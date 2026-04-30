@@ -1,4 +1,5 @@
 import { useGameStore } from '@/game/useGameStore';
+import { selectNetWorth } from '@/engine/selectors';
 import { Settings, Pause, Play, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, memo } from 'react';
@@ -16,7 +17,7 @@ const HUDTopBar = memo(function HUDTopBar() {
     return `S$${amount.toLocaleString()}`;
   };
 
-  const netWorth = player.cash + player.properties.reduce((sum, p) => sum + p.currentValue, 0) + player.cpfOrdinary + player.cpfSpecial;
+  const netWorth = selectNetWorth(player);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-deep-space/95 backdrop-blur-md border-b border-cyan-glow/30">
@@ -50,7 +51,7 @@ const HUDTopBar = memo(function HUDTopBar() {
           <div className="hidden md:flex items-center gap-3">
             <MetricPill label="Cash" value={formatCash(player.cash)} color="#00F0FF" />
             <MetricPill label="Net Worth" value={formatCash(netWorth)} color="#00E676" />
-            <MetricPill label="CPF" value={formatCash(player.cpfOrdinary + player.cpfSpecial)} color="#7C4DFF" />
+            <MetricPill label="CPF" value={formatCash([player.cpfOrdinary, player.cpfSpecial].reduce((sum, value) => sum + value, 0))} color="#7C4DFF" />
             <MetricPill label="Credit" value={String(player.creditScore)} color="#FFD740" />
           </div>
         )}

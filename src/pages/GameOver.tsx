@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/game/useGameStore';
 import { difficultySettings } from '@/game/types';
+import { INSOLVENCY_STRIKES_LIMIT } from '@/engine/constants';
+import { selectNetWorth } from '@/engine/selectors';
 import GlassCard from '@/components/GlassCard';
 import { Trophy, RotateCcw, Home } from 'lucide-react';
 
@@ -8,7 +10,7 @@ export default function GameOver() {
   const navigate = useNavigate();
   const { player } = useGameStore();
 
-  const netWorth = player.cash + player.properties.reduce((sum, p) => sum + p.currentValue, 0) + player.cpfOrdinary + player.cpfSpecial;
+  const netWorth = selectNetWorth(player);
   const target = difficultySettings[player.difficulty].targetNetWorth;
   const won = netWorth >= target;
   const score = Math.round((netWorth / target) * 1000) + player.achievements.length * 100 + player.turnCount * 10;
@@ -25,7 +27,9 @@ export default function GameOver() {
           <p className="text-text-secondary mb-6">
             {won
               ? `You reached your target of S$${(target / 1000000).toFixed(0)}M!`
-              : `You did not reach the target of S$${(target / 1000000).toFixed(0)}M.`}
+              : player.bankruptcyStrikes >= INSOLVENCY_STRIKES_LIMIT
+                ? 'You stayed insolvent for three consecutive turns.'
+                : `You did not reach the target of S$${(target / 1000000).toFixed(0)}M.`}
           </p>
 
           <div className="grid grid-cols-2 gap-4 mb-6 max-w-xs mx-auto">

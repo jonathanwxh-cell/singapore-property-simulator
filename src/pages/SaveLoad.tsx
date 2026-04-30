@@ -11,6 +11,7 @@ export default function SaveLoad() {
   const [slots, setSlots] = useState<SaveSlot[]>([]);
   const [importData, setImportData] = useState('');
   const [showImport, setShowImport] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
   useEffect(() => {
     setSlots(getSaveSlots());
@@ -43,10 +44,14 @@ export default function SaveLoad() {
     if (!importData.trim()) return;
     const slotId = parseInt(prompt('Which slot to save to? (1-5)', '1') || '1');
     if (slotId >= 1 && slotId <= 5) {
-      importSave(importData, slotId);
-      setImportData('');
-      setShowImport(false);
-      refresh();
+      if (importSave(importData, slotId)) {
+        setImportData('');
+        setShowImport(false);
+        setImportError(null);
+        refresh();
+      } else {
+        setImportError('Invalid save file. Versioned v1 save JSON is required.');
+      }
     }
   };
 
@@ -84,7 +89,7 @@ export default function SaveLoad() {
             <h3 className="font-rajdhani font-semibold text-white mb-3">Import Save Data</h3>
             <textarea
               value={importData}
-              onChange={(e) => setImportData(e.target.value)}
+              onChange={(e) => { setImportData(e.target.value); setImportError(null); }}
               placeholder="Paste save JSON here..."
               className="w-full h-32 bg-void-navy border border-glass-border rounded-input p-3 text-xs font-mono text-white placeholder:text-text-dim/50 focus:border-cyan-glow focus:outline-none resize-none"
             />
@@ -96,6 +101,7 @@ export default function SaveLoad() {
                 Cancel
               </button>
             </div>
+            {importError && <p className="text-danger text-xs mt-3">{importError}</p>}
           </GlassCard>
         )}
 

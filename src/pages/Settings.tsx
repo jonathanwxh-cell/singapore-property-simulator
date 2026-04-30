@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/game/useGameStore';
 import { difficultySettings } from '@/game/types';
+import { careers } from '@/data/careers';
 import GlassCard from '@/components/GlassCard';
 import { ArrowLeft, Volume2, Zap, RotateCcw } from 'lucide-react';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { settings, updateSettings, player, isGameActive } = useGameStore();
+  const careerName = careers.find(c => c.id === player.careerId)?.name ?? 'Unknown';
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
@@ -107,7 +109,7 @@ export default function Settings() {
               </div>
               <div className="flex justify-between">
                 <span className="text-text-secondary">Career</span>
-                <span className="text-white font-mono">{player.career}</span>
+                <span className="text-white font-mono">{careerName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-secondary">Turns Played</span>

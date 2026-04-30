@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 import { useGameStore } from '@/game/useGameStore';
+import { SAVE_VERSION } from '@/engine/constants';
+import { saveSchema } from '@/data/saveSchema';
 import type { SaveSlot, GameState } from '@/game/types';
 
 const SAVE_SLOTS_KEY = 'sgpt_saves';
@@ -27,8 +29,8 @@ export function useSaveLoad() {
         settings: gameState.settings,
         isGameActive: gameState.isGameActive,
         currentScenario: gameState.currentScenario,
-        screenHistory: gameState.screenHistory,
       };
+      const data = JSON.stringify({ ...state, version: SAVE_VERSION });
       const slot: SaveSlot = {
         id: slotId,
         name,
@@ -39,7 +41,7 @@ export function useSaveLoad() {
         year: state.player.year,
         month: state.player.month,
         difficulty: state.player.difficulty,
-        data: JSON.stringify(state),
+        data,
       };
 
       const existingIndex = slots.findIndex(s => s.id === slotId);
@@ -64,8 +66,9 @@ export function useSaveLoad() {
       const slot = slots.find(s => s.id === slotId);
       if (!slot) return false;
 
-      const state: GameState = JSON.parse(slot.data);
-      useGameStore.getState().loadGame(state);
+      const parsed = saveSchema.safeParse(JSON.parse(slot.data));
+      if (!parsed.success) return false;
+      useGameStore.getState().loadGame(parsed.data);
       return true;
     } catch {
       return false;
@@ -77,8 +80,9 @@ export function useSaveLoad() {
       const data = localStorage.getItem(AUTO_SAVE_KEY);
       if (!data) return false;
 
-      const state: GameState = JSON.parse(data);
-      useGameStore.getState().loadGame(state);
+      const parsed = saveSchema.safeParse(JSON.parse(data));
+      if (!parsed.success) return false;
+      useGameStore.getState().loadGame(parsed.data);
       return true;
     } catch {
       return false;
@@ -109,22 +113,9 @@ export function useSaveLoad() {
 
   const importSave = useCallback((jsonData: string, slotId: number): boolean => {
     try {
-      const parsed = JSON.parse(jsonData);
-
-      // Basic schema validation — reject clearly invalid data
-      if (!parsed || typeof parsed !== 'object') return false;
-      const requiredKeys = ['player', 'market', 'settings'];
-      for (const key of requiredKeys) {
-        if (!(key in parsed) || typeof parsed[key] !== 'object') return false;
-      }
-      if (typeof parsed.player.name !== 'string') return false;
-      if (typeof parsed.player.cash !== 'number') return false;
-      if (typeof parsed.player.salary !== 'number') return false;
-      if (typeof parsed.market.priceIndex !== 'number') return false;
-      if (!Array.isArray(parsed.player.properties)) return false;
-      if (!Array.isArray(parsed.player.loans)) return false;
-
-      const state: GameState = parsed;
+      const parsed = saveSchema.safeParse(JSON.parse(jsonData));
+      if (!parsed.success) return false;
+      const state = parsed.data;
       const slots = getSaveSlots();
       const slot: SaveSlot = {
         id: slotId,
@@ -136,7 +127,7 @@ export function useSaveLoad() {
         year: state.player.year,
         month: state.player.month,
         difficulty: state.player.difficulty,
-        data: jsonData,
+        data: JSON.stringify(state),
       };
 
       const existingIndex = slots.findIndex(s => s.id === slotId);

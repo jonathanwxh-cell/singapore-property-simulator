@@ -3,53 +3,18 @@ import { properties } from '@/data/properties';
 import { districts } from '@/data/districts';
 import { achievements } from '@/data/achievements';
 import GlassCard from '@/components/GlassCard';
-import { Building2, TrendingUp, Award, Target, Home, DollarSign, ImageOff } from 'lucide-react';
+import PropertyImage from '@/components/PropertyImage';
+import { selectMonthlyRentalIncome, selectNetWorth } from '@/engine/selectors';
+import { Building2, TrendingUp, Award, Target, Home, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-
-const imageFallbacks: Record<string, string> = {
-  '/district-hdb.jpg': '/property-interior-2.jpg',
-  '/district-orchard.jpg': '/property-interior-1.jpg',
-  '/district-marina.jpg': '/district-sentosa.jpg',
-  '/property-shophouse.jpg': '/property-interior-1.jpg',
-};
-
-function PropertyImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
-  const [error, setError] = useState(false);
-  const fallbackSrc = imageFallbacks[src] || '/property-interior-1.jpg';
-
-  if (error) {
-    return (
-      <div className={`${className} bg-void-navy flex items-center justify-center`}>
-        <ImageOff size={20} className="text-text-dim" />
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      onError={(e) => {
-        const img = e.target as HTMLImageElement;
-        if (img.src !== fallbackSrc && fallbackSrc) {
-          img.src = fallbackSrc;
-        } else {
-          setError(true);
-        }
-      }}
-    />
-  );
-}
 
 export default function Portfolio() {
   const { player, toggleRental } = useGameStore();
   const navigate = useNavigate();
 
-  const netWorth = player.cash + player.properties.reduce((sum, p) => sum + p.currentValue, 0) + player.cpfOrdinary + player.cpfSpecial;
+  const netWorth = selectNetWorth(player);
   const totalProfit = player.properties.reduce((sum, p) => sum + (p.currentValue - p.purchasePrice), 0) + player.totalPropertySalesProfit;
-  const rentalIncome = player.properties.filter(p => p.isRented).reduce((sum, p) => sum + p.monthlyRental, 0);
+  const rentalIncome = selectMonthlyRentalIncome(player);
 
   const unlockedAchievements = achievements.filter(a => player.achievements.includes(a.id));
 
@@ -109,7 +74,7 @@ export default function Portfolio() {
                       className="w-16 h-16 rounded-lg overflow-hidden shrink-0 cursor-pointer"
                       onClick={() => navigate(`/property/${property.id}`)}
                     >
-                      <PropertyImage src={property.image} alt={property.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <PropertyImage src={property.image} alt={property.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" fallbackIconSize={20} />
                     </div>
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/property/${property.id}`)}>
                       <div className="flex items-center gap-2">

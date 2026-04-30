@@ -1,18 +1,27 @@
 import { useGameStore } from '@/game/useGameStore';
 import { properties } from '@/data/properties';
 import GlassCard from '@/components/GlassCard';
+import { TAKE_HOME_RATIO } from '@/engine/constants';
+import { selectMonthlyExpenses, selectMonthlyRentalIncome, selectMonthlyTakeHome, selectNetWorth } from '@/engine/selectors';
 import { motion } from 'framer-motion';
 import { Wallet, TrendingUp, Building2, ArrowRight, Newspaper } from 'lucide-react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
-  const { player, nextTurn, market } = useGameStore();
+  const { player, nextTurn, market, isGameActive } = useGameStore();
   const navigate = useNavigate();
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  const netWorth = player.cash + player.properties.reduce((sum, p) => sum + p.currentValue, 0) + player.cpfOrdinary + player.cpfSpecial;
-  const monthlyIncome = player.salary * 0.8 + player.properties.filter(p => p.isRented).reduce((sum, p) => sum + p.monthlyRental, 0);
-  const monthlyExpenses = player.loans.filter(l => !l.isPaid).reduce((sum, l) => sum + l.monthlyPayment, 0);
+  const netWorth = selectNetWorth(player);
+  const monthlyTakeHome = selectMonthlyTakeHome(player, TAKE_HOME_RATIO);
+  const monthlyRental = selectMonthlyRentalIncome(player);
+  const monthlyIncome = monthlyTakeHome + monthlyRental;
+  const monthlyExpenses = selectMonthlyExpenses(player);
+
+  useEffect(() => {
+    if (!isGameActive) navigate('/gameover');
+  }, [isGameActive, navigate]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -57,8 +66,8 @@ export default function Dashboard() {
             <GlassCard>
               <h3 className="section-title text-white mb-4">Monthly Cashflow</h3>
               <div className="space-y-3">
-                <CashflowRow label="Salary (after CPF)" value={player.salary * 0.8} type="income" />
-                <CashflowRow label="Rental Income" value={monthlyIncome - player.salary * 0.8} type="income" />
+                <CashflowRow label="Salary (after CPF)" value={monthlyTakeHome} type="income" />
+                <CashflowRow label="Rental Income" value={monthlyRental} type="income" />
                 <div className="border-t border-divider" />
                 <CashflowRow label="Loan Payments" value={monthlyExpenses} type="expense" />
                 <div className="border-t border-divider" />
@@ -109,13 +118,13 @@ export default function Dashboard() {
             <GlassCard accentColor="#00F0FF">
               <h3 className="section-title text-white mb-4">Actions</h3>
               <div className="space-y-2">
-                <button onClick={() => window.location.hash = '#/properties'} className="w-full btn-secondary text-sm py-3">
+                <button onClick={() => navigate('/properties')} className="w-full btn-secondary text-sm py-3">
                   Browse Properties
                 </button>
-                <button onClick={() => window.location.hash = '#/bank'} className="w-full btn-secondary text-sm py-3">
+                <button onClick={() => navigate('/bank')} className="w-full btn-secondary text-sm py-3">
                   Manage Loans
                 </button>
-                <button onClick={() => window.location.hash = '#/market'} className="w-full btn-secondary text-sm py-3">
+                <button onClick={() => navigate('/market')} className="w-full btn-secondary text-sm py-3">
                   Market Overview
                 </button>
               </div>

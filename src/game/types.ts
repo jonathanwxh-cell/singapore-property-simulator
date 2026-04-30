@@ -28,7 +28,7 @@ export interface Loan {
 export interface Player {
   name: string;
   age: number;
-  career: string;
+  careerId: string;
   salary: number;
   cash: number;
   cpfOrdinary: number;
@@ -47,6 +47,7 @@ export interface Player {
   difficulty: Difficulty;
   totalRentalIncome: number;
   totalPropertySalesProfit: number;
+  bankruptcyStrikes: number;
 }
 
 export interface MarketState {
@@ -55,7 +56,6 @@ export interface MarketState {
   rentalIndex: number;
   volatility: number;
   lastEvent: string | null;
-  districtModifiers: Record<number, number>;
 }
 
 export interface GameSettings {
@@ -72,7 +72,6 @@ export interface GameState {
   settings: GameSettings;
   isGameActive: boolean;
   currentScenario: string | null;
-  screenHistory: string[];
 }
 
 export interface SaveSlot {

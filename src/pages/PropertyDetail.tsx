@@ -3,44 +3,9 @@ import { properties, propertyTypeInfo } from '@/data/properties';
 import { districts } from '@/data/districts';
 import { useGameStore } from '@/game/useGameStore';
 import GlassCard from '@/components/GlassCard';
-import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, Home, DollarSign, CheckCircle, ImageOff } from 'lucide-react';
+import PropertyImage from '@/components/PropertyImage';
+import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, Home, DollarSign, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
-
-const imageFallbacks: Record<string, string> = {
-  '/district-hdb.jpg': '/property-interior-2.jpg',
-  '/district-orchard.jpg': '/property-interior-1.jpg',
-  '/district-marina.jpg': '/district-sentosa.jpg',
-  '/property-shophouse.jpg': '/property-interior-1.jpg',
-};
-
-function PropertyImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
-  const [error, setError] = useState(false);
-  const fallbackSrc = imageFallbacks[src] || '/property-interior-1.jpg';
-
-  if (error) {
-    return (
-      <div className={`${className} bg-void-navy flex items-center justify-center`}>
-        <ImageOff size={40} className="text-text-dim" />
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      onError={(e) => {
-        const img = e.target as HTMLImageElement;
-        if (img.src !== fallbackSrc && fallbackSrc) {
-          img.src = fallbackSrc;
-        } else {
-          setError(true);
-        }
-      }}
-    />
-  );
-}
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +13,7 @@ export default function PropertyDetail() {
   const { player, buyProperty, sellProperty, toggleRental } = useGameStore();
   const [downPaymentPercent, setDownPaymentPercent] = useState(25);
   const [showSellConfirm, setShowSellConfirm] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const property = properties.find(p => p.id === id);
   const district = property ? districts.find(d => d.id === property.districtId) : null;
@@ -79,17 +45,21 @@ export default function PropertyDetail() {
 
   const handleBuy = () => {
     if (isOwned) return;
-    const success = buyProperty(property.id, downPayment);
-    if (success) {
+    const result = buyProperty(property.id, downPayment);
+    if (result.ok) {
       navigate('/properties');
+    } else {
+      setActionError(result.message);
     }
   };
 
   const handleSell = () => {
     if (!isOwned) return;
-    const success = sellProperty(ownedIndex);
-    if (success) {
+    const result = sellProperty(ownedIndex);
+    if (result.ok) {
       navigate('/portfolio');
+    } else {
+      setActionError(result.message);
     }
   };
 
@@ -111,7 +81,7 @@ export default function PropertyDetail() {
 
         {/* Hero Image */}
         <div className="relative h-64 md:h-80 rounded-xl overflow-hidden mb-6">
-          <PropertyImage src={property.image} alt={property.name} className="w-full h-full object-cover" />
+          <PropertyImage src={property.image} alt={property.name} className="w-full h-full object-cover" fallbackIconSize={40} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
           <div className="absolute bottom-4 left-4 right-4">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -291,6 +261,12 @@ export default function PropertyDetail() {
                       </div>
                     </div>
                   )}
+                  {actionError && (
+                    <div className="flex items-center gap-2 p-3 mt-3 rounded-lg bg-danger/10 border border-danger/30">
+                      <AlertTriangle size={16} className="text-danger shrink-0" />
+                      <p className="text-danger text-xs">{actionError}</p>
+                    </div>
+                  )}
                 </div>
               </GlassCard>
             ) : (
@@ -318,7 +294,7 @@ export default function PropertyDetail() {
                       min={5}
                       max={100}
                       value={downPaymentPercent}
-                      onChange={(e) => setDownPaymentPercent(Number(e.target.value))}
+                      onChange={(e) => { setDownPaymentPercent(Number(e.target.value)); setActionError(null); }}
                       className="w-full accent-cyan-glow"
                     />
                     <div className="flex justify-between text-[10px] font-mono text-text-dim mt-1">
@@ -360,6 +336,12 @@ export default function PropertyDetail() {
                   <p className="text-danger text-xs text-center mt-2">
                     You need S${(downPayment - player.cash).toLocaleString()} more
                   </p>
+                )}
+                {actionError && (
+                  <div className="flex items-center gap-2 p-3 mt-3 rounded-lg bg-danger/10 border border-danger/30">
+                    <AlertTriangle size={16} className="text-danger shrink-0" />
+                    <p className="text-danger text-xs">{actionError}</p>
+                  </div>
                 )}
               </GlassCard>
             )}

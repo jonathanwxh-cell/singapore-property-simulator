@@ -1,5 +1,8 @@
 import { useGameStore } from '@/game/useGameStore';
 import GlassCard from '@/components/GlassCard';
+import { TDSR_LIMIT } from '@/engine/constants';
+import { calcMonthlyPayment, calcTDSR } from '@/engine/finance';
+import { selectMonthlyExpenses } from '@/engine/selectors';
 import { Landmark, Wallet, TrendingDown, Plus, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
@@ -13,19 +16,14 @@ export default function Bank() {
 
   const activeLoans = player.loans.filter(l => !l.isPaid);
   const totalDebt = activeLoans.reduce((sum, l) => sum + l.remainingBalance, 0);
-  const monthlyPayments = activeLoans.reduce((sum, l) => sum + l.monthlyPayment, 0);
+  const monthlyPayments = selectMonthlyExpenses(player);
 
   const interestRate = player.difficulty === 'easy' ? 1.5 :
     player.difficulty === 'normal' ? 2.5 :
     player.difficulty === 'hard' ? 3.5 : 4.5;
 
-  const estimatedMonthly = loanAmount > 0
-    ? Math.round((loanAmount * (interestRate / 100 / 12)) / (1 - Math.pow(1 + interestRate / 100 / 12, -(loanYears * 12))))
-    : 0;
-
-  const tdsr = player.salary > 0 ? (monthlyPayments + estimatedMonthly) / player.salary : 0;
-  const tdsrExceeded = tdsr > 0.55;
-  const creditTooLow = player.creditScore < 400;
+  const estimatedMonthly = calcMonthlyPayment(loanAmount, interestRate, loanYears);
+  const tdsr = calcTDSR(monthlyPayments, estimatedMonthly, player.salary);
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
@@ -111,13 +109,21 @@ export default function Bank() {
                   <input
                     type="number"
                     value={payAmount}
-                    onChange={(e) => setPayAmount(Number(e.target.value))}
+                    onChange={(e) => { setPayAmount(Number(e.target.value)); setLoanError(null); }}
                     className="flex-1 bg-void-navy border border-glass-border rounded-input px-3 py-2 text-sm text-white font-mono focus:border-cyan-glow focus:outline-none"
                     min={1}
                     max={Math.min(player.cash, activeLoans.find(l => l.id === selectedLoanId)?.remainingBalance || 0)}
                   />
                   <button
-                    onClick={() => { payLoan(selectedLoanId, payAmount); setSelectedLoanId(null); }}
+                    onClick={() => {
+                      const result = payLoan(selectedLoanId, payAmount);
+                      if (result.ok) {
+                        setSelectedLoanId(null);
+                        setLoanError(null);
+                      } else {
+                        setLoanError(result.message);
+                      }
+                    }}
                     disabled={payAmount <= 0 || payAmount > player.cash}
                     className="btn-primary text-xs py-2 px-4 disabled:opacity-50"
                   >
@@ -141,7 +147,7 @@ export default function Bank() {
                     max={5000000}
                     step={50000}
                     value={loanAmount}
-                    onChange={(e) => setLoanAmount(Number(e.target.value))}
+                    onChange={(e) => { setLoanAmount(Number(e.target.value)); setLoanError(null); }}
                     className="w-full accent-cyan-glow"
                   />
                   <div className="flex justify-between font-mono text-xs text-white mt-1">
@@ -158,7 +164,7 @@ export default function Bank() {
                     min={5}
                     max={35}
                     value={loanYears}
-                    onChange={(e) => setLoanYears(Number(e.target.value))}
+                    onChange={(e) => { setLoanYears(Number(e.target.value)); setLoanError(null); }}
                     className="w-full accent-cyan-glow"
                   />
                   <div className="flex justify-between font-mono text-[10px] text-text-dim mt-1">
@@ -178,7 +184,7 @@ export default function Bank() {
                   </div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-text-secondary text-sm">TDSR (55% cap)</span>
-                    <span className={`font-mono ${tdsrExceeded ? 'text-danger' : 'text-success'}`}>{(tdsr * 100).toFixed(1)}%</span>
+                    <span className={`font-mono ${tdsr > TDSR_LIMIT ? 'text-danger' : 'text-success'}`}>{(tdsr * 100).toFixed(1)}%</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary text-sm">Total Interest</span>
@@ -196,19 +202,10 @@ export default function Bank() {
                 <button
                   onClick={() => {
                     setLoanError(null);
-                    if (tdsrExceeded) {
-                      setLoanError(`TDSR would be ${(tdsr * 100).toFixed(1)}% — exceeds 55% limit. Reduce loan amount or pay down existing debt.`);
-                      return;
-                    }
-                    if (creditTooLow) {
-                      setLoanError('Credit score too low (minimum 400). Improve your credit before applying.');
-                      return;
-                    }
-                    const ok = applyLoan(loanAmount, interestRate, loanYears, 'personal');
-                    if (!ok) setLoanError('Loan application rejected. Check your TDSR and credit score.');
+                    const result = applyLoan(loanAmount, interestRate, loanYears, 'personal');
+                    if (!result.ok) setLoanError(result.message);
                   }}
-                  disabled={tdsrExceeded || creditTooLow}
-                  className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="btn-primary w-full flex items-center justify-center gap-2"
                 >
                   <Plus size={16} />
                   Apply for Loan
