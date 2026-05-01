@@ -2,7 +2,10 @@ import type { Player } from '@/game/types';
 
 export function selectNetWorth(player: Player): number {
   const propertyValue = player.properties.reduce((sum, p) => sum + p.currentValue, 0);
-  return player.cash + propertyValue + player.cpfOrdinary + player.cpfSpecial + player.cpfMedisave;
+  const outstandingDebt = player.loans
+    .filter(loan => !loan.isPaid)
+    .reduce((sum, loan) => sum + loan.remainingBalance, 0);
+  return player.cash + propertyValue + player.cpfOrdinary + player.cpfSpecial + player.cpfMedisave - outstandingDebt;
 }
 
 export function selectMonthlyRentalIncome(player: Player): number {

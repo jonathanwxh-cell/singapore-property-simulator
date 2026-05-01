@@ -16,15 +16,19 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
 }
 
 describe('selectNetWorth', () => {
-  it('sums cash, property values, and all CPF buckets', () => {
+  it('subtracts outstanding loan balances from assets', () => {
     const player = makePlayer({
       cash: 50_000, cpfOrdinary: 30_000, cpfSpecial: 10_000, cpfMedisave: 15_000,
       properties: [
         { propertyId: 'a', purchasePrice: 0, purchaseDate: '', currentValue: 800_000, isRented: false, monthlyRental: 0, renovationLevel: 0 },
         { propertyId: 'b', purchasePrice: 0, purchaseDate: '', currentValue: 1_200_000, isRented: false, monthlyRental: 0, renovationLevel: 0 },
       ],
+      loans: [
+        { id: 'loan-a', type: 'mortgage', principal: 0, remainingBalance: 600_000, interestRate: 2.5, monthlyPayment: 2500, termYears: 30, startDate: '', isPaid: false },
+        { id: 'loan-b', type: 'personal', principal: 0, remainingBalance: 50_000, interestRate: 5, monthlyPayment: 900, termYears: 5, startDate: '', isPaid: false },
+      ],
     });
-    expect(selectNetWorth(player)).toBe(50_000 + 800_000 + 1_200_000 + 30_000 + 10_000 + 15_000);
+    expect(selectNetWorth(player)).toBe(50_000 + 800_000 + 1_200_000 + 30_000 + 10_000 + 15_000 - 600_000 - 50_000);
   });
 });
 

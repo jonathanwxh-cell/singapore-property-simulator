@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, Building2, TrendingUp, PieChart, Landmark, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useGameStore } from '@/game/useGameStore';
 
 const mobileNavItems = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -18,6 +19,7 @@ const mobileNavItems = [
 export default function GameLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const currentScenario = useGameStore(state => state.currentScenario);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -26,6 +28,12 @@ export default function GameLayout() {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
+  useEffect(() => {
+    if (currentScenario && location.pathname !== '/scenarios') {
+      navigate('/scenarios');
+    }
+  }, [currentScenario, location.pathname, navigate]);
 
   const sidebarWidth = isMobile ? 0 : 224;
   const bottomNavHeight = isMobile ? 56 : 0;

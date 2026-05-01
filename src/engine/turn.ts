@@ -95,7 +95,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   // Scenarios — skip on turn 0
   let scenarioId: string | null = null;
   const newTurnCount = player.turnCount + 1;
-  if (newTurnCount > 0 && newTurnCount % diff.eventFrequency === 0 && rng.next() < SCENARIO_TRIGGER_PROBABILITY) {
+  if (player.turnCount > 0 && newTurnCount % diff.eventFrequency === 0 && rng.next() < SCENARIO_TRIGGER_PROBABILITY) {
     scenarioId = rngPick(rng, scenarios).id;
   }
 
