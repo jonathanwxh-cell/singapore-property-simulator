@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { selectNetWorth, selectMonthlyNetCashflow, selectMonthlyTakeHome, selectMonthlyRentalIncome, selectMonthlyExpenses } from '@/engine/selectors';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
+import { formatCompactCurrency, formatCurrency } from '@/lib/format';
 
 export default function Dashboard() {
   const { player, nextTurn, market, isGameActive } = useGameStore();
@@ -27,7 +28,7 @@ export default function Dashboard() {
   const itemVariants = { hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } } };
 
   return (
-    <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
+    <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4 game-screen">
       <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-6xl mx-auto">
         <motion.div variants={itemVariants} className="mb-6">
           <h1 className="page-title text-white">Welcome, {player.name}</h1>
@@ -35,8 +36,8 @@ export default function Dashboard() {
         </motion.div>
 
         <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard icon={Wallet} label="Cash" value={`S$${(player.cash / 1000).toFixed(1)}K`} color="#00F0FF" />
-          <StatCard icon={TrendingUp} label="Net Worth" value={`S$${(netWorth / 1000000).toFixed(2)}M`} color="#00E676" />
+          <StatCard icon={Wallet} label="Cash" value={formatCompactCurrency(player.cash)} color="#00F0FF" />
+          <StatCard icon={TrendingUp} label="Net Worth" value={formatCompactCurrency(netWorth)} color="#00E676" />
           <StatCard icon={Building2} label="Properties" value={String(player.properties.length)} color="#7C4DFF" />
           <StatCard icon={Newspaper} label="Market Index" value={`${market.priceIndex.toFixed(1)}`} color="#FF9100" change={market.lastEvent === 'boom' ? '+5.2%' : market.lastEvent === 'crash' ? '-3.1%' : '+0.8%'} />
         </motion.div>
@@ -69,7 +70,7 @@ export default function Dashboard() {
                       <div key={i} className="flex items-center justify-between py-2 border-b border-divider last:border-0 cursor-pointer hover:bg-white/5 rounded px-2 -mx-2 transition-colors"
                         onClick={() => propInfo && navigate(`/property/${propInfo.id}`)}>
                         <div><p className="text-white text-sm font-medium hover:text-cyan-glow transition-colors">{propInfo ? propInfo.name : `Property #${i + 1}`}</p><p className="text-text-dim text-xs">Purchased: {p.purchaseDate}</p></div>
-                        <div className="text-right"><p className="text-cyan-glow font-mono text-sm">S${(p.currentValue / 1000).toFixed(0)}K</p><p className={`text-[10px] ${p.isRented ? 'text-cyan-glow' : 'text-text-dim'}`}>{p.isRented ? 'Rented' : 'Vacant'}</p></div>
+                        <div className="text-right"><p className="text-cyan-glow font-mono text-sm">{formatCompactCurrency(p.currentValue)}</p><p className={`text-[10px] ${p.isRented ? 'text-cyan-glow' : 'text-text-dim'}`}>{p.isRented ? 'Rented' : 'Vacant'}</p></div>
                       </div>
                     );
                   })}
@@ -116,10 +117,11 @@ function StatCard({ icon: Icon, label, value, color, change }: { icon: React.Ele
 
 function CashflowRow({ label, value, type, isTotal }: { label: string; value: number; type: 'income' | 'expense'; isTotal?: boolean }) {
   const color = isTotal ? (value >= 0 ? '#00E676' : '#FF1744') : type === 'income' ? '#00E676' : '#FF1744';
+  const sign = type === 'expense' && !isTotal ? '-' : isTotal && value >= 0 ? '+' : '';
   return (
     <div className="flex items-center justify-between">
       <span className={`${isTotal ? 'text-white font-semibold' : 'text-text-secondary'} text-sm`}>{label}</span>
-      <span className="font-mono text-sm" style={{ color }}>{type === 'expense' && !isTotal ? '-' : ''}{isTotal && value >= 0 ? '+' : ''}S${Math.abs(value).toLocaleString()}</span>
+      <span className="font-mono text-sm" style={{ color }}>{sign}{formatCurrency(Math.abs(value))}</span>
     </div>
   );
 }
