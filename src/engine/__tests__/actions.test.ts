@@ -22,17 +22,23 @@ describe('buyPropertyPure', () => {
   });
 
   it('rejects insufficient cash', () => {
+    // hdb-bto-1 costs $380k. Stamp duty on first property = BSD only = $5,400
+    // Down payment of $100k + $5,400 stamp duty = $105,400 needed
     const result = buyPropertyPure(makePlayer({ cash: 1000 }), 'hdb-bto-1', 100_000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('insufficient_cash');
   });
 
   it('rejects when TDSR would exceed 55%', () => {
+    // hdb-bto-1 costs $380k. LTV cap on first property = 75% = $285k max loan.
+    // Down payment must be >= $95k. Use $100k down → loan = $280k (within LTV).
+    // With $1500 existing debt + new mortgage, TDSR exceeds 55% on $3000 salary.
     const player = makePlayer({
       salary: 3000,
+      cash: 1_000_000,
       loans: [{ id: 'old', type: 'personal', principal: 0, remainingBalance: 100_000, interestRate: 5, monthlyPayment: 1500, termYears: 10, startDate: '', isPaid: false }],
     });
-    const result = buyPropertyPure(player, 'hdb-bto-1', 50_000);
+    const result = buyPropertyPure(player, 'hdb-bto-1', 100_000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('tdsr_exceeded');
   });
