@@ -7,8 +7,7 @@ import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, H
 import PropertyImage from '@/components/PropertyImage';
 import { useState } from 'react';
 import { calculateBSD, calculateABSD } from '@/engine/stampDuty';
-
-
+import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +19,6 @@ export default function PropertyDetail() {
   const property = properties.find(p => p.id === id);
   const district = property ? districts.find(d => d.id === property.districtId) : null;
 
-  // Check if player already owns this property
   const ownedIndex = property ? player.properties.findIndex(op => op.propertyId === property.id) : -1;
   const isOwned = ownedIndex >= 0;
   const ownedProperty = isOwned ? player.properties[ownedIndex] : null;
@@ -46,20 +44,21 @@ export default function PropertyDetail() {
   const bsd = calculateBSD(property.price);
   const absd = calculateABSD(property.price, player.properties.length);
   const totalUpfront = downPayment + bsd + absd;
-  const canAfford = player.cash >= totalUpfront && !isOwned;
+  const shortfall = Math.max(0, totalUpfront - player.cash);
+  const canAfford = shortfall === 0 && !isOwned;
 
   const handleBuy = () => {
-    if (isOwned) return;
-    const success = buyProperty(property.id, downPayment);
-    if (success) {
+    if (isOwned || !canAfford) return;
+    const result = buyProperty(property.id, downPayment);
+    if (result.ok) {
       navigate('/properties');
     }
   };
 
   const handleSell = () => {
     if (!isOwned) return;
-    const success = sellProperty(ownedIndex);
-    if (success) {
+    const result = sellProperty(ownedIndex);
+    if (result.ok) {
       navigate('/portfolio');
     }
   };
@@ -73,14 +72,13 @@ export default function PropertyDetail() {
   const gainPercent = ownedProperty ? (gain / ownedProperty.purchasePrice) * 100 : 0;
 
   return (
-    <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
+    <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4 game-screen">
       <div className="max-w-5xl mx-auto">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-text-secondary hover:text-cyan-glow transition-colors mb-4">
           <ArrowLeft size={18} />
           <span className="font-rajdhani text-sm uppercase">Back</span>
         </button>
 
-        {/* Hero Image */}
         <div className="relative h-64 md:h-80 rounded-xl overflow-hidden mb-6">
           <PropertyImage src={property.image} alt={property.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
@@ -112,7 +110,6 @@ export default function PropertyDetail() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left: Details */}
           <div className="lg:col-span-2 space-y-4">
             <GlassCard>
               <h3 className="section-title text-white mb-4">Property Details</h3>
@@ -154,7 +151,6 @@ export default function PropertyDetail() {
               </div>
             </GlassCard>
 
-            {/* Market Analysis */}
             <GlassCard accentColor="#FF9100">
               <h3 className="section-title text-white mb-4">Market Analysis</h3>
               <div className="grid grid-cols-3 gap-4">
@@ -164,46 +160,44 @@ export default function PropertyDetail() {
                 </div>
                 <div className="text-center">
                   <p className="label-text text-text-dim text-[10px]">Rental Yield</p>
-                  <p className="font-mono text-success text-lg">{property.rentalYield}%</p>
+                  <p className="font-mono text-success text-lg">{formatPercent(property.rentalYield, 1)}</p>
                 </div>
                 <div className="text-center">
                   <p className="label-text text-text-dim text-[10px]">Est. Monthly Rent</p>
-                  <p className="font-mono text-cyan-glow text-lg">S${Math.round(property.price * property.rentalYield / 100 / 12).toLocaleString()}</p>
+                  <p className="font-mono text-cyan-glow text-lg">{formatCurrency(Math.round(property.price * property.rentalYield / 100 / 12))}</p>
                 </div>
               </div>
             </GlassCard>
           </div>
 
-          {/* Right: Action Panel */}
           <div>
             {isOwned && ownedProperty ? (
-              /* OWNED: Management Panel */
               <GlassCard accentColor="#00E676" className="sticky top-4">
                 <h3 className="section-title text-white mb-4">Manage Property</h3>
 
                 <div className="space-y-3 mb-5">
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary text-sm">Current Value</span>
-                    <span className="font-mono text-white text-lg">S${(ownedProperty.currentValue / 1000000).toFixed(2)}M</span>
+                    <span className="font-mono text-white text-lg">{formatCompactCurrency(ownedProperty.currentValue)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary text-sm">Purchase Price</span>
-                    <span className="font-mono text-text-dim">S${(ownedProperty.purchasePrice / 1000000).toFixed(2)}M</span>
+                    <span className="font-mono text-text-dim">{formatCompactCurrency(ownedProperty.purchasePrice)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary text-sm">Gain/Loss</span>
                     <span className={`font-mono ${gain >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {gain >= 0 ? '+' : ''}S${(gain / 1000).toFixed(1)}K ({gain >= 0 ? '+' : ''}{gainPercent.toFixed(1)}%)
+                      {gain >= 0 ? '+' : ''}{formatCompactCurrency(gain)} ({gain >= 0 ? '+' : ''}{formatPercent(gainPercent, 1)})
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary text-sm">Est. Monthly Rent</span>
-                    <span className="font-mono text-cyan-glow">S${ownedProperty.monthlyRental.toLocaleString()}</span>
+                    <span className="font-mono text-cyan-glow">{formatCurrency(ownedProperty.monthlyRental)}</span>
                   </div>
                   {associatedLoan && !associatedLoan.isPaid && (
                     <div className="flex items-center justify-between">
                       <span className="text-text-secondary text-sm">Loan Balance</span>
-                      <span className="font-mono text-warning">S${associatedLoan.remainingBalance.toLocaleString()}</span>
+                      <span className="font-mono text-warning">{formatCurrency(associatedLoan.remainingBalance)}</span>
                     </div>
                   )}
 
@@ -211,7 +205,7 @@ export default function PropertyDetail() {
                     <div className="flex items-center justify-between">
                       <span className="text-text-secondary text-sm">Status</span>
                       <span className={`font-mono text-xs ${ownedProperty.isRented ? 'text-cyan-glow' : 'text-text-dim'}`}>
-                        {ownedProperty.isRented ? `Rented (S$${ownedProperty.monthlyRental.toLocaleString()}/mo)` : 'Vacant'}
+                        {ownedProperty.isRented ? `Rented (${formatCurrency(ownedProperty.monthlyRental)}/mo)` : 'Vacant'}
                       </span>
                     </div>
                   </div>
@@ -241,48 +235,36 @@ export default function PropertyDetail() {
                   ) : (
                     <div className="space-y-2">
                       <p className="text-warning text-xs text-center">
-                        Sell for S${ownedProperty.currentValue.toLocaleString()}?
+                        Sell for {formatCurrency(ownedProperty.currentValue)}?
                         {associatedLoan && !associatedLoan.isPaid && (
                           <span className="block text-text-dim mt-1">Loan will be paid off automatically.</span>
                         )}
                       </p>
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => setShowSellConfirm(false)}
-                          className="flex-1 btn-secondary text-xs py-2"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleSell}
-                          className="flex-1 btn-danger text-xs py-2"
-                        >
-                          Confirm Sell
-                        </button>
+                        <button onClick={() => setShowSellConfirm(false)} className="flex-1 btn-secondary text-xs py-2">Cancel</button>
+                        <button onClick={handleSell} className="flex-1 btn-danger text-xs py-2">Confirm Sell</button>
                       </div>
                     </div>
                   )}
                 </div>
               </GlassCard>
             ) : (
-              /* NOT OWNED: Purchase Panel */
               <GlassCard accentColor="#00E676" className="sticky top-4">
                 <h3 className="section-title text-white mb-4">Purchase</h3>
 
                 <div className="space-y-4 mb-6">
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary text-sm">Price</span>
-                    <span className="font-mono text-white text-lg">S${(property.price / 1000000).toFixed(2)}M</span>
+                    <span className="font-mono text-white text-lg">{formatCompactCurrency(property.price)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary text-sm">PSF</span>
-                    <span className="font-mono text-white">S${property.psf.toLocaleString()}</span>
+                    <span className="font-mono text-white">{formatCurrency(property.psf)}</span>
                   </div>
 
-                  {/* Down Payment Slider */}
-                  <div>
+                  <div className="slider-block">
                     <label className="label-text text-text-dim text-xs block mb-2">
-                      Down Payment: {downPaymentPercent}%
+                      Down Payment: {formatPercent(downPaymentPercent)}
                     </label>
                     <input
                       type="range"
@@ -301,12 +283,12 @@ export default function PropertyDetail() {
                   <div className="border-t border-divider pt-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-text-secondary text-sm">Down Payment</span>
-                      <span className="font-mono text-cyan-glow">S${downPayment.toLocaleString()}</span>
+                      <span className="font-mono text-cyan-glow">{formatCurrency(downPayment)}</span>
                     </div>
                     {loanAmount > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="text-text-secondary text-sm">Loan Amount</span>
-                        <span className="font-mono text-warning">S${loanAmount.toLocaleString()}</span>
+                        <span className="font-mono text-warning">{formatCurrency(loanAmount)}</span>
                       </div>
                     )}
                   </div>
@@ -314,39 +296,35 @@ export default function PropertyDetail() {
                   <div className="border-t border-divider pt-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-text-secondary text-sm">BSD (Stamp Duty)</span>
-                      <span className="font-mono text-text-dim">S${bsd.toLocaleString()}</span>
+                      <span className="font-mono text-text-dim">{formatCurrency(bsd)}</span>
                     </div>
                     {absd > 0 && (
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-text-secondary text-sm">ABSD ({player.properties.length > 0 ? '2nd+' : 'Additional'})</span>
-                        <span className="font-mono text-danger">S${absd.toLocaleString()}</span>
+                        <span className="font-mono text-danger">{formatCurrency(absd)}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between">
                       <span className="text-white text-sm font-semibold">Total Upfront</span>
-                      <span className="font-mono text-warning">S${totalUpfront.toLocaleString()}</span>
+                      <span className="font-mono text-warning">{formatCurrency(totalUpfront)}</span>
                     </div>
                   </div>
 
                   <div className="border-t border-divider pt-3">
                     <div className="flex items-center justify-between">
                       <span className="text-white text-sm font-semibold">Your Cash</span>
-                      <span className="font-mono text-white">S${player.cash.toLocaleString()}</span>
+                      <span className="font-mono text-white">{formatCurrency(player.cash)}</span>
                     </div>
                   </div>
                 </div>
 
-                <button
-                  onClick={handleBuy}
-                  disabled={!canAfford}
-                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                <button onClick={handleBuy} disabled={!canAfford} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
                   {canAfford ? 'Buy Property' : 'Insufficient Funds'}
                 </button>
 
-                {!canAfford && (
+                {!canAfford && shortfall > 0 && (
                   <p className="text-danger text-xs text-center mt-2">
-                    You need S${(downPayment - player.cash).toLocaleString()} more
+                    You need {formatCurrency(shortfall)} more
                   </p>
                 )}
               </GlassCard>
