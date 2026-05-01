@@ -53,7 +53,7 @@ You start as a 27-year-old Singaporean with a career and modest savings. Each tu
 
 ---
 
-## Property Types (30 properties)
+## Property Types (34 properties)
 
 | Type | Price Range | Rental Yield | Example |
 |------|------------|-------------|---------|
@@ -99,8 +99,10 @@ The financial engine implements actual Singapore property regulations:
 | Profile | 1st Property | 2nd Property | 3rd+ |
 |---------|-------------|-------------|------|
 | Citizen | 0% | 20% | 30% |
-| PR | 5% | 30% | 35% |
+| PR | 0% | 20% | 30% |
 | Foreigner | 60% | 60% | 60% |
+
+> The player is currently always treated as a Singapore citizen. PR rates in `stampDuty.ts` are placeholder (matching citizen rates) until a profile system is added; real SG PR rates are 5% / 30% / 35%. Foreigner rates already match the real 60% rule.
 
 Both BSD and ABSD are deducted from cash on purchase.
 
@@ -146,26 +148,26 @@ src/
 │   ├── constants.ts      # All tunable parameters in one place
 │   ├── rng.ts            # Seeded PRNG for deterministic replays
 │   ├── results.ts        # ActionResult<T> discriminated union
-│   └── __tests__/        # 85 tests (vitest)
+│   └── __tests__/        # 90+ tests (vitest)
 ├── game/
-│   └── types.ts          # Player, Loan, Property, MarketState, GameState
+│   ├── types.ts          # Player, Loan, Property, MarketState, GameState
+│   └── useGameStore.ts   # Zustand store — thin wrapper around engine actions
 ├── data/
-│   ├── properties.ts     # 30 properties across 9 types
+│   ├── properties.ts     # 34 properties across 9 types
 │   ├── careers.ts        # 7 career paths
 │   ├── districts.ts      # 28 Singapore districts
 │   ├── eras.ts           # Game era definitions
 │   ├── scenarios.ts      # Event deck with branching choices
 │   └── saveSchema.ts     # Zod schema for save validation
 ├── pages/                # Route-level React components
-├── components/           # Shared UI (GlassCard, HUDTopBar, Sidebar)
-└── context/              # GameContext (Zustand store)
+└── components/           # Shared UI (GlassCard, HUDTopBar, Sidebar, PropertyImage)
 ```
 
 ### Design Principles
 
 - **Pure engine, impure shell** — `engine/` has zero React imports and zero side effects. All functions take state in and return new state out. This makes the entire game logic testable without rendering a single component.
 - **Deterministic replays** — The seeded PRNG (`rng.ts`) ensures identical seeds produce identical games. Given the same seed, the same sequence of market movements, scenario triggers, and resolution outcomes will fire.
-- **Discriminated unions** — `ActionResult<T>` is `{ ok: true; value: T } | { ok: false; reason; message }`. Callers窄arrow with `if (result.ok)` and get type-safe access to data or error.
+- **Discriminated unions** — `ActionResult<T>` is `{ ok: true; value: T } | { ok: false; reason; message }`. Callers narrow with `if (result.ok)` and get type-safe access to data or error.
 - **Constants over magic numbers** — Every tunable parameter (CPF rates, BSD tiers, LTV caps, volatility, credit deltas) lives in `constants.ts`. Changing a rule is a one-line edit.
 - **Save versioning** — `SAVE_VERSION` (currently `2`) supports future migration. Old saves can be upgraded on load.
 
@@ -193,7 +195,7 @@ maxBorrowable(propertyPrice, existingHousingLoans): number
 ## Testing
 
 ```bash
-npm test          # Run all 85 tests
+npm test           # Run the full vitest suite
 npm run test:watch # Watch mode
 npm run test:ui    # Vitest UI
 ```
