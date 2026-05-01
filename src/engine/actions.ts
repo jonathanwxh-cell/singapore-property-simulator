@@ -17,6 +17,7 @@ import type { Rng } from './rng';
 import type { ScenarioOption } from '@/data/scenarios';
 import { calculateTotalStampDuty } from './stampDuty';
 import { maxBorrowable, checkMsr } from './ltv';
+import { formatCurrency, formatPercent, roundMoney } from '@/lib/format';
 
 export interface ScenarioResolution {
   cashDelta: number;
@@ -56,21 +57,22 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
     return fail('invalid_amount', 'Down payment must be between 1 and the property price.');
   }
 
-  // Stamp duty: BSD + ABSD, paid in cash
+  const roundedDownPayment = roundMoney(downPayment);
   const propertyCount = player.properties.length;
-  const stampDuty = calculateTotalStampDuty(property.price, propertyCount);
+  const stampDuty = roundMoney(calculateTotalStampDuty(property.price, propertyCount));
+  const totalUpfront = roundMoney(roundedDownPayment + stampDuty);
 
-  if (player.cash < downPayment + stampDuty) {
-    return fail('insufficient_cash', `Not enough cash for down payment ($${downPayment.toLocaleString()}) + stamp duty ($${Math.round(stampDuty).toLocaleString()}).`);
+  if (player.cash < totalUpfront) {
+    const shortfall = Math.max(0, roundMoney(totalUpfront - player.cash));
+    return fail('insufficient_cash', `Not enough cash for upfront costs. You need ${formatCurrency(shortfall)} more.`);
   }
 
-  // LTV cap: loan cannot exceed maxBorrowable based on existing housing loans
   const housingLoans = player.loans.filter(l => l.type === 'mortgage' && !l.isPaid).length;
   const maxLoan = maxBorrowable(property.price, housingLoans);
-  const loanAmount = property.price - downPayment;
+  const loanAmount = roundMoney(property.price - roundedDownPayment);
 
   if (loanAmount > maxLoan) {
-    return fail('ltv_exceeded', `Loan of $${loanAmount.toLocaleString()} exceeds LTV cap of $${Math.round(maxLoan).toLocaleString()}. Need higher down payment.`);
+    return fail('ltv_exceeded', `Loan of ${formatCurrency(loanAmount)} exceeds LTV cap of ${formatCurrency(maxLoan)}. Need higher down payment.`);
   }
 
   const diff = difficultySettings[player.difficulty];
@@ -79,18 +81,17 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
   if (loanAmount > 0) {
     const tdsr = calcTDSR(selectMonthlyExpenses(player), monthlyPayment, player.salary);
     if (tdsr > TDSR_LIMIT) {
-      return fail('tdsr_exceeded', `TDSR would be ${(tdsr * 100).toFixed(1)}%, exceeds ${TDSR_LIMIT * 100}% cap.`);
+      return fail('tdsr_exceeded', `TDSR would be ${formatPercent(tdsr * 100, 1)}, exceeds ${formatPercent(TDSR_LIMIT * 100)} cap.`);
     }
     if (player.creditScore < CREDIT_SCORE_FLOOR) {
       return fail('credit_too_low', `Credit score ${player.creditScore} below minimum ${CREDIT_SCORE_FLOOR}.`);
     }
   }
 
-  // MSR check for HDB/EC purchases
   if (loanAmount > 0 && property.isHdb) {
     const msr = checkMsr(player.salary, monthlyPayment, true);
     if (!msr.passes) {
-      return fail('msr_exceeded', `MSR would exceed 30% for HDB/EC purchase. Max monthly payment: S$${msr.maxMonthlyPayment.toLocaleString()}. Reduce loan amount or extend term.`);
+      return fail('msr_exceeded', `MSR would exceed 30% for HDB/EC purchase. Max monthly payment: ${formatCurrency(msr.maxMonthlyPayment)}. Reduce loan amount or extend term.`);
     }
   }
 
@@ -124,7 +125,7 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
   return ok({
     player: {
       ...player,
-      cash: player.cash - downPayment - stampDuty,
+      cash: roundMoney(player.cash - totalUpfront),
       properties: [...player.properties, owned],
       loans: newLoan ? [...player.loans, newLoan] : player.loans,
     },
@@ -157,7 +158,7 @@ export function sellPropertyPure(player: Player, propertyIndex: number): ActionR
   return ok({
     player: {
       ...player,
-      cash: player.cash + netProceeds,
+      cash: roundMoney(player.cash + netProceeds),
       properties: newProperties,
       loans: updatedLoans,
       totalPropertySalesProfit: player.totalPropertySalesProfit + profit,
@@ -173,25 +174,26 @@ export function applyLoanPure(
   type: 'mortgage' | 'renovation' | 'personal',
   propertyId?: string,
 ): ActionResult<{ player: Player }> {
-  if (amount <= 0 || termYears <= 0) {
+  const roundedAmount = roundMoney(amount);
+  if (roundedAmount <= 0 || termYears <= 0) {
     return fail('invalid_amount', 'Loan amount and term must be positive.');
   }
   if (player.creditScore < CREDIT_SCORE_FLOOR) {
     return fail('credit_too_low', `Credit score ${player.creditScore} below minimum ${CREDIT_SCORE_FLOOR}.`);
   }
 
-  const monthlyPayment = calcMonthlyPayment(amount, interestRate, termYears);
+  const monthlyPayment = calcMonthlyPayment(roundedAmount, interestRate, termYears);
   const existingPayments = selectMonthlyExpenses(player);
   const tdsr = calcTDSR(existingPayments, monthlyPayment, player.salary);
   if (tdsr > TDSR_LIMIT) {
-    return fail('tdsr_exceeded', `TDSR would be ${(tdsr * 100).toFixed(1)}%, exceeds ${TDSR_LIMIT * 100}% cap.`);
+    return fail('tdsr_exceeded', `TDSR would be ${formatPercent(tdsr * 100, 1)}, exceeds ${formatPercent(TDSR_LIMIT * 100)} cap.`);
   }
 
   const loan: Loan = {
     id: `loan_t${player.turnCount}_${player.loans.length}`,
     type,
-    principal: amount,
-    remainingBalance: amount,
+    principal: roundedAmount,
+    remainingBalance: roundedAmount,
     interestRate,
     monthlyPayment,
     termYears,
@@ -203,7 +205,7 @@ export function applyLoanPure(
   return ok({
     player: {
       ...player,
-      cash: player.cash + amount,
+      cash: roundMoney(player.cash + roundedAmount),
       loans: [...player.loans, loan],
       creditScore: Math.max(MIN_CREDIT_SCORE, player.creditScore + CREDIT_DELTA_LOAN_TAKEN),
     },
@@ -216,18 +218,18 @@ export function payLoanPure(player: Player, loanId: string, amount: number): Act
   if (loan.isPaid) return fail('loan_already_paid', 'Loan is already paid off.');
   if (amount <= 0) return fail('invalid_amount', 'Payment must be positive.');
 
-  const actualPayment = Math.min(amount, loan.remainingBalance);
+  const actualPayment = roundMoney(Math.min(amount, loan.remainingBalance));
   if (player.cash < actualPayment) {
     return fail('insufficient_cash', 'Not enough cash.');
   }
 
-  const newBalance = Math.max(0, loan.remainingBalance - actualPayment);
+  const newBalance = roundMoney(Math.max(0, loan.remainingBalance - actualPayment));
   const isPaid = newBalance <= 0;
 
   return ok({
     player: {
       ...player,
-      cash: player.cash - actualPayment,
+      cash: roundMoney(player.cash - actualPayment),
       loans: player.loans.map(l =>
         l.id === loanId ? { ...l, remainingBalance: newBalance, isPaid } : l
       ),
@@ -245,14 +247,14 @@ export function renovatePropertyPure(player: Player, propertyIndex: number, cost
   updatedProperties[propertyIndex] = {
     ...updatedProperties[propertyIndex],
     renovationLevel: updatedProperties[propertyIndex].renovationLevel + 1,
-    currentValue: updatedProperties[propertyIndex].currentValue + cost * 1.5,
+    currentValue: roundMoney(updatedProperties[propertyIndex].currentValue + cost * 1.5),
     monthlyRental: Math.round(updatedProperties[propertyIndex].monthlyRental * 1.15),
   };
 
   return ok({
     player: {
       ...player,
-      cash: player.cash - cost,
+      cash: roundMoney(player.cash - cost),
       properties: updatedProperties,
     },
   });
