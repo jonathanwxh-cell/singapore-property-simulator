@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { VolumeX, Volume2 } from 'lucide-react';
+import { useSaveLoad } from '@/hooks/useSaveLoad';
 
 gsap.registerPlugin();
 
@@ -104,6 +105,7 @@ function Particles() {
 
 export default function TitleScreen() {
   const navigate = useNavigate();
+  const { loadAutoSave, hasAutoSave } = useSaveLoad();
   const containerRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const subtitleRef = useRef<HTMLDivElement>(null);
@@ -244,7 +246,14 @@ export default function TitleScreen() {
             <MenuButton
               label="Continue"
               variant="secondary"
-              onClick={() => handleTransition('/dashboard')}
+              disabled={!hasAutoSave()}
+              onClick={() => {
+                if (loadAutoSave()) {
+                  handleTransition('/dashboard');
+                } else {
+                  handleTransition('/newgame');
+                }
+              }}
             />
             <MenuButton
               label="Load Game"
@@ -314,10 +323,12 @@ function MenuButton({
   label,
   variant,
   onClick,
+  disabled = false,
 }: {
   label: string;
   variant: 'primary' | 'secondary' | 'danger';
   onClick: () => void;
+  disabled?: boolean;
 }) {
   const baseClasses = 'menu-btn w-full h-[52px] flex items-center justify-center rounded-button font-rajdhani font-semibold text-[15px] tracking-[0.5px] uppercase transition-all duration-300 relative overflow-hidden group';
 
@@ -328,7 +339,7 @@ function MenuButton({
   };
 
   return (
-    <button className={`${baseClasses} ${variantClasses[variant]}`} onClick={onClick}>
+    <button className={`${baseClasses} ${variantClasses[variant]}`} onClick={onClick} disabled={disabled} style={disabled ? { opacity: 0.3, pointerEvents: 'none' } : undefined}>
       {/* Scanline effect on hover */}
       <span className="absolute inset-0 overflow-hidden pointer-events-none">
         <span className="absolute top-0 left-0 w-0 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:w-full transition-all duration-300" />

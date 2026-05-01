@@ -6,6 +6,7 @@ import type { Rng } from './rng';
 import { rngPick } from './rng';
 import { amortizeOneMonth } from './finance';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
+import { roundMoney } from '@/lib/format';
 import {
   TAKE_HOME_RATIO,
   PROPERTY_VALUE_VOL_FACTOR,
@@ -66,7 +67,8 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     if (loan.isPaid) return loan;
     const step = amortizeOneMonth(loan.remainingBalance, loan.monthlyPayment, loan.interestRate);
     totalLoanPayment += step.actualPayment;
-    return { ...loan, remainingBalance: step.newBalance, isPaid: step.isPaidOff };
+    const newBalance = Math.max(0, Math.round(step.newBalance));
+    return { ...loan, remainingBalance: newBalance, isPaid: newBalance <= 0 };
   });
 
   // Salary growth (annual)
@@ -103,10 +105,10 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     ...player,
     age: newAge,
     salary: newSalary,
-    cash: newCash,
-    cpfOrdinary: round2(afterInterest.oa),
-    cpfSpecial: round2(afterInterest.sa),
-    cpfMedisave: round2(afterInterest.ma),
+    cash: Math.round(newCash),
+    cpfOrdinary: Math.round(afterInterest.oa),
+    cpfSpecial: Math.round(afterInterest.sa),
+    cpfMedisave: Math.round(afterInterest.ma),
     properties: finalProperties,
     loans: updatedLoans,
     year: newYear,
@@ -139,8 +141,4 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   };
 
   return { player: newPlayer, market: newMarket, scenarioId, gameOver, outcome };
-}
-
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
 }

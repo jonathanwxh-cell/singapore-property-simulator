@@ -1,4 +1,5 @@
 import { useGameStore } from '@/game/useGameStore';
+import { selectNetWorth } from '@/engine/selectors';
 import { Settings, Pause, Play, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, memo } from 'react';
@@ -16,7 +17,7 @@ const HUDTopBar = memo(function HUDTopBar() {
     return `S$${amount.toLocaleString()}`;
   };
 
-  const netWorth = player.cash + player.properties.reduce((sum, p) => sum + p.currentValue, 0) + player.cpfOrdinary + player.cpfSpecial;
+  const netWorth = selectNetWorth(player);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-deep-space/95 backdrop-blur-md border-b border-cyan-glow/30">

@@ -15,6 +15,7 @@ export default function PropertyDetail() {
   const { player, buyProperty, sellProperty, toggleRental } = useGameStore();
   const [downPaymentPercent, setDownPaymentPercent] = useState(25);
   const [showSellConfirm, setShowSellConfirm] = useState(false);
+  const [buyError, setBuyError] = useState<string | null>(null);
 
   const property = properties.find(p => p.id === id);
   const district = property ? districts.find(d => d.id === property.districtId) : null;
@@ -48,10 +49,13 @@ export default function PropertyDetail() {
   const canAfford = shortfall === 0 && !isOwned;
 
   const handleBuy = () => {
-    if (isOwned || !canAfford) return;
+    if (isOwned) return;
+    setBuyError(null);
     const result = buyProperty(property.id, downPayment);
     if (result.ok) {
       navigate('/properties');
+    } else if ('message' in result) {
+      setBuyError(result.message);
     }
   };
 
@@ -318,11 +322,17 @@ export default function PropertyDetail() {
                   </div>
                 </div>
 
-                <button onClick={handleBuy} disabled={!canAfford} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
-                  {canAfford ? 'Buy Property' : 'Insufficient Funds'}
+                <button onClick={handleBuy} disabled={isOwned} className="btn-primary w-full disabled:opacity-50">
+                  Buy Property
                 </button>
 
-                {!canAfford && shortfall > 0 && (
+                {buyError && (
+                  <div className="mt-2 p-3 rounded-lg bg-danger/10 border border-danger/30">
+                    <p className="text-danger text-xs">{buyError}</p>
+                  </div>
+                )}
+
+                {!isOwned && shortfall > 0 && !buyError && (
                   <p className="text-danger text-xs text-center mt-2">
                     You need {formatCurrency(shortfall)} more
                   </p>
