@@ -7,7 +7,9 @@ export type ActionFailReason =
   | 'invalid_index'
   | 'loan_not_found'
   | 'loan_already_paid'
-  | 'invalid_amount';
+  | 'invalid_amount'
+  | 'ltv_exceeded'
+  | 'msr_exceeded';
 
 export type ActionResult<T = void> =
   | { ok: true; value: T }

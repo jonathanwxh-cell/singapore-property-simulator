@@ -6,6 +6,7 @@ import GlassCard from '@/components/GlassCard';
 import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, Home, DollarSign, CheckCircle } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
 import { useState } from 'react';
+import { calculateBSD, calculateABSD } from '@/engine/stampDuty';
 
 
 
@@ -42,7 +43,10 @@ export default function PropertyDetail() {
   const typeInfo = propertyTypeInfo[property.type];
   const downPayment = Math.round(property.price * (downPaymentPercent / 100));
   const loanAmount = property.price - downPayment;
-  const canAfford = player.cash >= downPayment && !isOwned;
+  const bsd = calculateBSD(property.price);
+  const absd = calculateABSD(property.price, player.properties.length);
+  const totalUpfront = downPayment + bsd + absd;
+  const canAfford = player.cash >= totalUpfront && !isOwned;
 
   const handleBuy = () => {
     if (isOwned) return;
@@ -305,6 +309,23 @@ export default function PropertyDetail() {
                         <span className="font-mono text-warning">S${loanAmount.toLocaleString()}</span>
                       </div>
                     )}
+                  </div>
+
+                  <div className="border-t border-divider pt-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-text-secondary text-sm">BSD (Stamp Duty)</span>
+                      <span className="font-mono text-text-dim">S${bsd.toLocaleString()}</span>
+                    </div>
+                    {absd > 0 && (
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-text-secondary text-sm">ABSD ({player.properties.length > 0 ? '2nd+' : 'Additional'})</span>
+                        <span className="font-mono text-danger">S${absd.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-white text-sm font-semibold">Total Upfront</span>
+                      <span className="font-mono text-warning">S${totalUpfront.toLocaleString()}</span>
+                    </div>
                   </div>
 
                   <div className="border-t border-divider pt-3">

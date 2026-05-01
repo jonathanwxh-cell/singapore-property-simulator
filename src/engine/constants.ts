@@ -1,7 +1,6 @@
 // Cashflow
 export const TAKE_HOME_RATIO = 0.8;
 export const CPF_TOTAL_CONTRIB_RATIO = 0.37;
-export const CPF_OA_PORTION = 0.65;
 
 // Underwriting
 export const TDSR_LIMIT = 0.55;

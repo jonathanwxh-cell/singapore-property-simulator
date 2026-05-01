@@ -7,6 +7,7 @@ import { advanceTurn } from '@/engine/turn';
 import { buyPropertyPure, sellPropertyPure, applyLoanPure, payLoanPure, renovatePropertyPure, resolveScenarioOption } from '@/engine/actions';
 import { selectNetWorth } from '@/engine/selectors';
 import { SAVE_VERSION } from '@/engine/constants';
+import { estimateInitialCpf } from '@/engine/cpf';
 import type { ScenarioOption } from '@/data/scenarios';
 import type { ScenarioResolution } from '@/engine/actions';
 import type { ActionResult } from '@/engine/results';
@@ -21,15 +22,16 @@ function createInitialPlayer(name: string, careerId: string, difficulty: Difficu
   const career = careers.find(c => c.id === careerId) || careers[0];
   const diff = difficultySettings[difficulty];
   const salary = Math.round(career.startingSalary * diff.salaryModifier);
+  const initialCpf = estimateInitialCpf(27, salary);
   return {
     name,
     age: 27,
     careerId,
     salary,
     cash: diff.startingCash,
-    cpfOrdinary: Math.round(diff.startingCash * 0.3),
-    cpfSpecial: Math.round(diff.startingCash * 0.1),
-    cpfMedisave: 20000,
+    cpfOrdinary: initialCpf.oa,
+    cpfSpecial: initialCpf.sa,
+    cpfMedisave: initialCpf.ma,
     creditScore: 650,
     properties: [],
     loans: [],

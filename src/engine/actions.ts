@@ -16,7 +16,7 @@ import { selectMonthlyExpenses } from './selectors';
 import type { Rng } from './rng';
 import type { ScenarioOption } from '@/data/scenarios';
 import { calculateTotalStampDuty } from './stampDuty';
-import { maxBorrowable } from './ltv';
+import { maxBorrowable, checkMsr } from './ltv';
 
 export interface ScenarioResolution {
   cashDelta: number;
@@ -70,7 +70,7 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
   const loanAmount = property.price - downPayment;
 
   if (loanAmount > maxLoan) {
-    return fail('invalid_amount', `Loan of $${loanAmount.toLocaleString()} exceeds LTV cap of $${Math.round(maxLoan).toLocaleString()}. Need higher down payment.`);
+    return fail('ltv_exceeded', `Loan of $${loanAmount.toLocaleString()} exceeds LTV cap of $${Math.round(maxLoan).toLocaleString()}. Need higher down payment.`);
   }
 
   const diff = difficultySettings[player.difficulty];
@@ -83,6 +83,14 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
     }
     if (player.creditScore < CREDIT_SCORE_FLOOR) {
       return fail('credit_too_low', `Credit score ${player.creditScore} below minimum ${CREDIT_SCORE_FLOOR}.`);
+    }
+  }
+
+  // MSR check for HDB/EC purchases
+  if (loanAmount > 0 && property.isHdb) {
+    const msr = checkMsr(player.salary, monthlyPayment, true);
+    if (!msr.passes) {
+      return fail('msr_exceeded', `MSR would exceed 30% for HDB/EC purchase. Max monthly payment: S$${msr.maxMonthlyPayment.toLocaleString()}. Reduce loan amount or extend term.`);
     }
   }
 

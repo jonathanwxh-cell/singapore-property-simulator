@@ -195,3 +195,40 @@ describe('loanId uniqueness across buy → sell → buy in same turn', () => {
     expect(secondLoanId).not.toBe(firstLoanId);
   });
 });
+
+describe('buyPropertyPure stamp duty + LTV + MSR', () => {
+  it('rejects when cash insufficient for downpayment + BSD + ABSD', () => {
+    const player = makePlayer({
+      cash: 200_000,
+      properties: [{ propertyId: 'existing', purchasePrice: 0, purchaseDate: '', currentValue: 0, isRented: false, monthlyRental: 0, renovationLevel: 0 }],
+    });
+    // hdb-bto-1 at $380K. As 2nd property: BSD ~6000 + ABSD 76000 = ~82000 stamp.
+    // Down 200K + ~82K stamp = 282K. Player has 200K → reject.
+    const result = buyPropertyPure(player, 'hdb-bto-1', 200_000);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('insufficient_cash');
+  });
+
+  it('deducts stamp duty from cash on success', () => {
+    const player = makePlayer({ cash: 1_000_000 });
+    const result = buyPropertyPure(player, 'hdb-bto-1', 100_000);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      // BSD on 380K = 6000. ABSD (1st property) = 0.
+      // Cash = 1M - 100K downpayment - 6K BSD = 894K.
+      expect(result.value.player.cash).toBe(894_000);
+    }
+  });
+
+  it('rejects with ltv_exceeded reason when loan exceeds LTV cap on second property', () => {
+    const player = makePlayer({
+      cash: 5_000_000,
+      loans: [{ id: 'm1', type: 'mortgage', principal: 0, remainingBalance: 100_000, interestRate: 2.5, monthlyPayment: 500, termYears: 30, startDate: '', isPaid: false }],
+    });
+    // hdb-bto-1 at 380K. With 50K downpayment, loan = 330K → 86.8% LTV.
+    // Second housing loan capped at 45% → max loan 171K → reject.
+    const result = buyPropertyPure(player, 'hdb-bto-1', 50_000);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('ltv_exceeded');
+  });
+});
