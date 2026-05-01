@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from 'framer-motion';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import HUDTopBar from './HUDTopBar';
 import Sidebar from './Sidebar';
@@ -31,11 +30,10 @@ export default function GameLayout() {
   const bottomNavHeight = isMobile ? 56 : 0;
 
   return (
-    <div className="bg-deep-space text-white" style={{ height: '100dvh', overflow: 'hidden' }}>
+    <div className="bg-deep-space text-white game-root" style={{ height: '100dvh', overflow: 'hidden' }}>
       <HUDTopBar />
       <Sidebar />
 
-      {/* Main content area - fills remaining viewport */}
       <main
         className="overflow-y-auto"
         style={{
@@ -45,20 +43,11 @@ export default function GameLayout() {
           height: '100dvh',
         }}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+        <div key={location.key || location.pathname}>
+          <Outlet />
+        </div>
       </main>
 
-      {/* Mobile bottom nav */}
       {isMobile && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center justify-around lg:hidden">
           {mobileNavItems.map((item) => {
