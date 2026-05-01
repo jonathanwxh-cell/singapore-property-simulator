@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buyPropertyPure, sellPropertyPure, payLoanPure, applyLoanPure } from '../actions';
+import { applyLoanPure, buyPropertyPure, payLoanPure, renovatePropertyPure, sellPropertyPure } from '../actions';
 import type { Player } from '@/game/types';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
@@ -96,5 +96,96 @@ describe('applyLoanPure', () => {
     const result = applyLoanPure(makePlayer({ creditScore: 350 }), 50_000, 5, 5, 'personal');
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('credit_too_low');
+  });
+
+  it('rejects zero amount', () => {
+    const result = applyLoanPure(makePlayer(), 0, 5, 5, 'personal');
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('invalid_amount');
+  });
+
+  it('rejects negative amount', () => {
+    const result = applyLoanPure(makePlayer(), -1000, 5, 5, 'personal');
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('invalid_amount');
+  });
+
+  it('rejects zero termYears (would otherwise produce NaN monthlyPayment)', () => {
+    const result = applyLoanPure(makePlayer(), 50_000, 5, 0, 'personal');
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('invalid_amount');
+  });
+
+  it('rejects negative termYears', () => {
+    const result = applyLoanPure(makePlayer(), 50_000, 5, -5, 'personal');
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('invalid_amount');
+  });
+});
+
+describe('renovatePropertyPure', () => {
+  const playerWithProperty = () => makePlayer({
+    properties: [{ propertyId: 'p1', purchasePrice: 500_000, purchaseDate: '', currentValue: 500_000, isRented: false, monthlyRental: 2000, renovationLevel: 0 }],
+  });
+
+  it('rejects zero cost', () => {
+    const result = renovatePropertyPure(playerWithProperty(), 0, 0);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('invalid_amount');
+  });
+
+  it('rejects negative cost (would otherwise be a money printer)', () => {
+    const result = renovatePropertyPure(playerWithProperty(), 0, -1000);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('invalid_amount');
+  });
+
+  it('rejects invalid property index', () => {
+    const result = renovatePropertyPure(playerWithProperty(), 5, 10_000);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('invalid_index');
+  });
+
+  it('rejects insufficient cash', () => {
+    const player = { ...playerWithProperty(), cash: 100 };
+    const result = renovatePropertyPure(player, 0, 50_000);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('insufficient_cash');
+  });
+
+  it('increments renovation level and boosts value/rental on success', () => {
+    const result = renovatePropertyPure(playerWithProperty(), 0, 20_000);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.player.properties[0].renovationLevel).toBe(1);
+      expect(result.value.player.properties[0].currentValue).toBe(530_000);
+      expect(result.value.player.properties[0].monthlyRental).toBe(2300);
+      expect(result.value.player.cash).toBe(980_000);
+    }
+  });
+});
+
+describe('loanId uniqueness across buy → sell → buy in same turn', () => {
+  it('does not collide when re-buying after sell', () => {
+    let player = makePlayer({ cash: 1_000_000 });
+
+    const r1 = buyPropertyPure(player, 'hdb-bto-1', 100_000);
+    expect(r1.ok).toBe(true);
+    if (!r1.ok) return;
+    player = r1.value.player;
+    const firstLoanId = player.loans[0].id;
+
+    const r2 = sellPropertyPure(player, 0);
+    expect(r2.ok).toBe(true);
+    if (!r2.ok) return;
+    player = r2.value.player;
+
+    const r3 = buyPropertyPure(player, 'hdb-bto-1', 100_000);
+    expect(r3.ok).toBe(true);
+    if (!r3.ok) return;
+    player = r3.value.player;
+    const secondLoanId = player.loans[player.loans.length - 1].id;
+
+    expect(secondLoanId).not.toBe(firstLoanId);
   });
 });
