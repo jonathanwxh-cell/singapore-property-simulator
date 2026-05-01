@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { useGameStore } from '@/game/useGameStore';
 import type { SaveSlot, GameState } from '@/game/types';
+import { saveSchema } from '@/data/saveSchema';
+import { SAVE_VERSION } from '@/engine/constants';
 
 const SAVE_SLOTS_KEY = 'sgpt_saves';
 const AUTO_SAVE_KEY = 'sgpt_autosave';
@@ -27,7 +29,8 @@ export function useSaveLoad() {
         settings: gameState.settings,
         isGameActive: gameState.isGameActive,
         currentScenario: gameState.currentScenario,
-        screenHistory: gameState.screenHistory,
+        rngSeed: gameState.rngSeed,
+        rngState: gameState.rngState,
       };
       const slot: SaveSlot = {
         id: slotId,
@@ -39,7 +42,7 @@ export function useSaveLoad() {
         year: state.player.year,
         month: state.player.month,
         difficulty: state.player.difficulty,
-        data: JSON.stringify(state),
+        data: JSON.stringify({ ...state, version: SAVE_VERSION }),
       };
 
       const existingIndex = slots.findIndex(s => s.id === slotId);
@@ -49,7 +52,6 @@ export function useSaveLoad() {
         slots.push(slot);
       }
 
-      // Keep only 5 manual slots + sort
       const manualSlots = slots.filter(s => s.id > 0).sort((a, b) => a.id - b.id);
       localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(manualSlots));
       return true;
@@ -64,8 +66,10 @@ export function useSaveLoad() {
       const slot = slots.find(s => s.id === slotId);
       if (!slot) return false;
 
-      const state: GameState = JSON.parse(slot.data);
-      useGameStore.getState().loadGame(state);
+      const parsed = saveSchema.safeParse(JSON.parse(slot.data));
+      if (!parsed.success) return false;
+
+      useGameStore.getState().loadGame(parsed.data as unknown as GameState);
       return true;
     } catch {
       return false;
@@ -77,8 +81,10 @@ export function useSaveLoad() {
       const data = localStorage.getItem(AUTO_SAVE_KEY);
       if (!data) return false;
 
-      const state: GameState = JSON.parse(data);
-      useGameStore.getState().loadGame(state);
+      const parsed = saveSchema.safeParse(JSON.parse(data));
+      if (!parsed.success) return false;
+
+      useGameStore.getState().loadGame(parsed.data as unknown as GameState);
       return true;
     } catch {
       return false;
@@ -109,22 +115,10 @@ export function useSaveLoad() {
 
   const importSave = useCallback((jsonData: string, slotId: number): boolean => {
     try {
-      const parsed = JSON.parse(jsonData);
+      const parsed = saveSchema.safeParse(JSON.parse(jsonData));
+      if (!parsed.success) return false;
 
-      // Basic schema validation — reject clearly invalid data
-      if (!parsed || typeof parsed !== 'object') return false;
-      const requiredKeys = ['player', 'market', 'settings'];
-      for (const key of requiredKeys) {
-        if (!(key in parsed) || typeof parsed[key] !== 'object') return false;
-      }
-      if (typeof parsed.player.name !== 'string') return false;
-      if (typeof parsed.player.cash !== 'number') return false;
-      if (typeof parsed.player.salary !== 'number') return false;
-      if (typeof parsed.market.priceIndex !== 'number') return false;
-      if (!Array.isArray(parsed.player.properties)) return false;
-      if (!Array.isArray(parsed.player.loans)) return false;
-
-      const state: GameState = parsed;
+      const state: GameState = parsed.data as unknown as GameState;
       const slots = getSaveSlots();
       const slot: SaveSlot = {
         id: slotId,
@@ -160,7 +154,6 @@ export function useSaveLoad() {
   const downloadSaveFile = useCallback((slotId: number) => {
     const data = exportSave(slotId);
     if (!data) return;
-
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -172,16 +165,5 @@ export function useSaveLoad() {
     URL.revokeObjectURL(url);
   }, [exportSave]);
 
-  return {
-    getSaveSlots,
-    saveGame,
-    loadGame,
-    loadAutoSave,
-    deleteSave,
-    exportSave,
-    importSave,
-    hasAutoSave,
-    downloadSaveFile,
-    autoSaveKey: AUTO_SAVE_KEY,
-  };
+  return { getSaveSlots, saveGame, loadGame, loadAutoSave, deleteSave, exportSave, importSave, hasAutoSave, downloadSaveFile, autoSaveKey: AUTO_SAVE_KEY };
 }

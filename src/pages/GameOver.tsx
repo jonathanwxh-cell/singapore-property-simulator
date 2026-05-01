@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/game/useGameStore';
+import { selectNetWorth } from '@/engine/selectors';
 import { difficultySettings } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
 import { Trophy, RotateCcw, Home } from 'lucide-react';
@@ -8,7 +9,7 @@ export default function GameOver() {
   const navigate = useNavigate();
   const { player } = useGameStore();
 
-  const netWorth = player.cash + player.properties.reduce((sum, p) => sum + p.currentValue, 0) + player.cpfOrdinary + player.cpfSpecial;
+  const netWorth = selectNetWorth(player);
   const target = difficultySettings[player.difficulty].targetNetWorth;
   const won = netWorth >= target;
   const score = Math.round((netWorth / target) * 1000) + player.achievements.length * 100 + player.turnCount * 10;
