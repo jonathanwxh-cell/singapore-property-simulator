@@ -107,7 +107,7 @@ export default function Settings() {
               </div>
               <div className="flex justify-between">
                 <span className="text-text-secondary">Career</span>
-                <span className="text-white font-mono">{player.career}</span>
+                <span className="text-white font-mono">{player.careerId}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-secondary">Turns Played</span>
