@@ -15,6 +15,8 @@ import { calcMonthlyPayment, calcTDSR } from './finance';
 import { selectMonthlyExpenses } from './selectors';
 import type { Rng } from './rng';
 import type { ScenarioOption } from '@/data/scenarios';
+import { calculateTotalStampDuty } from './stampDuty';
+import { maxBorrowable, checkMsr } from './ltv';
 
 export interface ScenarioResolution {
   cashDelta: number;
@@ -53,11 +55,24 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
   if (downPayment <= 0 || downPayment > property.price) {
     return fail('invalid_amount', 'Down payment must be between 1 and the property price.');
   }
-  if (player.cash < downPayment) {
-    return fail('insufficient_cash', 'Not enough cash for the down payment.');
+
+  // Stamp duty: BSD + ABSD, paid in cash
+  const propertyCount = player.properties.length;
+  const stampDuty = calculateTotalStampDuty(property.price, propertyCount);
+
+  if (player.cash < downPayment + stampDuty) {
+    return fail('insufficient_cash', `Not enough cash for down payment ($${downPayment.toLocaleString()}) + stamp duty ($${Math.round(stampDuty).toLocaleString()}).`);
   }
 
+  // LTV cap: loan cannot exceed maxBorrowable based on existing housing loans
+  const housingLoans = player.loans.filter(l => l.type === 'mortgage' && !l.isPaid).length;
+  const maxLoan = maxBorrowable(property.price, housingLoans);
   const loanAmount = property.price - downPayment;
+
+  if (loanAmount > maxLoan) {
+    return fail('ltv_exceeded', `Loan of $${loanAmount.toLocaleString()} exceeds LTV cap of $${Math.round(maxLoan).toLocaleString()}. Need higher down payment.`);
+  }
+
   const diff = difficultySettings[player.difficulty];
   const monthlyPayment = calcMonthlyPayment(loanAmount, diff.loanInterest, DEFAULT_MORTGAGE_TERM_YEARS);
 
@@ -68,6 +83,14 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
     }
     if (player.creditScore < CREDIT_SCORE_FLOOR) {
       return fail('credit_too_low', `Credit score ${player.creditScore} below minimum ${CREDIT_SCORE_FLOOR}.`);
+    }
+  }
+
+  // MSR check for HDB/EC purchases
+  if (loanAmount > 0 && property.isHdb) {
+    const msr = checkMsr(player.salary, monthlyPayment, true);
+    if (!msr.passes) {
+      return fail('msr_exceeded', `MSR would exceed 30% for HDB/EC purchase. Max monthly payment: S$${msr.maxMonthlyPayment.toLocaleString()}. Reduce loan amount or extend term.`);
     }
   }
 
@@ -101,7 +124,7 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
   return ok({
     player: {
       ...player,
-      cash: player.cash - downPayment,
+      cash: player.cash - downPayment - stampDuty,
       properties: [...player.properties, owned],
       loans: newLoan ? [...player.loans, newLoan] : player.loans,
     },

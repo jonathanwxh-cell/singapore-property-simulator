@@ -27,6 +27,7 @@ export interface Property {
   amenities: string[];
   nearestMrt: string;
   isAvailable: boolean;
+  isHdb: boolean;
 }
 
 export const properties: Property[] = [
@@ -49,6 +50,7 @@ export const properties: Property[] = [
     amenities: ['Sky Garden', 'Fitness Corner', 'Playground', 'Multi-Storey Carpark'],
     nearestMrt: 'Tampines West MRT',
     isAvailable: true,
+    isHdb: true,
   },
   {
     id: 'hdb-bto-2',
@@ -68,6 +70,7 @@ export const properties: Property[] = [
     amenities: ['Waterfront Promenade', 'Community Hub', 'Fitness Area', 'Smart Home Ready'],
     nearestMrt: 'Punggol MRT',
     isAvailable: true,
+    isHdb: true,
   },
   {
     id: 'hdb-bto-3',
@@ -87,6 +90,7 @@ export const properties: Property[] = [
     amenities: ['Community Farm', 'Smart Estate Features', 'Green Corridor', 'Town Park'],
     nearestMrt: 'Tengah Park MRT',
     isAvailable: true,
+    isHdb: true,
   },
   // HDB Resale Properties
   {
@@ -107,6 +111,7 @@ export const properties: Property[] = [
     amenities: ['Void Deck Shops', 'Covered Walkway', 'Nearby Schools'],
     nearestMrt: 'Ang Mo Kio MRT',
     isAvailable: true,
+    isHdb: true,
   },
   {
     id: 'hdb-resale-2',
@@ -126,6 +131,7 @@ export const properties: Property[] = [
     amenities: ['Toa Payoh Hub', 'HDB Hub', 'Sports Hall', 'Library'],
     nearestMrt: 'Toa Payoh MRT',
     isAvailable: true,
+    isHdb: true,
   },
   {
     id: 'hdb-resale-3',
@@ -145,6 +151,7 @@ export const properties: Property[] = [
     amenities: ['Clementi Mall', 'West Coast Park', 'NUS Nearby'],
     nearestMrt: 'Clementi MRT',
     isAvailable: true,
+    isHdb: true,
   },
   {
     id: 'hdb-resale-4',
@@ -164,6 +171,7 @@ export const properties: Property[] = [
     amenities: ['Northpoint City', 'Yishun Park', 'Swimming Complex'],
     nearestMrt: 'Yishun MRT',
     isAvailable: true,
+    isHdb: true,
   },
   {
     id: 'hdb-resale-5',
@@ -183,6 +191,7 @@ export const properties: Property[] = [
     amenities: ['East Coast Park', 'Bedok Mall', 'Bedok Reservoir'],
     nearestMrt: 'Bedok MRT',
     isAvailable: true,
+    isHdb: true,
   },
   // Executive Condo
   {
@@ -203,6 +212,7 @@ export const properties: Property[] = [
     amenities: ['Swimming Pool', 'Gym', 'Function Room', 'Tennis Court', 'BBQ Pits'],
     nearestMrt: 'Canberra MRT',
     isAvailable: true,
+    isHdb: true,
   },
   {
     id: 'ec-2',
@@ -222,6 +232,7 @@ export const properties: Property[] = [
     amenities: ['Lap Pool', 'Gym', 'Co-Working Space', 'Rooftop Garden'],
     nearestMrt: 'Yishun MRT',
     isAvailable: true,
+    isHdb: true,
   },
   {
     id: 'ec-3',
@@ -241,6 +252,7 @@ export const properties: Property[] = [
     amenities: ['Infinity Pool', 'Sky Terrace', 'Private Dining', 'Kayak Storage'],
     nearestMrt: 'Sam Kee LRT',
     isAvailable: true,
+    isHdb: true,
   },
   // Private Condo
   {
@@ -261,6 +273,7 @@ export const properties: Property[] = [
     amenities: ['Concierge', 'Infinity Pool', 'Private Lift', 'Sky Lounge', 'Gym'],
     nearestMrt: 'Orchard MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'condo-2',
@@ -280,6 +293,7 @@ export const properties: Property[] = [
     amenities: ['The Heart (Garden)', 'Lap Pool', 'Gym', 'Wine Room', 'Private Dining'],
     nearestMrt: 'Marina Bay MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'condo-3',
@@ -299,6 +313,7 @@ export const properties: Property[] = [
     amenities: ['Forest Pool', 'Gym', 'Club Lounge', 'Children\'s Play Pool', 'Tennis Court'],
     nearestMrt: 'Farrer Road MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'condo-4',
@@ -318,6 +333,7 @@ export const properties: Property[] = [
     amenities: ['Sky Pool', 'Co-Working Space', 'Gym', 'Sky Dining'],
     nearestMrt: 'Bugis MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'condo-5',
@@ -337,6 +353,7 @@ export const properties: Property[] = [
     amenities: ['Sky Allotment Gardens', 'Sky Lounge', 'Infinity Pool', 'Gym'],
     nearestMrt: 'Outram Park MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'condo-6',
@@ -356,6 +373,7 @@ export const properties: Property[] = [
     amenities: ['Landscaped Gardens', 'Multiple Pools', 'Clubhouse', 'Tennis Courts'],
     nearestMrt: 'Farrer Road MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'condo-7',
@@ -375,6 +393,7 @@ export const properties: Property[] = [
     amenities: ['50m Pool', 'Gym', 'Sky Terrace', 'Function Rooms'],
     nearestMrt: 'Queenstown MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'condo-8',
@@ -394,6 +413,7 @@ export const properties: Property[] = [
     amenities: ['Sky Garden', 'Infinity Pool', 'Gym', 'Heritage Garden', 'Co-Working'],
     nearestMrt: 'Outram Park MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'condo-9',
@@ -413,6 +433,7 @@ export const properties: Property[] = [
     amenities: ['Lagoon Pool', 'Gym', 'Clubhouse', 'Sports Courts', 'BBQ Pavilions'],
     nearestMrt: 'Kent Ridge MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'condo-10',
@@ -432,6 +453,7 @@ export const properties: Property[] = [
     amenities: ['128 Facilities', 'Multiple Pools', 'Gym', 'Karaoke', 'Movie Theatre'],
     nearestMrt: 'Simei MRT',
     isAvailable: true,
+    isHdb: false,
   },
   // Landed Properties
   {
@@ -452,6 +474,7 @@ export const properties: Property[] = [
     amenities: ['Heritage Status', 'Original Facade', 'Courtyard', 'Roof Terrace'],
     nearestMrt: 'Eunos MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'landed-2',
@@ -471,6 +494,7 @@ export const properties: Property[] = [
     amenities: ['Private Pool', 'Home Lift', 'Basement', 'Garden', 'Car Porch (2 Cars)'],
     nearestMrt: 'Buona Vista MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'landed-3',
@@ -490,6 +514,7 @@ export const properties: Property[] = [
     amenities: ['Private Pool', 'Private Yacht Berth', 'Home Cinema', 'Wine Cellar', 'Smart Home'],
     nearestMrt: 'Harbourfront MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'landed-4',
@@ -509,6 +534,7 @@ export const properties: Property[] = [
     amenities: ['Attic', 'Rooftop Terrace', 'Garden', 'Car Porch'],
     nearestMrt: 'King Albert Park MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'landed-5',
@@ -528,6 +554,7 @@ export const properties: Property[] = [
     amenities: ['Swimming Pool', 'Home Lift', 'Garden Pavilion', 'Basement Entertainment'],
     nearestMrt: 'Sixth Avenue MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'landed-6',
@@ -547,6 +574,7 @@ export const properties: Property[] = [
     amenities: ['Olympic Pool', 'Tennis Court', 'Guest House', '10-Car Garage', 'Wine Cellar'],
     nearestMrt: 'Botanic Gardens MRT',
     isAvailable: true,
+    isHdb: false,
   },
   // Commercial Properties
   {
@@ -567,6 +595,7 @@ export const properties: Property[] = [
     amenities: ['Conservation Status', 'Upper Floor Office', 'Street Frontage'],
     nearestMrt: 'Telok Ayer MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'commercial-2',
@@ -586,6 +615,7 @@ export const properties: Property[] = [
     amenities: ['Prime Frontage', 'High Foot Traffic', 'Loading Bay Access'],
     nearestMrt: 'Orchard MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'commercial-3',
@@ -605,6 +635,7 @@ export const properties: Property[] = [
     amenities: ['24/7 Access', 'Building Gym', 'Meeting Rooms', 'Pantry'],
     nearestMrt: 'Raffles Place MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'commercial-4',
@@ -624,6 +655,7 @@ export const properties: Property[] = [
     amenities: ['Conservation Status', 'Heritage Features', 'Rooftop Access'],
     nearestMrt: 'Tanjong Katong MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'commercial-5',
@@ -643,6 +675,7 @@ export const properties: Property[] = [
     amenities: ['Co-Working Lounge', 'Meeting Pods', 'Pantry', 'Gym Access'],
     nearestMrt: 'one-north MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'commercial-6',
@@ -662,6 +695,7 @@ export const properties: Property[] = [
     amenities: ['Heritage Status', 'Wide Frontage', 'Rear Access'],
     nearestMrt: 'Serangoon MRT',
     isAvailable: true,
+    isHdb: false,
   },
   {
     id: 'commercial-7',
@@ -681,6 +715,7 @@ export const properties: Property[] = [
     amenities: ['Sky Garden', 'Food Court', 'Gym', 'Childcare'],
     nearestMrt: 'Paya Lebar MRT',
     isAvailable: true,
+    isHdb: false,
   },
 ];
 

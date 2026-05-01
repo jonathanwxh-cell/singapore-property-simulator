@@ -8,8 +8,6 @@ import { amortizeOneMonth } from './finance';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
 import {
   TAKE_HOME_RATIO,
-  CPF_TOTAL_CONTRIB_RATIO,
-  CPF_OA_PORTION,
   PROPERTY_VALUE_VOL_FACTOR,
   PROPERTY_VALUE_FLOOR,
   PRICE_INDEX_BOUNDS,
@@ -18,6 +16,7 @@ import {
   INSOLVENCY_STRIKES_LIMIT,
   SCENARIO_TRIGGER_PROBABILITY,
 } from './constants';
+import { contributeCpf, applyCpfInterest } from './cpf';
 
 export interface AdvanceTurnInput {
   player: Player;
@@ -50,8 +49,11 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     newAge++;
   }
 
-  // CPF
-  const cpfContribution = player.salary * CPF_TOTAL_CONTRIB_RATIO;
+  // CPF — real age-based allocation + interest
+  const cpfBalances = { oa: player.cpfOrdinary, sa: player.cpfSpecial, ma: player.cpfMedisave };
+  const afterContribution = contributeCpf(cpfBalances, player.salary, player.age);
+  const afterInterest = applyCpfInterest(afterContribution);
+
   const cpfEmployee = player.salary * (1 - TAKE_HOME_RATIO);
   const takeHomePay = player.salary - cpfEmployee;
 
@@ -89,7 +91,6 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   // Cashflow
   const netCashChange = takeHomePay + rentalIncome - totalLoanPayment;
   const newCash = player.cash + netCashChange;
-  const newCpfOrdinary = player.cpfOrdinary + cpfContribution * CPF_OA_PORTION;
 
   // Scenarios — skip on turn 0
   let scenarioId: string | null = null;
@@ -103,7 +104,9 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     age: newAge,
     salary: newSalary,
     cash: newCash,
-    cpfOrdinary: newCpfOrdinary,
+    cpfOrdinary: round2(afterInterest.oa),
+    cpfSpecial: round2(afterInterest.sa),
+    cpfMedisave: round2(afterInterest.ma),
     properties: finalProperties,
     loans: updatedLoans,
     year: newYear,
@@ -136,4 +139,8 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   };
 
   return { player: newPlayer, market: newMarket, scenarioId, gameOver, outcome };
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
 }

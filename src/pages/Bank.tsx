@@ -1,6 +1,7 @@
 import { useGameStore } from '@/game/useGameStore';
 import { calcMonthlyPayment, calcTDSR } from '@/engine/finance';
 import { TDSR_LIMIT, CREDIT_SCORE_FLOOR } from '@/engine/constants';
+import { getLtvCap } from '@/engine/ltv';
 import { difficultySettings } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
 import { Landmark, Wallet, TrendingDown, Plus, AlertTriangle } from 'lucide-react';
@@ -105,6 +106,10 @@ export default function Bank() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-text-secondary text-sm">TDSR ({TDSR_LIMIT * 100}% cap)</span>
                     <span className={`font-mono ${tdsr > TDSR_LIMIT ? 'text-danger' : 'text-success'}`}>{(tdsr * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-text-secondary text-sm">LTV (next property)</span>
+                    <span className="font-mono text-text-dim">{(getLtvCap(activeLoans.filter(l => l.type === 'mortgage').length) * 100).toFixed(0)}%</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary text-sm">Total Interest</span>
