@@ -306,4 +306,26 @@
   .border-glow-cyan {
     box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
   }
+
+  .game-root,
+  .game-screen,
+  .glass-panel,
+  .slider-block,
+  button,
+  input[type='range'] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input,
+  textarea,
+  [contenteditable='true'] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  input[type='range'] {
+    touch-action: pan-y;
+    cursor: pointer;
+  }
 }
