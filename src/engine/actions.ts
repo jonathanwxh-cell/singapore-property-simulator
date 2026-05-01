@@ -71,7 +71,7 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
     }
   }
 
-  const loanId = `loan_${player.year}-${player.month}-${player.properties.length}`;
+  const loanId = `loan_t${player.turnCount}_${player.loans.length}`;
   const owned: OwnedProperty = {
     propertyId: property.id,
     purchasePrice: property.price,
@@ -150,6 +150,9 @@ export function applyLoanPure(
   type: 'mortgage' | 'renovation' | 'personal',
   propertyId?: string,
 ): ActionResult<{ player: Player }> {
+  if (amount <= 0 || termYears <= 0) {
+    return fail('invalid_amount', 'Loan amount and term must be positive.');
+  }
   if (player.creditScore < CREDIT_SCORE_FLOOR) {
     return fail('credit_too_low', `Credit score ${player.creditScore} below minimum ${CREDIT_SCORE_FLOOR}.`);
   }
@@ -162,7 +165,7 @@ export function applyLoanPure(
   }
 
   const loan: Loan = {
-    id: `loan_${player.year}-${player.month}-${player.loans.length}`,
+    id: `loan_t${player.turnCount}_${player.loans.length}`,
     type,
     principal: amount,
     remainingBalance: amount,
@@ -211,8 +214,9 @@ export function payLoanPure(player: Player, loanId: string, amount: number): Act
 }
 
 export function renovatePropertyPure(player: Player, propertyIndex: number, cost: number): ActionResult<{ player: Player }> {
-  if (player.cash < cost) return fail('insufficient_cash', 'Not enough cash.');
+  if (cost <= 0) return fail('invalid_amount', 'Renovation cost must be positive.');
   if (propertyIndex < 0 || propertyIndex >= player.properties.length) return fail('invalid_index', 'Invalid property index.');
+  if (player.cash < cost) return fail('insufficient_cash', 'Not enough cash.');
 
   const updatedProperties = [...player.properties];
   updatedProperties[propertyIndex] = {
