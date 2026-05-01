@@ -80,7 +80,7 @@ describe('advanceTurn', () => {
   });
 
   it('triggers loss state after 3 consecutive insolvent turns', () => {
-    let player = makePlayer({
+    const player = makePlayer({
       cash: -50_000, salary: 1000, bankruptcyStrikes: 0,
       loans: [{ id: 'loan_1', type: 'mortgage', principal: 500_000, remainingBalance: 500_000, interestRate: 2.5, monthlyPayment: 1976, termYears: 30, startDate: '2024-01', isPaid: false }],
     });
