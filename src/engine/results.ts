@@ -9,7 +9,9 @@ export type ActionFailReason =
   | 'loan_already_paid'
   | 'invalid_amount'
   | 'ltv_exceeded'
-  | 'msr_exceeded';
+  | 'msr_exceeded'
+  | 'cpf_not_allowed'
+  | 'cpf_exceeded';
 
 export type ActionResult<T = void> =
   | { ok: true; value: T }

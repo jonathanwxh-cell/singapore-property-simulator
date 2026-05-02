@@ -4,6 +4,7 @@ import GameLayout from '@/components/GameLayout';
 
 // Eagerly load title screen (first impression)
 import TitleScreen from '@/pages/TitleScreen';
+const HowToPlay = lazy(() => import('@/pages/HowToPlay'));
 
 // Lazy load other pages for code splitting
 const NewGame = lazy(() => import('@/pages/NewGame'));
@@ -37,6 +38,7 @@ export default function App() {
         <Routes>
           {/* Title Screen - no layout (no HUD/Sidebar) */}
           <Route path="/" element={<TitleScreen />} />
+          <Route path="/how-to-play" element={<HowToPlay />} />
 
           {/* Game screens with layout */}
           <Route element={<GameLayout />}>

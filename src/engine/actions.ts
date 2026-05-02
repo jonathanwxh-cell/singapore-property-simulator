@@ -26,6 +26,11 @@ export interface ScenarioResolution {
   success: boolean;
 }
 
+function canUseCpfForProperty(propertyId: string): boolean {
+  const property = properties.find((candidate) => candidate.id === propertyId);
+  return Boolean(property && !property.type.startsWith('Commercial'));
+}
+
 export function resolveScenarioOption(option: ScenarioOption, rng: Rng): ScenarioResolution {
   const success = rng.next() <= option.probability;
   if (success) {
@@ -46,7 +51,12 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
   };
 }
 
-export function buyPropertyPure(player: Player, propertyId: string, downPayment: number): ActionResult<{ player: Player }> {
+export function buyPropertyPure(
+  player: Player,
+  propertyId: string,
+  downPayment: number,
+  cpfOrdinaryUsed = 0,
+): ActionResult<{ player: Player }> {
   const property = properties.find(p => p.id === propertyId);
   if (!property) return fail('property_not_found', 'Property not found.');
   if (player.properties.some(p => p.propertyId === propertyId)) {
@@ -59,9 +69,21 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
   // Stamp duty: BSD + ABSD, paid in cash
   const propertyCount = player.properties.length;
   const stampDuty = calculateTotalStampDuty(property.price, propertyCount);
+  const totalUpfront = downPayment + stampDuty;
+  const cpfEligible = canUseCpfForProperty(propertyId);
+  const allowedCpfUse = cpfEligible ? Math.min(totalUpfront, player.cpfOrdinary) : 0;
+  const cpfToUse = Math.max(0, Math.round(cpfOrdinaryUsed));
 
-  if (player.cash < downPayment + stampDuty) {
-    return fail('insufficient_cash', `Not enough cash for down payment ($${downPayment.toLocaleString()}) + stamp duty ($${Math.round(stampDuty).toLocaleString()}).`);
+  if (!cpfEligible && cpfToUse > 0) {
+    return fail('cpf_not_allowed', 'CPF OA can only be used for residential property purchases.');
+  }
+  if (cpfToUse > allowedCpfUse) {
+    return fail('cpf_exceeded', `CPF OA usage exceeds the eligible amount of S$${allowedCpfUse.toLocaleString()}.`);
+  }
+
+  const cashRequired = totalUpfront - cpfToUse;
+  if (player.cash < cashRequired) {
+    return fail('insufficient_cash', `Not enough cash for the remaining upfront cost of S$${Math.round(cashRequired).toLocaleString()} after CPF usage.`);
   }
 
   // LTV cap: loan cannot exceed maxBorrowable based on existing housing loans
@@ -124,7 +146,8 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
   return ok({
     player: {
       ...player,
-      cash: player.cash - downPayment - stampDuty,
+      cash: player.cash - cashRequired,
+      cpfOrdinary: player.cpfOrdinary - cpfToUse,
       properties: [...player.properties, owned],
       loans: newLoan ? [...player.loans, newLoan] : player.loans,
     },

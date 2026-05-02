@@ -51,6 +51,23 @@ describe('buyPropertyPure', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('already_owned');
   });
+
+  it('uses CPF OA for eligible residential upfront costs', () => {
+    const player = makePlayer({ cash: 60_000, cpfOrdinary: 40_000 });
+    const result = buyPropertyPure(player, 'hdb-bto-0', 70_000, 20_000);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.player.cash).toBeLessThan(player.cash);
+      expect(result.value.player.cpfOrdinary).toBe(20_000);
+    }
+  });
+
+  it('rejects CPF OA usage on commercial purchases', () => {
+    const player = makePlayer({ cash: 5_000_000, cpfOrdinary: 200_000 });
+    const result = buyPropertyPure(player, 'commercial-5', 1_000_000, 100_000);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('cpf_not_allowed');
+  });
 });
 
 describe('payLoanPure', () => {

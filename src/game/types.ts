@@ -25,6 +25,20 @@ export interface Loan {
   isPaid: boolean;
 }
 
+export interface MarketNewsItem {
+  id: string;
+  turn: number;
+  month: number;
+  year: number;
+  headline: string;
+  detail: string;
+  category: 'Rates' | 'Demand' | 'Supply' | 'Policy' | 'Macro' | 'Infrastructure';
+  tone: 'bullish' | 'bearish' | 'neutral';
+  priceChangePct: number;
+  rentalChangePct: number;
+  rateChangePct: number;
+}
+
 export interface Player {
   name: string;
   age: number;
@@ -56,6 +70,12 @@ export interface MarketState {
   rentalIndex: number;
   volatility: number;
   lastEvent: string | null;
+  monthlyPriceChangePct?: number;
+  monthlyRentalChangePct?: number;
+  monthlyInterestRateChangePct?: number;
+  lastHeadline?: string | null;
+  lastSummary?: string | null;
+  newsFeed?: MarketNewsItem[];
 }
 
 export interface GameSettings {

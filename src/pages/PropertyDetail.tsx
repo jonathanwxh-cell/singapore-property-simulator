@@ -7,6 +7,7 @@ import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, H
 import PropertyImage from '@/components/PropertyImage';
 import { useState } from 'react';
 import { calculateBSD, calculateABSD } from '@/engine/stampDuty';
+import { getLtvCap } from '@/engine/ltv';
 
 
 
@@ -16,6 +17,8 @@ export default function PropertyDetail() {
   const { player, buyProperty, sellProperty, toggleRental } = useGameStore();
   const [downPaymentPercent, setDownPaymentPercent] = useState(25);
   const [showSellConfirm, setShowSellConfirm] = useState(false);
+  const [useCpfOrdinary, setUseCpfOrdinary] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const property = properties.find(p => p.id === id);
   const district = property ? districts.find(d => d.id === property.districtId) : null;
@@ -41,27 +44,39 @@ export default function PropertyDetail() {
   }
 
   const typeInfo = propertyTypeInfo[property.type];
-  const downPayment = Math.round(property.price * (downPaymentPercent / 100));
+  const activeHousingLoans = player.loans.filter(l => l.type === 'mortgage' && !l.isPaid).length;
+  const minDownPaymentPercent = Math.round((1 - getLtvCap(activeHousingLoans)) * 100);
+  const effectiveDownPaymentPercent = Math.max(downPaymentPercent, minDownPaymentPercent);
+  const downPayment = Math.round(property.price * (effectiveDownPaymentPercent / 100));
   const loanAmount = property.price - downPayment;
   const bsd = calculateBSD(property.price);
   const absd = calculateABSD(property.price, player.properties.length);
   const totalUpfront = downPayment + bsd + absd;
-  const canAfford = player.cash >= totalUpfront && !isOwned;
+  const cpfEligible = !property.type.startsWith('Commercial');
+  const cpfApplied = cpfEligible && useCpfOrdinary ? Math.min(player.cpfOrdinary, totalUpfront) : 0;
+  const cashRequired = Math.max(0, totalUpfront - cpfApplied);
+  const canAfford = player.cash >= cashRequired && !isOwned;
 
   const handleBuy = () => {
     if (isOwned) return;
-    const success = buyProperty(property.id, downPayment);
-    if (success) {
+    const result = buyProperty(property.id, downPayment, cpfApplied);
+    if (result.ok) {
+      setActionError(null);
       navigate('/properties');
+      return;
     }
+    setActionError(result.message);
   };
 
   const handleSell = () => {
     if (!isOwned) return;
-    const success = sellProperty(ownedIndex);
-    if (success) {
+    const result = sellProperty(ownedIndex);
+    if (result.ok) {
+      setActionError(null);
       navigate('/portfolio');
+      return;
     }
+    setActionError(result.message);
   };
 
   const handleToggleRental = () => {
@@ -282,18 +297,18 @@ export default function PropertyDetail() {
                   {/* Down Payment Slider */}
                   <div>
                     <label className="label-text text-text-dim text-xs block mb-2">
-                      Down Payment: {downPaymentPercent}%
+                      Down Payment: {effectiveDownPaymentPercent}%
                     </label>
                     <input
                       type="range"
-                      min={5}
+                      min={minDownPaymentPercent}
                       max={100}
-                      value={downPaymentPercent}
+                      value={effectiveDownPaymentPercent}
                       onChange={(e) => setDownPaymentPercent(Number(e.target.value))}
                       className="w-full accent-cyan-glow"
                     />
                     <div className="flex justify-between text-[10px] font-mono text-text-dim mt-1">
-                      <span>5%</span>
+                      <span>{minDownPaymentPercent}%</span>
                       <span>100%</span>
                     </div>
                   </div>
@@ -310,6 +325,25 @@ export default function PropertyDetail() {
                       </div>
                     )}
                   </div>
+
+                  {cpfEligible && player.cpfOrdinary > 0 && (
+                    <div className="border-t border-divider pt-3">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={useCpfOrdinary}
+                          onChange={(e) => setUseCpfOrdinary(e.target.checked)}
+                          className="mt-1 accent-cyan-glow"
+                        />
+                        <div>
+                          <p className="text-white text-sm font-semibold">Use CPF OA toward eligible upfront costs</p>
+                          <p className="text-text-secondary text-xs mt-1">
+                            Available OA: S${player.cpfOrdinary.toLocaleString()} | Applied now: S${cpfApplied.toLocaleString()}
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  )}
 
                   <div className="border-t border-divider pt-3">
                     <div className="flex items-center justify-between mb-1">
@@ -329,8 +363,18 @@ export default function PropertyDetail() {
                   </div>
 
                   <div className="border-t border-divider pt-3">
+                    {cpfApplied > 0 && (
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-text-secondary text-sm">CPF OA Applied</span>
+                        <span className="font-mono text-success">-S${cpfApplied.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
-                      <span className="text-white text-sm font-semibold">Your Cash</span>
+                      <span className="text-white text-sm font-semibold">Cash Required</span>
+                      <span className="font-mono text-white">S${cashRequired.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-text-secondary text-sm">Your Cash</span>
                       <span className="font-mono text-white">S${player.cash.toLocaleString()}</span>
                     </div>
                   </div>
@@ -346,8 +390,12 @@ export default function PropertyDetail() {
 
                 {!canAfford && (
                   <p className="text-danger text-xs text-center mt-2">
-                    You need S${(downPayment - player.cash).toLocaleString()} more
+                    You need S${Math.max(0, cashRequired - player.cash).toLocaleString()} more cash
                   </p>
+                )}
+
+                {actionError && (
+                  <p className="text-danger text-xs text-center mt-2">{actionError}</p>
                 )}
               </GlassCard>
             )}

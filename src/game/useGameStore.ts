@@ -61,6 +61,20 @@ function createInitialMarket() {
     rentalIndex: 100,
     volatility: 0.1,
     lastEvent: null as string | null,
+    monthlyPriceChangePct: 0,
+    monthlyRentalChangePct: 0,
+    monthlyInterestRateChangePct: 0,
+    lastHeadline: 'The market opens with steady conditions and patient buyers.',
+    lastSummary: 'Nothing dramatic yet. Watch grants, rates, and neighborhood supply for the next move.',
+    newsFeed: [],
+  };
+}
+
+function withHydratedMarket(state: GameState['market']): GameState['market'] {
+  return {
+    ...createInitialMarket(),
+    ...state,
+    newsFeed: state.newsFeed ?? [],
   };
 }
 
@@ -84,7 +98,7 @@ interface GameStore extends GameState {
   newGame: (name: string, careerId: string, difficulty: Difficulty) => void;
   loadGame: (state: GameState) => void;
   nextTurn: () => void;
-  buyProperty: (propertyId: string, downPayment: number) => ActionResult;
+  buyProperty: (propertyId: string, downPayment: number, cpfOrdinaryUsed?: number) => ActionResult;
   sellProperty: (propertyIndex: number) => ActionResult;
   applyLoan: (amount: number, interestRate: number, termYears: number, type: 'mortgage' | 'renovation' | 'personal', propertyId?: string) => ActionResult;
   payLoan: (loanId: string, amount: number) => ActionResult;
@@ -123,7 +137,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   loadGame: (state) => {
     rng = createRng(state.rngSeed);
     rng.setState(state.rngState);
-    set({ ...state, player: withDerivedPlayer(state.player), isGameActive: true });
+    set({ ...state, market: withHydratedMarket(state.market), player: withDerivedPlayer(state.player), isGameActive: true });
   },
 
   nextTurn: () => {
@@ -143,8 +157,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (settings.autoSave) saveTurn(nextState);
   },
 
-  buyProperty: (propertyId, downPayment) => {
-    const result = buyPropertyPure(get().player, propertyId, downPayment);
+  buyProperty: (propertyId, downPayment, cpfOrdinaryUsed = 0) => {
+    const result = buyPropertyPure(get().player, propertyId, downPayment, cpfOrdinaryUsed);
     if (result.ok) set({ player: withDerivedPlayer(result.value.player) });
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
