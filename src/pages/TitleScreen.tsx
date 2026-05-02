@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { VolumeX, Volume2 } from 'lucide-react';
+import GameLogo from '@/components/GameLogo';
 
 gsap.registerPlugin();
 
@@ -211,10 +212,9 @@ export default function TitleScreen() {
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] px-4">
         {/* Logo & Title */}
         <div ref={logoRef} className="flex flex-col items-center mb-8 opacity-0">
-          <img
-            src="/title-logo.png"
-            alt="Property Tycoon: Singapore"
-            className="w-[320px] md:w-[450px] lg:w-[500px] h-auto object-contain drop-shadow-[0_0_30px_rgba(0,240,255,0.3)]"
+          <GameLogo
+            variant="title"
+            className="drop-shadow-[0_0_30px_rgba(0,240,255,0.22)]"
           />
         </div>
 
@@ -224,9 +224,9 @@ export default function TitleScreen() {
           className="text-center mb-10 opacity-0"
         >
           <span
-            className="font-rajdhani text-text-dim text-sm md:text-lg tracking-[6px] uppercase"
+            className="font-rajdhani text-text-dim text-sm md:text-lg tracking-[4px] uppercase"
           >
-            Singapore
+            Build wealth across the Lion City
           </span>
         </div>
 
