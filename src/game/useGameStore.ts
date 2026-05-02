@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, Difficulty, Player, LifeActionId, PlayerLifeState, LivingArrangement } from './types';
+import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement } from './types';
 import { createInitialLifeState, difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE } from './types';
 import { careers } from '@/data/careers';
 import { createRng, newSeed, type Rng } from '@/engine/rng';

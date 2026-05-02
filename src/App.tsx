@@ -8,6 +8,7 @@ import TitleScreen from '@/pages/TitleScreen';
 // Lazy load other pages for code splitting
 const NewGame = lazy(() => import('@/pages/NewGame'));
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
+const Life = lazy(() => import('@/pages/Life'));
 const Properties = lazy(() => import('@/pages/Properties'));
 const PropertyDetail = lazy(() => import('@/pages/PropertyDetail'));
 const Market = lazy(() => import('@/pages/Market'));
@@ -42,6 +43,7 @@ export default function App() {
           <Route element={<GameLayout />}>
             <Route path="/newgame" element={<NewGame />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/life" element={<Life />} />
             <Route path="/properties" element={<Properties />} />
             <Route path="/property/:id" element={<PropertyDetail />} />
             <Route path="/market" element={<Market />} />

@@ -1,11 +1,12 @@
 import { useGameStore } from '@/game/useGameStore';
 import { properties } from '@/data/properties';
+import { lifeActions } from '@/data/lifeActions';
 import GlassCard from '@/components/GlassCard';
 import { motion } from 'framer-motion';
-import { Wallet, TrendingUp, Building2, ArrowRight, Newspaper } from 'lucide-react';
+import { Wallet, TrendingUp, Building2, ArrowRight, Newspaper, BatteryCharging, Flame, House } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { selectNetWorth, selectMonthlyNetCashflow, selectMonthlyTakeHome, selectMonthlyRentalIncome, selectMonthlyExpenses } from '@/engine/selectors';
+import { selectNetWorth, selectMonthlyNetCashflow, selectMonthlyTakeHome, selectMonthlyRentalIncome, selectMonthlyExpenses, selectMonthlyHouseholdLoad } from '@/engine/selectors';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 
 export default function Dashboard() {
@@ -16,8 +17,11 @@ export default function Dashboard() {
   const netWorth = selectNetWorth(player);
   const monthlyTakeHome = selectMonthlyTakeHome(player, TAKE_HOME_RATIO);
   const monthlyRental = selectMonthlyRentalIncome(player);
-  const monthlyExpenses = selectMonthlyExpenses(player);
+  const monthlyDebt = selectMonthlyExpenses(player);
+  const monthlyHouseholdLoad = selectMonthlyHouseholdLoad(player);
   const monthlyNetCashflow = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
+  const selectedPrimaryAction = lifeActions.find((action) => action.id === (player.life.selectedPrimaryActionId ?? 'focus-at-work'));
+  const selectedSecondaryAction = lifeActions.find((action) => action.id === player.life.selectedSecondaryActionId);
 
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
@@ -49,7 +53,8 @@ export default function Dashboard() {
                 <CashflowRow label="Salary (after CPF)" value={monthlyTakeHome} type="income" />
                 <CashflowRow label="Rental Income" value={monthlyRental} type="income" />
                 <div className="border-t border-divider" />
-                <CashflowRow label="Loan Payments" value={monthlyExpenses} type="expense" />
+                <CashflowRow label="Loan Payments" value={monthlyDebt} type="expense" />
+                <CashflowRow label="Household Load" value={monthlyHouseholdLoad} type="expense" />
                 <div className="border-t border-divider" />
                 <CashflowRow label="Net Cashflow" value={monthlyNetCashflow} type={monthlyNetCashflow >= 0 ? 'income' : 'expense'} isTotal />
               </div>
@@ -79,10 +84,26 @@ export default function Dashboard() {
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-4">
+            <GlassCard accentColor="#FFD740">
+              <h3 className="section-title text-white mb-3">Life Planning</h3>
+              <div className="space-y-2 mb-4">
+                <LifeRow icon={BatteryCharging} label="Energy" value={`${player.life.energy}/100`} />
+                <LifeRow icon={Flame} label="Stress" value={`${player.life.stress}/100`} />
+                <LifeRow icon={House} label="Household" value={`S$${player.life.householdLoad.toLocaleString()}/mo`} />
+              </div>
+              <p className="text-text-secondary text-xs mb-2">
+                Primary action: <span className="text-white">{selectedPrimaryAction?.label ?? 'Focus at Work'}</span>
+              </p>
+              <p className="text-text-secondary text-xs mb-4">
+                Secondary action: <span className="text-white">{selectedSecondaryAction?.label ?? 'None'}</span>
+              </p>
+              <button onClick={() => navigate('/life')} className="w-full btn-secondary text-sm py-3">Plan Life Actions</button>
+            </GlassCard>
             <GlassCard accentColor="#00F0FF">
               <h3 className="section-title text-white mb-4">Actions</h3>
               <div className="space-y-2">
                 <button onClick={() => navigate('/properties')} className="w-full btn-secondary text-sm py-3">Browse Properties</button>
+                <button onClick={() => navigate('/life')} className="w-full btn-secondary text-sm py-3">Manage Life</button>
                 <button onClick={() => navigate('/bank')} className="w-full btn-secondary text-sm py-3">Manage Loans</button>
                 <button onClick={() => navigate('/market')} className="w-full btn-secondary text-sm py-3">Market Overview</button>
               </div>
@@ -97,6 +118,18 @@ export default function Dashboard() {
           </motion.div>
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+function LifeRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2">
+        <Icon size={14} className="text-cyan-glow" />
+        <span className="text-text-secondary text-sm">{label}</span>
+      </div>
+      <span className="font-mono text-sm text-white">{value}</span>
     </div>
   );
 }

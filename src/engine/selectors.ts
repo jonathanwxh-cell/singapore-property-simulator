@@ -33,6 +33,13 @@ export function selectMonthlyHouseholdLoad(player: Player): number {
   return player.life.householdLoad;
 }
 
+export function selectPotentialHousingGrant(player: Player): number {
+  if (player.properties.length > 0) {
+    return 0;
+  }
+  return Math.min(25_000, player.life.schemeProgress.firstTimerGrant * 500);
+}
+
 export function selectMonthlyOwnershipCosts(player: Player): number {
   return player.properties.reduce((sum, property) => {
     return sum + (property.maintenanceCost ?? deriveMaintenanceCost(property)) + (property.propertyTax ?? derivePropertyTax(property));

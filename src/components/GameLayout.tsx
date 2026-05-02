@@ -3,12 +3,13 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import HUDTopBar from './HUDTopBar';
 import Sidebar from './Sidebar';
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Building2, TrendingUp, PieChart, Landmark, Sparkles } from 'lucide-react';
+import { LayoutDashboard, BriefcaseBusiness, Building2, TrendingUp, PieChart, Landmark, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGameStore } from '@/game/useGameStore';
 
 const mobileNavItems = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Life', path: '/life', icon: BriefcaseBusiness },
   { label: 'Properties', path: '/properties', icon: Building2 },
   { label: 'Market', path: '/market', icon: TrendingUp },
   { label: 'Portfolio', path: '/portfolio', icon: PieChart },
@@ -68,7 +69,7 @@ export default function GameLayout() {
 
       {/* Mobile bottom nav */}
       {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center justify-around lg:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center gap-1 px-2 overflow-x-auto lg:hidden">
           {mobileNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -77,7 +78,7 @@ export default function GameLayout() {
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 w-14 h-14 transition-colors',
+                  'flex flex-col items-center justify-center gap-0.5 min-w-[3.75rem] h-14 shrink-0 transition-colors',
                   isActive ? 'text-cyan-glow' : 'text-text-dim'
                 )}
               >

@@ -58,7 +58,7 @@ export function resolveLifeMonth(player: Player, career: Career, rng: Pick<Rng, 
   const notes: string[] = [];
   const householdCost = calculateHouseholdLoad(startingLife);
 
-  let summary: LifeMonthSummary = {
+  const summary: LifeMonthSummary = {
     primaryActionId: startingLife.selectedPrimaryActionId ?? 'focus-at-work',
     secondaryActionId: canTakeSecondaryAction(startingLife) ? startingLife.selectedSecondaryActionId : null,
     cashDelta: 0,

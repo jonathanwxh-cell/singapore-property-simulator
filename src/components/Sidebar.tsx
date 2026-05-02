@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useGameStore } from '@/game/useGameStore';
 import {
+  BriefcaseBusiness,
   LayoutDashboard,
   Building2,
   TrendingUp,
@@ -21,6 +22,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Life', path: '/life', icon: BriefcaseBusiness },
   { label: 'Properties', path: '/properties', icon: Building2 },
   { label: 'Market', path: '/market', icon: TrendingUp },
   { label: 'Portfolio', path: '/portfolio', icon: PieChart },

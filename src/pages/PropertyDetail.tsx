@@ -10,6 +10,8 @@ import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/form
 import { listingRarityInfo } from '@/data/listingChannels';
 import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
 import { getListingCatalog } from '@/engine/listings';
+import { selectAffordabilityReport, selectMonthlyNetCashflow, selectPotentialHousingGrant } from '@/engine/selectors';
+import { TAKE_HOME_RATIO } from '@/engine/constants';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +47,9 @@ export default function PropertyDetail() {
   const rarityInfo = listingRarityInfo[property.listingRarity];
   const downPayment = getDownPaymentAmount(property.price, downPaymentPercent);
   const validation = validatePurchase(player, property, downPayment);
+  const monthlySurplus = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
+  const grantSupport = property.isHdb ? selectPotentialHousingGrant(player) : 0;
+  const affordability = selectAffordabilityReport(player, validation.totalUpfront, monthlySurplus, grantSupport);
   const extraReasons = validation.reasons.filter((reason) => reason.code !== 'insufficient_cash');
   const visibleMessages = Array.from(
     new Set([
@@ -362,6 +367,34 @@ export default function PropertyDetail() {
                     <div className="flex items-center justify-between">
                       <span className="text-white text-sm font-semibold">Your Cash</span>
                       <span className="font-mono text-white">{formatCurrency(player.cash)}</span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-divider pt-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-text-secondary text-sm">Monthly Surplus</span>
+                      <span className={`font-mono ${monthlySurplus >= 0 ? 'text-success' : 'text-danger'}`}>
+                        {monthlySurplus >= 0 ? '+' : ''}{formatCurrency(monthlySurplus)}
+                      </span>
+                    </div>
+                    {grantSupport > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-text-secondary text-sm">Potential First-Home Support</span>
+                        <span className="font-mono text-cyan-glow">{formatCurrency(grantSupport)}</span>
+                      </div>
+                    )}
+                    <div className="rounded-lg border border-glass-border bg-white/5 px-3 py-3">
+                      <p className="text-white text-sm font-semibold mb-1">Affordability outlook</p>
+                      <p className="text-text-secondary text-xs leading-relaxed">
+                        {affordability.monthsAtCurrentPace === null
+                          ? 'Current monthly surplus is too tight to project a clean purchase timeline.'
+                          : affordability.monthsAtCurrentPace === 0
+                            ? 'You already have enough to cover the current upfront requirement.'
+                            : `At your current pace, this upfront requirement is about ${affordability.monthsAtCurrentPace} months away.`}
+                      </p>
+                      <p className="text-text-dim text-[11px] mt-2">
+                        Best accelerators: Side Gig, Property Hustle, and Claim / Plan Schemes.
+                      </p>
                     </div>
                   </div>
                 </div>

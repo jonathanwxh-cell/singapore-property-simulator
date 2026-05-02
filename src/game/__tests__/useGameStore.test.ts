@@ -68,7 +68,7 @@ describe('useGameStore', () => {
   it('creates a new game with default life-state values', () => {
     useGameStore.getState().newGame('Avery', 'tech', 'normal');
 
-    expect((useGameStore.getState().player as any).life).toMatchObject({
+    expect(useGameStore.getState().player.life).toMatchObject({
       energy: 70,
       stress: 20,
       reputation: 0,
@@ -94,8 +94,8 @@ describe('useGameStore', () => {
   it('normalizes legacy save data that has no life state', () => {
     const legacyState = makeState({
       player: (() => {
-        const player = makePlayer();
-        delete (player as any).life;
+        const player = makePlayer() as Player & { life?: Player['life'] };
+        delete player.life;
         return player as Player;
       })(),
     });
