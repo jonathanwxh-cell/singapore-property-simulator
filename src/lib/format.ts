@@ -10,7 +10,9 @@ export function roundMoneyPrecise(value: number): number {
 
 export function formatCurrency(value: number, options: { decimals?: number } = {}): string {
   const decimals = options.decimals ?? 0;
-  return 'S$' + Math.round(value).toLocaleString('en-SG', {
+  const factor = 10 ** decimals;
+  const rounded = Math.round(value * factor) / factor;
+  return 'S$' + rounded.toLocaleString('en-SG', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { selectNetWorth, selectOutstandingDebt } from '../selectors';
 import { buyPropertyPure, applyLoanPure, payLoanPure } from '../actions';
 import { advanceTurn } from '../turn';
-import { difficultySettings } from '@/game/types';
 import type { Player } from '@/game/types';
 import { createRng } from '../rng';
 

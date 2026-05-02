@@ -93,6 +93,7 @@ export default function Bank() {
                   <button onClick={() => { payLoan(selectedLoanId, payAmount); setSelectedLoanId(null); setPayAmount(0); }}
                     disabled={payAmount <= 0 || payAmount > maxPayment} className="btn-primary text-xs py-2 px-4 disabled:opacity-50">Pay</button>
                 </div>
+                <p className="text-text-secondary text-[10px] mt-2">Current payment amount: {formatCurrency(payAmount)}</p>
                 <p className="text-text-dim text-[10px] mt-2">Maximum payable now: {formatCurrency(maxPayment)}</p>
               </GlassCard>
             )}
@@ -105,7 +106,7 @@ export default function Bank() {
                 <div className="slider-block">
                   <label className="label-text text-text-dim text-xs block mb-2">Loan Amount</label>
                   <input type="range" min={LOAN_AMOUNT_MIN} max={LOAN_AMOUNT_MAX} step={LOAN_AMOUNT_STEP} value={loanAmount}
-                    onChange={(e) => { setLoanAmount(Number(e.target.value)); setLoanError(null); }} className="w-full accent-cyan-glow" />
+                    onChange={(e) => { setLoanAmount(Number(e.target.value)); setLoanError(null); }} className="game-slider w-full accent-cyan-glow" />
                   <div className="flex justify-between font-mono text-xs text-white mt-1">
                     <span>S$50K</span><span className="text-cyan-glow text-lg">{formatCurrency(loanAmount)}</span><span>S$5M</span>
                   </div>
@@ -113,7 +114,7 @@ export default function Bank() {
                 <div className="slider-block">
                   <label className="label-text text-text-dim text-xs block mb-2">Loan Term: {loanYears} years</label>
                   <input type="range" min={LOAN_TERM_MIN} max={LOAN_TERM_MAX} value={loanYears}
-                    onChange={(e) => { setLoanYears(Number(e.target.value)); setLoanError(null); }} className="w-full accent-cyan-glow" />
+                    onChange={(e) => { setLoanYears(Number(e.target.value)); setLoanError(null); }} className="game-slider w-full accent-cyan-glow" />
                   <div className="flex justify-between font-mono text-[10px] text-text-dim mt-1"><span>5yr</span><span>35yr</span></div>
                 </div>
                 <div className="border-t border-divider pt-4">

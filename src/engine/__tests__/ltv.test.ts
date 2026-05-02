@@ -3,8 +3,8 @@ import { getLtvCap, checkMsr, maxBorrowable, minCashRequired } from '../ltv';
 
 describe('LTV / MSR', () => {
   describe('getLtvCap', () => {
-    it('75% LTV on first housing loan', () => {
-      expect(getLtvCap(0)).toBe(0.75);
+    it('95% LTV on first housing loan', () => {
+      expect(getLtvCap(0)).toBe(0.95);
     });
 
     it('45% LTV on second housing loan', () => {
@@ -36,8 +36,8 @@ describe('LTV / MSR', () => {
   });
 
   describe('maxBorrowable', () => {
-    it('first loan: 75% of property price', () => {
-      expect(maxBorrowable(1000000, 0)).toBe(750000);
+    it('first loan: 95% of property price', () => {
+      expect(maxBorrowable(1000000, 0)).toBe(950000);
     });
 
     it('second loan: 45% of property price', () => {
@@ -50,8 +50,8 @@ describe('LTV / MSR', () => {
   });
 
   describe('minCashRequired', () => {
-    it('first loan: 25% down', () => {
-      expect(minCashRequired(1000000, 0)).toBe(250000);
+    it('first loan: 5% down', () => {
+      expect(minCashRequired(1000000, 0)).toBe(50000);
     });
 
     it('second loan: 55% down', () => {

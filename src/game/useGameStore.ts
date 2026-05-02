@@ -74,10 +74,22 @@ function createInitialSettings(difficulty: Difficulty) {
   };
 }
 
-function saveTurn(state: { player: Player } & Record<string, unknown>) {
+function saveTurn(state: GameState) {
   try {
     localStorage.setItem('sgpt_autosave', JSON.stringify({ ...state, version: SAVE_VERSION }));
   } catch { /* storage unavailable */ }
+}
+
+function pickGameState(state: GameState): GameState {
+  return {
+    player: state.player,
+    market: state.market,
+    settings: state.settings,
+    isGameActive: state.isGameActive,
+    currentScenario: state.currentScenario,
+    rngSeed: state.rngSeed,
+    rngState: state.rngState,
+  };
 }
 
 interface GameStore extends GameState {
@@ -118,6 +130,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       rngSeed: seed,
       rngState: rng.getState(),
     });
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   loadGame: (state) => {
@@ -127,7 +141,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   nextTurn: () => {
-    const { player, market, settings } = get();
+    const { player, market, settings, currentScenario } = get();
+    if (currentScenario) return;
     const result = advanceTurn({ player, market, settings, rng });
     const nextState = {
       player: finalizePlayer(result.player),
@@ -144,31 +159,51 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   buyProperty: (propertyId, downPayment) => {
     const result = buyPropertyPure(get().player, propertyId, downPayment);
-    if (result.ok) set({ player: finalizePlayer(result.value.player) });
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
   sellProperty: (propertyIndex) => {
     const result = sellPropertyPure(get().player, propertyIndex);
-    if (result.ok) set({ player: finalizePlayer(result.value.player) });
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
   applyLoan: (amount, interestRate, termYears, type, propertyId) => {
     const result = applyLoanPure(get().player, amount, interestRate, termYears, type, propertyId);
-    if (result.ok) set({ player: finalizePlayer(result.value.player) });
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
   payLoan: (loanId, amount) => {
     const result = payLoanPure(get().player, loanId, amount);
-    if (result.ok) set({ player: finalizePlayer(result.value.player) });
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
   renovateProperty: (propertyIndex, cost) => {
     const result = renovatePropertyPure(get().player, propertyIndex, cost);
-    if (result.ok) set({ player: finalizePlayer(result.value.player) });
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
@@ -178,20 +213,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const updatedProperties = [...player.properties];
     updatedProperties[propertyIndex] = { ...updatedProperties[propertyIndex], isRented: !updatedProperties[propertyIndex].isRented };
     set({ player: finalizePlayer({ ...player, properties: updatedProperties }) });
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   updateSettings: (newSettings) => {
     set(state => ({ settings: { ...state.settings, ...newSettings } }));
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   unlockAchievement: (achievementId) => {
     const { player } = get();
     if (player.achievements.includes(achievementId)) return;
     set({ player: finalizePlayer({ ...player, achievements: [...player.achievements, achievementId] }) });
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   setCurrentScenario: (scenarioId) => {
     set({ currentScenario: scenarioId });
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   resolveScenario: (option) => {
@@ -211,6 +254,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       rngState: rng.getState(),
       currentScenario: null,
     }));
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
     return resolution;
   },
 

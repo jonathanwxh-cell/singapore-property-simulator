@@ -112,6 +112,7 @@ export default function TitleScreen() {
   const menuRef = useRef<HTMLDivElement>(null);
   const versionRef = useRef<HTMLDivElement>(null);
   const [soundOn, setSoundOn] = useState(false);
+  const [canContinue, setCanContinue] = useState(false);
 
   useGSAP(() => {
     const tl = gsap.timeline();
@@ -160,6 +161,10 @@ export default function TitleScreen() {
     };
   }, { scope: containerRef });
 
+  useEffect(() => {
+    setCanContinue(hasAutoSave());
+  }, [hasAutoSave]);
+
   const handleTransition = (path: string) => {
     gsap.to(containerRef.current, {
       opacity: 0,
@@ -170,6 +175,11 @@ export default function TitleScreen() {
         navigate(path);
       },
     });
+  };
+
+  const handleContinue = () => {
+    if (!loadAutoSave()) return;
+    handleTransition('/dashboard');
   };
 
   return (
@@ -246,14 +256,8 @@ export default function TitleScreen() {
             <MenuButton
               label="Continue"
               variant="secondary"
-              disabled={!hasAutoSave()}
-              onClick={() => {
-                if (loadAutoSave()) {
-                  handleTransition('/dashboard');
-                } else {
-                  handleTransition('/newgame');
-                }
-              }}
+              onClick={handleContinue}
+              disabled={!canContinue}
             />
             <MenuButton
               label="Load Game"
@@ -339,7 +343,11 @@ function MenuButton({
   };
 
   return (
-    <button className={`${baseClasses} ${variantClasses[variant]}`} onClick={onClick} disabled={disabled} style={disabled ? { opacity: 0.3, pointerEvents: 'none' } : undefined}>
+    <button
+      className={`${baseClasses} ${variantClasses[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+    >
       {/* Scanline effect on hover */}
       <span className="absolute inset-0 overflow-hidden pointer-events-none">
         <span className="absolute top-0 left-0 w-0 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:w-full transition-all duration-300" />

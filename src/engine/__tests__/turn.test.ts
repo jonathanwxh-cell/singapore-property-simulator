@@ -55,6 +55,23 @@ describe('advanceTurn', () => {
     expect(firedOnZero).toBe(false);
   });
 
+  it('does not fire a scenario on the first tycoon turn even when event frequency is 1', () => {
+    let firedOnFirstTycoonTurn = false;
+    const tycoonSettings: GameSettings = { ...baseSettings, difficulty: 'tycoon' };
+
+    for (let seed = 0; seed < 50; seed++) {
+      const result = advanceTurn({
+        player: makePlayer({ turnCount: 0, difficulty: 'tycoon' }),
+        market: baseMarket,
+        settings: tycoonSettings,
+        rng: createRng(seed),
+      });
+      if (result.scenarioId !== null) firedOnFirstTycoonTurn = true;
+    }
+
+    expect(firedOnFirstTycoonTurn).toBe(false);
+  });
+
   it('property value does NOT drift when volChange = 0', () => {
     const rng = { next: () => 0.5, getState: () => 0, setState: () => {}, getSeed: () => 0 };
     const player = makePlayer({
@@ -80,7 +97,7 @@ describe('advanceTurn', () => {
   });
 
   it('triggers loss state after 3 consecutive insolvent turns', () => {
-    let player = makePlayer({
+    const player = makePlayer({
       cash: -50_000, salary: 1000, bankruptcyStrikes: 0,
       loans: [{ id: 'loan_1', type: 'mortgage', principal: 500_000, remainingBalance: 500_000, interestRate: 2.5, monthlyPayment: 1976, termYears: 30, startDate: '2024-01', isPaid: false }],
     });

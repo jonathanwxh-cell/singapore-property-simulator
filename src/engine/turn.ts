@@ -6,7 +6,6 @@ import type { Rng } from './rng';
 import { rngPick } from './rng';
 import { amortizeOneMonth } from './finance';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
-import { roundMoney } from '@/lib/format';
 import {
   TAKE_HOME_RATIO,
   PROPERTY_VALUE_VOL_FACTOR,
@@ -97,7 +96,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   // Scenarios — skip on turn 0
   let scenarioId: string | null = null;
   const newTurnCount = player.turnCount + 1;
-  if (newTurnCount > 0 && newTurnCount % diff.eventFrequency === 0 && rng.next() < SCENARIO_TRIGGER_PROBABILITY) {
+  if (player.turnCount > 0 && newTurnCount % diff.eventFrequency === 0 && rng.next() < SCENARIO_TRIGGER_PROBABILITY) {
     scenarioId = rngPick(rng, scenarios).id;
   }
 

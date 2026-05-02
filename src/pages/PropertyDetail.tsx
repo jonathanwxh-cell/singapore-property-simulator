@@ -6,8 +6,8 @@ import GlassCard from '@/components/GlassCard';
 import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, Home, DollarSign, CheckCircle } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
 import { useState } from 'react';
-import { calculateBSD, calculateABSD } from '@/engine/stampDuty';
 import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
+import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +15,7 @@ export default function PropertyDetail() {
   const { player, buyProperty, sellProperty, toggleRental } = useGameStore();
   const [downPaymentPercent, setDownPaymentPercent] = useState(25);
   const [showSellConfirm, setShowSellConfirm] = useState(false);
-  const [buyError, setBuyError] = useState<string | null>(null);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
   const property = properties.find(p => p.id === id);
   const district = property ? districts.find(d => d.id === property.districtId) : null;
@@ -40,23 +40,38 @@ export default function PropertyDetail() {
   }
 
   const typeInfo = propertyTypeInfo[property.type];
-  const downPayment = Math.round(property.price * (downPaymentPercent / 100));
-  const loanAmount = property.price - downPayment;
-  const bsd = calculateBSD(property.price);
-  const absd = calculateABSD(property.price, player.properties.length);
-  const totalUpfront = downPayment + bsd + absd;
-  const shortfall = Math.max(0, totalUpfront - player.cash);
-  const canAfford = shortfall === 0 && !isOwned;
+  const downPayment = getDownPaymentAmount(property.price, downPaymentPercent);
+  const validation = validatePurchase(player, property, downPayment);
+  const extraReasons = validation.reasons.filter((reason) => reason.code !== 'insufficient_cash');
+  const visibleMessages = Array.from(
+    new Set([
+      ...(validation.shortfall > 0 ? [`You need ${formatCurrency(validation.shortfall)} more`] : []),
+      ...extraReasons.map((reason) => reason.message),
+      ...(purchaseError ? [purchaseError] : []),
+    ])
+  );
 
   const handleBuy = () => {
-    if (isOwned) return;
-    setBuyError(null);
-    const result = buyProperty(property.id, downPayment);
-    if (result.ok) {
-      navigate('/properties');
-    } else if ('message' in result) {
-      setBuyError(result.message);
+    setPurchaseError(null);
+    if (!validation.canBuy) {
+      setPurchaseError(validation.reasons[0]?.message ?? 'This property cannot be purchased right now.');
+      return;
     }
+
+    const result = buyProperty(property.id, validation.downPayment);
+    if (result.ok) {
+      navigate('/portfolio');
+      return;
+    }
+
+    if (import.meta.env.DEV) {
+      console.error('Purchase rejected after enabled validation path.', {
+        propertyId: property.id,
+        downPayment: validation.downPayment,
+        result,
+      });
+    }
+    setPurchaseError(result.message);
   };
 
   const handleSell = () => {
@@ -275,8 +290,11 @@ export default function PropertyDetail() {
                       min={5}
                       max={100}
                       value={downPaymentPercent}
-                      onChange={(e) => setDownPaymentPercent(Number(e.target.value))}
-                      className="w-full accent-cyan-glow"
+                      onChange={(e) => {
+                        setDownPaymentPercent(Number(e.target.value));
+                        setPurchaseError(null);
+                      }}
+                      className="game-slider w-full accent-cyan-glow"
                     />
                     <div className="flex justify-between text-[10px] font-mono text-text-dim mt-1">
                       <span>5%</span>
@@ -287,12 +305,12 @@ export default function PropertyDetail() {
                   <div className="border-t border-divider pt-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-text-secondary text-sm">Down Payment</span>
-                      <span className="font-mono text-cyan-glow">{formatCurrency(downPayment)}</span>
+                      <span className="font-mono text-cyan-glow">{formatCurrency(validation.downPayment)}</span>
                     </div>
-                    {loanAmount > 0 && (
+                    {validation.mortgageAmount > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="text-text-secondary text-sm">Loan Amount</span>
-                        <span className="font-mono text-warning">{formatCurrency(loanAmount)}</span>
+                        <span className="font-mono text-warning">{formatCurrency(validation.mortgageAmount)}</span>
                       </div>
                     )}
                   </div>
@@ -300,17 +318,17 @@ export default function PropertyDetail() {
                   <div className="border-t border-divider pt-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-text-secondary text-sm">BSD (Stamp Duty)</span>
-                      <span className="font-mono text-text-dim">{formatCurrency(bsd)}</span>
+                      <span className="font-mono text-text-dim">{formatCurrency(validation.bsd)}</span>
                     </div>
-                    {absd > 0 && (
+                    {validation.absd > 0 && (
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-text-secondary text-sm">ABSD ({player.properties.length > 0 ? '2nd+' : 'Additional'})</span>
-                        <span className="font-mono text-danger">{formatCurrency(absd)}</span>
+                        <span className="font-mono text-danger">{formatCurrency(validation.absd)}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between">
                       <span className="text-white text-sm font-semibold">Total Upfront</span>
-                      <span className="font-mono text-warning">{formatCurrency(totalUpfront)}</span>
+                      <span className="font-mono text-warning">{formatCurrency(validation.totalUpfront)}</span>
                     </div>
                   </div>
 
@@ -322,20 +340,18 @@ export default function PropertyDetail() {
                   </div>
                 </div>
 
-                <button onClick={handleBuy} disabled={isOwned} className="btn-primary w-full disabled:opacity-50">
-                  Buy Property
+                <button onClick={handleBuy} disabled={!validation.canBuy} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
+                  {validation.canBuy ? 'Buy Property' : validation.shortfall > 0 ? 'Insufficient Cash' : 'Cannot Buy Yet'}
                 </button>
 
-                {buyError && (
-                  <div className="mt-2 p-3 rounded-lg bg-danger/10 border border-danger/30">
-                    <p className="text-danger text-xs">{buyError}</p>
+                {visibleMessages.length > 0 && (
+                  <div className="mt-3 space-y-1">
+                    {visibleMessages.map((message) => (
+                      <p key={message} className="text-danger text-xs text-center">
+                        {message}
+                      </p>
+                    ))}
                   </div>
-                )}
-
-                {!isOwned && shortfall > 0 && !buyError && (
-                  <p className="text-danger text-xs text-center mt-2">
-                    You need {formatCurrency(shortfall)} more
-                  </p>
                 )}
               </GlassCard>
             )}

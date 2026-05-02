@@ -51,6 +51,26 @@ describe('buyPropertyPure', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('already_owned');
   });
+
+  it('creates the expected Tampines mortgage and upfront cash change at 5% down', () => {
+    const player = makePlayer({
+      cash: 50_000,
+      salary: 5_500,
+      cpfOrdinary: 31_600,
+      cpfSpecial: 8_300,
+      cpfMedisave: 11_000,
+    });
+
+    const result = buyPropertyPure(player, 'hdb-bto-1', 19_000);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.value.player.cash).toBe(25_000);
+    expect(result.value.player.properties).toHaveLength(1);
+    expect(result.value.player.loans).toHaveLength(1);
+    expect(result.value.player.loans[0].principal).toBe(361_000);
+    expect(result.value.player.loans[0].remainingBalance).toBe(361_000);
+  });
 });
 
 describe('payLoanPure', () => {

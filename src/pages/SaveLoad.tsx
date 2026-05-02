@@ -4,10 +4,11 @@ import { useSaveLoad } from '@/hooks/useSaveLoad';
 import GlassCard from '@/components/GlassCard';
 import { Save, Download, Upload, Trash2, ArrowLeft, Clock, User } from 'lucide-react';
 import type { SaveSlot } from '@/game/types';
+import { formatCompactCurrency } from '@/lib/format';
 
 export default function SaveLoad() {
   const navigate = useNavigate();
-  const { getSaveSlots, saveGame, loadGame, deleteSave, downloadSaveFile, importSave, hasAutoSave } = useSaveLoad();
+  const { getSaveSlots, saveGame, loadGame, loadAutoSave, deleteSave, downloadSaveFile, importSave, hasAutoSave } = useSaveLoad();
   const [slots, setSlots] = useState<SaveSlot[]>([]);
   const [importData, setImportData] = useState('');
   const [showImport, setShowImport] = useState(false);
@@ -64,10 +65,18 @@ export default function SaveLoad() {
         {hasAutoSave() && (
           <GlassCard className="mb-6 flex items-center gap-3" accentColor="#00E676">
             <Clock size={20} className="text-success" />
-            <div>
+            <div className="flex-1">
               <p className="text-white font-rajdhani font-semibold">Auto-Save Available</p>
               <p className="text-text-secondary text-xs">Your game is automatically saved every turn.</p>
             </div>
+            <button
+              onClick={() => {
+                if (loadAutoSave()) navigate('/dashboard');
+              }}
+              className="btn-primary text-xs py-2 px-4"
+            >
+              Continue
+            </button>
           </GlassCard>
         )}
 
@@ -137,7 +146,7 @@ export default function SaveLoad() {
                   <div className="flex items-center gap-3 text-[10px] text-text-dim font-mono mt-0.5">
                     <span>{slot.playerName}</span>
                     <span>|</span>
-                    <span>Net: S${(slot.netWorth / 1000000).toFixed(2)}M</span>
+                    <span>Net: {formatCompactCurrency(slot.netWorth)}</span>
                     <span>|</span>
                     <span>Turn {slot.turnCount}</span>
                     <span>|</span>

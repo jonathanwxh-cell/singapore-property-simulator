@@ -16,7 +16,7 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
 }
 
 describe('selectNetWorth', () => {
-  it('sums cash, property values, and all CPF buckets', () => {
+  it('sums cash, property values, and all CPF buckets when debt-free', () => {
     const player = makePlayer({
       cash: 50_000, cpfOrdinary: 30_000, cpfSpecial: 10_000, cpfMedisave: 15_000,
       properties: [
@@ -25,6 +25,23 @@ describe('selectNetWorth', () => {
       ],
     });
     expect(selectNetWorth(player)).toBe(50_000 + 800_000 + 1_200_000 + 30_000 + 10_000 + 15_000);
+  });
+
+  it('subtracts unpaid loan balances from property-backed net worth', () => {
+    const player = makePlayer({
+      cash: 25_000,
+      cpfOrdinary: 31_600,
+      cpfSpecial: 8_300,
+      cpfMedisave: 11_000,
+      properties: [
+        { propertyId: 'hdb-bto-1', purchasePrice: 380_000, purchaseDate: '', currentValue: 380_000, isRented: false, monthlyRental: 0, renovationLevel: 0, loanId: 'mortgage-1' },
+      ],
+      loans: [
+        { id: 'mortgage-1', type: 'mortgage', principal: 361_000, remainingBalance: 361_000, interestRate: 2.5, monthlyPayment: 1426, termYears: 30, startDate: '', isPaid: false },
+      ],
+    });
+
+    expect(selectNetWorth(player)).toBe(94_900);
   });
 });
 

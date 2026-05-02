@@ -3,6 +3,7 @@ import { selectNetWorth } from '@/engine/selectors';
 import { Settings, Pause, Play, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, memo } from 'react';
+import { formatCompactCurrency } from '@/lib/format';
 
 const HUDTopBar = memo(function HUDTopBar() {
   const navigate = useNavigate();
@@ -11,13 +12,8 @@ const HUDTopBar = memo(function HUDTopBar() {
 
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  const formatCash = (amount: number) => {
-    if (amount >= 1000000) return `S$${(amount / 1000000).toFixed(2)}M`;
-    if (amount >= 1000) return `S$${(amount / 1000).toFixed(0)}K`;
-    return `S$${amount.toLocaleString()}`;
-  };
-
   const netWorth = selectNetWorth(player);
+  const cpfTotal = player.cpfOrdinary + player.cpfSpecial + player.cpfMedisave;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-deep-space/95 backdrop-blur-md border-b border-cyan-glow/30">
@@ -49,9 +45,9 @@ const HUDTopBar = memo(function HUDTopBar() {
         {/* Center: Key Metrics */}
         {isGameActive && (
           <div className="hidden md:flex items-center gap-3">
-            <MetricPill label="Cash" value={formatCash(player.cash)} color="#00F0FF" />
-            <MetricPill label="Net Worth" value={formatCash(netWorth)} color="#00E676" />
-            <MetricPill label="CPF" value={formatCash(player.cpfOrdinary + player.cpfSpecial)} color="#7C4DFF" />
+            <MetricPill label="Cash" value={formatCompactCurrency(player.cash)} color="#00F0FF" />
+            <MetricPill label="Net Worth" value={formatCompactCurrency(netWorth)} color="#00E676" />
+            <MetricPill label="CPF" value={formatCompactCurrency(cpfTotal)} color="#7C4DFF" />
             <MetricPill label="Credit" value={String(player.creditScore)} color="#FFD740" />
           </div>
         )}

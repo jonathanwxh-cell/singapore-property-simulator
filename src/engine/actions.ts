@@ -15,9 +15,8 @@ import { calcMonthlyPayment, calcTDSR } from './finance';
 import { selectMonthlyExpenses } from './selectors';
 import type { Rng } from './rng';
 import type { ScenarioOption } from '@/data/scenarios';
-import { calculateTotalStampDuty } from './stampDuty';
-import { maxBorrowable, checkMsr } from './ltv';
-import { formatCurrency, formatPercent, roundMoney } from '@/lib/format';
+import { formatPercent, roundMoney } from '@/lib/format';
+import { validatePurchase } from './purchase';
 
 export interface ScenarioResolution {
   cashDelta: number;
@@ -50,51 +49,14 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
 export function buyPropertyPure(player: Player, propertyId: string, downPayment: number): ActionResult<{ player: Player }> {
   const property = properties.find(p => p.id === propertyId);
   if (!property) return fail('property_not_found', 'Property not found.');
-  if (player.properties.some(p => p.propertyId === propertyId)) {
-    return fail('already_owned', 'You already own this property.');
-  }
-  if (downPayment <= 0 || downPayment > property.price) {
-    return fail('invalid_amount', 'Down payment must be between 1 and the property price.');
-  }
-
-  const roundedDownPayment = roundMoney(downPayment);
-  const propertyCount = player.properties.length;
-  const stampDuty = roundMoney(calculateTotalStampDuty(property.price, propertyCount));
-  const totalUpfront = roundMoney(roundedDownPayment + stampDuty);
-
-  if (player.cash < totalUpfront) {
-    const shortfall = Math.max(0, roundMoney(totalUpfront - player.cash));
-    return fail('insufficient_cash', `Not enough cash for upfront costs. You need ${formatCurrency(shortfall)} more.`);
+  const validation = validatePurchase(player, property, downPayment);
+  if (!validation.canBuy) {
+    const primaryReason = validation.reasons[0];
+    return fail(primaryReason.code, primaryReason.message);
   }
 
-  const housingLoans = player.loans.filter(l => l.type === 'mortgage' && !l.isPaid).length;
-  const maxLoan = maxBorrowable(property.price, housingLoans);
-  const loanAmount = roundMoney(property.price - roundedDownPayment);
-
-  if (loanAmount > maxLoan) {
-    return fail('ltv_exceeded', `Loan of ${formatCurrency(loanAmount)} exceeds LTV cap of ${formatCurrency(maxLoan)}. Need higher down payment.`);
-  }
-
+  const loanAmount = validation.mortgageAmount;
   const diff = difficultySettings[player.difficulty];
-  const monthlyPayment = calcMonthlyPayment(loanAmount, diff.loanInterest, DEFAULT_MORTGAGE_TERM_YEARS);
-
-  if (loanAmount > 0) {
-    const tdsr = calcTDSR(selectMonthlyExpenses(player), monthlyPayment, player.salary);
-    if (tdsr > TDSR_LIMIT) {
-      return fail('tdsr_exceeded', `TDSR would be ${formatPercent(tdsr * 100, 1)}, exceeds ${formatPercent(TDSR_LIMIT * 100)} cap.`);
-    }
-    if (player.creditScore < CREDIT_SCORE_FLOOR) {
-      return fail('credit_too_low', `Credit score ${player.creditScore} below minimum ${CREDIT_SCORE_FLOOR}.`);
-    }
-  }
-
-  if (loanAmount > 0 && property.isHdb) {
-    const msr = checkMsr(player.salary, monthlyPayment, true);
-    if (!msr.passes) {
-      return fail('msr_exceeded', `MSR would exceed 30% for HDB/EC purchase. Max monthly payment: ${formatCurrency(msr.maxMonthlyPayment)}. Reduce loan amount or extend term.`);
-    }
-  }
-
   const loanId = `loan_t${player.turnCount}_${player.loans.length}`;
   const owned: OwnedProperty = {
     propertyId: property.id,
@@ -114,7 +76,7 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
         principal: loanAmount,
         remainingBalance: loanAmount,
         interestRate: diff.loanInterest,
-        monthlyPayment,
+        monthlyPayment: validation.monthlyPayment,
         termYears: DEFAULT_MORTGAGE_TERM_YEARS,
         startDate: `${player.year}-${String(player.month).padStart(2, '0')}`,
         propertyId: property.id,
@@ -125,7 +87,7 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
   return ok({
     player: {
       ...player,
-      cash: roundMoney(player.cash - totalUpfront),
+      cash: roundMoney(player.cash - validation.totalUpfront),
       properties: [...player.properties, owned],
       loans: newLoan ? [...player.loans, newLoan] : player.loans,
     },

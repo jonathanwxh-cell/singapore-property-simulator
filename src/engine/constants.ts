@@ -53,7 +53,7 @@ export const ABSD_RATES = {
 } as const;
 
 // ── LTV / MSR (2024) ──────────────────────────────────────────────
-export const LTV_FIRST_LOAN = 0.75;
+export const LTV_FIRST_LOAN = 0.95;
 export const LTV_SECOND_LOAN = 0.45;
 export const LTV_THIRD_PLUS_LOAN = 0.35;
 export const MSR_LIMIT = 0.30;
