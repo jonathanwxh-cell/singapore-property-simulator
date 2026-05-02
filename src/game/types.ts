@@ -1,6 +1,47 @@
 export type Difficulty = 'easy' | 'normal' | 'hard' | 'tycoon';
 export type MaritalStatus = 'single' | 'married' | 'divorced';
 export type OccupancyStatus = 'vacant' | 'tenanted' | 'renovating' | 'listed';
+export type LivingArrangement = 'with-parents' | 'renting-room' | 'renting-flat';
+export type LifeActionId =
+  | 'focus-at-work'
+  | 'take-side-gig'
+  | 'property-hustle'
+  | 'upskill'
+  | 'support-household'
+  | 'plan-schemes'
+  | 'recover';
+
+export interface LifeMonthSummary {
+  primaryActionId: LifeActionId;
+  secondaryActionId: LifeActionId | null;
+  cashDelta: number;
+  energyDelta: number;
+  stressDelta: number;
+  reputationDelta: number;
+  careerMomentumDelta: number;
+  householdSupportDelta: number;
+  notes: string[];
+}
+
+export interface PlayerLifeState {
+  energy: number;
+  stress: number;
+  reputation: number;
+  careerMomentum: number;
+  householdLoad: number;
+  householdSupport: number;
+  livingArrangement: LivingArrangement;
+  selectedPrimaryActionId: LifeActionId | null;
+  selectedSecondaryActionId: LifeActionId | null;
+  trainingTrackId: string | null;
+  trainingMonthsRemaining: number;
+  schemeProgress: {
+    skillsFuture: number;
+    firstTimerGrant: number;
+    householdSupport: number;
+  };
+  lastMonthSummary: LifeMonthSummary | null;
+}
 
 export interface OwnedProperty {
   propertyId: string;
@@ -55,6 +96,7 @@ export interface Player {
   totalRentalIncome: number;
   totalPropertySalesProfit: number;
   bankruptcyStrikes: number;
+  life: PlayerLifeState;
 }
 
 export interface MarketState {
@@ -153,3 +195,26 @@ export const INITIAL_MONTH = 1;
 export const INITIAL_AGE = 27;
 export const MAX_CREDIT_SCORE = 850;
 export const MIN_CREDIT_SCORE = 300;
+
+export function createInitialLifeState(overrides: Partial<PlayerLifeState> = {}): PlayerLifeState {
+  return {
+    energy: 70,
+    stress: 20,
+    reputation: 0,
+    careerMomentum: 0,
+    householdLoad: 650,
+    householdSupport: 50,
+    livingArrangement: 'with-parents',
+    selectedPrimaryActionId: null,
+    selectedSecondaryActionId: null,
+    trainingTrackId: null,
+    trainingMonthsRemaining: 0,
+    schemeProgress: {
+      skillsFuture: 0,
+      firstTimerGrant: 0,
+      householdSupport: 0,
+    },
+    lastMonthSummary: null,
+    ...overrides,
+  };
+}

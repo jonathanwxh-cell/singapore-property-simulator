@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { GameState, Difficulty, Player } from './types';
-import { difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE } from './types';
+import type { GameState, Difficulty, Player, LifeActionId, PlayerLifeState, LivingArrangement } from './types';
+import { createInitialLifeState, difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE } from './types';
 import { careers } from '@/data/careers';
 import { createRng, newSeed, type Rng } from '@/engine/rng';
 import { advanceTurn } from '@/engine/turn';
@@ -20,6 +20,18 @@ function withNetWorth(player: Player): Player {
   return { ...player, totalNetWorth: selectNetWorth(player) };
 }
 
+function normalizeLifeState(life: Partial<PlayerLifeState> | undefined): PlayerLifeState {
+  const initial = createInitialLifeState();
+  return {
+    ...initial,
+    ...life,
+    schemeProgress: {
+      ...initial.schemeProgress,
+      ...life?.schemeProgress,
+    },
+  };
+}
+
 function withPortfolioDefaults(player: Player): Player {
   return {
     ...player,
@@ -27,8 +39,15 @@ function withPortfolioDefaults(player: Player): Player {
   };
 }
 
+function withLifeDefaults(player: Player): Player {
+  return {
+    ...player,
+    life: normalizeLifeState(player.life),
+  };
+}
+
 function finalizePlayer(player: Player): Player {
-  return withEvaluatedAchievements(withNetWorth(withPortfolioDefaults(player)));
+  return withEvaluatedAchievements(withNetWorth(withLifeDefaults(withPortfolioDefaults(player))));
 }
 
 function createInitialPlayer(name: string, careerId: string, difficulty: Difficulty): Player {
@@ -59,6 +78,7 @@ function createInitialPlayer(name: string, careerId: string, difficulty: Difficu
     totalRentalIncome: 0,
     totalPropertySalesProfit: 0,
     bankruptcyStrikes: 0,
+    life: createInitialLifeState(),
   });
 }
 
@@ -104,6 +124,9 @@ interface GameStore extends GameState {
   newGame: (name: string, careerId: string, difficulty: Difficulty) => void;
   loadGame: (state: GameState) => void;
   nextTurn: () => void;
+  setPrimaryLifeAction: (actionId: LifeActionId | null) => void;
+  setSecondaryLifeAction: (actionId: LifeActionId | null) => void;
+  setLivingArrangement: (arrangement: LivingArrangement) => void;
   buyProperty: (propertyId: string, downPayment: number) => ActionResult;
   sellProperty: (propertyIndex: number) => ActionResult;
   applyLoan: (amount: number, interestRate: number, termYears: number, type: 'mortgage' | 'renovation' | 'personal', propertyId?: string) => ActionResult;
@@ -163,6 +186,42 @@ export const useGameStore = create<GameStore>((set, get) => ({
     };
     set(nextState);
     if (settings.autoSave) saveTurn(nextState);
+  },
+
+  setPrimaryLifeAction: (actionId) => {
+    set((state) => ({
+      player: finalizePlayer({
+        ...state.player,
+        life: {
+          ...state.player.life,
+          selectedPrimaryActionId: actionId,
+        },
+      }),
+    }));
+  },
+
+  setSecondaryLifeAction: (actionId) => {
+    set((state) => ({
+      player: finalizePlayer({
+        ...state.player,
+        life: {
+          ...state.player.life,
+          selectedSecondaryActionId: actionId,
+        },
+      }),
+    }));
+  },
+
+  setLivingArrangement: (arrangement) => {
+    set((state) => ({
+      player: finalizePlayer({
+        ...state.player,
+        life: {
+          ...state.player.life,
+          livingArrangement: arrangement,
+        },
+      }),
+    }));
   },
 
   buyProperty: (propertyId, downPayment) => {

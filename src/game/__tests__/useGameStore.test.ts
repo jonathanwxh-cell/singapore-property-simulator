@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useGameStore } from '../useGameStore';
-import type { GameState, Player } from '../types';
+import { createInitialLifeState, type GameState, type Player } from '../types';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -26,6 +26,7 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
     totalRentalIncome: 0,
     totalPropertySalesProfit: 0,
     bankruptcyStrikes: 0,
+    life: createInitialLifeState(),
     ...overrides,
   };
 }
@@ -62,6 +63,32 @@ function resetStore(overrides: Partial<GameState> = {}) {
 describe('useGameStore', () => {
   beforeEach(() => {
     resetStore();
+  });
+
+  it('creates a new game with default life-state values', () => {
+    useGameStore.getState().newGame('Avery', 'tech', 'normal');
+
+    expect((useGameStore.getState().player as any).life).toMatchObject({
+      energy: 70,
+      stress: 20,
+      reputation: 0,
+      careerMomentum: 0,
+      householdLoad: 650,
+      householdSupport: 50,
+      livingArrangement: 'with-parents',
+      selectedPrimaryActionId: null,
+      selectedSecondaryActionId: null,
+      trainingTrackId: null,
+      trainingMonthsRemaining: 0,
+    });
+  });
+
+  it('stores monthly life actions in player state', () => {
+    useGameStore.getState().setPrimaryLifeAction('take-side-gig');
+    useGameStore.getState().setSecondaryLifeAction('recover');
+
+    expect(useGameStore.getState().player.life.selectedPrimaryActionId).toBe('take-side-gig');
+    expect(useGameStore.getState().player.life.selectedSecondaryActionId).toBe('recover');
   });
 
   it('keeps total net worth flat when taking on matching debt', () => {
