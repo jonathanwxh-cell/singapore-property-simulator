@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyLoanPure, buyPropertyPure, payLoanPure, renovatePropertyPure, sellPropertyPure } from '../actions';
+import { applyLoanPure, buyPropertyPure, calculateSellerStampDuty, payLoanPure, renovatePropertyPure, sellPropertyPure } from '../actions';
 import type { Player } from '@/game/types';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
@@ -100,7 +100,7 @@ describe('payLoanPure', () => {
 });
 
 describe('sellPropertyPure', () => {
-  it('records capital gain (saleValue - purchasePrice), independent of outstanding loan', () => {
+  it('records sale profit after agent commission, independent of outstanding loan', () => {
     const player = makePlayer({
       cash: 0,
       properties: [{ propertyId: 'p1', purchasePrice: 800_000, purchaseDate: '', currentValue: 1_200_000, isRented: false, monthlyRental: 0, renovationLevel: 0, loanId: 'L1' }],
@@ -109,11 +109,18 @@ describe('sellPropertyPure', () => {
     const result = sellPropertyPure(player, 0);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value.player.totalPropertySalesProfit).toBe(400_000);
-      expect(result.value.player.cash).toBe(600_000);
+      expect(result.value.player.totalPropertySalesProfit).toBe(376_000);
+      expect(result.value.player.cash).toBe(576_000);
       expect(result.value.player.properties).toHaveLength(0);
       expect(result.value.player.loans[0].isPaid).toBe(true);
     }
+  });
+
+  it('deducts seller stamp duty for properties sold inside the holding period', () => {
+    expect(calculateSellerStampDuty('2024-01', 2024, 6, 1_000_000)).toBe(120_000);
+    expect(calculateSellerStampDuty('2024-01', 2025, 6, 1_000_000)).toBe(80_000);
+    expect(calculateSellerStampDuty('2024-01', 2026, 6, 1_000_000)).toBe(40_000);
+    expect(calculateSellerStampDuty('2024-01', 2027, 6, 1_000_000)).toBe(0);
   });
 });
 
@@ -237,6 +244,32 @@ describe('buyPropertyPure stamp duty + LTV + MSR', () => {
       // BSD on 380K = 6000. ABSD (1st property) = 0.
       // Cash = 1M - 100K downpayment - 6K BSD = 894K.
       expect(result.value.player.cash).toBe(894_000);
+    }
+  });
+
+  it('uses CPF OA toward the down payment before cash', () => {
+    const player = makePlayer({ cash: 80_000, cpfOrdinary: 30_000 });
+    const result = buyPropertyPure(player, 'hdb-bto-1', 95_000, 30_000);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.player.cash).toBe(9_000);
+      expect(result.value.player.cpfOrdinary).toBe(0);
+    }
+  });
+
+  it('rejects CPF OA use above the eligible down payment amount', () => {
+    const player = makePlayer({ cash: 1_000_000, cpfOrdinary: 100_000 });
+    const result = buyPropertyPure(player, 'hdb-bto-1', 95_000, 100_000);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('cpf_exceeded');
+  });
+
+  it('uses the supplied live market rate when creating a mortgage', () => {
+    const player = makePlayer({ cash: 1_000_000 });
+    const result = buyPropertyPure(player, 'hdb-bto-1', 100_000, 0, 4.25);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.player.loans[0].interestRate).toBe(4.25);
     }
   });
 

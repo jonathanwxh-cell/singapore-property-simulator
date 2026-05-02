@@ -6,7 +6,7 @@ import { createRng, newSeed, type Rng } from '@/engine/rng';
 import { advanceTurn } from '@/engine/turn';
 import { buyPropertyPure, sellPropertyPure, applyLoanPure, payLoanPure, renovatePropertyPure, resolveScenarioOption } from '@/engine/actions';
 import { selectNetWorth } from '@/engine/selectors';
-import { SAVE_VERSION } from '@/engine/constants';
+import { INTEREST_RATE_BOUNDS, SAVE_VERSION } from '@/engine/constants';
 import { estimateInitialCpf } from '@/engine/cpf';
 import { withEvaluatedAchievements } from '@/engine/achievementRules';
 import type { ScenarioOption } from '@/data/scenarios';
@@ -96,7 +96,7 @@ interface GameStore extends GameState {
   newGame: (name: string, careerId: string, difficulty: Difficulty) => void;
   loadGame: (state: GameState) => void;
   nextTurn: () => void;
-  buyProperty: (propertyId: string, downPayment: number) => ActionResult;
+  buyProperty: (propertyId: string, downPayment: number, cpfOrdinaryUsed?: number) => ActionResult;
   sellProperty: (propertyIndex: number) => ActionResult;
   applyLoan: (amount: number, interestRate: number, termYears: number, type: 'mortgage' | 'renovation' | 'personal', propertyId?: string) => ActionResult;
   payLoan: (loanId: string, amount: number) => ActionResult;
@@ -157,8 +157,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (settings.autoSave) saveTurn(nextState);
   },
 
-  buyProperty: (propertyId, downPayment) => {
-    const result = buyPropertyPure(get().player, propertyId, downPayment);
+  buyProperty: (propertyId, downPayment, cpfOrdinaryUsed = 0) => {
+    const { player, market } = get();
+    const result = buyPropertyPure(player, propertyId, downPayment, cpfOrdinaryUsed, market.interestRate);
     if (result.ok) {
       set({ player: finalizePlayer(result.value.player) });
       const state = get();
@@ -239,21 +240,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   resolveScenario: (option) => {
     const resolution = resolveScenarioOption(option, rng);
-    set(state => ({
-      player: finalizePlayer({
-        ...state.player,
-        cash: state.player.cash + resolution.cashDelta,
-        creditScore: Math.max(MIN_CREDIT_SCORE, Math.min(MAX_CREDIT_SCORE, state.player.creditScore + resolution.creditDelta)),
-        properties: resolution.propertyValueImpactPct === 0
-          ? state.player.properties
-          : state.player.properties.map(p => ({
-              ...p,
-              currentValue: Math.round(p.currentValue * (1 + resolution.propertyValueImpactPct / 100)),
-            })),
-      }),
-      rngState: rng.getState(),
-      currentScenario: null,
-    }));
+    set(state => {
+      const nextInterestRate = Math.max(
+        INTEREST_RATE_BOUNDS.min,
+        Math.min(INTEREST_RATE_BOUNDS.max, state.market.interestRate + resolution.interestRateDelta),
+      );
+      return {
+        player: finalizePlayer({
+          ...state.player,
+          cash: state.player.cash + resolution.cashDelta,
+          creditScore: Math.max(MIN_CREDIT_SCORE, Math.min(MAX_CREDIT_SCORE, state.player.creditScore + resolution.creditDelta)),
+          properties: resolution.propertyValueImpactPct === 0
+            ? state.player.properties
+            : state.player.properties.map(p => ({
+                ...p,
+                currentValue: Math.round(p.currentValue * (1 + resolution.propertyValueImpactPct / 100)),
+              })),
+        }),
+        market: { ...state.market, interestRate: nextInterestRate },
+        rngState: rng.getState(),
+        currentScenario: null,
+      };
+    });
     const state = get();
     if (state.settings.autoSave) saveTurn(pickGameState(state));
     return resolution;

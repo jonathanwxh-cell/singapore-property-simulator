@@ -12,10 +12,11 @@ import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { player, buyProperty, sellProperty, toggleRental } = useGameStore();
+  const { player, market, buyProperty, sellProperty, toggleRental } = useGameStore();
   const [downPaymentPercent, setDownPaymentPercent] = useState(25);
   const [showSellConfirm, setShowSellConfirm] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [useCpfOrdinary, setUseCpfOrdinary] = useState(true);
 
   const property = properties.find(p => p.id === id);
   const district = property ? districts.find(d => d.id === property.districtId) : null;
@@ -41,7 +42,8 @@ export default function PropertyDetail() {
 
   const typeInfo = propertyTypeInfo[property.type];
   const downPayment = getDownPaymentAmount(property.price, downPaymentPercent);
-  const validation = validatePurchase(player, property, downPayment);
+  const cpfOrdinaryUsed = useCpfOrdinary ? Math.min(player.cpfOrdinary, downPayment) : 0;
+  const validation = validatePurchase(player, property, downPayment, cpfOrdinaryUsed, market.interestRate);
   const extraReasons = validation.reasons.filter((reason) => reason.code !== 'insufficient_cash');
   const visibleMessages = Array.from(
     new Set([
@@ -58,7 +60,7 @@ export default function PropertyDetail() {
       return;
     }
 
-    const result = buyProperty(property.id, validation.downPayment);
+    const result = buyProperty(property.id, validation.downPayment, validation.cpfOrdinaryUsed);
     if (result.ok) {
       navigate('/portfolio');
       return;
@@ -307,6 +309,24 @@ export default function PropertyDetail() {
                       <span className="text-text-secondary text-sm">Down Payment</span>
                       <span className="font-mono text-cyan-glow">{formatCurrency(validation.downPayment)}</span>
                     </div>
+                    <label className="flex items-center justify-between gap-3 py-2 text-sm">
+                      <span className="text-text-secondary">Use CPF OA</span>
+                      <input
+                        type="checkbox"
+                        checked={useCpfOrdinary}
+                        onChange={(e) => {
+                          setUseCpfOrdinary(e.target.checked);
+                          setPurchaseError(null);
+                        }}
+                        className="h-4 w-4 accent-cyan-glow"
+                      />
+                    </label>
+                    {useCpfOrdinary && (
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-text-secondary text-sm">CPF OA Applied</span>
+                        <span className="font-mono text-success">-{formatCurrency(cpfOrdinaryUsed)}</span>
+                      </div>
+                    )}
                     {validation.mortgageAmount > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="text-text-secondary text-sm">Loan Amount</span>
@@ -330,12 +350,20 @@ export default function PropertyDetail() {
                       <span className="text-white text-sm font-semibold">Total Upfront</span>
                       <span className="font-mono text-warning">{formatCurrency(validation.totalUpfront)}</span>
                     </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-white text-sm font-semibold">Cash Required</span>
+                      <span className="font-mono text-cyan-glow">{formatCurrency(validation.cashRequired)}</span>
+                    </div>
                   </div>
 
                   <div className="border-t border-divider pt-3">
                     <div className="flex items-center justify-between">
                       <span className="text-white text-sm font-semibold">Your Cash</span>
                       <span className="font-mono text-white">{formatCurrency(player.cash)}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-text-secondary text-sm">CPF OA Balance</span>
+                      <span className="font-mono text-text-dim">{formatCurrency(player.cpfOrdinary)}</span>
                     </div>
                   </div>
                 </div>

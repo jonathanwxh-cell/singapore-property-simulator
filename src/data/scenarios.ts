@@ -6,6 +6,7 @@ export interface ScenarioOption {
   probability: number;
   cashImpact: number;
   propertyValueImpact: number;
+  interestRateImpact?: number;
   creditImpact: number;
   followUpText: string;
 }
@@ -56,9 +57,9 @@ export const scenarios: Scenario[] = [
     image: '/market-trend-bg.jpg',
     frequency: 'common',
     options: [
-      { label: 'Refinance', description: 'Seek better rates from other banks', probability: 0.7, cashImpact: -5000, propertyValueImpact: -2, creditImpact: 0, followUpText: 'You found a slightly better rate, but the pain is still there.' },
-      { label: 'Pay Down Debt', description: 'Use savings to reduce loan principal', probability: 0.8, cashImpact: -50000, propertyValueImpact: 0, creditImpact: 10, followUpText: 'Your debt burden is lighter, and your credit score improved!' },
-      { label: 'Do Nothing', description: 'Absorb the higher payments', probability: 0.9, cashImpact: -12000, propertyValueImpact: -3, creditImpact: -5, followUpText: 'Your cash flow took a hit. Higher rates are the enemy of leveraged investors.' },
+      { label: 'Refinance', description: 'Seek better rates from other banks', probability: 0.7, cashImpact: -5000, propertyValueImpact: -2, interestRateImpact: 0.4, creditImpact: 0, followUpText: 'You found a slightly better rate, but the pain is still there.' },
+      { label: 'Pay Down Debt', description: 'Use savings to reduce loan principal', probability: 0.8, cashImpact: -50000, propertyValueImpact: 0, interestRateImpact: 0.8, creditImpact: 10, followUpText: 'Your debt burden is lighter, and your credit score improved!' },
+      { label: 'Do Nothing', description: 'Absorb the higher payments', probability: 0.9, cashImpact: -12000, propertyValueImpact: -3, interestRateImpact: 1.0, creditImpact: -5, followUpText: 'Your cash flow took a hit. Higher rates are the enemy of leveraged investors.' },
     ],
   },
   {
@@ -95,9 +96,9 @@ export const scenarios: Scenario[] = [
     image: '/scenario-boom.jpg',
     frequency: 'uncommon',
     options: [
-      { label: 'Refinance Everything', description: 'Lock in the lowest possible mortgage rates', probability: 0.9, cashImpact: 8000, propertyValueImpact: 0, creditImpact: 5, followUpText: 'Your monthly payments dropped significantly. Cash flow positive!' },
-      { label: 'Leverage and Expand', description: 'Take advantage of cheap money to grow portfolio', probability: 0.65, cashImpact: -500000, propertyValueImpact: 12, creditImpact: -10, followUpText: 'You expanded aggressively. Low rates make property investment very attractive.' },
-      { label: 'Pay Down Loans', description: 'Use savings to reduce principal while rates are low', probability: 0.8, cashImpact: -80000, propertyValueImpact: 0, creditImpact: 15, followUpText: 'Your debt is shrinking fast. Financial freedom is within reach!' },
+      { label: 'Refinance Everything', description: 'Lock in the lowest possible mortgage rates', probability: 0.9, cashImpact: 8000, propertyValueImpact: 0, interestRateImpact: -0.8, creditImpact: 5, followUpText: 'Your monthly payments dropped significantly. Cash flow positive!' },
+      { label: 'Leverage and Expand', description: 'Take advantage of cheap money to grow portfolio', probability: 0.65, cashImpact: -500000, propertyValueImpact: 12, interestRateImpact: -0.5, creditImpact: -10, followUpText: 'You expanded aggressively. Low rates make property investment very attractive.' },
+      { label: 'Pay Down Loans', description: 'Use savings to reduce principal while rates are low', probability: 0.8, cashImpact: -80000, propertyValueImpact: 0, interestRateImpact: -0.3, creditImpact: 15, followUpText: 'Your debt is shrinking fast. Financial freedom is within reach!' },
     ],
   },
   // PERSONAL EVENTS

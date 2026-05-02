@@ -110,7 +110,7 @@ export const difficultySettings: Record<Difficulty, {
     description: 'Generous starting capital and steady growth. Perfect for beginners.',
   },
   normal: {
-    startingCash: 50000,
+    startingCash: 75000,
     salaryModifier: 1.0,
     marketVolatility: 0.12,
     eventFrequency: 6,
@@ -120,7 +120,7 @@ export const difficultySettings: Record<Difficulty, {
     description: 'Balanced gameplay with realistic market conditions.',
   },
   hard: {
-    startingCash: 10000,
+    startingCash: 50000,
     salaryModifier: 0.8,
     marketVolatility: 0.2,
     eventFrequency: 3,

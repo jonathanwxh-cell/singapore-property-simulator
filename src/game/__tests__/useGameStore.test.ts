@@ -68,7 +68,7 @@ describe('useGameStore', () => {
     useGameStore.getState().newGame('Tester', 'tech', 'normal');
 
     const player = useGameStore.getState().player;
-    expect(player.cash).toBe(50_000);
+    expect(player.cash).toBe(75_000);
     expect(player.totalNetWorth).toBeCloseTo(player.cash + player.cpfOrdinary + player.cpfSpecial + player.cpfMedisave, 2);
   });
 

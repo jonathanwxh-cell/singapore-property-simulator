@@ -18,6 +18,7 @@ const SaveLoad = lazy(() => import('@/pages/SaveLoad'));
 const Settings = lazy(() => import('@/pages/Settings'));
 const GameOver = lazy(() => import('@/pages/GameOver'));
 const Leaderboard = lazy(() => import('@/pages/Leaderboard'));
+const Tutorial = lazy(() => import('@/pages/Tutorial'));
 
 function LoadingFallback() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
             <Route path="/scenarios" element={<Scenarios />} />
             <Route path="/saveload" element={<SaveLoad />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/tutorial" element={<Tutorial />} />
             <Route path="/gameover" element={<GameOver />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
           </Route>

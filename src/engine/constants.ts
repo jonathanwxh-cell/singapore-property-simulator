@@ -6,6 +6,12 @@ export const CPF_TOTAL_CONTRIB_RATIO = 0.37;
 export const TDSR_LIMIT = 0.55;
 export const CREDIT_SCORE_FLOOR = 400;
 export const DEFAULT_MORTGAGE_TERM_YEARS = 30;
+export const AGENT_COMMISSION_RATE = 0.02;
+export const SSD_RATES = [
+  { maxMonthsHeld: 12, rate: 0.12 },
+  { maxMonthsHeld: 24, rate: 0.08 },
+  { maxMonthsHeld: 36, rate: 0.04 },
+] as const;
 
 // Market dynamics
 export const PROPERTY_VALUE_VOL_FACTOR = 0.05;

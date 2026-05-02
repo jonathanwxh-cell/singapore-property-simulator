@@ -4,7 +4,7 @@ import { careers } from '@/data/careers';
 import { scenarios } from '@/data/scenarios';
 import type { Rng } from './rng';
 import { rngPick } from './rng';
-import { amortizeOneMonth } from './finance';
+import { amortizeOneMonth, calcMonthlyPayment } from './finance';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
 import {
   TAKE_HOME_RATIO,
@@ -82,6 +82,14 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   const newPriceIndex = Math.max(PRICE_INDEX_BOUNDS.min, Math.min(PRICE_INDEX_BOUNDS.max, market.priceIndex * (1 + volChange * 0.1)));
   const newRentalIndex = Math.max(RENTAL_INDEX_BOUNDS.min, Math.min(RENTAL_INDEX_BOUNDS.max, market.rentalIndex * (1 + volChange * 0.05)));
   const newInterestRate = Math.max(INTEREST_RATE_BOUNDS.min, Math.min(INTEREST_RATE_BOUNDS.max, market.interestRate + (rng.next() - 0.5) * 0.5));
+  const repricedLoans = updatedLoans.map(loan => {
+    if (loan.isPaid || loan.type !== 'mortgage') return loan;
+    return {
+      ...loan,
+      interestRate: newInterestRate,
+      monthlyPayment: calcMonthlyPayment(loan.remainingBalance, newInterestRate, loan.termYears),
+    };
+  });
 
   // Property values — single volChange multiplier, no priceIndex drift
   const finalProperties = player.properties.map(p => ({
@@ -109,7 +117,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     cpfSpecial: Math.round(afterInterest.sa),
     cpfMedisave: Math.round(afterInterest.ma),
     properties: finalProperties,
-    loans: updatedLoans,
+    loans: repricedLoans,
     year: newYear,
     month: newMonth,
     turnCount: newTurnCount,
@@ -121,7 +129,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
 
   // Game-over detection
   const monthlyTakeHome = newSalary * TAKE_HOME_RATIO + rentalIncome;
-  const monthlyDebt = updatedLoans.filter(l => !l.isPaid).reduce((s, l) => s + l.monthlyPayment, 0);
+  const monthlyDebt = repricedLoans.filter(l => !l.isPaid).reduce((s, l) => s + l.monthlyPayment, 0);
   const isInsolvent = newPlayer.cash < 0 && monthlyTakeHome < monthlyDebt;
   const newStrikes = isInsolvent ? (player.bankruptcyStrikes ?? 0) + 1 : 0;
   newPlayer.bankruptcyStrikes = newStrikes;

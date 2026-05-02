@@ -96,6 +96,19 @@ describe('advanceTurn', () => {
     expect(result.player.loans[0].isPaid).toBe(false);
   });
 
+  it('reprices active mortgage payments from the live market rate for the next turn', () => {
+    const rng = { next: () => 0.5, getState: () => 0, setState: () => {}, getSeed: () => 0 };
+    const player = makePlayer({
+      loans: [{
+        id: 'loan_1', type: 'mortgage', principal: 500_000, remainingBalance: 500_000,
+        interestRate: 1.5, monthlyPayment: 1726, termYears: 30, startDate: '2024-01', isPaid: false,
+      }],
+    });
+    const result = advanceTurn({ player, market: { ...baseMarket, interestRate: 4.25 }, settings: baseSettings, rng });
+    expect(result.player.loans[0].interestRate).toBe(4.25);
+    expect(result.player.loans[0].monthlyPayment).toBeGreaterThan(1726);
+  });
+
   it('triggers loss state after 3 consecutive insolvent turns', () => {
     const player = makePlayer({
       cash: -50_000, salary: 1000, bankruptcyStrikes: 0,

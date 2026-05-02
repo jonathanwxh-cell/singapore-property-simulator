@@ -10,6 +10,8 @@ import {
   CREDIT_DELTA_LOAN_TAKEN,
   CREDIT_DELTA_LOAN_PAYMENT,
   CREDIT_DELTA_LOAN_PAID_OFF,
+  AGENT_COMMISSION_RATE,
+  SSD_RATES,
 } from './constants';
 import { calcMonthlyPayment, calcTDSR } from './finance';
 import { selectMonthlyExpenses } from './selectors';
@@ -22,6 +24,7 @@ export interface ScenarioResolution {
   cashDelta: number;
   creditDelta: number;
   propertyValueImpactPct: number;
+  interestRateDelta: number;
   followUpText: string;
   success: boolean;
 }
@@ -33,6 +36,7 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
       cashDelta: option.cashImpact,
       creditDelta: option.creditImpact,
       propertyValueImpactPct: option.propertyValueImpact,
+      interestRateDelta: option.interestRateImpact ?? 0,
       followUpText: option.followUpText,
       success: true,
     };
@@ -41,22 +45,28 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
     cashDelta: Math.round(option.cashImpact * 0.5),
     creditDelta: -10,
     propertyValueImpactPct: Math.round(option.propertyValueImpact * 0.5),
+    interestRateDelta: Math.round((option.interestRateImpact ?? 0) * 50) / 100,
     followUpText: 'Things did not go as planned. The outcome was worse than expected.',
     success: false,
   };
 }
 
-export function buyPropertyPure(player: Player, propertyId: string, downPayment: number): ActionResult<{ player: Player }> {
+export function buyPropertyPure(
+  player: Player,
+  propertyId: string,
+  downPayment: number,
+  cpfOrdinaryUsed = 0,
+  loanInterestRate = difficultySettings[player.difficulty].loanInterest,
+): ActionResult<{ player: Player }> {
   const property = properties.find(p => p.id === propertyId);
   if (!property) return fail('property_not_found', 'Property not found.');
-  const validation = validatePurchase(player, property, downPayment);
+  const validation = validatePurchase(player, property, downPayment, cpfOrdinaryUsed, loanInterestRate);
   if (!validation.canBuy) {
     const primaryReason = validation.reasons[0];
     return fail(primaryReason.code, primaryReason.message);
   }
 
   const loanAmount = validation.mortgageAmount;
-  const diff = difficultySettings[player.difficulty];
   const loanId = `loan_t${player.turnCount}_${player.loans.length}`;
   const owned: OwnedProperty = {
     propertyId: property.id,
@@ -75,8 +85,8 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
         type: 'mortgage',
         principal: loanAmount,
         remainingBalance: loanAmount,
-        interestRate: diff.loanInterest,
         monthlyPayment: validation.monthlyPayment,
+        interestRate: loanInterestRate,
         termYears: DEFAULT_MORTGAGE_TERM_YEARS,
         startDate: `${player.year}-${String(player.month).padStart(2, '0')}`,
         propertyId: property.id,
@@ -87,7 +97,8 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
   return ok({
     player: {
       ...player,
-      cash: roundMoney(player.cash - validation.totalUpfront),
+      cash: roundMoney(player.cash - validation.cashRequired),
+      cpfOrdinary: roundMoney(player.cpfOrdinary - validation.cpfOrdinaryUsed),
       properties: [...player.properties, owned],
       loans: newLoan ? [...player.loans, newLoan] : player.loans,
     },
@@ -101,7 +112,10 @@ export function sellPropertyPure(player: Player, propertyIndex: number): ActionR
 
   const property = player.properties[propertyIndex];
   const saleValue = Math.round(property.currentValue);
-  const profit = saleValue - property.purchasePrice;
+  const agentCommission = roundMoney(saleValue * AGENT_COMMISSION_RATE);
+  const sellerStampDuty = calculateSellerStampDuty(property.purchaseDate, player.year, player.month, saleValue);
+  const sellingCosts = agentCommission + sellerStampDuty;
+  const profit = saleValue - property.purchasePrice - sellingCosts;
 
   let outstandingLoan = 0;
   const updatedLoans = property.loanId
@@ -114,7 +128,7 @@ export function sellPropertyPure(player: Player, propertyIndex: number): ActionR
       })
     : player.loans;
 
-  const netProceeds = saleValue - outstandingLoan;
+  const netProceeds = saleValue - outstandingLoan - sellingCosts;
   const newProperties = player.properties.filter((_, i) => i !== propertyIndex);
 
   return ok({
@@ -126,6 +140,14 @@ export function sellPropertyPure(player: Player, propertyIndex: number): ActionR
       totalPropertySalesProfit: player.totalPropertySalesProfit + profit,
     },
   });
+}
+
+export function calculateSellerStampDuty(purchaseDate: string, currentYear: number, currentMonth: number, saleValue: number): number {
+  const [purchaseYearRaw, purchaseMonthRaw] = purchaseDate.split('-').map(Number);
+  if (!purchaseYearRaw || !purchaseMonthRaw) return 0;
+  const monthsHeld = (currentYear - purchaseYearRaw) * 12 + (currentMonth - purchaseMonthRaw);
+  const rate = SSD_RATES.find(tier => monthsHeld >= 0 && monthsHeld < tier.maxMonthsHeld)?.rate ?? 0;
+  return roundMoney(saleValue * rate);
 }
 
 export function applyLoanPure(

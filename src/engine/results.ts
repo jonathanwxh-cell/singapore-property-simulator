@@ -8,6 +8,7 @@ export type ActionFailReason =
   | 'loan_not_found'
   | 'loan_already_paid'
   | 'invalid_amount'
+  | 'cpf_exceeded'
   | 'ltv_exceeded'
   | 'msr_exceeded';
 

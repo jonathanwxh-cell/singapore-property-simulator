@@ -22,9 +22,11 @@ export interface PurchaseValidation {
   canBuy: boolean;
   reasons: PurchaseValidationReason[];
   downPayment: number;
+  cpfOrdinaryUsed: number;
   bsd: number;
   absd: number;
   totalUpfront: number;
+  cashRequired: number;
   shortfall: number;
   mortgageAmount: number;
   monthlyPayment: number;
@@ -44,21 +46,28 @@ export function getDownPaymentAmount(price: number, downPaymentPercent: number):
   return roundMoney(price * (downPaymentPercent / 100));
 }
 
-export function validatePurchase(player: Player, property: Property, downPayment: number): PurchaseValidation {
+export function validatePurchase(
+  player: Player,
+  property: Property,
+  downPayment: number,
+  cpfOrdinaryUsed = 0,
+  loanInterestRate = difficultySettings[player.difficulty].loanInterest,
+): PurchaseValidation {
   const roundedDownPayment = roundMoney(downPayment);
+  const roundedCpfUsed = roundMoney(cpfOrdinaryUsed);
   const propertyCount = player.properties.length;
   const isOwned = player.properties.some((ownedProperty) => ownedProperty.propertyId === property.id);
   const bsd = roundMoney(calculateBSD(property.price));
   const absd = roundMoney(calculateABSD(property.price, propertyCount));
   const totalUpfront = roundMoney(roundedDownPayment + bsd + absd);
-  const shortfall = Math.max(0, roundMoney(totalUpfront - player.cash));
+  const cashRequired = roundMoney(totalUpfront - roundedCpfUsed);
+  const shortfall = Math.max(0, roundMoney(cashRequired - player.cash));
   const mortgageAmount = Math.max(0, roundMoney(property.price - roundedDownPayment));
   const activeHousingLoans = player.loans.filter((loan) => loan.type === 'mortgage' && !loan.isPaid).length;
   const ltvCap = getLtvCap(activeHousingLoans);
   const maxLoan = maxBorrowable(property.price, activeHousingLoans);
   const ltvAllowed = mortgageAmount <= maxLoan;
-  const diff = difficultySettings[player.difficulty];
-  const monthlyPayment = calcMonthlyPayment(mortgageAmount, diff.loanInterest, DEFAULT_MORTGAGE_TERM_YEARS);
+  const monthlyPayment = calcMonthlyPayment(mortgageAmount, loanInterestRate, DEFAULT_MORTGAGE_TERM_YEARS);
   const tdsrRatio = mortgageAmount > 0 ? calcTDSR(selectMonthlyExpenses(player), monthlyPayment, player.salary) : 0;
   const tdsrAllowed = mortgageAmount <= 0 || tdsrRatio <= TDSR_LIMIT;
   const creditAllowed = mortgageAmount <= 0 || player.creditScore >= CREDIT_SCORE_FLOOR;
@@ -81,6 +90,27 @@ export function validatePurchase(player: Player, property: Property, downPayment
     reasons.push({
       code: 'invalid_amount',
       message: 'Down payment must be between 1 and the property price.',
+    });
+  }
+
+  if (roundedCpfUsed < 0) {
+    reasons.push({
+      code: 'invalid_amount',
+      message: 'CPF OA amount cannot be negative.',
+    });
+  }
+
+  if (roundedCpfUsed > roundedDownPayment) {
+    reasons.push({
+      code: 'cpf_exceeded',
+      message: 'CPF OA usage cannot exceed the down payment.',
+    });
+  }
+
+  if (roundedCpfUsed > player.cpfOrdinary) {
+    reasons.push({
+      code: 'cpf_exceeded',
+      message: `CPF OA usage exceeds available balance of ${formatCurrency(player.cpfOrdinary)}.`,
     });
   }
 
@@ -125,9 +155,11 @@ export function validatePurchase(player: Player, property: Property, downPayment
     canBuy: reasons.length === 0,
     reasons,
     downPayment: roundedDownPayment,
+    cpfOrdinaryUsed: roundedCpfUsed,
     bsd,
     absd,
     totalUpfront,
+    cashRequired,
     shortfall,
     mortgageAmount,
     monthlyPayment,
