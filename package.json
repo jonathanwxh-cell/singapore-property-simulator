@@ -1,7 +1,28 @@
 {
-  "name": "my-app",
+  "name": "singapore-property-simulator",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.4.0",
+  "description": "A single-player turn-based property investment game set in Singapore — CPF, stamp duty, LTV/MSR/TDSR, mortgage underwriting, market cycles.",
+  "license": "UNLICENSED",
+  "author": "jonathanwxh-cell",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonathanwxh-cell/singapore-property-simulator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jonathanwxh-cell/singapore-property-simulator/issues"
+  },
+  "homepage": "https://github.com/jonathanwxh-cell/singapore-property-simulator#readme",
+  "keywords": [
+    "singapore",
+    "property",
+    "real-estate",
+    "cpf",
+    "simulation",
+    "game",
+    "react",
+    "typescript"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
