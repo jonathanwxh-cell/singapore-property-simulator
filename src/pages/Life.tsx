@@ -1,5 +1,7 @@
 import GlassCard from '@/components/GlassCard';
-import { lifeActions } from '@/data/lifeActions';
+import SceneImage from '@/components/SceneImage';
+import { lifeActions, lifeActionsById, type LifeActionDefinition } from '@/data/lifeActions';
+import { getLifeOutcomeVisual, lifeOutcomeVisuals } from '@/data/lifeVisuals';
 import { useGameStore } from '@/game/useGameStore';
 import { canTakeSecondaryAction } from '@/engine/life';
 import { getListingCatalog } from '@/engine/listings';
@@ -28,6 +30,10 @@ export default function Life() {
   const monthlySurplus = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
   const canTakeSecondAction = canTakeSecondaryAction(player.life);
   const selectedPrimaryActionId = player.life.selectedPrimaryActionId ?? 'focus-at-work';
+  const selectedPrimaryAction = lifeActionsById[selectedPrimaryActionId];
+  const selectedSecondaryAction = player.life.selectedSecondaryActionId
+    ? lifeActionsById[player.life.selectedSecondaryActionId]
+    : null;
   const cheapestListing = [...getListingCatalog()].sort((a, b) => a.price - b.price)[0];
   const defaultDownPayment = getDownPaymentAmount(cheapestListing.price, 25);
   const purchaseValidation = validatePurchase(player, cheapestListing, defaultDownPayment);
@@ -38,6 +44,9 @@ export default function Life() {
     monthlySurplus,
     grantSupport,
   );
+  const lastMonthVisual = player.life.lastMonthSummary
+    ? getLifeOutcomeVisual(player.life.lastMonthSummary)
+    : lifeOutcomeVisuals.balanced;
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
@@ -48,6 +57,36 @@ export default function Life() {
             Shape the month before the market shapes you. Build income, manage stress, and plan your first move into property.
           </p>
         </div>
+
+        <GlassCard accentColor={selectedPrimaryAction.accent} className="mb-6 overflow-hidden" padding="none">
+          <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
+            <SceneImage
+              src={selectedPrimaryAction.image}
+              alt={selectedPrimaryAction.imageAlt}
+              className="h-64 lg:h-full w-full object-cover"
+            />
+            <div className="p-5 lg:p-6 flex flex-col justify-between gap-5">
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-[0.24em]" style={{ color: selectedPrimaryAction.accent }}>
+                  {selectedPrimaryAction.visualLabel}
+                </p>
+                <h2 className="section-title text-white mt-2">{selectedPrimaryAction.label}</h2>
+                <p className="text-text-secondary text-sm mt-2 leading-relaxed">
+                  {selectedPrimaryAction.heroHint}
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-3 gap-3">
+                <HeroMetric label="Energy" value={`${player.life.energy}/100`} tone="text-cyan-glow" />
+                <HeroMetric label="Stress" value={`${player.life.stress}/100`} tone="text-warning" />
+                <HeroMetric
+                  label="Monthly Surplus"
+                  value={formatCurrency(monthlySurplus)}
+                  tone={monthlySurplus >= 0 ? 'text-success' : 'text-danger'}
+                />
+              </div>
+            </div>
+          </div>
+        </GlassCard>
 
         <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
           <LifeStatCard icon={BatteryCharging} label="Energy" value={`${player.life.energy}/100`} color="#00F0FF" />
@@ -98,21 +137,13 @@ export default function Life() {
               <p className="text-text-secondary text-sm mb-4">Pick the main way you want to spend this month. If you skip planning, the game defaults to Focus at Work.</p>
               <div className="grid md:grid-cols-2 gap-3">
                 {lifeActions.map((action) => (
-                  <button
+                  <LifeActionOptionCard
                     key={action.id}
+                    action={action}
+                    selected={selectedPrimaryActionId === action.id}
+                    selectedTone="primary"
                     onClick={() => setPrimaryLifeAction(action.id)}
-                    className={`text-left rounded-xl border px-4 py-4 transition-all ${
-                      selectedPrimaryActionId === action.id
-                        ? 'border-cyan-glow/60 bg-cyan-glow/10'
-                        : 'border-glass-border bg-white/5 hover:border-cyan-glow/40 hover:bg-cyan-glow/5'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className={`font-rajdhani font-semibold ${selectedPrimaryActionId === action.id ? 'text-cyan-glow' : 'text-white'}`}>{action.label}</p>
-                      <span className="text-[10px] font-mono uppercase" style={{ color: action.accent }}>{action.category}</span>
-                    </div>
-                    <p className="text-text-secondary text-xs mt-2 leading-relaxed">{action.description}</p>
-                  </button>
+                  />
                 ))}
               </div>
             </GlassCard>
@@ -124,18 +155,13 @@ export default function Life() {
                   <p className="text-text-secondary text-sm mb-4">Energy and stress are healthy enough for one extra push this month.</p>
                   <div className="grid md:grid-cols-2 gap-3">
                     {lifeActions.map((action) => (
-                      <button
+                      <LifeActionOptionCard
                         key={`secondary-${action.id}`}
+                        action={action}
+                        selected={player.life.selectedSecondaryActionId === action.id}
+                        selectedTone="secondary"
                         onClick={() => setSecondaryLifeAction(player.life.selectedSecondaryActionId === action.id ? null : action.id)}
-                        className={`text-left rounded-xl border px-4 py-4 transition-all ${
-                          player.life.selectedSecondaryActionId === action.id
-                            ? 'border-purple-glow/60 bg-purple-glow/10'
-                            : 'border-glass-border bg-white/5 hover:border-purple-glow/40 hover:bg-purple-glow/5'
-                        }`}
-                      >
-                        <p className={`font-rajdhani font-semibold ${player.life.selectedSecondaryActionId === action.id ? 'text-purple-glow' : 'text-white'}`}>{action.label}</p>
-                        <p className="text-text-secondary text-xs mt-2 leading-relaxed">{action.description}</p>
-                      </button>
+                      />
                     ))}
                   </div>
                 </>
@@ -155,8 +181,8 @@ export default function Life() {
               <h3 className="section-title text-white mb-4">Monthly Snapshot</h3>
               <div className="space-y-3">
                 <SnapshotRow label="Current monthly surplus" value={formatCurrency(monthlySurplus)} positive={monthlySurplus >= 0} />
-                <SnapshotRow label="Primary action" value={lifeActions.find((action) => action.id === selectedPrimaryActionId)?.label ?? 'Focus at Work'} />
-                <SnapshotRow label="Secondary action" value={player.life.selectedSecondaryActionId ? lifeActions.find((action) => action.id === player.life.selectedSecondaryActionId)?.label ?? 'None' : 'None'} />
+                <SnapshotRow label="Primary action" value={selectedPrimaryAction.label} />
+                <SnapshotRow label="Secondary action" value={selectedSecondaryAction?.label ?? 'None'} />
                 <SnapshotRow label="Training progress" value={player.life.trainingTrackId ? `${player.life.trainingMonthsRemaining} month(s) remaining` : 'No active course'} />
               </div>
             </GlassCard>
@@ -195,8 +221,29 @@ export default function Life() {
               <h3 className="section-title text-white mb-4">Last Month</h3>
               {player.life.lastMonthSummary ? (
                 <div className="space-y-3">
-                  <SnapshotRow label="Primary action" value={lifeActions.find((action) => action.id === player.life.lastMonthSummary?.primaryActionId)?.label ?? player.life.lastMonthSummary.primaryActionId} />
+                  <SceneImage
+                    src={lastMonthVisual.image}
+                    alt={lastMonthVisual.label}
+                    className="h-36 w-full rounded-xl object-cover"
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-white font-rajdhani font-semibold">{lastMonthVisual.label}</p>
+                      <p className="text-text-secondary text-xs mt-1">{lastMonthVisual.description}</p>
+                    </div>
+                    <span className="rounded-full border border-glass-border bg-white/5 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-cyan-glow">
+                      Month Tone
+                    </span>
+                  </div>
+                  <SnapshotRow label="Primary action" value={lifeActionsById[player.life.lastMonthSummary.primaryActionId].label} />
+                  <SnapshotRow
+                    label="Secondary action"
+                    value={player.life.lastMonthSummary.secondaryActionId
+                      ? lifeActionsById[player.life.lastMonthSummary.secondaryActionId].label
+                      : 'None'}
+                  />
                   <SnapshotRow label="Cash delta" value={formatCurrency(player.life.lastMonthSummary.cashDelta)} positive={player.life.lastMonthSummary.cashDelta >= 0} />
+                  <SnapshotRow label="Energy delta" value={`${player.life.lastMonthSummary.energyDelta >= 0 ? '+' : ''}${player.life.lastMonthSummary.energyDelta}`} positive={player.life.lastMonthSummary.energyDelta >= 0} />
                   <SnapshotRow label="Stress delta" value={`${player.life.lastMonthSummary.stressDelta >= 0 ? '+' : ''}${player.life.lastMonthSummary.stressDelta}`} positive={player.life.lastMonthSummary.stressDelta <= 0} />
                   <div className="space-y-2 pt-1">
                     {player.life.lastMonthSummary.notes.map((note) => (
@@ -271,5 +318,50 @@ function ProgressLine({ label, value, max }: { label: string; value: number; max
         <div className="h-full rounded-full bg-cyan-glow" style={{ width: `${percent}%` }} />
       </div>
     </div>
+  );
+}
+
+function HeroMetric({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className="rounded-xl border border-glass-border bg-white/5 px-3 py-3">
+      <p className="text-text-dim text-[10px] font-mono uppercase tracking-[0.18em]">{label}</p>
+      <p className={`font-mono text-sm mt-1 ${tone}`}>{value}</p>
+    </div>
+  );
+}
+
+function LifeActionOptionCard({
+  action,
+  selected,
+  selectedTone,
+  onClick,
+}: {
+  action: LifeActionDefinition;
+  selected: boolean;
+  selectedTone: 'primary' | 'secondary';
+  onClick: () => void;
+}) {
+  const selectedClasses = selectedTone === 'primary'
+    ? 'border-cyan-glow/60 bg-cyan-glow/10'
+    : 'border-purple-glow/60 bg-purple-glow/10';
+  const idleClasses = selectedTone === 'primary'
+    ? 'border-glass-border bg-white/5 hover:border-cyan-glow/40 hover:bg-cyan-glow/5'
+    : 'border-glass-border bg-white/5 hover:border-purple-glow/40 hover:bg-purple-glow/5';
+  const selectedLabel = selectedTone === 'primary' ? 'text-cyan-glow' : 'text-purple-glow';
+
+  return (
+    <button
+      onClick={onClick}
+      className={`text-left rounded-xl border p-3 transition-all ${selected ? selectedClasses : idleClasses}`}
+    >
+      <SceneImage src={action.image} alt={action.imageAlt} className="h-28 w-full rounded-lg object-cover mb-3" />
+      <div className="flex items-center justify-between gap-3">
+        <p className={`font-rajdhani font-semibold ${selected ? selectedLabel : 'text-white'}`}>{action.label}</p>
+        <span className="rounded-full border border-white/10 bg-black/15 px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.16em]" style={{ color: action.accent }}>
+          {action.visualLabel}
+        </span>
+      </div>
+      <p className="text-text-secondary text-xs mt-2 leading-relaxed">{action.description}</p>
+    </button>
   );
 }

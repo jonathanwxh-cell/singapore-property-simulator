@@ -1,6 +1,7 @@
 import { useGameStore } from '@/game/useGameStore';
 import { properties } from '@/data/properties';
-import { lifeActions } from '@/data/lifeActions';
+import SceneImage from '@/components/SceneImage';
+import { lifeActions, lifeActionsById } from '@/data/lifeActions';
 import GlassCard from '@/components/GlassCard';
 import { motion } from 'framer-motion';
 import { Wallet, TrendingUp, Building2, ArrowRight, Newspaper, BatteryCharging, Flame, House } from 'lucide-react';
@@ -20,8 +21,11 @@ export default function Dashboard() {
   const monthlyDebt = selectMonthlyExpenses(player);
   const monthlyHouseholdLoad = selectMonthlyHouseholdLoad(player);
   const monthlyNetCashflow = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
-  const selectedPrimaryAction = lifeActions.find((action) => action.id === (player.life.selectedPrimaryActionId ?? 'focus-at-work'));
-  const selectedSecondaryAction = lifeActions.find((action) => action.id === player.life.selectedSecondaryActionId);
+  const selectedPrimaryAction = lifeActions.find((action) => action.id === (player.life.selectedPrimaryActionId ?? 'focus-at-work'))
+    ?? lifeActionsById['focus-at-work'];
+  const selectedSecondaryAction = player.life.selectedSecondaryActionId
+    ? lifeActionsById[player.life.selectedSecondaryActionId]
+    : null;
 
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
@@ -84,20 +88,33 @@ export default function Dashboard() {
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-4">
-            <GlassCard accentColor="#FFD740">
+            <GlassCard accentColor={selectedPrimaryAction.accent} className="overflow-hidden" padding="none">
+              <SceneImage
+                src={selectedPrimaryAction.image}
+                alt={selectedPrimaryAction.imageAlt}
+                className="h-36 w-full object-cover"
+              />
+              <div className="p-4">
               <h3 className="section-title text-white mb-3">Life Planning</h3>
+              <p className="text-[10px] font-mono uppercase tracking-[0.22em]" style={{ color: selectedPrimaryAction.accent }}>
+                {selectedPrimaryAction.visualLabel}
+              </p>
+              <p className="text-text-secondary text-xs mt-2 mb-4 leading-relaxed">
+                {selectedPrimaryAction.heroHint}
+              </p>
               <div className="space-y-2 mb-4">
                 <LifeRow icon={BatteryCharging} label="Energy" value={`${player.life.energy}/100`} />
                 <LifeRow icon={Flame} label="Stress" value={`${player.life.stress}/100`} />
                 <LifeRow icon={House} label="Household" value={`S$${player.life.householdLoad.toLocaleString()}/mo`} />
               </div>
               <p className="text-text-secondary text-xs mb-2">
-                Primary action: <span className="text-white">{selectedPrimaryAction?.label ?? 'Focus at Work'}</span>
+                Primary action: <span className="text-white">{selectedPrimaryAction.label}</span>
               </p>
               <p className="text-text-secondary text-xs mb-4">
                 Secondary action: <span className="text-white">{selectedSecondaryAction?.label ?? 'None'}</span>
               </p>
               <button onClick={() => navigate('/life')} className="w-full btn-secondary text-sm py-3">Plan Life Actions</button>
+              </div>
             </GlassCard>
             <GlassCard accentColor="#00F0FF">
               <h3 className="section-title text-white mb-4">Actions</h3>
