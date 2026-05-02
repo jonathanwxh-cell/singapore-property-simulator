@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { advanceTurn } from '../turn';
 import { createRng } from '../rng';
-import type { Player, MarketState, GameSettings } from '@/game/types';
+import { createInitialLifeState, type Player, type MarketState, type GameSettings } from '@/game/types';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -10,7 +10,7 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
     creditScore: 700, properties: [], loans: [], maritalStatus: 'single',
     children: 0, year: 2024, month: 1, turnCount: 0, totalNetWorth: 145_000,
     achievements: [], difficulty: 'normal', totalRentalIncome: 0,
-    totalPropertySalesProfit: 0, bankruptcyStrikes: 0,
+    totalPropertySalesProfit: 0, bankruptcyStrikes: 0, life: createInitialLifeState(),
     ...overrides,
   };
 }
@@ -123,6 +123,25 @@ describe('advanceTurn', () => {
     const player = makePlayer({ cash: 100_000, salary: 5000, bankruptcyStrikes: 2 });
     const result = advanceTurn({ player, market: baseMarket, settings: baseSettings, rng: createRng(1) });
     expect(result.player.bankruptcyStrikes).toBe(0);
+  });
+
+  it('resolves the selected primary action and clears it after advancing a turn', () => {
+    const result = advanceTurn({
+      player: makePlayer({
+        careerId: 'tech',
+        life: createInitialLifeState({
+          selectedPrimaryActionId: 'take-side-gig',
+          selectedSecondaryActionId: 'recover',
+        }),
+      }),
+      market: baseMarket,
+      settings: baseSettings,
+      rng: createRng(42),
+    });
+
+    expect(result.player.life.lastMonthSummary?.primaryActionId).toBe('take-side-gig');
+    expect(result.player.life.selectedPrimaryActionId).toBe(null);
+    expect(result.player.life.selectedSecondaryActionId).toBe(null);
   });
 });
 

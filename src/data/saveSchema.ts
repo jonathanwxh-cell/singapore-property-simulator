@@ -49,6 +49,35 @@ const playerSchema = z.object({
   totalRentalIncome: z.number(),
   totalPropertySalesProfit: z.number(),
   bankruptcyStrikes: z.number().optional(),
+  life: z.object({
+    energy: z.number(),
+    stress: z.number(),
+    reputation: z.number(),
+    careerMomentum: z.number(),
+    householdLoad: z.number(),
+    householdSupport: z.number(),
+    livingArrangement: z.enum(['with-parents', 'renting-room', 'renting-flat']),
+    selectedPrimaryActionId: z.string().nullable(),
+    selectedSecondaryActionId: z.string().nullable(),
+    trainingTrackId: z.string().nullable(),
+    trainingMonthsRemaining: z.number(),
+    schemeProgress: z.object({
+      skillsFuture: z.number(),
+      firstTimerGrant: z.number(),
+      householdSupport: z.number(),
+    }),
+    lastMonthSummary: z.object({
+      primaryActionId: z.string(),
+      secondaryActionId: z.string().nullable(),
+      cashDelta: z.number(),
+      energyDelta: z.number(),
+      stressDelta: z.number(),
+      reputationDelta: z.number(),
+      careerMomentumDelta: z.number(),
+      householdSupportDelta: z.number(),
+      notes: z.array(z.string()),
+    }).nullable(),
+  }).optional(),
 });
 
 export const saveSchema = z.object({

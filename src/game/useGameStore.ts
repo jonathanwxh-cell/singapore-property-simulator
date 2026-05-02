@@ -10,6 +10,7 @@ import { SAVE_VERSION } from '@/engine/constants';
 import { estimateInitialCpf } from '@/engine/cpf';
 import { withEvaluatedAchievements } from '@/engine/achievementRules';
 import { normalizeOwnedProperty } from '@/engine/portfolio';
+import { calculateHouseholdLoad, normalizeLifeState } from '@/engine/life';
 import type { ScenarioOption } from '@/data/scenarios';
 import type { ScenarioResolution } from '@/engine/actions';
 import type { ActionResult } from '@/engine/results';
@@ -18,18 +19,6 @@ let rng: Rng = createRng(0);
 
 function withNetWorth(player: Player): Player {
   return { ...player, totalNetWorth: selectNetWorth(player) };
-}
-
-function normalizeLifeState(life: Partial<PlayerLifeState> | undefined): PlayerLifeState {
-  const initial = createInitialLifeState();
-  return {
-    ...initial,
-    ...life,
-    schemeProgress: {
-      ...initial.schemeProgress,
-      ...life?.schemeProgress,
-    },
-  };
 }
 
 function withPortfolioDefaults(player: Player): Player {
@@ -219,6 +208,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         life: {
           ...state.player.life,
           livingArrangement: arrangement,
+          householdLoad: calculateHouseholdLoad({
+            ...state.player.life,
+            livingArrangement: arrangement,
+          }),
         },
       }),
     }));

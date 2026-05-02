@@ -56,7 +56,7 @@ export function resolveLifeMonth(player: Player, career: Career, rng: Pick<Rng, 
   const startingLife = normalizeLifeState(player.life);
   const nextLife = normalizeLifeState(startingLife);
   const notes: string[] = [];
-  const householdCost = getCurrentHouseholdCost(startingLife);
+  const householdCost = calculateHouseholdLoad(startingLife);
 
   let summary: LifeMonthSummary = {
     primaryActionId: startingLife.selectedPrimaryActionId ?? 'focus-at-work',
@@ -86,7 +86,7 @@ export function resolveLifeMonth(player: Player, career: Career, rng: Pick<Rng, 
   nextLife.reputation = clamp(nextLife.reputation, 0, 100);
   nextLife.careerMomentum = clamp(nextLife.careerMomentum, -100, 100);
   nextLife.householdSupport = clamp(nextLife.householdSupport, 0, 100);
-  nextLife.householdLoad = getCurrentHouseholdCost(nextLife);
+  nextLife.householdLoad = calculateHouseholdLoad(nextLife);
   nextLife.selectedPrimaryActionId = null;
   nextLife.selectedSecondaryActionId = null;
   nextLife.lastMonthSummary = summary;
@@ -261,7 +261,7 @@ function applyActionResolution(
   notes.push(resolution.note);
 }
 
-function getCurrentHouseholdCost(life: PlayerLifeState): number {
+export function calculateHouseholdLoad(life: PlayerLifeState): number {
   const baseLoad = getBaseHouseholdLoad(life.livingArrangement);
   const supportDiscount = Math.max(0, Math.round((life.householdSupport - 50) * 6));
   const stressSurcharge = life.stress > 60 ? Math.round((life.stress - 60) * 4) : 0;

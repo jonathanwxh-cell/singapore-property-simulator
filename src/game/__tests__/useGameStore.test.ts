@@ -91,6 +91,20 @@ describe('useGameStore', () => {
     expect(useGameStore.getState().player.life.selectedSecondaryActionId).toBe('recover');
   });
 
+  it('normalizes legacy save data that has no life state', () => {
+    const legacyState = makeState({
+      player: (() => {
+        const player = makePlayer();
+        delete (player as any).life;
+        return player as Player;
+      })(),
+    });
+
+    useGameStore.getState().loadGame(legacyState);
+
+    expect(useGameStore.getState().player.life.livingArrangement).toBe('with-parents');
+  });
+
   it('keeps total net worth flat when taking on matching debt', () => {
     resetStore({
       player: makePlayer({ cash: 200_000, totalNetWorth: 200_000 }),

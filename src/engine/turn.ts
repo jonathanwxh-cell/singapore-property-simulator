@@ -6,6 +6,7 @@ import { rngPick } from './rng';
 import { amortizeOneMonth } from './finance';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
 import { advancePortfolioMonth } from './portfolio';
+import { resolveLifeMonth } from './life';
 import { getEligibleScenarios } from './scenarioContext';
 import {
   TAKE_HOME_RATIO,
@@ -62,6 +63,10 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   const rentalIncome = selectMonthlyRentalIncome(player);
   const portfolioStep = advancePortfolioMonth(player);
 
+  // Career and life-state resolution
+  const career = careers.find(c => c.id === player.careerId) || careers[0];
+  const lifeResolution = resolveLifeMonth(player, career, rng);
+
   // Loan amortization
   let totalLoanPayment = 0;
   const updatedLoans = player.loans.map(loan => {
@@ -72,10 +77,10 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   });
 
   // Salary growth (annual)
-  const career = careers.find(c => c.id === player.careerId) || careers[0];
   let newSalary = player.salary;
   if (newMonth === 1) {
-    newSalary = Math.round(player.salary * (1 + career.growthRate * (0.5 + rng.next())));
+    const momentumMultiplier = 1 + lifeResolution.nextLife.careerMomentum / 400;
+    newSalary = Math.round(player.salary * (1 + career.growthRate * (0.5 + rng.next()) * momentumMultiplier));
   }
 
   // Market dynamics
@@ -92,7 +97,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
 
   // Cashflow
   const totalOwnershipCosts = portfolioStep.monthlyCosts.maintenance + portfolioStep.monthlyCosts.propertyTax;
-  const netCashChange = takeHomePay + rentalIncome - totalLoanPayment - totalOwnershipCosts;
+  const netCashChange = takeHomePay + rentalIncome + lifeResolution.cashDelta - totalLoanPayment - totalOwnershipCosts - lifeResolution.householdCost;
   const newCash = player.cash + netCashChange;
 
   // Scenarios — skip on turn 0
@@ -121,6 +126,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     year: newYear,
     month: newMonth,
     turnCount: newTurnCount,
+    life: lifeResolution.nextLife,
     totalRentalIncome: player.totalRentalIncome + rentalIncome,
     totalNetWorth: 0, // computed below
     bankruptcyStrikes: player.bankruptcyStrikes ?? 0,
@@ -128,7 +134,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   newPlayer.totalNetWorth = selectNetWorth(newPlayer);
 
   // Game-over detection
-  const monthlyTakeHome = newSalary * TAKE_HOME_RATIO + rentalIncome;
+  const monthlyTakeHome = newSalary * TAKE_HOME_RATIO + rentalIncome + lifeResolution.cashDelta;
   const monthlyDebt = updatedLoans.filter(l => !l.isPaid).reduce((s, l) => s + l.monthlyPayment, 0);
   const isInsolvent = newPlayer.cash < 0 && monthlyTakeHome < monthlyDebt;
   const newStrikes = isInsolvent ? (player.bankruptcyStrikes ?? 0) + 1 : 0;
