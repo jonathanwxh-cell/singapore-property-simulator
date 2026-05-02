@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { selectMonthlyExpenses, selectMonthlyNetCashflow, selectMonthlyRentalIncome, selectMonthlyTakeHome, selectNetWorth } from '../selectors';
+import { createInitialLifeState } from '@/game/types';
+import { selectAffordabilityReport, selectMonthlyExpenses, selectMonthlyNetCashflow, selectMonthlyRentalIncome, selectMonthlyTakeHome, selectNetWorth } from '../selectors';
 import { TAKE_HOME_RATIO } from '../constants';
 import type { Player } from '@/game/types';
 
@@ -10,7 +11,7 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
     creditScore: 700, properties: [], loans: [], maritalStatus: 'single',
     children: 0, year: 2024, month: 1, turnCount: 0, totalNetWorth: 0,
     achievements: [], difficulty: 'normal', totalRentalIncome: 0,
-    totalPropertySalesProfit: 0, bankruptcyStrikes: 0,
+    totalPropertySalesProfit: 0, bankruptcyStrikes: 0, life: createInitialLifeState(),
     ...overrides,
   };
 }
@@ -69,6 +70,36 @@ describe('selectMonthlyNetCashflow', () => {
       properties: [{ propertyId: 'a', purchasePrice: 0, purchaseDate: '', currentValue: 0, isRented: true, monthlyRental: 2000, renovationLevel: 0 }],
       loans: [{ id: 'a', type: 'mortgage', principal: 0, remainingBalance: 100, interestRate: 2.5, monthlyPayment: 1500, termYears: 30, startDate: '', isPaid: false }],
     });
-    expect(selectMonthlyNetCashflow(player, TAKE_HOME_RATIO)).toBe(4500);
+    expect(selectMonthlyNetCashflow(player, TAKE_HOME_RATIO)).toBe(3850);
+  });
+
+  it('includes household load in monthly net cashflow', () => {
+    const player = makePlayer({
+      salary: 5000,
+      life: createInitialLifeState({ householdLoad: 650 }),
+    });
+
+    expect(selectMonthlyNetCashflow(player, TAKE_HOME_RATIO)).toBe(3350);
+  });
+});
+
+describe('selectAffordabilityReport', () => {
+  it('estimates months to afford from monthly surplus', () => {
+    const player = makePlayer({ cash: 50_000 });
+    const report = selectAffordabilityReport(player, 81_900, 6_000);
+
+    expect(report.shortfall).toBe(31_900);
+    expect(report.monthsAtCurrentPace).toBe(6);
+    expect(report.blockers).toContain('cash');
+  });
+
+  it('returns null months-to-buy when monthly surplus is non-positive', () => {
+    const player = makePlayer({
+      cash: 50_000,
+      life: createInitialLifeState({ householdLoad: 4500 }),
+    });
+
+    const report = selectAffordabilityReport(player, 81_900, selectMonthlyNetCashflow(player, TAKE_HOME_RATIO));
+    expect(report.monthsAtCurrentPace).toBe(null);
   });
 });
