@@ -18,6 +18,7 @@ export default function Dashboard() {
   const monthlyRental = selectMonthlyRentalIncome(player);
   const monthlyExpenses = selectMonthlyExpenses(player);
   const monthlyNetCashflow = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
+  const marketChange = formatSignedPercent(market.monthlyPriceChangePct ?? 0);
 
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
@@ -38,7 +39,25 @@ export default function Dashboard() {
           <StatCard icon={Wallet} label="Cash" value={`S$${(player.cash / 1000).toFixed(1)}K`} color="#00F0FF" />
           <StatCard icon={TrendingUp} label="Net Worth" value={`S$${(netWorth / 1000000).toFixed(2)}M`} color="#00E676" />
           <StatCard icon={Building2} label="Properties" value={String(player.properties.length)} color="#7C4DFF" />
-          <StatCard icon={Newspaper} label="Market Index" value={`${market.priceIndex.toFixed(1)}`} color="#FF9100" change={market.lastEvent === 'boom' ? '+5.2%' : market.lastEvent === 'crash' ? '-3.1%' : '+0.8%'} />
+          <StatCard icon={Newspaper} label="Market Index" value={`${market.priceIndex.toFixed(1)}`} color="#FF9100" change={marketChange} />
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="mb-6">
+          <GlassCard accentColor={market.lastEvent === 'crash' ? '#FF1744' : market.lastEvent === 'boom' ? '#00E676' : '#00F0FF'}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="section-title text-white mb-1">Market Pulse</h3>
+                <p className="text-white font-medium">{market.lastHeadline ?? 'The market is waiting for a catalyst.'}</p>
+                <p className="text-text-secondary text-sm mt-2 max-w-3xl">{market.lastSummary ?? 'Advance a turn to generate the next headline.'}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className={`font-mono text-lg ${marketChange.startsWith('-') ? 'text-danger' : marketChange.startsWith('+') ? 'text-success' : 'text-text-secondary'}`}>
+                  {marketChange}
+                </p>
+                <p className="text-text-dim text-xs">price index this month</p>
+              </div>
+            </div>
+          </GlassCard>
         </motion.div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -122,4 +141,9 @@ function CashflowRow({ label, value, type, isTotal }: { label: string; value: nu
       <span className="font-mono text-sm" style={{ color }}>{type === 'expense' && !isTotal ? '-' : ''}{isTotal && value >= 0 ? '+' : ''}S${Math.abs(value).toLocaleString()}</span>
     </div>
   );
+}
+
+function formatSignedPercent(value: number): string {
+  if (Math.abs(value) < 0.05) return '0.0%';
+  return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
 }

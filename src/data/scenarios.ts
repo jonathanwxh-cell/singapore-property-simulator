@@ -21,6 +21,19 @@ export interface Scenario {
 }
 
 export const scenarios: Scenario[] = [
+  {
+    id: 'first-home-window',
+    category: 'Personal',
+    title: 'First-Home Window Opens',
+    description: 'A mix of grants, family support, and lender competition has created an unusually good entry point for first-time buyers. You need to decide how to use the moment.',
+    image: '/scenario-personal.jpg',
+    frequency: 'common',
+    options: [
+      { label: 'Claim the grant', description: 'Take a first-home support package and build your buying power now', probability: 0.95, cashImpact: 40000, propertyValueImpact: 0, creditImpact: 5, followUpText: 'The grant gives you a meaningful boost toward your first purchase and improves lender confidence.' },
+      { label: 'Build a buffer', description: 'Keep the support in cash so you can stay flexible', probability: 0.95, cashImpact: 25000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'You stayed patient and banked extra dry powder for a cleaner first deal.' },
+      { label: 'Side-hustle for momentum', description: 'Take on short-term extra work to accelerate your deposit', probability: 0.85, cashImpact: 18000, propertyValueImpact: 0, creditImpact: 10, followUpText: 'The extra effort is paying off. Your finances look stronger heading into your first application.' },
+    ],
+  },
   // MARKET EVENTS
   {
     id: 'market-crash',

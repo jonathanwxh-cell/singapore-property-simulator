@@ -6,6 +6,7 @@ import { difficultySettings } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
 import { Sparkles, CheckCircle, X } from 'lucide-react';
 import type { ScenarioOption } from '@/data/scenarios';
+import { STARTER_SCENARIO_TURN } from '@/engine/constants';
 
 export default function Scenarios() {
   const { currentScenario, resolveScenario, player, setCurrentScenario } = useGameStore();
@@ -29,9 +30,13 @@ export default function Scenarios() {
   };
 
   if (!activeScenario && !result) {
-    const nextIn = player.turnCount > 0
-      ? difficultySettings[player.difficulty].eventFrequency - (player.turnCount % difficultySettings[player.difficulty].eventFrequency)
-      : difficultySettings[player.difficulty].eventFrequency;
+    const cadence = difficultySettings[player.difficulty].eventFrequency;
+    const cadenceRemainder = player.turnCount % cadence;
+    const nextIn = player.properties.length === 0 && player.turnCount < STARTER_SCENARIO_TURN
+      ? STARTER_SCENARIO_TURN - player.turnCount
+      : player.turnCount > 0
+        ? (cadenceRemainder === 0 ? cadence : cadence - cadenceRemainder)
+        : cadence;
 
     return (
       <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
@@ -41,7 +46,7 @@ export default function Scenarios() {
             <GlassCard className="text-center py-8">
               <Sparkles size={40} className="text-purple-glow mx-auto mb-3" />
               <p className="text-text-secondary">Scenarios will appear here as you play the game.</p>
-              <p className="text-text-dim text-sm mt-1">Advance turns to trigger random life events and market scenarios.</p>
+              <p className="text-text-dim text-sm mt-1">Your first one is guaranteed early so the run starts with a real decision.</p>
             </GlassCard>
           ) : (
             <>

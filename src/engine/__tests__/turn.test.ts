@@ -69,16 +69,38 @@ describe('advanceTurn', () => {
     expect(firedOnFirstTycoonTurn).toBe(false);
   });
 
-  it('property value does NOT drift when volChange = 0', () => {
-    const rng = { next: () => 0.5, getState: () => 0, setState: () => {}, getSeed: () => 0 };
-    const player = makePlayer({
-      properties: [{
-        propertyId: 'hdb-bto-1', purchasePrice: 800_000, purchaseDate: '2024-01',
-        currentValue: 800_000, isRented: false, monthlyRental: 3000, renovationLevel: 0,
-      }],
+  it('guarantees the first-home scenario on turn 2 when the player owns nothing', () => {
+    const result = advanceTurn({
+      player: makePlayer({ turnCount: 1, month: 2, difficulty: 'normal' }),
+      market: baseMarket,
+      settings: baseSettings,
+      rng: createRng(7),
     });
-    const result = advanceTurn({ player, market: { ...baseMarket, priceIndex: 110 }, settings: baseSettings, rng });
-    expect(result.player.properties[0].currentValue).toBe(800_000);
+    expect(result.scenarioId).toBe('first-home-window');
+  });
+
+  it('fires a regular scenario on cadence instead of leaving an empty drought', () => {
+    const result = advanceTurn({
+      player: makePlayer({ turnCount: 5, month: 6, difficulty: 'normal', properties: [{ propertyId: 'hdb-bto-0', purchasePrice: 265_000, purchaseDate: '2024-01', currentValue: 265_000, isRented: false, monthlyRental: 0, renovationLevel: 0 }] }),
+      market: baseMarket,
+      settings: baseSettings,
+      rng: createRng(19),
+    });
+    expect(result.scenarioId).not.toBeNull();
+    expect(result.scenarioId).not.toBe('first-home-window');
+  });
+
+  it('attaches a market headline and news feed entry to each turn', () => {
+    const result = advanceTurn({
+      player: makePlayer({ turnCount: 2 }),
+      market: baseMarket,
+      settings: baseSettings,
+      rng: createRng(11),
+    });
+    expect(result.market.lastHeadline).toBeTruthy();
+    expect(result.market.lastSummary).toBeTruthy();
+    expect(result.market.newsFeed).toHaveLength(1);
+    expect(typeof result.market.monthlyPriceChangePct).toBe('number');
   });
 
   it('amortizes a mortgage by the correct interest split', () => {

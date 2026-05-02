@@ -5,6 +5,7 @@ import { scenarios } from '@/data/scenarios';
 import type { Rng } from './rng';
 import { rngPick } from './rng';
 import { amortizeOneMonth } from './finance';
+import { generateMarketNews } from './marketNews';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
 import {
   TAKE_HOME_RATIO,
@@ -14,7 +15,8 @@ import {
   RENTAL_INDEX_BOUNDS,
   INTEREST_RATE_BOUNDS,
   INSOLVENCY_STRIKES_LIMIT,
-  SCENARIO_TRIGGER_PROBABILITY,
+  MARKET_NEWS_FEED_LIMIT,
+  STARTER_SCENARIO_TURN,
 } from './constants';
 import { contributeCpf, applyCpfInterest } from './cpf';
 
@@ -49,7 +51,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     newAge++;
   }
 
-  // CPF — real age-based allocation + interest
+  // CPF - real age-based allocation + interest
   const cpfBalances = { oa: player.cpfOrdinary, sa: player.cpfSpecial, ma: player.cpfMedisave };
   const afterContribution = contributeCpf(cpfBalances, player.salary, player.age);
   const afterInterest = applyCpfInterest(afterContribution);
@@ -62,7 +64,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
 
   // Loan amortization
   let totalLoanPayment = 0;
-  const updatedLoans = player.loans.map(loan => {
+  const updatedLoans = player.loans.map((loan) => {
     if (loan.isPaid) return loan;
     const step = amortizeOneMonth(loan.remainingBalance, loan.monthlyPayment, loan.interestRate);
     totalLoanPayment += step.actualPayment;
@@ -70,33 +72,54 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   });
 
   // Salary growth (annual)
-  const career = careers.find(c => c.id === player.careerId) || careers[0];
+  const career = careers.find((candidate) => candidate.id === player.careerId) || careers[0];
   let newSalary = player.salary;
   if (newMonth === 1) {
     newSalary = Math.round(player.salary * (1 + career.growthRate * (0.5 + rng.next())));
   }
 
-  // Market dynamics
-  const volChange = (rng.next() - 0.5) * 2 * diff.marketVolatility;
-  const newPriceIndex = Math.max(PRICE_INDEX_BOUNDS.min, Math.min(PRICE_INDEX_BOUNDS.max, market.priceIndex * (1 + volChange * 0.1)));
-  const newRentalIndex = Math.max(RENTAL_INDEX_BOUNDS.min, Math.min(RENTAL_INDEX_BOUNDS.max, market.rentalIndex * (1 + volChange * 0.05)));
-  const newInterestRate = Math.max(INTEREST_RATE_BOUNDS.min, Math.min(INTEREST_RATE_BOUNDS.max, market.interestRate + (rng.next() - 0.5) * 0.5));
+  const newTurnCount = player.turnCount + 1;
 
-  // Property values — single volChange multiplier, no priceIndex drift
-  const finalProperties = player.properties.map(p => ({
-    ...p,
-    currentValue: Math.max(PROPERTY_VALUE_FLOOR, Math.round(p.currentValue * (1 + volChange * PROPERTY_VALUE_VOL_FACTOR))),
+  // Market dynamics with actual monthly moves and explanatory headlines
+  const marketPulse = generateMarketNews({
+    rng,
+    turn: newTurnCount,
+    month: newMonth,
+    year: newYear,
+    volatility: diff.marketVolatility,
+  });
+  const newPriceIndex = Math.max(
+    PRICE_INDEX_BOUNDS.min,
+    Math.min(PRICE_INDEX_BOUNDS.max, market.priceIndex * (1 + marketPulse.priceChangePct / 100)),
+  );
+  const newRentalIndex = Math.max(
+    RENTAL_INDEX_BOUNDS.min,
+    Math.min(RENTAL_INDEX_BOUNDS.max, market.rentalIndex * (1 + marketPulse.rentalChangePct / 100)),
+  );
+  const newInterestRate = Math.max(
+    INTEREST_RATE_BOUNDS.min,
+    Math.min(INTEREST_RATE_BOUNDS.max, market.interestRate + marketPulse.rateChangePct),
+  );
+
+  // Property values follow the same broader market pulse, but with dampened sensitivity
+  const finalProperties = player.properties.map((property) => ({
+    ...property,
+    currentValue: Math.max(
+      PROPERTY_VALUE_FLOOR,
+      Math.round(property.currentValue * (1 + (marketPulse.priceChangePct / 100) * PROPERTY_VALUE_VOL_FACTOR * 10)),
+    ),
   }));
 
   // Cashflow
   const netCashChange = takeHomePay + rentalIncome - totalLoanPayment;
   const newCash = player.cash + netCashChange;
 
-  // Scenarios — skip on turn 0
+  // Scenarios - guarantee an early decision and then fire on cadence instead of chance
   let scenarioId: string | null = null;
-  const newTurnCount = player.turnCount + 1;
-  if (player.turnCount > 0 && newTurnCount % diff.eventFrequency === 0 && rng.next() < SCENARIO_TRIGGER_PROBABILITY) {
-    scenarioId = rngPick(rng, scenarios).id;
+  if (player.properties.length === 0 && newTurnCount === STARTER_SCENARIO_TURN) {
+    scenarioId = 'first-home-window';
+  } else if (player.turnCount > 0 && newTurnCount % diff.eventFrequency === 0) {
+    scenarioId = rngPick(rng, scenarios.filter((scenario) => scenario.id !== 'first-home-window')).id;
   }
 
   const newPlayer: Player = {
@@ -113,14 +136,14 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     month: newMonth,
     turnCount: newTurnCount,
     totalRentalIncome: player.totalRentalIncome + rentalIncome,
-    totalNetWorth: 0, // computed below
+    totalNetWorth: 0,
     bankruptcyStrikes: player.bankruptcyStrikes ?? 0,
   };
   newPlayer.totalNetWorth = selectNetWorth(newPlayer);
 
   // Game-over detection
   const monthlyTakeHome = newSalary * TAKE_HOME_RATIO + rentalIncome;
-  const monthlyDebt = updatedLoans.filter(l => !l.isPaid).reduce((s, l) => s + l.monthlyPayment, 0);
+  const monthlyDebt = updatedLoans.filter((loan) => !loan.isPaid).reduce((sum, loan) => sum + loan.monthlyPayment, 0);
   const isInsolvent = newPlayer.cash < 0 && monthlyTakeHome < monthlyDebt;
   const newStrikes = isInsolvent ? (player.bankruptcyStrikes ?? 0) + 1 : 0;
   newPlayer.bankruptcyStrikes = newStrikes;
@@ -135,7 +158,13 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     priceIndex: newPriceIndex,
     rentalIndex: newRentalIndex,
     volatility: diff.marketVolatility,
-    lastEvent: volChange > 0.05 ? 'boom' : volChange < -0.05 ? 'crash' : 'stable',
+    lastEvent: marketPulse.lastEvent,
+    monthlyPriceChangePct: marketPulse.priceChangePct,
+    monthlyRentalChangePct: marketPulse.rentalChangePct,
+    monthlyInterestRateChangePct: marketPulse.rateChangePct,
+    lastHeadline: marketPulse.newsItem.headline,
+    lastSummary: marketPulse.newsItem.detail,
+    newsFeed: [marketPulse.newsItem, ...(market.newsFeed ?? [])].slice(0, MARKET_NEWS_FEED_LIMIT),
   };
 
   return { player: newPlayer, market: newMarket, scenarioId, gameOver, outcome };
