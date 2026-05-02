@@ -1,4 +1,11 @@
 export type ScenarioCategory = 'Market' | 'Personal' | 'Property' | 'Macro' | 'Rare';
+export type ScenarioRequirement =
+  | 'owned-property'
+  | 'rented-property'
+  | 'aging-leasehold'
+  | 'premium-district'
+  | 'commercial-asset'
+  | 'single-only';
 
 export interface ScenarioOption {
   label: string;
@@ -17,6 +24,7 @@ export interface Scenario {
   description: string;
   image: string;
   frequency: 'common' | 'uncommon' | 'rare' | 'very-rare';
+  requires?: ScenarioRequirement[];
   options: ScenarioOption[];
 }
 
@@ -134,6 +142,7 @@ export const scenarios: Scenario[] = [
     description: 'You have decided to tie the knot! This is a major life milestone that brings new financial considerations.',
     image: '/scenario-personal.jpg',
     frequency: 'uncommon',
+    requires: ['single-only'],
     options: [
       { label: 'Buy Matrimonial Home', description: 'Purchase a home together using combined income', probability: 0.8, cashImpact: -100000, propertyValueImpact: 15, creditImpact: 10, followUpText: 'Combined income means stronger loan eligibility. Welcome to married life!' },
       { label: 'Host Wedding First', description: 'Save for a grand wedding celebration', probability: 0.9, cashImpact: -50000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'Beautiful wedding! Combined income going forward means stronger purchasing power.' },
@@ -174,6 +183,7 @@ export const scenarios: Scenario[] = [
     description: 'A developer is eyeing your property for collective sale! The offer is significantly above market value.',
     image: '/scenario-boom.jpg',
     frequency: 'rare',
+    requires: ['owned-property'],
     options: [
       { label: 'Vote to Sell', description: 'Accept the en-bloc offer', probability: 0.8, cashImpact: 800000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'Jackpot! The en-bloc sale netted you a massive profit. Time to reinvest!' },
       { label: 'Hold Out', description: 'Reject the offer and wait for a better price', probability: 0.4, cashImpact: 0, propertyValueImpact: 5, creditImpact: 0, followUpText: 'Risky move. The developer may walk away, or they may come back with a higher offer.' },
@@ -187,6 +197,7 @@ export const scenarios: Scenario[] = [
     description: 'Your tenant has failed to pay rent for 2 months and has disappeared. You need to find a new tenant.',
     image: '/scenario-market-crash.jpg',
     frequency: 'common',
+    requires: ['rented-property'],
     options: [
       { label: 'Engage Agent', description: 'Pay for a property agent to find new tenant quickly', probability: 0.85, cashImpact: -8000, propertyValueImpact: 0, creditImpact: -5, followUpText: 'New tenant found in 3 weeks. A small price to pay for peace of mind.' },
       { label: 'Self-Market', description: 'Handle the listing yourself to save costs', probability: 0.6, cashImpact: -15000, propertyValueImpact: 0, creditImpact: -10, followUpText: 'It took 2 months to find a tenant. Lost rental income hurt, but you saved on commission.' },
@@ -200,6 +211,7 @@ export const scenarios: Scenario[] = [
     description: 'Your aging property needs significant repairs. The plumbing and electrical systems require complete overhaul.',
     image: '/scenario-market-crash.jpg',
     frequency: 'common',
+    requires: ['owned-property'],
     options: [
       { label: 'Full Renovation', description: 'Complete overhaul to modern standards', probability: 0.85, cashImpact: -80000, propertyValueImpact: 12, creditImpact: 0, followUpText: 'The renovated property now commands higher rent and increased in value!' },
       { label: 'Patch Repairs', description: 'Do only essential fixes to save money', probability: 0.9, cashImpact: -25000, propertyValueImpact: 2, creditImpact: 0, followUpText: 'The bare minimum keeps things functional, but the property value barely budged.' },
@@ -213,6 +225,7 @@ export const scenarios: Scenario[] = [
     description: 'Your tenant has been exceptional — always on time, maintains the property well, and wants to renew for 3 years.',
     image: '/scenario-boom.jpg',
     frequency: 'common',
+    requires: ['rented-property'],
     options: [
       { label: 'Small Rent Increase', description: 'Raise rent modestly to keep them happy', probability: 0.9, cashImpact: 12000, propertyValueImpact: 2, creditImpact: 5, followUpText: 'The tenant gladly accepted the small increase. Stable income for 3 years!' },
       { label: 'Maintain Current Rent', description: 'No increase to ensure long-term stability', probability: 0.95, cashImpact: 6000, propertyValueImpact: 0, creditImpact: 10, followUpText: 'The grateful tenant signed the 3-year lease. Zero vacancy risk!' },
@@ -226,6 +239,7 @@ export const scenarios: Scenario[] = [
     description: 'The government is offering lease top-up schemes for aging 99-year lease properties at a discounted rate.',
     image: '/scenario-boom.jpg',
     frequency: 'uncommon',
+    requires: ['aging-leasehold'],
     options: [
       { label: 'Top Up Lease', description: 'Extend the lease by 50 years', probability: 0.8, cashImpact: -150000, propertyValueImpact: 25, creditImpact: 0, followUpText: 'Brilliant move! The lease extension significantly boosted your property value.' },
       { label: 'Sell Before Top-Up', description: 'Sell the property as-is to someone else', probability: 0.6, cashImpact: 200000, propertyValueImpact: -5, creditImpact: 0, followUpText: 'You passed the decision to the buyer. Sometimes the best move is to exit.' },
@@ -240,6 +254,7 @@ export const scenarios: Scenario[] = [
     description: 'The government has announced a new MRT line that will pass through an area where you own property!',
     image: '/scenario-boom.jpg',
     frequency: 'uncommon',
+    requires: ['owned-property'],
     options: [
       { label: 'Hold for Capital Gain', description: 'Wait for property values to rise when MRT opens', probability: 0.8, cashImpact: 0, propertyValueImpact: 20, creditImpact: 0, followUpText: 'Property prices in the area surged on the news! Great patience.' },
       { label: 'Buy More Nearby', description: 'Acquire additional properties before prices rise', probability: 0.65, cashImpact: -400000, propertyValueImpact: 30, creditImpact: -5, followUpText: 'You capitalized on the news early. Multiple properties now rising in value!' },
@@ -319,6 +334,7 @@ export const scenarios: Scenario[] = [
     description: 'A major developer has made a direct, unsolicited offer on one of your properties at 40% above valuation.',
     image: '/scenario-boom.jpg',
     frequency: 'very-rare',
+    requires: ['owned-property'],
     options: [
       { label: 'Accept Immediately', description: 'Take the life-changing offer', probability: 0.95, cashImpact: 2500000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'Life-changing windfall! Time to reinvest strategically.' },
       { label: 'Counter Higher', description: 'Negotiate for an even better price', probability: 0.5, cashImpact: 3200000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'Incredible! The developer agreed to your counter. Fortune favors the bold!' },

@@ -5,22 +5,30 @@ import { careers } from '@/data/careers';
 import { createRng, newSeed, type Rng } from '@/engine/rng';
 import { advanceTurn } from '@/engine/turn';
 import { buyPropertyPure, sellPropertyPure, applyLoanPure, payLoanPure, renovatePropertyPure, resolveScenarioOption } from '@/engine/actions';
-import { deriveUnlockedAchievementIds } from '@/engine/achievements';
 import { selectNetWorth } from '@/engine/selectors';
 import { SAVE_VERSION } from '@/engine/constants';
 import { estimateInitialCpf } from '@/engine/cpf';
+import { withEvaluatedAchievements } from '@/engine/achievementRules';
+import { normalizeOwnedProperty } from '@/engine/portfolio';
 import type { ScenarioOption } from '@/data/scenarios';
 import type { ScenarioResolution } from '@/engine/actions';
 import type { ActionResult } from '@/engine/results';
 
 let rng: Rng = createRng(0);
 
-function withDerivedPlayer(player: Player): Player {
+function withNetWorth(player: Player): Player {
+  return { ...player, totalNetWorth: selectNetWorth(player) };
+}
+
+function withPortfolioDefaults(player: Player): Player {
   return {
     ...player,
-    totalNetWorth: selectNetWorth(player),
-    achievements: deriveUnlockedAchievementIds(player),
+    properties: player.properties.map(normalizeOwnedProperty),
   };
+}
+
+function finalizePlayer(player: Player): Player {
+  return withEvaluatedAchievements(withNetWorth(withPortfolioDefaults(player)));
 }
 
 function createInitialPlayer(name: string, careerId: string, difficulty: Difficulty): Player {
@@ -28,7 +36,7 @@ function createInitialPlayer(name: string, careerId: string, difficulty: Difficu
   const diff = difficultySettings[difficulty];
   const salary = Math.round(career.startingSalary * diff.salaryModifier);
   const initialCpf = estimateInitialCpf(27, salary);
-  return withDerivedPlayer({
+  return finalizePlayer({
     name,
     age: 27,
     careerId,
@@ -45,7 +53,7 @@ function createInitialPlayer(name: string, careerId: string, difficulty: Difficu
     year: 2024,
     month: 1,
     turnCount: 0,
-    totalNetWorth: diff.startingCash,
+    totalNetWorth: 0,
     achievements: [],
     difficulty,
     totalRentalIncome: 0,
@@ -74,10 +82,22 @@ function createInitialSettings(difficulty: Difficulty) {
   };
 }
 
-function saveTurn(state: { player: Player } & Record<string, unknown>) {
+function saveTurn(state: GameState) {
   try {
     localStorage.setItem('sgpt_autosave', JSON.stringify({ ...state, version: SAVE_VERSION }));
   } catch { /* storage unavailable */ }
+}
+
+function pickGameState(state: GameState): GameState {
+  return {
+    player: state.player,
+    market: state.market,
+    settings: state.settings,
+    isGameActive: state.isGameActive,
+    currentScenario: state.currentScenario,
+    rngSeed: state.rngSeed,
+    rngState: state.rngState,
+  };
 }
 
 interface GameStore extends GameState {
@@ -118,12 +138,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       rngSeed: seed,
       rngState: rng.getState(),
     });
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   loadGame: (state) => {
     rng = createRng(state.rngSeed);
     rng.setState(state.rngState);
-    set({ ...state, player: withDerivedPlayer(state.player), isGameActive: true });
+    set({ ...state, player: finalizePlayer(state.player), isGameActive: true });
   },
 
   nextTurn: () => {
@@ -131,7 +153,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (currentScenario) return;
     const result = advanceTurn({ player, market, settings, rng });
     const nextState = {
-      player: withDerivedPlayer(result.player),
+      player: finalizePlayer(result.player),
       market: result.market,
       settings,
       currentScenario: result.scenarioId,
@@ -145,31 +167,51 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   buyProperty: (propertyId, downPayment) => {
     const result = buyPropertyPure(get().player, propertyId, downPayment);
-    if (result.ok) set({ player: withDerivedPlayer(result.value.player) });
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
   sellProperty: (propertyIndex) => {
     const result = sellPropertyPure(get().player, propertyIndex);
-    if (result.ok) set({ player: withDerivedPlayer(result.value.player) });
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
   applyLoan: (amount, interestRate, termYears, type, propertyId) => {
     const result = applyLoanPure(get().player, amount, interestRate, termYears, type, propertyId);
-    if (result.ok) set({ player: withDerivedPlayer(result.value.player) });
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
   payLoan: (loanId, amount) => {
     const result = payLoanPure(get().player, loanId, amount);
-    if (result.ok) set({ player: withDerivedPlayer(result.value.player) });
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
   renovateProperty: (propertyIndex, cost) => {
     const result = renovatePropertyPure(get().player, propertyIndex, cost);
-    if (result.ok) set({ player: withDerivedPlayer(result.value.player) });
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
@@ -177,28 +219,42 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { player } = get();
     if (propertyIndex < 0 || propertyIndex >= player.properties.length) return;
     const updatedProperties = [...player.properties];
-    updatedProperties[propertyIndex] = { ...updatedProperties[propertyIndex], isRented: !updatedProperties[propertyIndex].isRented };
-    set({ player: withDerivedPlayer({ ...player, properties: updatedProperties }) });
+    const nextIsRented = !updatedProperties[propertyIndex].isRented;
+    updatedProperties[propertyIndex] = {
+      ...updatedProperties[propertyIndex],
+      isRented: nextIsRented,
+      occupancyStatus: nextIsRented ? 'tenanted' : 'vacant',
+      vacancyMonths: nextIsRented ? 0 : updatedProperties[propertyIndex].vacancyMonths ?? 0,
+    };
+    set({ player: finalizePlayer({ ...player, properties: updatedProperties }) });
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   updateSettings: (newSettings) => {
     set(state => ({ settings: { ...state.settings, ...newSettings } }));
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   unlockAchievement: (achievementId) => {
     const { player } = get();
     if (player.achievements.includes(achievementId)) return;
-    set({ player: withDerivedPlayer({ ...player, achievements: [...player.achievements, achievementId] }) });
+    set({ player: finalizePlayer({ ...player, achievements: [...player.achievements, achievementId] }) });
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   setCurrentScenario: (scenarioId) => {
     set({ currentScenario: scenarioId });
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   resolveScenario: (option) => {
     const resolution = resolveScenarioOption(option, rng);
     set(state => ({
-      player: withDerivedPlayer({
+      player: finalizePlayer({
         ...state.player,
         cash: state.player.cash + resolution.cashDelta,
         creditScore: Math.max(MIN_CREDIT_SCORE, Math.min(MAX_CREDIT_SCORE, state.player.creditScore + resolution.creditDelta)),
@@ -212,6 +268,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       rngState: rng.getState(),
       currentScenario: null,
     }));
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
     return resolution;
   },
 

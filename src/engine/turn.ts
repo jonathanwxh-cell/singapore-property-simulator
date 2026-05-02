@@ -1,11 +1,12 @@
 import type { Player, MarketState, GameSettings } from '@/game/types';
 import { difficultySettings } from '@/game/types';
 import { careers } from '@/data/careers';
-import { scenarios } from '@/data/scenarios';
 import type { Rng } from './rng';
 import { rngPick } from './rng';
 import { amortizeOneMonth } from './finance';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
+import { advancePortfolioMonth } from './portfolio';
+import { getEligibleScenarios } from './scenarioContext';
 import {
   TAKE_HOME_RATIO,
   PROPERTY_VALUE_VOL_FACTOR,
@@ -59,6 +60,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
 
   // Rental income
   const rentalIncome = selectMonthlyRentalIncome(player);
+  const portfolioStep = advancePortfolioMonth(player);
 
   // Loan amortization
   let totalLoanPayment = 0;
@@ -83,20 +85,27 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   const newInterestRate = Math.max(INTEREST_RATE_BOUNDS.min, Math.min(INTEREST_RATE_BOUNDS.max, market.interestRate + (rng.next() - 0.5) * 0.5));
 
   // Property values — single volChange multiplier, no priceIndex drift
-  const finalProperties = player.properties.map(p => ({
+  const finalProperties = portfolioStep.updatedProperties.map(p => ({
     ...p,
     currentValue: Math.max(PROPERTY_VALUE_FLOOR, Math.round(p.currentValue * (1 + volChange * PROPERTY_VALUE_VOL_FACTOR))),
   }));
 
   // Cashflow
-  const netCashChange = takeHomePay + rentalIncome - totalLoanPayment;
+  const totalOwnershipCosts = portfolioStep.monthlyCosts.maintenance + portfolioStep.monthlyCosts.propertyTax;
+  const netCashChange = takeHomePay + rentalIncome - totalLoanPayment - totalOwnershipCosts;
   const newCash = player.cash + netCashChange;
 
   // Scenarios — skip on turn 0
   let scenarioId: string | null = null;
   const newTurnCount = player.turnCount + 1;
-  if (player.turnCount > 0 && newTurnCount % diff.eventFrequency === 0 && rng.next() < SCENARIO_TRIGGER_PROBABILITY) {
-    scenarioId = rngPick(rng, scenarios).id;
+  const eligibleScenarios = getEligibleScenarios(player);
+  if (
+    player.turnCount > 0 &&
+    eligibleScenarios.length > 0 &&
+    newTurnCount % diff.eventFrequency === 0 &&
+    rng.next() < SCENARIO_TRIGGER_PROBABILITY
+  ) {
+    scenarioId = rngPick(rng, eligibleScenarios).id;
   }
 
   const newPlayer: Player = {

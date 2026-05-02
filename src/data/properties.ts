@@ -1,3 +1,6 @@
+import type { ListingChannel, ListingRarity } from './listingChannels';
+import { additionalProperties } from './propertyExpansion';
+
 export type PropertyType =
   | 'HDB BTO'
   | 'HDB Resale'
@@ -28,9 +31,12 @@ export interface Property {
   nearestMrt: string;
   isAvailable: boolean;
   isHdb: boolean;
+  listingChannel?: ListingChannel;
+  listingRarity?: ListingRarity;
+  archetypeId?: string;
 }
 
-export const properties: Property[] = [
+const baseProperties: Property[] = [
   // HDB BTO Properties
   {
     id: 'hdb-bto-1',
@@ -718,6 +724,8 @@ export const properties: Property[] = [
     isHdb: false,
   },
 ];
+
+export const properties: Property[] = [...baseProperties, ...additionalProperties];
 
 export const propertyTypeInfo: Record<PropertyType, { color: string; icon: string; description: string }> = {
   'HDB BTO': { color: '#00E676', icon: 'Building', description: 'New public housing from HDB' },

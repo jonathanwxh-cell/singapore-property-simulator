@@ -22,17 +22,12 @@ describe('buyPropertyPure', () => {
   });
 
   it('rejects insufficient cash', () => {
-    // hdb-bto-1 costs $380k. Stamp duty on first property = BSD only = $5,400
-    // Down payment of $100k + $5,400 stamp duty = $105,400 needed
     const result = buyPropertyPure(makePlayer({ cash: 1000 }), 'hdb-bto-1', 100_000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('insufficient_cash');
   });
 
   it('rejects when TDSR would exceed 55%', () => {
-    // hdb-bto-1 costs $380k. LTV cap on first property = 75% = $285k max loan.
-    // Down payment must be >= $95k. Use $100k down → loan = $280k (within LTV).
-    // With $1500 existing debt + new mortgage, TDSR exceeds 55% on $3000 salary.
     const player = makePlayer({
       salary: 3000,
       cash: 1_000_000,
@@ -50,6 +45,30 @@ describe('buyPropertyPure', () => {
     const result = buyPropertyPure(player, 'hdb-bto-1', 100_000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('already_owned');
+  });
+
+  it('creates the expected Tampines mortgage and ownership state on a valid purchase', () => {
+    const player = makePlayer({
+      cash: 150_000,
+      salary: 5_500,
+      cpfOrdinary: 31_600,
+      cpfSpecial: 8_300,
+      cpfMedisave: 11_000,
+    });
+
+    const result = buyPropertyPure(player, 'hdb-bto-1', 100_000);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.value.player.cash).toBe(44_000);
+    expect(result.value.player.properties).toHaveLength(1);
+    expect(result.value.player.loans).toHaveLength(1);
+    expect(result.value.player.loans[0].principal).toBe(280_000);
+    expect(result.value.player.loans[0].remainingBalance).toBe(280_000);
+    expect(result.value.player.properties[0].occupancyStatus).toBe('vacant');
+    expect(result.value.player.properties[0].vacancyMonths).toBe(0);
+    expect(result.value.player.properties[0].maintenanceCost).toBeGreaterThan(0);
+    expect(result.value.player.properties[0].propertyTax).toBeGreaterThan(0);
   });
 });
 
@@ -202,8 +221,6 @@ describe('buyPropertyPure stamp duty + LTV + MSR', () => {
       cash: 200_000,
       properties: [{ propertyId: 'existing', purchasePrice: 0, purchaseDate: '', currentValue: 0, isRented: false, monthlyRental: 0, renovationLevel: 0 }],
     });
-    // hdb-bto-1 at $380K. As 2nd property: BSD ~6000 + ABSD 76000 = ~82000 stamp.
-    // Down 200K + ~82K stamp = 282K. Player has 200K → reject.
     const result = buyPropertyPure(player, 'hdb-bto-1', 200_000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('insufficient_cash');
@@ -214,8 +231,6 @@ describe('buyPropertyPure stamp duty + LTV + MSR', () => {
     const result = buyPropertyPure(player, 'hdb-bto-1', 100_000);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      // BSD on 380K = 6000. ABSD (1st property) = 0.
-      // Cash = 1M - 100K downpayment - 6K BSD = 894K.
       expect(result.value.player.cash).toBe(894_000);
     }
   });
@@ -225,8 +240,6 @@ describe('buyPropertyPure stamp duty + LTV + MSR', () => {
       cash: 5_000_000,
       loans: [{ id: 'm1', type: 'mortgage', principal: 0, remainingBalance: 100_000, interestRate: 2.5, monthlyPayment: 500, termYears: 30, startDate: '', isPaid: false }],
     });
-    // hdb-bto-1 at 380K. With 50K downpayment, loan = 330K → 86.8% LTV.
-    // Second housing loan capped at 45% → max loan 171K → reject.
     const result = buyPropertyPure(player, 'hdb-bto-1', 50_000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('ltv_exceeded');

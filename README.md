@@ -13,11 +13,11 @@ You start as a 27-year-old Singaporean with a career and modest savings. Each tu
 ### Core Loop
 
 1. **Earn** — Monthly salary (career-dependent) flows in after CPF deductions
-2. **Buy** — Purchase properties across 9 property types and 28 districts
+2. **Buy** — Browse 80 live listings across 9 property types, 28 districts, and 6 listing channels
 3. **Finance** — Take mortgages, manage LTV caps and TDSR/MSR limits
 4. **Collect Rent** — Tenant income from rented properties
-5. **Advance Turn** — Market moves, loans amortize, CPF compounds, events fire
-6. **React** — Scenario events (market crashes, cooling measures, renovation opportunities) present choices with probabilistic outcomes
+5. **Advance Turn** — Market moves, loans amortize, CPF compounds, ownership costs hit, and portfolio-aware events fire
+6. **React** — Scenario events (market crashes, cooling measures, tenant defaults, leasehold pressure, renovation opportunities) present choices with probabilistic outcomes
 
 ### Win / Lose
 
@@ -53,7 +53,7 @@ You start as a 27-year-old Singaporean with a career and modest savings. Each tu
 
 ---
 
-## Property Types (34 properties)
+## Property Types (80 listings)
 
 | Type | Price Range | Rental Yield | Example |
 |------|------------|-------------|---------|
@@ -66,6 +66,14 @@ You start as a 27-year-old Singaporean with a career and modest savings. Each tu
 | Landed Bungalow | $22M–$45M | 1.0–1.5% | Sentosa Cove |
 | Commercial Shop | $4.8M–$12M | 2.8–3.3% | Amoy Street Shophouse |
 | Commercial Office | $2.8M–$5.5M | 3.5–4.2% | Raffles Place Office |
+
+The market now spans all 28 defined districts with at least 2 live listings each. Inventory is grouped into `New Launch`, `Resale`, `Auction`, `Distressed`, `Off-Market`, and `Signature` channels so the browser feels more like a live market than a flat spreadsheet.
+
+### Portfolio Depth
+
+- Owned properties now track occupancy state, vacancy streaks, maintenance drag, and property tax.
+- Portfolio summaries surface investor routes such as `Heartland Landlord` and `Commercial Cashflow Operator`.
+- Contextual scenarios now key off what you actually own, whether it is rented, and whether you are holding aging leasehold stock.
 
 ---
 
@@ -145,15 +153,21 @@ src/
 │   ├── ltv.ts            # LTV cap, MSR check, max-borrowable
 │   ├── finance.ts        # Amortization, monthly payment, TDSR calc
 │   ├── selectors.ts      # Derived state: net worth, rental income, expenses
+│   ├── listings.ts       # Listing enrichment, district coverage, market mover helpers
+│   ├── portfolio.ts      # Carrying costs, occupancy state, investor-route summaries
+│   ├── scenarioContext.ts# Portfolio-aware scenario gating
 │   ├── constants.ts      # All tunable parameters in one place
 │   ├── rng.ts            # Seeded PRNG for deterministic replays
 │   ├── results.ts        # ActionResult<T> discriminated union
-│   └── __tests__/        # 90+ tests (vitest)
+│   └── __tests__/        # 130+ tests (vitest)
 ├── game/
 │   ├── types.ts          # Player, Loan, Property, MarketState, GameState
 │   └── useGameStore.ts   # Zustand store — thin wrapper around engine actions
 ├── data/
-│   ├── properties.ts     # 34 properties across 9 types
+│   ├── properties.ts     # Base catalog plus expansion hook for the live market
+│   ├── propertyExpansion.ts # Expanded listing pack to reach full district coverage
+│   ├── propertyArchetypes.ts # Strategy labels and reusable listing archetypes
+│   ├── listingChannels.ts # Market channels, rarity metadata, and badges
 │   ├── careers.ts        # 7 career paths
 │   ├── districts.ts      # 28 Singapore districts
 │   ├── eras.ts           # Game era definitions
@@ -200,7 +214,7 @@ npm run test:watch # Watch mode
 npm run test:ui    # Vitest UI
 ```
 
-Tests cover: CPF allocation & interest, BSD/ABSD tiers, LTV caps, MSR checks, TDSR enforcement, buy/sell/renovate/pay-loan actions, turn advancement, amortization, insolvency detection, and win/lose conditions.
+Tests cover: CPF allocation and interest, BSD and ABSD tiers, LTV caps, MSR checks, TDSR enforcement, buy and sell flows, shortfall math, mortgage creation, net worth calculations, carrying costs, route progression, scenario eligibility, turn advancement, amortization, insolvency detection, and win or lose conditions.
 
 ---
 

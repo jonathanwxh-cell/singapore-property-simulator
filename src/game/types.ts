@@ -1,5 +1,6 @@
 export type Difficulty = 'easy' | 'normal' | 'hard' | 'tycoon';
 export type MaritalStatus = 'single' | 'married' | 'divorced';
+export type OccupancyStatus = 'vacant' | 'tenanted' | 'renovating' | 'listed';
 
 export interface OwnedProperty {
   propertyId: string;
@@ -10,6 +11,12 @@ export interface OwnedProperty {
   monthlyRental: number;
   renovationLevel: number;
   loanId?: string;
+  occupancyStatus?: OccupancyStatus;
+  tenantQuality?: number;
+  vacancyMonths?: number;
+  maintenanceCost?: number;
+  propertyTax?: number;
+  listingChannel?: string;
 }
 
 export interface Loan {

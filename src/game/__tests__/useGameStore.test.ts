@@ -99,4 +99,28 @@ describe('useGameStore', () => {
     expect(result.ok).toBe(true);
     expect(useGameStore.getState().player.achievements).toContain('first-property');
   });
+
+  it('keeps occupancy state in sync when rental status changes', () => {
+    resetStore({
+      player: makePlayer({
+        properties: [{
+          propertyId: 'hdb-bto-1',
+          purchasePrice: 380_000,
+          purchaseDate: '2024-01',
+          currentValue: 380_000,
+          isRented: false,
+          monthlyRental: 1647,
+          renovationLevel: 0,
+        }],
+      }),
+    });
+
+    useGameStore.getState().toggleRental(0);
+    expect(useGameStore.getState().player.properties[0].isRented).toBe(true);
+    expect(useGameStore.getState().player.properties[0].occupancyStatus).toBe('tenanted');
+
+    useGameStore.getState().toggleRental(0);
+    expect(useGameStore.getState().player.properties[0].isRented).toBe(false);
+    expect(useGameStore.getState().player.properties[0].occupancyStatus).toBe('vacant');
+  });
 });

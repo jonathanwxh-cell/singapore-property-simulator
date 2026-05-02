@@ -221,6 +221,16 @@ export const achievements: Achievement[] = [
     secret: true,
   },
   {
+    id: 'commercial-operator',
+    name: 'Commercial Operator',
+    description: 'Own 3 commercial assets simultaneously.',
+    condition: 'commercial_count >= 3',
+    icon: 'Briefcase',
+    tier: 'gold',
+    points: 1200,
+    secret: false,
+  },
+  {
     id: 'all-districts',
     name: 'Island-Wide Empire',
     description: 'Own properties in 10 different districts.',
