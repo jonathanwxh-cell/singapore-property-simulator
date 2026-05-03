@@ -5,6 +5,7 @@ import { scenarios } from '@/data/scenarios';
 import type { Rng } from './rng';
 import { rngPick } from './rng';
 import { amortizeOneMonth } from './finance';
+import { resolveAnnualCareerReview, shouldOfferJobSwitch, shouldRunAnnualCareerReview } from './careerProgression';
 import { generateMarketNews } from './marketNews';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
 import {
@@ -71,14 +72,50 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     return { ...loan, remainingBalance: step.newBalance, isPaid: step.isPaidOff };
   });
 
-  // Salary growth (annual)
+  // Career review and salary growth
   const career = careers.find((candidate) => candidate.id === player.careerId) || careers[0];
   let newSalary = player.salary;
-  if (newMonth === 1) {
-    newSalary = Math.round(player.salary * (1 + career.growthRate * (0.5 + rng.next())));
-  }
-
   const newTurnCount = player.turnCount + 1;
+  let reviewBonusCash = 0;
+  let reviewSalaryDelta = 0;
+  let reviewVolatilityModifier = player.careerVolatilityModifier;
+  let lastCareerReviewTurn = player.lastCareerReviewTurn;
+  let careerProgressionProfile = player.careerProgressionProfile;
+  let careerReviewHistory = player.careerReviewHistory;
+
+  if (newMonth === 1 && shouldRunAnnualCareerReview(newTurnCount)) {
+    const review = resolveAnnualCareerReview({
+      rng,
+      salary: player.salary,
+      careerGrowthRate: career.growthRate,
+      careerRiskFactor: career.riskFactor,
+      careerGrowthModifier: player.careerGrowthModifier,
+      careerRiskModifier: player.careerRiskModifier,
+      careerVolatilityModifier: player.careerVolatilityModifier,
+      positiveCashflow: takeHomePay + rentalIncome - totalLoanPayment >= 0,
+      underStress: player.cash < 0 || (player.bankruptcyStrikes ?? 0) > 0,
+    });
+    newSalary = Math.max(1000, Math.round(player.salary * (1 + review.salaryDeltaPct)));
+    reviewBonusCash = review.bonusCash;
+    reviewSalaryDelta = newSalary - player.salary;
+    reviewVolatilityModifier = round2(player.careerVolatilityModifier + review.volatilityDelta);
+    lastCareerReviewTurn = newTurnCount;
+    careerProgressionProfile = {
+      reviewCount: player.careerProgressionProfile.reviewCount + 1,
+      lastOutcome: review.outcome,
+      lastSalaryDelta: reviewSalaryDelta,
+      lastBonus: review.bonusCash,
+    };
+    careerReviewHistory = [
+      ...player.careerReviewHistory,
+      {
+        turn: newTurnCount,
+        outcome: review.outcome,
+        salaryDelta: reviewSalaryDelta,
+        bonus: review.bonusCash,
+      },
+    ];
+  }
 
   // Market dynamics with actual monthly moves and explanatory headlines
   const marketPulse = generateMarketNews({
@@ -112,12 +149,16 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
 
   // Cashflow
   const netCashChange = takeHomePay + rentalIncome - totalLoanPayment;
-  const newCash = player.cash + netCashChange;
+  const newCash = player.cash + netCashChange + reviewBonusCash;
 
-  // Scenarios - guarantee an early decision and then fire on cadence instead of chance
+  // Scenarios - priority order: first-home ladder, job switch choice, annual review visibility, then regular cadence
   let scenarioId: string | null = null;
   if (player.properties.length === 0 && newTurnCount === STARTER_SCENARIO_TURN) {
     scenarioId = 'first-home-window';
+  } else if (shouldOfferJobSwitch(newTurnCount, player.nextJobSwitchTurn)) {
+    scenarioId = 'job-switch-opportunity';
+  } else if (shouldRunAnnualCareerReview(newTurnCount)) {
+    scenarioId = 'career-review';
   } else if (player.turnCount > 0 && newTurnCount % diff.eventFrequency === 0) {
     scenarioId = rngPick(rng, scenarios.filter((scenario) => scenario.id !== 'first-home-window')).id;
   }
@@ -138,6 +179,15 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     totalRentalIncome: player.totalRentalIncome + rentalIncome,
     totalNetWorth: 0,
     bankruptcyStrikes: player.bankruptcyStrikes ?? 0,
+    careerGrowthModifier: player.careerGrowthModifier,
+    careerRiskModifier: player.careerRiskModifier,
+    careerVolatilityModifier: reviewVolatilityModifier,
+    lastCareerReviewTurn: lastCareerReviewTurn,
+    nextJobSwitchTurn: shouldOfferJobSwitch(newTurnCount, player.nextJobSwitchTurn) ? newTurnCount + 24 : player.nextJobSwitchTurn,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+    careerProgressionProfile,
+    careerReviewHistory,
   };
   newPlayer.totalNetWorth = selectNetWorth(newPlayer);
 

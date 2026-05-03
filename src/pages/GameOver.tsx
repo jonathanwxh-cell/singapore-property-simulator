@@ -4,6 +4,9 @@ import { selectNetWorth } from '@/engine/selectors';
 import { difficultySettings } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
 import { Trophy, RotateCcw, Home } from 'lucide-react';
+import { careers } from '@/data/careers';
+import { deriveEligibilityFlags } from '@/engine/eligibility';
+import EligibilityBadge from '@/components/EligibilityBadge';
 
 export default function GameOver() {
   const navigate = useNavigate();
@@ -13,6 +16,16 @@ export default function GameOver() {
   const target = difficultySettings[player.difficulty].targetNetWorth;
   const won = netWorth >= target;
   const score = Math.round((netWorth / target) * 1000) + player.achievements.length * 100 + player.turnCount * 10;
+  const career = careers.find((candidate) => candidate.id === player.careerId) ?? careers[0];
+  const startingSalary = Math.round(career.startingSalary * difficultySettings[player.difficulty].salaryModifier);
+  const salaryGrowth = player.salary - startingSalary;
+  const latestReview = player.careerReviewHistory[player.careerReviewHistory.length - 1] ?? null;
+  const eligibilityFlags = deriveEligibilityFlags({
+    salary: player.salary,
+    properties: player.properties,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+  });
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space flex items-center justify-center px-4">
@@ -48,6 +61,24 @@ export default function GameOver() {
             </div>
           </div>
 
+          <div className="mb-6 rounded-xl border border-glass-border bg-white/5 p-4 text-left">
+            <h2 className="section-title text-white mb-3">Progression Recap</h2>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {eligibilityFlags.firstTimer && <EligibilityBadge label="First-Timer" tone="good" />}
+              {eligibilityFlags.upgrader && <EligibilityBadge label="Upgrader" tone="warn" />}
+              {eligibilityFlags.homeowner && <EligibilityBadge label="Homeowner" tone="warn" />}
+              {player.ownedPrivateHome && <EligibilityBadge label="Private-Home Owner" tone="warn" />}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <RecapRow label="Career Path" value={career.name} />
+              <RecapRow label="Annual Reviews" value={String(player.careerProgressionProfile.reviewCount)} />
+              <RecapRow label="Salary Growth" value={`${salaryGrowth >= 0 ? '+' : '-'}S$${Math.abs(salaryGrowth).toLocaleString()}`} />
+              <RecapRow label="Current Salary" value={`S$${player.salary.toLocaleString()}`} />
+              <RecapRow label="First Purchase" value={player.firstHomePurchased ? 'Completed' : 'Not reached'} />
+              <RecapRow label="Latest Review" value={latestReview ? formatCareerOutcome(latestReview.outcome) : 'None yet'} />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <button onClick={() => navigate('/newgame')} className="btn-primary w-full flex items-center justify-center gap-2">
               <RotateCcw size={16} />
@@ -60,6 +91,23 @@ export default function GameOver() {
           </div>
         </GlassCard>
       </div>
+    </div>
+  );
+}
+
+function formatCareerOutcome(outcome: 'promotion' | 'bonus' | 'steady' | 'setback' | null): string {
+  if (outcome === 'promotion') return 'Promotion';
+  if (outcome === 'bonus') return 'Bonus';
+  if (outcome === 'steady') return 'Steady';
+  if (outcome === 'setback') return 'Setback';
+  return 'Career Review';
+}
+
+function RecapRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-black/20 p-3">
+      <p className="text-text-dim text-[10px] uppercase">{label}</p>
+      <p className="mt-1 text-sm text-white">{value}</p>
     </div>
   );
 }

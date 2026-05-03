@@ -7,23 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- **Scenario pacing**: the simulator now guarantees an early first-home scenario and then fires scenarios on a stable cadence, preventing 12-turn droughts with no events.
-- **Tutorial routing**: `How to Play` now opens a dedicated tutorial page instead of sending players to Settings.
-- **Market readability**: the dashboard and market view now show real monthly price, rental, and rate moves with matching headlines instead of hardcoded repeating percentage text.
-
-### Changed
-- **Repo metadata standardised**: `package.json` updated with proper name (`singapore-property-simulator`), version, description, license, repository, author, keywords, and homepage. Previously inherited the OKComputer scaffolding defaults (`my-app`, `0.0.0`).
-- **Single lockfile**: removed `bun.lock`; `package-lock.json` is the canonical lockfile (matches the README's `npm install` instructions).
-- **Early-game pacing**: first purchases are much more reachable thanks to CPF OA support for eligible residential upfront costs, more affordable starter homes, and a starter scenario that creates an immediate decision.
-
 ### Added
+- **Career & Eligibility Lite phase**: annual career reviews, job-switch scenarios, persistent first-home and private-home progression flags, and simplified executive condo eligibility rules.
+- **Progression UI**: dashboard `Career Review` and `Eligibility Summary` surfaces, property-browser/detail eligibility badges, and a game-over progression recap.
+- **Custom progression art**: added a dedicated `career-review-key-art.png` illustration for the new career milestone flow.
 - `LICENSE` file (proprietary, all rights reserved per README intent).
 - `.github/workflows/ci.yml` running lint (advisory) + test + build on push/PR to `main`.
 - `.github/PULL_REQUEST_TEMPLATE.md` with summary, test plan, and changelog hint.
 - README badges: CI status, license, version.
 - `How to Play` tutorial page with quickstart instructions and first-property guidance.
 - A scripted Playwright smoke test covering tutorial routing, early scenario trigger, market feed visibility, and a first affordable purchase.
+
+### Changed
+- **Property browsing**: listings now explain when they are first-timer friendly, upgrader tier, EC eligible, or blocked by a salary ceiling.
+- **Purchase validation**: executive condo purchases now enforce the simplified salary-ceiling and private-home-history rules used by the new eligibility layer.
+- **Smoke coverage**: the Playwright smoke run now checks the new career review art and eligibility summary surfaces on top of the earlier pacing flow.
+- **Repo metadata standardised**: `package.json` updated with proper name (`singapore-property-simulator`), version, description, license, repository, author, keywords, and homepage. Previously inherited the OKComputer scaffolding defaults (`my-app`, `0.0.0`).
+- **Single lockfile**: removed `bun.lock`; `package-lock.json` is the canonical lockfile (matches the README's `npm install` instructions).
+- **Early-game pacing**: first purchases are much more reachable thanks to CPF OA support for eligible residential upfront costs, more affordable starter homes, and a starter scenario that creates an immediate decision.
+
+### Fixed
+- **Scenario pacing**: the simulator now guarantees an early first-home scenario and then fires scenarios on a stable cadence, preventing 12-turn droughts with no events.
+- **Tutorial routing**: `How to Play` now opens a dedicated tutorial page instead of sending players to Settings.
+- **Market readability**: the dashboard and market view now show real monthly price, rental, and rate moves with matching headlines instead of hardcoded repeating percentage text.
 
 ## [0.4.1] — 2026-05-01
 

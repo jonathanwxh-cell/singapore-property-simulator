@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { selectNetWorth, selectMonthlyNetCashflow, selectMonthlyTakeHome, selectMonthlyRentalIncome, selectMonthlyExpenses } from '@/engine/selectors';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
+import { deriveEligibilityFlags, EC_MAX_MONTHLY_INCOME } from '@/engine/eligibility';
+import EligibilityBadge from '@/components/EligibilityBadge';
 
 export default function Dashboard() {
   const { player, nextTurn, market, isGameActive } = useGameStore();
@@ -19,6 +21,14 @@ export default function Dashboard() {
   const monthlyExpenses = selectMonthlyExpenses(player);
   const monthlyNetCashflow = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
   const marketChange = formatSignedPercent(market.monthlyPriceChangePct ?? 0);
+  const eligibilityFlags = deriveEligibilityFlags({
+    salary: player.salary,
+    properties: player.properties,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+  });
+  const latestCareerReview = player.careerReviewHistory[player.careerReviewHistory.length - 1] ?? null;
+  const nextJobSwitchIn = Math.max(player.nextJobSwitchTurn - player.turnCount, 0);
 
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
@@ -56,6 +66,73 @@ export default function Dashboard() {
                 </p>
                 <p className="text-text-dim text-xs">price index this month</p>
               </div>
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="grid xl:grid-cols-[1.3fr,0.9fr] gap-4 mb-6">
+          <GlassCard accentColor="#FFD740">
+            <div className="grid gap-4 md:grid-cols-[220px,1fr]">
+              <img
+                src="/career-review-key-art.png"
+                alt="Career Review"
+                className="h-44 w-full rounded-xl object-cover opacity-90"
+              />
+              <div>
+                <h3 className="section-title text-white mb-2">Career Review</h3>
+                {latestCareerReview ? (
+                  <>
+                    <p className="text-white font-medium">{formatCareerOutcome(latestCareerReview.outcome)}</p>
+                    <p className="text-text-secondary text-sm mt-1">
+                      Your latest annual review has already rolled into salary and buying power. Use the next few turns to decide whether to press or protect that momentum.
+                    </p>
+                    <div className="grid sm:grid-cols-3 gap-3 mt-4">
+                      <CareerMetric label="Salary Delta" value={formatSignedCurrency(latestCareerReview.salaryDelta)} tone={latestCareerReview.salaryDelta >= 0 ? 'good' : 'blocked'} />
+                      <CareerMetric label="Bonus" value={latestCareerReview.bonus > 0 ? `S$${latestCareerReview.bonus.toLocaleString()}` : 'None'} tone={latestCareerReview.bonus > 0 ? 'good' : 'warn'} />
+                      <CareerMetric label="Review Count" value={String(player.careerProgressionProfile.reviewCount)} tone="warn" />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-white font-medium">First annual review pending</p>
+                    <p className="text-text-secondary text-sm mt-1">
+                      Your first formal review arrives on turn 12. After that, salary growth, setbacks, and job-switch choices become part of the housing climb.
+                    </p>
+                  </>
+                )}
+                <p className="text-text-dim text-xs mt-4">
+                  Next job-switch window in <span className="font-mono text-white">{nextJobSwitchIn}</span> turns.
+                </p>
+              </div>
+            </div>
+          </GlassCard>
+
+          <GlassCard accentColor="#FF9100">
+            <h3 className="section-title text-white mb-2">Eligibility Summary</h3>
+            <div className="flex flex-wrap gap-2">
+              {eligibilityFlags.firstTimer && <EligibilityBadge label="First-Timer" tone="good" />}
+              {eligibilityFlags.homeowner && <EligibilityBadge label="Homeowner" tone="warn" />}
+              {eligibilityFlags.upgrader && <EligibilityBadge label="Upgrader" tone="warn" />}
+              {eligibilityFlags.ecEligible && <EligibilityBadge label="EC Eligible" tone="good" />}
+              {!eligibilityFlags.ecEligible && player.salary > EC_MAX_MONTHLY_INCOME && (
+                <EligibilityBadge label="EC Ceiling Exceeded" tone="blocked" />
+              )}
+              {player.ownedPrivateHome && <EligibilityBadge label="Private-Home Owner" tone="warn" />}
+            </div>
+            <div className="space-y-2 mt-4 text-sm">
+              <p className="text-text-secondary">
+                Monthly salary: <span className="font-mono text-white">S${player.salary.toLocaleString()}</span>
+              </p>
+              <p className="text-text-secondary">
+                EC ceiling: <span className="font-mono text-white">S${EC_MAX_MONTHLY_INCOME.toLocaleString()}</span>
+              </p>
+              <p className="text-text-secondary">
+                {eligibilityFlags.firstTimer
+                  ? 'You are still on your first-home rung, so HDB and early support listings should feel the cleanest to pursue.'
+                  : eligibilityFlags.homeowner
+                    ? 'You have crossed into the upgrader stage. Private condos and larger moves should start feeling more intentional now.'
+                    : 'You have first-home history but no current residential holding, which keeps the run flexible for a reset or bigger next move.'}
+              </p>
             </div>
           </GlassCard>
         </motion.div>
@@ -146,4 +223,39 @@ function CashflowRow({ label, value, type, isTotal }: { label: string; value: nu
 function formatSignedPercent(value: number): string {
   if (Math.abs(value) < 0.05) return '0.0%';
   return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+}
+
+function formatCareerOutcome(outcome: 'promotion' | 'bonus' | 'steady' | 'setback' | null): string {
+  if (outcome === 'promotion') return 'Promotion Year';
+  if (outcome === 'bonus') return 'Strong Bonus Year';
+  if (outcome === 'steady') return 'Steady Progress Year';
+  if (outcome === 'setback') return 'Career Setback';
+  return 'Career Review';
+}
+
+function formatSignedCurrency(value: number): string {
+  return `${value >= 0 ? '+' : '-'}S$${Math.abs(value).toLocaleString()}`;
+}
+
+function CareerMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'good' | 'warn' | 'blocked';
+}) {
+  const toneClasses = {
+    good: 'text-success',
+    warn: 'text-warning',
+    blocked: 'text-danger',
+  } satisfies Record<typeof tone, string>;
+
+  return (
+    <div className="rounded-lg bg-white/5 p-3">
+      <p className="label-text text-text-dim text-[10px]">{label}</p>
+      <p className={`font-mono text-sm ${toneClasses[tone]}`}>{value}</p>
+    </div>
+  );
 }

@@ -39,6 +39,20 @@ export interface MarketNewsItem {
   rateChangePct: number;
 }
 
+export interface CareerProgressionProfile {
+  reviewCount: number;
+  lastOutcome: 'promotion' | 'bonus' | 'steady' | 'setback' | null;
+  lastSalaryDelta: number;
+  lastBonus: number;
+}
+
+export interface CareerReviewHistoryEntry {
+  turn: number;
+  outcome: CareerProgressionProfile['lastOutcome'];
+  salaryDelta: number;
+  bonus: number;
+}
+
 export interface Player {
   name: string;
   age: number;
@@ -62,6 +76,15 @@ export interface Player {
   totalRentalIncome: number;
   totalPropertySalesProfit: number;
   bankruptcyStrikes: number;
+  careerGrowthModifier: number;
+  careerRiskModifier: number;
+  careerVolatilityModifier: number;
+  lastCareerReviewTurn: number;
+  nextJobSwitchTurn: number;
+  firstHomePurchased: boolean;
+  ownedPrivateHome: boolean;
+  careerProgressionProfile: CareerProgressionProfile;
+  careerReviewHistory: CareerReviewHistoryEntry[];
 }
 
 export interface MarketState {

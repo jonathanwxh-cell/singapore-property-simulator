@@ -5,16 +5,25 @@ import GlassCard from '@/components/GlassCard';
 import { Search, MapPin, Bed, Bath, Maximize } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
 import { useNavigate } from 'react-router-dom';
-
-
+import { useGameStore } from '@/game/useGameStore';
+import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
+import EligibilityBadge from '@/components/EligibilityBadge';
 
 export default function Properties() {
   const navigate = useNavigate();
+  const { player } = useGameStore();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
 
   const propertyTypes = Object.keys(propertyTypeInfo);
+  const eligibilityInput = {
+    salary: player.salary,
+    properties: player.properties,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+  };
+  const flags = deriveEligibilityFlags(eligibilityInput);
 
   const filtered = properties.filter(p => {
     const district = districts.find(d => d.id === p.districtId);
@@ -72,6 +81,7 @@ export default function Properties() {
           {filtered.map((property) => {
             const district = districts.find(d => d.id === property.districtId);
             const typeInfo = propertyTypeInfo[property.type];
+            const eligibility = evaluatePropertyEligibility({ ...eligibilityInput, propertyType: property.type });
             return (
               <GlassCard
                 key={property.id}
@@ -104,6 +114,24 @@ export default function Properties() {
                   <span className="flex items-center gap-1"><Bed size={12} /> {property.bedrooms || '-'}</span>
                   <span className="flex items-center gap-1"><Bath size={12} /> {property.bathrooms || '-'}</span>
                   <span className="flex items-center gap-1"><Maximize size={12} /> {property.size}sqm</span>
+                </div>
+
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {flags.firstTimer && eligibility.firstTimerFriendly && (
+                    <EligibilityBadge label="First-Timer Friendly" tone="good" />
+                  )}
+                  {property.type === 'Executive Condo' && eligibility.ecEligible && (
+                    <EligibilityBadge label="EC Eligible" tone="good" />
+                  )}
+                  {eligibility.salaryCeilingExceeded && (
+                    <EligibilityBadge label="Salary Ceiling Exceeded" tone="blocked" />
+                  )}
+                  {eligibility.upgraderTier && (
+                    <EligibilityBadge label="Upgrader Tier" tone="warn" />
+                  )}
+                  {property.type === 'Executive Condo' && eligibility.blockedReason && !eligibility.salaryCeilingExceeded && (
+                    <EligibilityBadge label="Private-Owner Blocked" tone="blocked" />
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">

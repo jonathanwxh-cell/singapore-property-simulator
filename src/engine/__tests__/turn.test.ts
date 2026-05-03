@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { advanceTurn } from '../turn';
 import { createRng } from '../rng';
 import type { Player, MarketState, GameSettings } from '@/game/types';
+import { scenarios } from '@/data/scenarios';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -11,6 +12,20 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
     children: 0, year: 2024, month: 1, turnCount: 0, totalNetWorth: 145_000,
     achievements: [], difficulty: 'normal', totalRentalIncome: 0,
     totalPropertySalesProfit: 0, bankruptcyStrikes: 0,
+    careerGrowthModifier: 1,
+    careerRiskModifier: 1,
+    careerVolatilityModifier: 0,
+    lastCareerReviewTurn: 0,
+    nextJobSwitchTurn: 24,
+    firstHomePurchased: false,
+    ownedPrivateHome: false,
+    careerProgressionProfile: {
+      reviewCount: 0,
+      lastOutcome: null,
+      lastSalaryDelta: 0,
+      lastBonus: 0,
+    },
+    careerReviewHistory: [],
     ...overrides,
   };
 }
@@ -77,6 +92,37 @@ describe('advanceTurn', () => {
       rng: createRng(7),
     });
     expect(result.scenarioId).toBe('first-home-window');
+  });
+
+  it('runs an annual career review on the twelfth turn and surfaces the review scenario', () => {
+    const result = advanceTurn({
+      player: makePlayer({ turnCount: 11, month: 12, year: 2024 }),
+      market: baseMarket,
+      settings: baseSettings,
+      rng: createRng(5),
+    });
+
+    expect(result.scenarioId).toBe('career-review');
+    expect(result.player.lastCareerReviewTurn).toBe(12);
+    expect(result.player.careerProgressionProfile.reviewCount).toBe(1);
+    expect(result.player.careerReviewHistory).toHaveLength(1);
+  });
+
+  it('offers a job-switch scenario when the scheduled switch turn is reached', () => {
+    const result = advanceTurn({
+      player: makePlayer({ turnCount: 23, nextJobSwitchTurn: 24, month: 6, year: 2025, properties: [{ propertyId: 'hdb-bto-0', purchasePrice: 265_000, purchaseDate: '2024-01', currentValue: 265_000, isRented: false, monthlyRental: 0, renovationLevel: 0 }] }),
+      market: baseMarket,
+      settings: baseSettings,
+      rng: createRng(13),
+    });
+
+    expect(result.scenarioId).toBe('job-switch-opportunity');
+  });
+
+  it('has concrete scenario definitions for annual review and job-switch turns', () => {
+    const scenarioIds = new Set(scenarios.map((scenario) => scenario.id));
+    expect(scenarioIds.has('career-review')).toBe(true);
+    expect(scenarioIds.has('job-switch-opportunity')).toBe(true);
   });
 
   it('fires a regular scenario on cadence instead of leaving an empty drought', () => {
