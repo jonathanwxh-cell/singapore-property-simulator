@@ -98,6 +98,11 @@ export default function Scenarios() {
             <GlassCard accentColor={color} className="relative">
               <button onClick={handleDismiss} className="absolute top-4 right-4 text-text-dim hover:text-white transition-colors"><X size={20} /></button>
               <div className="mb-4"><span className="text-[10px] px-2 py-0.5 rounded font-rajdhani uppercase" style={{ backgroundColor: `${color}20`, color }}>{activeScenario.category}</span></div>
+              <img
+                src={activeScenario.id === 'career-review' ? '/career-review-key-art.png' : activeScenario.image}
+                alt={activeScenario.id === 'career-review' ? 'Career Review' : activeScenario.title}
+                className="mb-4 h-40 w-full rounded-xl object-cover opacity-85"
+              />
               <h2 className="page-title text-xl text-white mb-2">{activeScenario.title}</h2>
               <p className="text-text-secondary text-sm mb-6 leading-relaxed">{activeScenario.description}</p>
               <div className="space-y-2">

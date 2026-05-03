@@ -8,8 +8,8 @@ import PropertyImage from '@/components/PropertyImage';
 import { useState } from 'react';
 import { calculateBSD, calculateABSD } from '@/engine/stampDuty';
 import { getLtvCap } from '@/engine/ltv';
-
-
+import EligibilityBadge from '@/components/EligibilityBadge';
+import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -55,10 +55,28 @@ export default function PropertyDetail() {
   const cpfEligible = !property.type.startsWith('Commercial');
   const cpfApplied = cpfEligible && useCpfOrdinary ? Math.min(player.cpfOrdinary, totalUpfront) : 0;
   const cashRequired = Math.max(0, totalUpfront - cpfApplied);
-  const canAfford = player.cash >= cashRequired && !isOwned;
+  const eligibilityFlags = deriveEligibilityFlags({
+    salary: player.salary,
+    properties: player.properties,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+  });
+  const eligibility = evaluatePropertyEligibility({
+    propertyType: property.type,
+    salary: player.salary,
+    properties: player.properties,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+  });
+  const eligibilityBlocked = Boolean(eligibility.blockedReason);
+  const canAfford = player.cash >= cashRequired && !isOwned && !eligibilityBlocked;
 
   const handleBuy = () => {
     if (isOwned) return;
+    if (eligibilityBlocked) {
+      setActionError(eligibility.blockedReason);
+      return;
+    }
     const result = buyProperty(property.id, downPayment, cpfApplied);
     if (result.ok) {
       setActionError(null);
@@ -118,6 +136,18 @@ export default function PropertyDetail() {
                   Rented Out
                 </span>
               )}
+              {!isOwned && eligibilityFlags.firstTimer && eligibility.firstTimerFriendly && (
+                <EligibilityBadge label="First-Timer Friendly" tone="good" />
+              )}
+              {!isOwned && property.type === 'Executive Condo' && eligibility.ecEligible && (
+                <EligibilityBadge label="EC Eligible" tone="good" />
+              )}
+              {!isOwned && eligibility.salaryCeilingExceeded && (
+                <EligibilityBadge label="Salary Ceiling Exceeded" tone="blocked" />
+              )}
+              {!isOwned && eligibility.upgraderTier && (
+                <EligibilityBadge label="Upgrader Tier" tone="warn" />
+              )}
             </div>
             <h1 className="page-title text-white text-2xl md:text-4xl">{property.name}</h1>
             <p className="text-text-secondary text-sm flex items-center gap-1 mt-1">
@@ -166,6 +196,51 @@ export default function PropertyDetail() {
                   </div>
                   <p className="text-text-dim text-xs mt-3">Nearest: {property.nearestMrt}</p>
                 </div>
+              </div>
+            </GlassCard>
+
+            <GlassCard accentColor={eligibilityBlocked ? '#FF1744' : '#FFD740'}>
+              <h3 className="section-title text-white mb-4">Eligibility</h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {eligibilityFlags.firstTimer && (
+                  <EligibilityBadge label="First-Timer" tone="good" />
+                )}
+                {eligibilityFlags.homeowner && (
+                  <EligibilityBadge label="Homeowner" tone="warn" />
+                )}
+                {eligibilityFlags.upgrader && (
+                  <EligibilityBadge label="Upgrader" tone="warn" />
+                )}
+                {eligibilityFlags.ecEligible && property.type === 'Executive Condo' && (
+                  <EligibilityBadge label="EC Eligible" tone="good" />
+                )}
+                {eligibility.salaryCeilingExceeded && (
+                  <EligibilityBadge label="Salary Ceiling Exceeded" tone="blocked" />
+                )}
+                {eligibility.upgraderTier && (
+                  <EligibilityBadge label="Upgrader Tier" tone="warn" />
+                )}
+              </div>
+
+              <div className="space-y-2 text-sm">
+                {eligibility.firstTimerFriendly && (
+                  <p className="text-success">This listing fits the early-game first-home ladder and stays readable on a starter salary.</p>
+                )}
+                {eligibility.salaryCeiling !== null && (
+                  <p className="text-text-secondary">
+                    Salary ceiling: <span className="font-mono text-white">S${eligibility.salaryCeiling.toLocaleString()}</span>
+                    {' '}| Your salary: <span className={`font-mono ${eligibility.salaryCeilingExceeded ? 'text-danger' : 'text-success'}`}>S${player.salary.toLocaleString()}</span>
+                  </p>
+                )}
+                {eligibility.blockedReason ? (
+                  <p className="text-danger">{eligibility.blockedReason}</p>
+                ) : (
+                  <p className="text-text-secondary">
+                    {eligibility.upgraderTier
+                      ? 'This listing represents the next rung up. It is meant to feel more like an upgrader move than a first-home starter buy.'
+                      : 'You currently meet the simplified eligibility rules for this listing.'}
+                  </p>
+                )}
               </div>
             </GlassCard>
 
@@ -385,13 +460,16 @@ export default function PropertyDetail() {
                   disabled={!canAfford}
                   className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {canAfford ? 'Buy Property' : 'Insufficient Funds'}
+                  {eligibilityBlocked ? 'Not Eligible Yet' : canAfford ? 'Buy Property' : 'Insufficient Funds'}
                 </button>
 
-                {!canAfford && (
+                {!canAfford && !eligibilityBlocked && (
                   <p className="text-danger text-xs text-center mt-2">
                     You need S${Math.max(0, cashRequired - player.cash).toLocaleString()} more cash
                   </p>
+                )}
+                {eligibilityBlocked && eligibility.blockedReason && (
+                  <p className="text-danger text-xs text-center mt-2">{eligibility.blockedReason}</p>
                 )}
 
                 {actionError && (

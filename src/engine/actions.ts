@@ -17,11 +17,20 @@ import type { Rng } from './rng';
 import type { ScenarioOption } from '@/data/scenarios';
 import { calculateTotalStampDuty } from './stampDuty';
 import { maxBorrowable, checkMsr } from './ltv';
+import {
+  getSalaryCeilingForProperty,
+  isPrivateResidentialPropertyType,
+  isResidentialPropertyType,
+} from './eligibility';
 
 export interface ScenarioResolution {
   cashDelta: number;
   creditDelta: number;
   propertyValueImpactPct: number;
+  salaryDeltaPct: number;
+  careerGrowthModifierDelta: number;
+  careerRiskModifierDelta: number;
+  careerVolatilityModifierDelta: number;
   followUpText: string;
   success: boolean;
 }
@@ -38,6 +47,10 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
       cashDelta: option.cashImpact,
       creditDelta: option.creditImpact,
       propertyValueImpactPct: option.propertyValueImpact,
+      salaryDeltaPct: option.salaryDeltaPct ?? 0,
+      careerGrowthModifierDelta: option.careerGrowthModifierDelta ?? 0,
+      careerRiskModifierDelta: option.careerRiskModifierDelta ?? 0,
+      careerVolatilityModifierDelta: option.careerVolatilityModifierDelta ?? 0,
       followUpText: option.followUpText,
       success: true,
     };
@@ -46,6 +59,10 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
     cashDelta: Math.round(option.cashImpact * 0.5),
     creditDelta: -10,
     propertyValueImpactPct: Math.round(option.propertyValueImpact * 0.5),
+    salaryDeltaPct: 0,
+    careerGrowthModifierDelta: 0,
+    careerRiskModifierDelta: 0,
+    careerVolatilityModifierDelta: 0,
     followUpText: 'Things did not go as planned. The outcome was worse than expected.',
     success: false,
   };
@@ -84,6 +101,14 @@ export function buyPropertyPure(
   const cashRequired = totalUpfront - cpfToUse;
   if (player.cash < cashRequired) {
     return fail('insufficient_cash', `Not enough cash for the remaining upfront cost of S$${Math.round(cashRequired).toLocaleString()} after CPF usage.`);
+  }
+
+  const salaryCeiling = getSalaryCeilingForProperty(property.type);
+  if (salaryCeiling !== null && player.salary > salaryCeiling) {
+    return fail('eligibility_blocked', `Monthly salary of S$${player.salary.toLocaleString()} exceeds the S$${salaryCeiling.toLocaleString()} ceiling for this property type.`);
+  }
+  if (property.type === 'Executive Condo' && player.ownedPrivateHome) {
+    return fail('eligibility_blocked', 'Executive condos are blocked after you have owned a private home in this run.');
   }
 
   // LTV cap: loan cannot exceed maxBorrowable based on existing housing loans
@@ -150,6 +175,8 @@ export function buyPropertyPure(
       cpfOrdinary: player.cpfOrdinary - cpfToUse,
       properties: [...player.properties, owned],
       loans: newLoan ? [...player.loans, newLoan] : player.loans,
+      firstHomePurchased: isResidentialPropertyType(property.type) ? true : player.firstHomePurchased,
+      ownedPrivateHome: isPrivateResidentialPropertyType(property.type) ? true : player.ownedPrivateHome,
     },
   });
 }

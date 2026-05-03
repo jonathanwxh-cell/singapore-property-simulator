@@ -49,6 +49,25 @@ const playerSchema = z.object({
   totalRentalIncome: z.number(),
   totalPropertySalesProfit: z.number(),
   bankruptcyStrikes: z.number().optional(),
+  careerGrowthModifier: z.number().optional(),
+  careerRiskModifier: z.number().optional(),
+  careerVolatilityModifier: z.number().optional(),
+  lastCareerReviewTurn: z.number().optional(),
+  nextJobSwitchTurn: z.number().optional(),
+  firstHomePurchased: z.boolean().optional(),
+  ownedPrivateHome: z.boolean().optional(),
+  careerProgressionProfile: z.object({
+    reviewCount: z.number(),
+    lastOutcome: z.enum(['promotion', 'bonus', 'steady', 'setback']).nullable(),
+    lastSalaryDelta: z.number(),
+    lastBonus: z.number(),
+  }).optional(),
+  careerReviewHistory: z.array(z.object({
+    turn: z.number(),
+    outcome: z.enum(['promotion', 'bonus', 'steady', 'setback']).nullable(),
+    salaryDelta: z.number(),
+    bonus: z.number(),
+  })).optional(),
 });
 
 export const saveSchema = z.object({

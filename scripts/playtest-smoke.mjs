@@ -66,6 +66,31 @@ async function expectVisible(page, selector, timeout = 15000) {
   await page.waitForSelector(selector, { timeout });
 }
 
+async function resolveScenarioIfPresent(page) {
+  const optionButtons = page.locator('button.group.w-full.text-left:visible');
+  if (await optionButtons.count()) {
+    await optionButtons.first().click();
+    await expectVisible(page, 'text=Scenario Resolved');
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await delay(250);
+  }
+}
+
+async function clickAdvance(page) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const button = page.getByRole('button', { name: /Advance to/i });
+      await button.waitFor({ state: 'visible', timeout: 15000 });
+      await delay(150);
+      await button.click();
+      return;
+    } catch (error) {
+      if (attempt === 2) throw error;
+      await delay(300);
+    }
+  }
+}
+
 async function run() {
   const port = await getAvailablePort();
   const baseUrl = `http://127.0.0.1:${port}`;
@@ -92,6 +117,9 @@ async function run() {
     await page.getByRole('button', { name: /Start Game/i }).click();
 
     await expectVisible(page, 'text=Market Pulse');
+    await expectVisible(page, 'text=Career Review');
+    await expectVisible(page, 'text=Eligibility Summary');
+    await expectVisible(page, 'img[alt="Career Review"]');
     await expectVisible(page, 'text=Advance to');
 
     await page.getByRole('button', { name: /Advance to/i }).click();
@@ -108,6 +136,7 @@ async function run() {
     await expectVisible(page, 'text=Turn 2');
 
     await page.goto(`${baseUrl}/#/properties`, { waitUntil: 'networkidle' });
+    await expectVisible(page, 'text=First-Timer Friendly');
     await page.getByText('Woodlands North Grove 3-Room').click();
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');
     await expectVisible(page, 'text=Cash Required');
@@ -119,6 +148,24 @@ async function run() {
     await expectVisible(page, 'text=Property Browser');
     await page.goto(`${baseUrl}/#/portfolio`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Woodlands North Grove 3-Room');
+
+    await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+    for (let step = 0; step < 9; step += 1) {
+      await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+      await clickAdvance(page);
+      await resolveScenarioIfPresent(page);
+      await delay(200);
+    }
+
+    await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+    await clickAdvance(page);
+    await expectVisible(page, 'text=Annual Career Review');
+    await expectVisible(page, 'img[alt="Career Review"]');
+    await page.locator('button.group.w-full.text-left:visible').first().click();
+    await expectVisible(page, 'text=Scenario Resolved');
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+    await expectVisible(page, 'text=Turn 12');
 
     await browser.close();
     browser = null;

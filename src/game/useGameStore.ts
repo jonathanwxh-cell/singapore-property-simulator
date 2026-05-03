@@ -15,11 +15,36 @@ import type { ActionResult } from '@/engine/results';
 
 let rng: Rng = createRng(0);
 
-function withDerivedPlayer(player: Player): Player {
+function createInitialCareerProgressionProfile() {
+  return {
+    reviewCount: 0,
+    lastOutcome: null,
+    lastSalaryDelta: 0,
+    lastBonus: 0,
+  } as const;
+}
+
+function withHydratedPlayer(player: Player): Player {
   return {
     ...player,
-    totalNetWorth: selectNetWorth(player),
-    achievements: deriveUnlockedAchievementIds(player),
+    careerGrowthModifier: player.careerGrowthModifier ?? 1,
+    careerRiskModifier: player.careerRiskModifier ?? 1,
+    careerVolatilityModifier: player.careerVolatilityModifier ?? 0,
+    lastCareerReviewTurn: player.lastCareerReviewTurn ?? 0,
+    nextJobSwitchTurn: player.nextJobSwitchTurn ?? 24,
+    firstHomePurchased: player.firstHomePurchased ?? false,
+    ownedPrivateHome: player.ownedPrivateHome ?? false,
+    careerProgressionProfile: player.careerProgressionProfile ?? createInitialCareerProgressionProfile(),
+    careerReviewHistory: player.careerReviewHistory ?? [],
+  };
+}
+
+function withDerivedPlayer(player: Player): Player {
+  const hydrated = withHydratedPlayer(player);
+  return {
+    ...hydrated,
+    totalNetWorth: selectNetWorth(hydrated),
+    achievements: deriveUnlockedAchievementIds(hydrated),
   };
 }
 
@@ -51,6 +76,15 @@ function createInitialPlayer(name: string, careerId: string, difficulty: Difficu
     totalRentalIncome: 0,
     totalPropertySalesProfit: 0,
     bankruptcyStrikes: 0,
+    careerGrowthModifier: 1,
+    careerRiskModifier: 1,
+    careerVolatilityModifier: 0,
+    lastCareerReviewTurn: 0,
+    nextJobSwitchTurn: 24,
+    firstHomePurchased: false,
+    ownedPrivateHome: false,
+    careerProgressionProfile: createInitialCareerProgressionProfile(),
+    careerReviewHistory: [],
   });
 }
 
@@ -215,7 +249,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       player: withDerivedPlayer({
         ...state.player,
         cash: state.player.cash + resolution.cashDelta,
+        salary: Math.max(1000, Math.round(state.player.salary * (1 + resolution.salaryDeltaPct))),
         creditScore: Math.max(MIN_CREDIT_SCORE, Math.min(MAX_CREDIT_SCORE, state.player.creditScore + resolution.creditDelta)),
+        careerGrowthModifier: round2(Math.max(0.5, state.player.careerGrowthModifier + resolution.careerGrowthModifierDelta)),
+        careerRiskModifier: round2(Math.max(0.5, state.player.careerRiskModifier + resolution.careerRiskModifierDelta)),
+        careerVolatilityModifier: round2(state.player.careerVolatilityModifier + resolution.careerVolatilityModifierDelta),
         properties: resolution.propertyValueImpactPct === 0
           ? state.player.properties
           : state.player.properties.map(p => ({
@@ -231,3 +269,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   calculateNetWorth: () => selectNetWorth(get().player),
 }));
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}

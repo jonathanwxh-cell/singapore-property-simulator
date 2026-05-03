@@ -26,6 +26,15 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
     totalRentalIncome: 0,
     totalPropertySalesProfit: 0,
     bankruptcyStrikes: 0,
+    careerGrowthModifier: 1,
+    careerRiskModifier: 1,
+    careerVolatilityModifier: 0,
+    lastCareerReviewTurn: 0,
+    nextJobSwitchTurn: 24,
+    firstHomePurchased: false,
+    ownedPrivateHome: false,
+    careerProgressionProfile: { reviewCount: 0, lastOutcome: null, lastSalaryDelta: 0, lastBonus: 0 },
+    careerReviewHistory: [],
     ...overrides,
   };
 }
@@ -98,5 +107,61 @@ describe('useGameStore', () => {
 
     expect(result.ok).toBe(true);
     expect(useGameStore.getState().player.achievements).toContain('first-property');
+  });
+
+  it('initializes progression defaults for a new game', () => {
+    useGameStore.getState().newGame('Plan Test', 'graduate', 'normal');
+    const player = useGameStore.getState().player;
+
+    expect(player.firstHomePurchased).toBe(false);
+    expect(player.careerProgressionProfile.reviewCount).toBe(0);
+    expect(player.nextJobSwitchTurn).toBe(24);
+  });
+
+  it('hydrates missing progression fields when loading older saves', () => {
+    const baseState = makeState();
+    useGameStore.getState().loadGame({
+      ...baseState,
+      player: {
+        ...baseState.player,
+        firstHomePurchased: undefined,
+        careerProgressionProfile: undefined,
+        nextJobSwitchTurn: undefined,
+      } as never,
+    });
+
+    const hydrated = useGameStore.getState().player;
+    expect(hydrated.firstHomePurchased).toBe(false);
+    expect(hydrated.careerProgressionProfile.reviewCount).toBe(0);
+    expect(hydrated.nextJobSwitchTurn).toBeGreaterThan(0);
+  });
+
+  it('applies salary and career modifier deltas from scenario resolutions', () => {
+    resetStore({
+      player: makePlayer({ salary: 6000, cash: 100_000 }),
+    });
+
+    const resolution = useGameStore.getState().resolveScenario({
+      label: 'Take the growth role',
+      description: 'Higher pay with more upside and some added volatility.',
+      probability: 1,
+      cashImpact: 12_000,
+      propertyValueImpact: 0,
+      creditImpact: 5,
+      followUpText: 'You switched into a faster track role.',
+      salaryDeltaPct: 0.12,
+      careerGrowthModifierDelta: 0.2,
+      careerRiskModifierDelta: 0.08,
+      careerVolatilityModifierDelta: 0.04,
+    });
+
+    expect(resolution.success).toBe(true);
+    const player = useGameStore.getState().player;
+    expect(player.salary).toBe(6720);
+    expect(player.cash).toBe(112_000);
+    expect(player.creditScore).toBe(705);
+    expect(player.careerGrowthModifier).toBeCloseTo(1.2);
+    expect(player.careerRiskModifier).toBeCloseTo(1.08);
+    expect(player.careerVolatilityModifier).toBeCloseTo(0.04);
   });
 });

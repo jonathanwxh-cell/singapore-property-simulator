@@ -7,6 +7,10 @@ export interface ScenarioOption {
   cashImpact: number;
   propertyValueImpact: number;
   creditImpact: number;
+  salaryDeltaPct?: number;
+  careerGrowthModifierDelta?: number;
+  careerRiskModifierDelta?: number;
+  careerVolatilityModifierDelta?: number;
   followUpText: string;
 }
 
@@ -32,6 +36,101 @@ export const scenarios: Scenario[] = [
       { label: 'Claim the grant', description: 'Take a first-home support package and build your buying power now', probability: 0.95, cashImpact: 40000, propertyValueImpact: 0, creditImpact: 5, followUpText: 'The grant gives you a meaningful boost toward your first purchase and improves lender confidence.' },
       { label: 'Build a buffer', description: 'Keep the support in cash so you can stay flexible', probability: 0.95, cashImpact: 25000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'You stayed patient and banked extra dry powder for a cleaner first deal.' },
       { label: 'Side-hustle for momentum', description: 'Take on short-term extra work to accelerate your deposit', probability: 0.85, cashImpact: 18000, propertyValueImpact: 0, creditImpact: 10, followUpText: 'The extra effort is paying off. Your finances look stronger heading into your first application.' },
+    ],
+  },
+  {
+    id: 'career-review',
+    category: 'Personal',
+    title: 'Annual Career Review',
+    description: 'Your year-end review is in. The raise has already landed, but how you respond will shape your trajectory and buying power for the next stretch of the run.',
+    image: '/scenario-personal.jpg',
+    frequency: 'common',
+    options: [
+      {
+        label: 'Bank the momentum',
+        description: 'Stay disciplined, protect your runway, and build lender confidence for the next move.',
+        probability: 1,
+        cashImpact: 0,
+        propertyValueImpact: 0,
+        creditImpact: 5,
+        careerGrowthModifierDelta: 0.04,
+        careerRiskModifierDelta: -0.04,
+        careerVolatilityModifierDelta: -0.01,
+        followUpText: 'You kept the good year grounded. The steadier profile should make the next housing step easier to carry.',
+      },
+      {
+        label: 'Push for bigger scope',
+        description: 'Use the review to lean into a faster track role with more upside next year.',
+        probability: 1,
+        cashImpact: 0,
+        propertyValueImpact: 0,
+        creditImpact: 0,
+        careerGrowthModifierDelta: 0.12,
+        careerRiskModifierDelta: 0.06,
+        careerVolatilityModifierDelta: 0.03,
+        followUpText: 'You asked for a bigger mandate. If you execute, your salary curve can climb much faster from here.',
+      },
+      {
+        label: 'Reset and recover',
+        description: 'Take a lighter lane, preserve energy, and make next year about stability instead of stretch.',
+        probability: 1,
+        cashImpact: 0,
+        propertyValueImpact: 0,
+        creditImpact: 3,
+        careerGrowthModifierDelta: -0.02,
+        careerRiskModifierDelta: -0.08,
+        careerVolatilityModifierDelta: -0.03,
+        followUpText: 'You chose a steadier rhythm. The upside is lower, but your runway and planning confidence improve.',
+      },
+    ],
+  },
+  {
+    id: 'job-switch-opportunity',
+    category: 'Personal',
+    title: 'Job Switch Opportunity',
+    description: 'A recruiter reached out with a live opening. This is a clean fork in the road: keep your current stability or trade some certainty for a higher ceiling.',
+    image: '/scenario-personal.jpg',
+    frequency: 'uncommon',
+    options: [
+      {
+        label: 'Stay in role',
+        description: 'Take a modest internal bump and keep your current risk profile under control.',
+        probability: 1,
+        cashImpact: 6000,
+        propertyValueImpact: 0,
+        creditImpact: 3,
+        salaryDeltaPct: 0.03,
+        careerGrowthModifierDelta: -0.02,
+        careerRiskModifierDelta: -0.05,
+        careerVolatilityModifierDelta: -0.02,
+        followUpText: 'You stayed put and took the safer progression path. The salary lift is smaller, but the run gets easier to plan around.',
+      },
+      {
+        label: 'Take the higher-paying role',
+        description: 'Step into a better package now with a little more exposure to performance pressure.',
+        probability: 1,
+        cashImpact: 12000,
+        propertyValueImpact: 0,
+        creditImpact: 5,
+        salaryDeltaPct: 0.12,
+        careerGrowthModifierDelta: 0.16,
+        careerRiskModifierDelta: 0.08,
+        careerVolatilityModifierDelta: 0.04,
+        followUpText: 'You switched into a stronger-paying seat. Your buying power jumps immediately, but expectations rise with it.',
+      },
+      {
+        label: 'Take the stretch role',
+        description: 'Go for the biggest jump in pay and future growth, accepting the most volatile path.',
+        probability: 1,
+        cashImpact: 18000,
+        propertyValueImpact: 0,
+        creditImpact: 2,
+        salaryDeltaPct: 0.18,
+        careerGrowthModifierDelta: 0.28,
+        careerRiskModifierDelta: 0.15,
+        careerVolatilityModifierDelta: 0.08,
+        followUpText: 'You bet on yourself. The salary leap is real, and so is the pressure that comes with it.',
+      },
     ],
   },
   // MARKET EVENTS
