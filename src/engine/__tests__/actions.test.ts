@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyLoanPure, buyPropertyPure, payLoanPure, renovatePropertyPure, sellPropertyPure } from '../actions';
-import type { Player } from '@/game/types';
+import { createInitialLifeState, type Player } from '@/game/types';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -10,6 +10,12 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
     children: 0, year: 2024, month: 1, turnCount: 0, totalNetWorth: 0,
     achievements: [], difficulty: 'normal', totalRentalIncome: 0,
     totalPropertySalesProfit: 0, bankruptcyStrikes: 0,
+    life: createInitialLifeState(),
+    careerGrowthModifier: 1, careerRiskModifier: 1, careerVolatilityModifier: 0,
+    lastCareerReviewTurn: 0, nextJobSwitchTurn: 24,
+    firstHomePurchased: false, ownedPrivateHome: false,
+    careerProgressionProfile: { reviewCount: 0, lastOutcome: null, lastSalaryDelta: 0, lastBonus: 0 },
+    careerReviewHistory: [],
     ...overrides,
   };
 }
@@ -69,6 +75,47 @@ describe('buyPropertyPure', () => {
     expect(result.value.player.properties[0].vacancyMonths).toBe(0);
     expect(result.value.player.properties[0].maintenanceCost).toBeGreaterThan(0);
     expect(result.value.player.properties[0].propertyTax).toBeGreaterThan(0);
+  });
+
+  it('uses CPF OA for eligible residential upfront costs', () => {
+    const player = makePlayer({ cash: 60_000, cpfOrdinary: 40_000 });
+    const result = buyPropertyPure(player, 'hdb-bto-0', 70_000, 20_000);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.player.cash).toBeLessThan(player.cash);
+      expect(result.value.player.cpfOrdinary).toBe(20_000);
+    }
+  });
+
+  it('rejects CPF OA usage on commercial purchases', () => {
+    const player = makePlayer({ cash: 5_000_000, cpfOrdinary: 200_000 });
+    const result = buyPropertyPure(player, 'commercial-5', 1_000_000, 100_000);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('cpf_not_allowed');
+  });
+
+  it('rejects executive condo purchases when the salary ceiling is exceeded', () => {
+    const result = buyPropertyPure(makePlayer({ cash: 2_000_000, salary: 17_500 }), 'ec-1', 500_000);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('eligibility_blocked');
+  });
+
+  it('marks the first residential purchase as leaving first-timer status', () => {
+    const result = buyPropertyPure(makePlayer({ cash: 2_000_000 }), 'hdb-bto-1', 100_000);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.player.firstHomePurchased).toBe(true);
+      expect(result.value.player.ownedPrivateHome).toBe(false);
+    }
+  });
+
+  it('flags private-home ownership after buying a private condo', () => {
+    const result = buyPropertyPure(makePlayer({ cash: 3_000_000 }), 'condo-10', 500_000);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.player.firstHomePurchased).toBe(true);
+      expect(result.value.player.ownedPrivateHome).toBe(true);
+    }
   });
 });
 

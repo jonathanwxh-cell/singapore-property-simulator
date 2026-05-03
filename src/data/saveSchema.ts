@@ -10,6 +10,12 @@ const ownedPropertySchema = z.object({
   monthlyRental: z.number(),
   renovationLevel: z.number(),
   loanId: z.string().optional(),
+  occupancyStatus: z.enum(['vacant', 'tenanted', 'renovating', 'listed']).optional(),
+  tenantQuality: z.number().optional(),
+  vacancyMonths: z.number().optional(),
+  maintenanceCost: z.number().optional(),
+  propertyTax: z.number().optional(),
+  listingChannel: z.string().optional(),
 });
 
 const loanSchema = z.object({
@@ -78,6 +84,25 @@ const playerSchema = z.object({
       notes: z.array(z.string()),
     }).nullable(),
   }).optional(),
+  careerGrowthModifier: z.number().optional(),
+  careerRiskModifier: z.number().optional(),
+  careerVolatilityModifier: z.number().optional(),
+  lastCareerReviewTurn: z.number().optional(),
+  nextJobSwitchTurn: z.number().optional(),
+  firstHomePurchased: z.boolean().optional(),
+  ownedPrivateHome: z.boolean().optional(),
+  careerProgressionProfile: z.object({
+    reviewCount: z.number(),
+    lastOutcome: z.enum(['promotion', 'bonus', 'steady', 'setback']).nullable(),
+    lastSalaryDelta: z.number(),
+    lastBonus: z.number(),
+  }).optional(),
+  careerReviewHistory: z.array(z.object({
+    turn: z.number(),
+    outcome: z.enum(['promotion', 'bonus', 'steady', 'setback']).nullable(),
+    salaryDelta: z.number(),
+    bonus: z.number(),
+  })).optional(),
 });
 
 export const saveSchema = z.object({
@@ -89,6 +114,24 @@ export const saveSchema = z.object({
     rentalIndex: z.number(),
     volatility: z.number(),
     lastEvent: z.string().nullable(),
+    monthlyPriceChangePct: z.number().optional(),
+    monthlyRentalChangePct: z.number().optional(),
+    monthlyInterestRateChangePct: z.number().optional(),
+    lastHeadline: z.string().nullable().optional(),
+    lastSummary: z.string().nullable().optional(),
+    newsFeed: z.array(z.object({
+      id: z.string(),
+      turn: z.number(),
+      month: z.number(),
+      year: z.number(),
+      headline: z.string(),
+      detail: z.string(),
+      category: z.enum(['Rates', 'Demand', 'Supply', 'Policy', 'Macro', 'Infrastructure']),
+      tone: z.enum(['bullish', 'bearish', 'neutral']),
+      priceChangePct: z.number(),
+      rentalChangePct: z.number(),
+      rateChangePct: z.number(),
+    })).optional(),
   }),
   settings: z.object({
     soundEnabled: z.boolean(),

@@ -17,6 +17,30 @@ import type { ActionResult } from '@/engine/results';
 
 let rng: Rng = createRng(0);
 
+function createInitialCareerProgressionProfile() {
+  return {
+    reviewCount: 0,
+    lastOutcome: null,
+    lastSalaryDelta: 0,
+    lastBonus: 0,
+  } as const;
+}
+
+function withCareerDefaults(player: Player): Player {
+  return {
+    ...player,
+    careerGrowthModifier: player.careerGrowthModifier ?? 1,
+    careerRiskModifier: player.careerRiskModifier ?? 1,
+    careerVolatilityModifier: player.careerVolatilityModifier ?? 0,
+    lastCareerReviewTurn: player.lastCareerReviewTurn ?? 0,
+    nextJobSwitchTurn: player.nextJobSwitchTurn ?? 24,
+    firstHomePurchased: player.firstHomePurchased ?? false,
+    ownedPrivateHome: player.ownedPrivateHome ?? false,
+    careerProgressionProfile: player.careerProgressionProfile ?? createInitialCareerProgressionProfile(),
+    careerReviewHistory: player.careerReviewHistory ?? [],
+  };
+}
+
 function withNetWorth(player: Player): Player {
   return { ...player, totalNetWorth: selectNetWorth(player) };
 }
@@ -36,7 +60,8 @@ function withLifeDefaults(player: Player): Player {
 }
 
 function finalizePlayer(player: Player): Player {
-  return withEvaluatedAchievements(withNetWorth(withLifeDefaults(withPortfolioDefaults(player))));
+  const hydrated = withLifeDefaults(withPortfolioDefaults(withCareerDefaults(player)));
+  return withEvaluatedAchievements(withNetWorth(hydrated));
 }
 
 function createInitialPlayer(name: string, careerId: string, difficulty: Difficulty): Player {
@@ -68,6 +93,15 @@ function createInitialPlayer(name: string, careerId: string, difficulty: Difficu
     totalPropertySalesProfit: 0,
     bankruptcyStrikes: 0,
     life: createInitialLifeState(),
+    careerGrowthModifier: 1,
+    careerRiskModifier: 1,
+    careerVolatilityModifier: 0,
+    lastCareerReviewTurn: 0,
+    nextJobSwitchTurn: 24,
+    firstHomePurchased: false,
+    ownedPrivateHome: false,
+    careerProgressionProfile: createInitialCareerProgressionProfile(),
+    careerReviewHistory: [],
   });
 }
 
@@ -78,6 +112,20 @@ function createInitialMarket() {
     rentalIndex: 100,
     volatility: 0.1,
     lastEvent: null as string | null,
+    monthlyPriceChangePct: 0,
+    monthlyRentalChangePct: 0,
+    monthlyInterestRateChangePct: 0,
+    lastHeadline: 'The market opens with steady conditions and patient buyers.',
+    lastSummary: 'Nothing dramatic yet. Watch grants, rates, and neighborhood supply for the next move.',
+    newsFeed: [],
+  };
+}
+
+function withHydratedMarket(state: GameState['market']): GameState['market'] {
+  return {
+    ...createInitialMarket(),
+    ...state,
+    newsFeed: state.newsFeed ?? [],
   };
 }
 
@@ -116,7 +164,7 @@ interface GameStore extends GameState {
   setPrimaryLifeAction: (actionId: LifeActionId | null) => void;
   setSecondaryLifeAction: (actionId: LifeActionId | null) => void;
   setLivingArrangement: (arrangement: LivingArrangement) => void;
-  buyProperty: (propertyId: string, downPayment: number) => ActionResult;
+  buyProperty: (propertyId: string, downPayment: number, cpfOrdinaryUsed?: number) => ActionResult;
   sellProperty: (propertyIndex: number) => ActionResult;
   applyLoan: (amount: number, interestRate: number, termYears: number, type: 'mortgage' | 'renovation' | 'personal', propertyId?: string) => ActionResult;
   payLoan: (loanId: string, amount: number) => ActionResult;
@@ -157,7 +205,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   loadGame: (state) => {
     rng = createRng(state.rngSeed);
     rng.setState(state.rngState);
-    set({ ...state, player: finalizePlayer(state.player), isGameActive: true });
+    set({
+      ...state,
+      market: withHydratedMarket(state.market),
+      player: finalizePlayer(state.player),
+      isGameActive: true,
+    });
   },
 
   nextTurn: () => {
@@ -217,8 +270,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }));
   },
 
-  buyProperty: (propertyId, downPayment) => {
-    const result = buyPropertyPure(get().player, propertyId, downPayment);
+  buyProperty: (propertyId, downPayment, cpfOrdinaryUsed = 0) => {
+    const result = buyPropertyPure(get().player, propertyId, downPayment, cpfOrdinaryUsed);
     if (result.ok) {
       set({ player: finalizePlayer(result.value.player) });
       const state = get();
@@ -309,7 +362,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       player: finalizePlayer({
         ...state.player,
         cash: state.player.cash + resolution.cashDelta,
+        salary: Math.max(1000, Math.round(state.player.salary * (1 + resolution.salaryDeltaPct))),
         creditScore: Math.max(MIN_CREDIT_SCORE, Math.min(MAX_CREDIT_SCORE, state.player.creditScore + resolution.creditDelta)),
+        careerGrowthModifier: round2(Math.max(0.5, state.player.careerGrowthModifier + resolution.careerGrowthModifierDelta)),
+        careerRiskModifier: round2(Math.max(0.5, state.player.careerRiskModifier + resolution.careerRiskModifierDelta)),
+        careerVolatilityModifier: round2(state.player.careerVolatilityModifier + resolution.careerVolatilityModifierDelta),
         properties: resolution.propertyValueImpactPct === 0
           ? state.player.properties
           : state.player.properties.map(p => ({
@@ -327,3 +384,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   calculateNetWorth: () => selectNetWorth(get().player),
 }));
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}

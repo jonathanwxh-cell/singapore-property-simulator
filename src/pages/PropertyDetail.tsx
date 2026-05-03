@@ -12,6 +12,9 @@ import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
 import { getListingCatalog } from '@/engine/listings';
 import { selectAffordabilityReport, selectMonthlyNetCashflow, selectPotentialHousingGrant } from '@/engine/selectors';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
+import { getLtvCap } from '@/engine/ltv';
+import EligibilityBadge from '@/components/EligibilityBadge';
+import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +22,8 @@ export default function PropertyDetail() {
   const { player, buyProperty, sellProperty, toggleRental } = useGameStore();
   const [downPaymentPercent, setDownPaymentPercent] = useState(25);
   const [showSellConfirm, setShowSellConfirm] = useState(false);
-  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [useCpfOrdinary, setUseCpfOrdinary] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const property = getListingCatalog().find(p => p.id === id);
   const district = property ? districts.find(d => d.id === property.districtId) : null;
@@ -45,49 +49,76 @@ export default function PropertyDetail() {
 
   const typeInfo = propertyTypeInfo[property.type];
   const rarityInfo = listingRarityInfo[property.listingRarity];
-  const downPayment = getDownPaymentAmount(property.price, downPaymentPercent);
+  const activeHousingLoans = player.loans.filter(l => l.type === 'mortgage' && !l.isPaid).length;
+  const minDownPaymentPercent = Math.round((1 - getLtvCap(activeHousingLoans)) * 100);
+  const effectiveDownPaymentPercent = Math.max(downPaymentPercent, minDownPaymentPercent);
+  const downPayment = getDownPaymentAmount(property.price, effectiveDownPaymentPercent);
   const validation = validatePurchase(player, property, downPayment);
+  const cpfEligible = !property.type.startsWith('Commercial');
+  const cpfApplied = cpfEligible && useCpfOrdinary ? Math.min(player.cpfOrdinary, validation.totalUpfront) : 0;
+  const cashRequired = Math.max(0, validation.totalUpfront - cpfApplied);
   const monthlySurplus = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
   const grantSupport = property.isHdb ? selectPotentialHousingGrant(player) : 0;
-  const affordability = selectAffordabilityReport(player, validation.totalUpfront, monthlySurplus, grantSupport);
+  const affordability = selectAffordabilityReport(player, cashRequired, monthlySurplus, grantSupport);
   const extraReasons = validation.reasons.filter((reason) => reason.code !== 'insufficient_cash');
+  const eligibilityFlags = deriveEligibilityFlags({
+    salary: player.salary,
+    properties: player.properties,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+  });
+  const eligibility = evaluatePropertyEligibility({
+    propertyType: property.type,
+    salary: player.salary,
+    properties: player.properties,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+  });
+  const eligibilityBlocked = Boolean(eligibility.blockedReason);
+  const cashShortfall = Math.max(0, cashRequired - player.cash);
+  const canAfford = cashShortfall === 0 && extraReasons.length === 0 && !isOwned && !eligibilityBlocked;
   const visibleMessages = Array.from(
     new Set([
-      ...(validation.shortfall > 0 ? [`You need ${formatCurrency(validation.shortfall)} more`] : []),
+      ...(cashShortfall > 0 ? [`You need ${formatCurrency(cashShortfall)} more cash after CPF OA`] : []),
       ...extraReasons.map((reason) => reason.message),
-      ...(purchaseError ? [purchaseError] : []),
+      ...(eligibility.blockedReason ? [eligibility.blockedReason] : []),
+      ...(actionError ? [actionError] : []),
     ])
   );
 
   const handleBuy = () => {
-    setPurchaseError(null);
-    if (!validation.canBuy) {
-      setPurchaseError(validation.reasons[0]?.message ?? 'This property cannot be purchased right now.');
+    if (isOwned) return;
+    setActionError(null);
+    if (eligibilityBlocked) {
+      setActionError(eligibility.blockedReason);
       return;
     }
-
-    const result = buyProperty(property.id, validation.downPayment);
+    if (extraReasons.length > 0) {
+      setActionError(extraReasons[0].message);
+      return;
+    }
+    if (cashShortfall > 0) {
+      setActionError(`You need ${formatCurrency(cashShortfall)} more cash after CPF OA.`);
+      return;
+    }
+    const result = buyProperty(property.id, validation.downPayment, cpfApplied);
     if (result.ok) {
+      setActionError(null);
       navigate('/portfolio');
       return;
     }
-
-    if (import.meta.env.DEV) {
-      console.error('Purchase rejected after enabled validation path.', {
-        propertyId: property.id,
-        downPayment: validation.downPayment,
-        result,
-      });
-    }
-    setPurchaseError(result.message);
+    setActionError(result.message);
   };
 
   const handleSell = () => {
     if (!isOwned) return;
     const result = sellProperty(ownedIndex);
     if (result.ok) {
+      setActionError(null);
       navigate('/portfolio');
+      return;
     }
+    setActionError(result.message);
   };
 
   const handleToggleRental = () => {
@@ -127,6 +158,18 @@ export default function PropertyDetail() {
                 <span className="px-2 py-1 rounded text-[10px] font-rajdhani font-semibold bg-cyan-glow/20 text-cyan-glow">
                   Rented Out
                 </span>
+              )}
+              {!isOwned && eligibilityFlags.firstTimer && eligibility.firstTimerFriendly && (
+                <EligibilityBadge label="First-Timer Friendly" tone="good" />
+              )}
+              {!isOwned && property.type === 'Executive Condo' && eligibility.ecEligible && (
+                <EligibilityBadge label="EC Eligible" tone="good" />
+              )}
+              {!isOwned && eligibility.salaryCeilingExceeded && (
+                <EligibilityBadge label="Salary Ceiling Exceeded" tone="blocked" />
+              )}
+              {!isOwned && eligibility.upgraderTier && (
+                <EligibilityBadge label="Upgrader Tier" tone="warn" />
               )}
             </div>
             <h1 className="page-title text-white text-2xl md:text-4xl">{property.name}</h1>
@@ -199,6 +242,51 @@ export default function PropertyDetail() {
                 </div>
               </div>
               <p className="text-text-secondary text-sm mt-4">{property.districtTheme}</p>
+            </GlassCard>
+
+            <GlassCard accentColor={eligibilityBlocked ? '#FF1744' : '#FFD740'}>
+              <h3 className="section-title text-white mb-4">Eligibility</h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {eligibilityFlags.firstTimer && (
+                  <EligibilityBadge label="First-Timer" tone="good" />
+                )}
+                {eligibilityFlags.homeowner && (
+                  <EligibilityBadge label="Homeowner" tone="warn" />
+                )}
+                {eligibilityFlags.upgrader && (
+                  <EligibilityBadge label="Upgrader" tone="warn" />
+                )}
+                {eligibilityFlags.ecEligible && property.type === 'Executive Condo' && (
+                  <EligibilityBadge label="EC Eligible" tone="good" />
+                )}
+                {eligibility.salaryCeilingExceeded && (
+                  <EligibilityBadge label="Salary Ceiling Exceeded" tone="blocked" />
+                )}
+                {eligibility.upgraderTier && (
+                  <EligibilityBadge label="Upgrader Tier" tone="warn" />
+                )}
+              </div>
+
+              <div className="space-y-2 text-sm">
+                {eligibility.firstTimerFriendly && (
+                  <p className="text-success">This listing fits the early-game first-home ladder and stays readable on a starter salary.</p>
+                )}
+                {eligibility.salaryCeiling !== null && (
+                  <p className="text-text-secondary">
+                    Salary ceiling: <span className="font-mono text-white">S${eligibility.salaryCeiling.toLocaleString()}</span>
+                    {' '}| Your salary: <span className={`font-mono ${eligibility.salaryCeilingExceeded ? 'text-danger' : 'text-success'}`}>S${player.salary.toLocaleString()}</span>
+                  </p>
+                )}
+                {eligibility.blockedReason ? (
+                  <p className="text-danger">{eligibility.blockedReason}</p>
+                ) : (
+                  <p className="text-text-secondary">
+                    {eligibility.upgraderTier
+                      ? 'This listing represents the next rung up. It is meant to feel more like an upgrader move than a first-home starter buy.'
+                      : 'You currently meet the simplified eligibility rules for this listing.'}
+                  </p>
+                )}
+              </div>
             </GlassCard>
 
             <GlassCard accentColor="#FF9100">
@@ -314,21 +402,21 @@ export default function PropertyDetail() {
 
                   <div className="slider-block">
                     <label className="label-text text-text-dim text-xs block mb-2">
-                      Down Payment: {formatPercent(downPaymentPercent)}
+                      Down Payment: {effectiveDownPaymentPercent}%
                     </label>
                     <input
                       type="range"
-                      min={5}
+                      min={minDownPaymentPercent}
                       max={100}
-                      value={downPaymentPercent}
+                      value={effectiveDownPaymentPercent}
                       onChange={(e) => {
                         setDownPaymentPercent(Number(e.target.value));
-                        setPurchaseError(null);
+                        setActionError(null);
                       }}
                       className="game-slider w-full accent-cyan-glow"
                     />
                     <div className="flex justify-between text-[10px] font-mono text-text-dim mt-1">
-                      <span>5%</span>
+                      <span>{minDownPaymentPercent}%</span>
                       <span>100%</span>
                     </div>
                   </div>
@@ -345,6 +433,25 @@ export default function PropertyDetail() {
                       </div>
                     )}
                   </div>
+
+                  {cpfEligible && player.cpfOrdinary > 0 && (
+                    <div className="border-t border-divider pt-3">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={useCpfOrdinary}
+                          onChange={(e) => setUseCpfOrdinary(e.target.checked)}
+                          className="mt-1 accent-cyan-glow"
+                        />
+                        <div>
+                          <p className="text-white text-sm font-semibold">Use CPF OA toward eligible upfront costs</p>
+                          <p className="text-text-secondary text-xs mt-1">
+                            Available OA: S${player.cpfOrdinary.toLocaleString()} | Applied now: S${cpfApplied.toLocaleString()}
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  )}
 
                   <div className="border-t border-divider pt-3">
                     <div className="flex items-center justify-between mb-1">
@@ -364,8 +471,18 @@ export default function PropertyDetail() {
                   </div>
 
                   <div className="border-t border-divider pt-3">
+                    {cpfApplied > 0 && (
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-text-secondary text-sm">CPF OA Applied</span>
+                        <span className="font-mono text-success">-S${cpfApplied.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
-                      <span className="text-white text-sm font-semibold">Your Cash</span>
+                      <span className="text-white text-sm font-semibold">Cash Required</span>
+                      <span className="font-mono text-white">{formatCurrency(cashRequired)}</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-text-secondary text-sm">Your Cash</span>
                       <span className="font-mono text-white">{formatCurrency(player.cash)}</span>
                     </div>
                   </div>
@@ -389,8 +506,8 @@ export default function PropertyDetail() {
                         {affordability.monthsAtCurrentPace === null
                           ? 'Current monthly surplus is too tight to project a clean purchase timeline.'
                           : affordability.monthsAtCurrentPace === 0
-                            ? 'You already have enough to cover the current upfront requirement.'
-                            : `At your current pace, this upfront requirement is about ${affordability.monthsAtCurrentPace} months away.`}
+                            ? 'You already have enough to cover the cash requirement after CPF OA.'
+                            : `At your current pace, this cash requirement is about ${affordability.monthsAtCurrentPace} months away.`}
                       </p>
                       <p className="text-text-dim text-[11px] mt-2">
                         Best accelerators: Side Gig, Property Hustle, and Claim / Plan Schemes.
@@ -399,8 +516,12 @@ export default function PropertyDetail() {
                   </div>
                 </div>
 
-                <button onClick={handleBuy} disabled={!validation.canBuy} className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed">
-                  {validation.canBuy ? 'Buy Property' : validation.shortfall > 0 ? 'Insufficient Cash' : 'Cannot Buy Yet'}
+                <button
+                  onClick={handleBuy}
+                  disabled={!canAfford}
+                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {eligibilityBlocked ? 'Not Eligible Yet' : canAfford ? 'Buy Property' : 'Insufficient Funds'}
                 </button>
 
                 {visibleMessages.length > 0 && (

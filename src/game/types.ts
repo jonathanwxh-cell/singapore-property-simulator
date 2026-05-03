@@ -73,6 +73,34 @@ export interface Loan {
   isPaid: boolean;
 }
 
+export interface MarketNewsItem {
+  id: string;
+  turn: number;
+  month: number;
+  year: number;
+  headline: string;
+  detail: string;
+  category: 'Rates' | 'Demand' | 'Supply' | 'Policy' | 'Macro' | 'Infrastructure';
+  tone: 'bullish' | 'bearish' | 'neutral';
+  priceChangePct: number;
+  rentalChangePct: number;
+  rateChangePct: number;
+}
+
+export interface CareerProgressionProfile {
+  reviewCount: number;
+  lastOutcome: 'promotion' | 'bonus' | 'steady' | 'setback' | null;
+  lastSalaryDelta: number;
+  lastBonus: number;
+}
+
+export interface CareerReviewHistoryEntry {
+  turn: number;
+  outcome: CareerProgressionProfile['lastOutcome'];
+  salaryDelta: number;
+  bonus: number;
+}
+
 export interface Player {
   name: string;
   age: number;
@@ -97,6 +125,15 @@ export interface Player {
   totalPropertySalesProfit: number;
   bankruptcyStrikes: number;
   life: PlayerLifeState;
+  careerGrowthModifier: number;
+  careerRiskModifier: number;
+  careerVolatilityModifier: number;
+  lastCareerReviewTurn: number;
+  nextJobSwitchTurn: number;
+  firstHomePurchased: boolean;
+  ownedPrivateHome: boolean;
+  careerProgressionProfile: CareerProgressionProfile;
+  careerReviewHistory: CareerReviewHistoryEntry[];
 }
 
 export interface MarketState {
@@ -105,6 +142,12 @@ export interface MarketState {
   rentalIndex: number;
   volatility: number;
   lastEvent: string | null;
+  monthlyPriceChangePct?: number;
+  monthlyRentalChangePct?: number;
+  monthlyInterestRateChangePct?: number;
+  lastHeadline?: string | null;
+  lastSummary?: string | null;
+  newsFeed?: MarketNewsItem[];
 }
 
 export interface GameSettings {

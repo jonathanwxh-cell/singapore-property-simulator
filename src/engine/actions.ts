@@ -18,13 +18,27 @@ import type { ScenarioOption } from '@/data/scenarios';
 import { formatPercent, roundMoney } from '@/lib/format';
 import { validatePurchase } from './purchase';
 import { deriveMaintenanceCost, derivePropertyTax } from './portfolio';
+import {
+  getSalaryCeilingForProperty,
+  isPrivateResidentialPropertyType,
+  isResidentialPropertyType,
+} from './eligibility';
 
 export interface ScenarioResolution {
   cashDelta: number;
   creditDelta: number;
   propertyValueImpactPct: number;
+  salaryDeltaPct: number;
+  careerGrowthModifierDelta: number;
+  careerRiskModifierDelta: number;
+  careerVolatilityModifierDelta: number;
   followUpText: string;
   success: boolean;
+}
+
+function canUseCpfForProperty(propertyId: string): boolean {
+  const property = properties.find((candidate) => candidate.id === propertyId);
+  return Boolean(property && !property.type.startsWith('Commercial'));
 }
 
 export function resolveScenarioOption(option: ScenarioOption, rng: Rng): ScenarioResolution {
@@ -34,6 +48,10 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
       cashDelta: option.cashImpact,
       creditDelta: option.creditImpact,
       propertyValueImpactPct: option.propertyValueImpact,
+      salaryDeltaPct: option.salaryDeltaPct ?? 0,
+      careerGrowthModifierDelta: option.careerGrowthModifierDelta ?? 0,
+      careerRiskModifierDelta: option.careerRiskModifierDelta ?? 0,
+      careerVolatilityModifierDelta: option.careerVolatilityModifierDelta ?? 0,
       followUpText: option.followUpText,
       success: true,
     };
@@ -42,18 +60,52 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
     cashDelta: Math.round(option.cashImpact * 0.5),
     creditDelta: -10,
     propertyValueImpactPct: Math.round(option.propertyValueImpact * 0.5),
+    salaryDeltaPct: 0,
+    careerGrowthModifierDelta: 0,
+    careerRiskModifierDelta: 0,
+    careerVolatilityModifierDelta: 0,
     followUpText: 'Things did not go as planned. The outcome was worse than expected.',
     success: false,
   };
 }
 
-export function buyPropertyPure(player: Player, propertyId: string, downPayment: number): ActionResult<{ player: Player }> {
+export function buyPropertyPure(
+  player: Player,
+  propertyId: string,
+  downPayment: number,
+  cpfOrdinaryUsed = 0,
+): ActionResult<{ player: Player }> {
   const property = properties.find(p => p.id === propertyId);
   if (!property) return fail('property_not_found', 'Property not found.');
+
   const validation = validatePurchase(player, property, downPayment);
-  if (!validation.canBuy) {
-    const primaryReason = validation.reasons[0];
-    return fail(primaryReason.code, primaryReason.message);
+  const cpfEligible = canUseCpfForProperty(propertyId);
+  const allowedCpfUse = cpfEligible ? Math.min(validation.totalUpfront, player.cpfOrdinary) : 0;
+  const cpfToUse = Math.max(0, Math.round(cpfOrdinaryUsed));
+
+  if (!cpfEligible && cpfToUse > 0) {
+    return fail('cpf_not_allowed', 'CPF OA can only be used for residential property purchases.');
+  }
+  if (cpfToUse > allowedCpfUse) {
+    return fail('cpf_exceeded', `CPF OA usage exceeds the eligible amount of S$${allowedCpfUse.toLocaleString()}.`);
+  }
+
+  const blockingReason = validation.reasons.find((reason) => reason.code !== 'insufficient_cash');
+  if (blockingReason) {
+    return fail(blockingReason.code, blockingReason.message);
+  }
+
+  const cashRequired = roundMoney(validation.totalUpfront - cpfToUse);
+  if (player.cash < cashRequired) {
+    return fail('insufficient_cash', `Not enough cash for the remaining upfront cost of S$${Math.round(cashRequired).toLocaleString()} after CPF usage.`);
+  }
+
+  const salaryCeiling = getSalaryCeilingForProperty(property.type);
+  if (salaryCeiling !== null && player.salary > salaryCeiling) {
+    return fail('eligibility_blocked', `Monthly salary of S$${player.salary.toLocaleString()} exceeds the S$${salaryCeiling.toLocaleString()} ceiling for this property type.`);
+  }
+  if (property.type === 'Executive Condo' && player.ownedPrivateHome) {
+    return fail('eligibility_blocked', 'Executive condos are blocked after you have owned a private home in this run.');
   }
 
   const loanAmount = validation.mortgageAmount;
@@ -111,9 +163,12 @@ export function buyPropertyPure(player: Player, propertyId: string, downPayment:
   return ok({
     player: {
       ...player,
-      cash: roundMoney(player.cash - validation.totalUpfront),
+      cash: roundMoney(player.cash - cashRequired),
+      cpfOrdinary: roundMoney(player.cpfOrdinary - cpfToUse),
       properties: [...player.properties, owned],
       loans: newLoan ? [...player.loans, newLoan] : player.loans,
+      firstHomePurchased: isResidentialPropertyType(property.type) ? true : player.firstHomePurchased,
+      ownedPrivateHome: isPrivateResidentialPropertyType(property.type) ? true : player.ownedPrivateHome,
     },
   });
 }

@@ -264,7 +264,7 @@ export default function TitleScreen() {
             <MenuButton
               label="How to Play"
               variant="secondary"
-              onClick={() => handleTransition('/settings')}
+              onClick={() => handleTransition('/how-to-play')}
             />
             <MenuButton
               label="Quit"

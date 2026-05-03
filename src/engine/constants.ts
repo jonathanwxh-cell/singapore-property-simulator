@@ -19,6 +19,8 @@ export const INSOLVENCY_STRIKES_LIMIT = 3;
 
 // Scenarios
 export const SCENARIO_TRIGGER_PROBABILITY = 0.7;
+export const STARTER_SCENARIO_TURN = 2;
+export const MARKET_NEWS_FEED_LIMIT = 8;
 
 // Credit score deltas
 export const CREDIT_DELTA_LOAN_TAKEN = -5;

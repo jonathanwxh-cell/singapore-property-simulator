@@ -4,6 +4,8 @@ import { careers } from '@/data/careers';
 import type { Rng } from './rng';
 import { rngPick } from './rng';
 import { amortizeOneMonth } from './finance';
+import { resolveAnnualCareerReview, shouldOfferJobSwitch, shouldRunAnnualCareerReview } from './careerProgression';
+import { generateMarketNews } from './marketNews';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
 import { advancePortfolioMonth } from './portfolio';
 import { resolveLifeMonth } from './life';
@@ -17,6 +19,8 @@ import {
   INTEREST_RATE_BOUNDS,
   INSOLVENCY_STRIKES_LIMIT,
   SCENARIO_TRIGGER_PROBABILITY,
+  MARKET_NEWS_FEED_LIMIT,
+  STARTER_SCENARIO_TURN,
 } from './constants';
 import { contributeCpf, applyCpfInterest } from './cpf';
 
@@ -51,7 +55,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     newAge++;
   }
 
-  // CPF — real age-based allocation + interest
+  // CPF - real age-based allocation + interest
   const cpfBalances = { oa: player.cpfOrdinary, sa: player.cpfSpecial, ma: player.cpfMedisave };
   const afterContribution = contributeCpf(cpfBalances, player.salary, player.age);
   const afterInterest = applyCpfInterest(afterContribution);
@@ -69,48 +73,121 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
 
   // Loan amortization
   let totalLoanPayment = 0;
-  const updatedLoans = player.loans.map(loan => {
+  const updatedLoans = player.loans.map((loan) => {
     if (loan.isPaid) return loan;
     const step = amortizeOneMonth(loan.remainingBalance, loan.monthlyPayment, loan.interestRate);
     totalLoanPayment += step.actualPayment;
     return { ...loan, remainingBalance: step.newBalance, isPaid: step.isPaidOff };
   });
 
-  // Salary growth (annual)
+  // Career review and salary growth
   let newSalary = player.salary;
-  if (newMonth === 1) {
+  const newTurnCount = player.turnCount + 1;
+  let reviewBonusCash = 0;
+  let reviewSalaryDelta = 0;
+  let reviewVolatilityModifier = player.careerVolatilityModifier;
+  let lastCareerReviewTurn = player.lastCareerReviewTurn;
+  let careerProgressionProfile = player.careerProgressionProfile;
+  let careerReviewHistory = player.careerReviewHistory;
+  const totalOwnershipCosts = portfolioStep.monthlyCosts.maintenance + portfolioStep.monthlyCosts.propertyTax;
+
+  if (newMonth === 1 && shouldRunAnnualCareerReview(newTurnCount)) {
     const momentumMultiplier = 1 + lifeResolution.nextLife.careerMomentum / 400;
-    newSalary = Math.round(player.salary * (1 + career.growthRate * (0.5 + rng.next()) * momentumMultiplier));
+    const review = resolveAnnualCareerReview({
+      rng,
+      salary: player.salary,
+      careerGrowthRate: career.growthRate * momentumMultiplier,
+      careerRiskFactor: career.riskFactor,
+      careerGrowthModifier: player.careerGrowthModifier,
+      careerRiskModifier: player.careerRiskModifier,
+      careerVolatilityModifier: player.careerVolatilityModifier,
+      positiveCashflow:
+        takeHomePay +
+        rentalIncome +
+        lifeResolution.cashDelta -
+        totalLoanPayment -
+        totalOwnershipCosts -
+        lifeResolution.householdCost >= 0,
+      underStress: player.cash < 0 || (player.bankruptcyStrikes ?? 0) > 0,
+    });
+    newSalary = Math.max(1000, Math.round(player.salary * (1 + review.salaryDeltaPct)));
+    reviewBonusCash = review.bonusCash;
+    reviewSalaryDelta = newSalary - player.salary;
+    reviewVolatilityModifier = round2(player.careerVolatilityModifier + review.volatilityDelta);
+    lastCareerReviewTurn = newTurnCount;
+    careerProgressionProfile = {
+      reviewCount: player.careerProgressionProfile.reviewCount + 1,
+      lastOutcome: review.outcome,
+      lastSalaryDelta: reviewSalaryDelta,
+      lastBonus: review.bonusCash,
+    };
+    careerReviewHistory = [
+      ...player.careerReviewHistory,
+      {
+        turn: newTurnCount,
+        outcome: review.outcome,
+        salaryDelta: reviewSalaryDelta,
+        bonus: review.bonusCash,
+      },
+    ];
   }
 
-  // Market dynamics
-  const volChange = (rng.next() - 0.5) * 2 * diff.marketVolatility;
-  const newPriceIndex = Math.max(PRICE_INDEX_BOUNDS.min, Math.min(PRICE_INDEX_BOUNDS.max, market.priceIndex * (1 + volChange * 0.1)));
-  const newRentalIndex = Math.max(RENTAL_INDEX_BOUNDS.min, Math.min(RENTAL_INDEX_BOUNDS.max, market.rentalIndex * (1 + volChange * 0.05)));
-  const newInterestRate = Math.max(INTEREST_RATE_BOUNDS.min, Math.min(INTEREST_RATE_BOUNDS.max, market.interestRate + (rng.next() - 0.5) * 0.5));
+  // Market dynamics with actual monthly moves and explanatory headlines
+  const marketPulse = generateMarketNews({
+    rng,
+    turn: newTurnCount,
+    month: newMonth,
+    year: newYear,
+    volatility: diff.marketVolatility,
+  });
+  const newPriceIndex = Math.max(
+    PRICE_INDEX_BOUNDS.min,
+    Math.min(PRICE_INDEX_BOUNDS.max, market.priceIndex * (1 + marketPulse.priceChangePct / 100)),
+  );
+  const newRentalIndex = Math.max(
+    RENTAL_INDEX_BOUNDS.min,
+    Math.min(RENTAL_INDEX_BOUNDS.max, market.rentalIndex * (1 + marketPulse.rentalChangePct / 100)),
+  );
+  const newInterestRate = Math.max(
+    INTEREST_RATE_BOUNDS.min,
+    Math.min(INTEREST_RATE_BOUNDS.max, market.interestRate + marketPulse.rateChangePct),
+  );
 
-  // Property values — single volChange multiplier, no priceIndex drift
-  const finalProperties = portfolioStep.updatedProperties.map(p => ({
-    ...p,
-    currentValue: Math.max(PROPERTY_VALUE_FLOOR, Math.round(p.currentValue * (1 + volChange * PROPERTY_VALUE_VOL_FACTOR))),
+  // Property values follow the same broader market pulse, but with dampened sensitivity
+  const finalProperties = portfolioStep.updatedProperties.map((property) => ({
+    ...property,
+    currentValue: Math.max(
+      PROPERTY_VALUE_FLOOR,
+      Math.round(property.currentValue * (1 + (marketPulse.priceChangePct / 100) * PROPERTY_VALUE_VOL_FACTOR * 10)),
+    ),
   }));
 
   // Cashflow
-  const totalOwnershipCosts = portfolioStep.monthlyCosts.maintenance + portfolioStep.monthlyCosts.propertyTax;
-  const netCashChange = takeHomePay + rentalIncome + lifeResolution.cashDelta - totalLoanPayment - totalOwnershipCosts - lifeResolution.householdCost;
-  const newCash = player.cash + netCashChange;
+  const netCashChange =
+    takeHomePay +
+    rentalIncome +
+    lifeResolution.cashDelta -
+    totalLoanPayment -
+    totalOwnershipCosts -
+    lifeResolution.householdCost;
+  const newCash = player.cash + netCashChange + reviewBonusCash;
 
-  // Scenarios — skip on turn 0
+  // Scenarios - priority order: first-home ladder, job switch choice, annual review visibility, then regular cadence
   let scenarioId: string | null = null;
-  const newTurnCount = player.turnCount + 1;
-  const eligibleScenarios = getEligibleScenarios(player);
-  if (
-    player.turnCount > 0 &&
-    eligibleScenarios.length > 0 &&
-    newTurnCount % diff.eventFrequency === 0 &&
-    rng.next() < SCENARIO_TRIGGER_PROBABILITY
-  ) {
-    scenarioId = rngPick(rng, eligibleScenarios).id;
+  const jobSwitchDue = shouldOfferJobSwitch(newTurnCount, player.nextJobSwitchTurn);
+  if (player.properties.length === 0 && newTurnCount === STARTER_SCENARIO_TURN) {
+    scenarioId = 'first-home-window';
+  } else if (jobSwitchDue) {
+    scenarioId = 'job-switch-opportunity';
+  } else if (shouldRunAnnualCareerReview(newTurnCount)) {
+    scenarioId = 'career-review';
+  } else if (player.turnCount > 0 && newTurnCount % diff.eventFrequency === 0 && rng.next() < SCENARIO_TRIGGER_PROBABILITY) {
+    const regularScenarios = getEligibleScenarios(player).filter(
+      (scenario) => !['first-home-window', 'job-switch-opportunity', 'career-review'].includes(scenario.id),
+    );
+    if (regularScenarios.length > 0) {
+      scenarioId = rngPick(rng, regularScenarios).id;
+    }
   }
 
   const newPlayer: Player = {
@@ -128,14 +205,23 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     turnCount: newTurnCount,
     life: lifeResolution.nextLife,
     totalRentalIncome: player.totalRentalIncome + rentalIncome,
-    totalNetWorth: 0, // computed below
+    totalNetWorth: 0,
     bankruptcyStrikes: player.bankruptcyStrikes ?? 0,
+    careerGrowthModifier: player.careerGrowthModifier,
+    careerRiskModifier: player.careerRiskModifier,
+    careerVolatilityModifier: reviewVolatilityModifier,
+    lastCareerReviewTurn: lastCareerReviewTurn,
+    nextJobSwitchTurn: scenarioId === 'job-switch-opportunity' ? newTurnCount + 24 : player.nextJobSwitchTurn,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+    careerProgressionProfile,
+    careerReviewHistory,
   };
   newPlayer.totalNetWorth = selectNetWorth(newPlayer);
 
   // Game-over detection
   const monthlyTakeHome = newSalary * TAKE_HOME_RATIO + rentalIncome + lifeResolution.cashDelta;
-  const monthlyDebt = updatedLoans.filter(l => !l.isPaid).reduce((s, l) => s + l.monthlyPayment, 0);
+  const monthlyDebt = updatedLoans.filter((loan) => !loan.isPaid).reduce((sum, loan) => sum + loan.monthlyPayment, 0);
   const isInsolvent = newPlayer.cash < 0 && monthlyTakeHome < monthlyDebt;
   const newStrikes = isInsolvent ? (player.bankruptcyStrikes ?? 0) + 1 : 0;
   newPlayer.bankruptcyStrikes = newStrikes;
@@ -150,7 +236,13 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     priceIndex: newPriceIndex,
     rentalIndex: newRentalIndex,
     volatility: diff.marketVolatility,
-    lastEvent: volChange > 0.05 ? 'boom' : volChange < -0.05 ? 'crash' : 'stable',
+    lastEvent: marketPulse.lastEvent,
+    monthlyPriceChangePct: marketPulse.priceChangePct,
+    monthlyRentalChangePct: marketPulse.rentalChangePct,
+    monthlyInterestRateChangePct: marketPulse.rateChangePct,
+    lastHeadline: marketPulse.newsItem.headline,
+    lastSummary: marketPulse.newsItem.detail,
+    newsFeed: [marketPulse.newsItem, ...(market.newsFeed ?? [])].slice(0, MARKET_NEWS_FEED_LIMIT),
   };
 
   return { player: newPlayer, market: newMarket, scenarioId, gameOver, outcome };

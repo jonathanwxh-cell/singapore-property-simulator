@@ -8,9 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Career & Eligibility Lite phase**: annual career reviews, job-switch scenarios, persistent first-home and private-home progression flags, and simplified executive condo eligibility rules.
+- **Progression UI**: dashboard Career Review and Eligibility Summary surfaces, property-browser/detail eligibility badges, and a game-over progression recap.
+- **Custom progression art**: dedicated `career-review-key-art.png` illustration for the career milestone flow.
+- `How to Play` tutorial page with quickstart instructions and first-property guidance.
+- Scripted Playwright smoke test covering tutorial routing, early scenario trigger, market feed visibility, and a first affordable purchase.
 - `LICENSE` file for the repository.
 - `.github/workflows/ci.yml` to run lint, test, and build on push and pull request.
 - `.github/PULL_REQUEST_TEMPLATE.md` with summary, test-plan, and changelog prompts.
+- README badges for CI status, license, and version.
 - Hybrid life-planning systems including monthly actions, energy, stress, household load, career momentum, side gigs, and scheme-planning decisions.
 - Reusable life-scene artwork for life planning surfaces, action cards, and month-outcome storytelling.
 - Vector-first skyline-and-wordmark logo system for the title screen and HUD.
@@ -23,8 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added CI, version, and license badges to the README while preserving the updated gameplay and systems documentation.
 - Replaced the old raster title emblem with the reusable `GameLogo` component on the title screen and HUD.
 - Upgraded the property browser, market, portfolio, property detail, dashboard, and life-planning surfaces to expose listing channels, market context, affordability guidance, carrying costs, and life-state storytelling more clearly.
+- Property browsing now explains first-timer friendliness, upgrader tiers, EC eligibility, and salary-ceiling blockers.
+- Purchase validation now supports CPF OA for eligible residential upfront costs and enforces simplified EC salary-ceiling and private-home-history rules.
+- Early-game pacing now makes first purchases more reachable through starter homes and a first-home scenario.
+- Smoke coverage now checks career review art and eligibility summary surfaces on top of the earlier pacing flow.
 
 ### Fixed
+- Scenario pacing now guarantees an early first-home scenario and then fires scenarios on a stable cadence, preventing long droughts with no events.
+- `How to Play` now opens a dedicated tutorial page instead of sending players to Settings.
+- Dashboard and market views now show real monthly price, rental, and rate moves with matching headlines instead of hardcoded repeating percentage text.
 - Centralized property purchase validation so the property detail UI and reducer use the same affordability and financing rules.
 - Fixed the silent property purchase failure by ensuring successful purchases mutate persisted state, create the mortgage, unlock achievements, and route cleanly into the portfolio flow.
 - Preserved the corrected net worth formula across HUD, dashboard, portfolio, save/load flows, and game-over calculations.

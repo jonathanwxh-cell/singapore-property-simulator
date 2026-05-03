@@ -6,6 +6,7 @@ import { difficultySettings } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
 import { Sparkles, CheckCircle, X } from 'lucide-react';
 import type { ScenarioOption } from '@/data/scenarios';
+import { STARTER_SCENARIO_TURN } from '@/engine/constants';
 
 export default function Scenarios() {
   const { currentScenario, resolveScenario, player, setCurrentScenario } = useGameStore();
@@ -29,9 +30,13 @@ export default function Scenarios() {
   };
 
   if (!activeScenario && !result) {
-    const nextIn = player.turnCount > 0
-      ? difficultySettings[player.difficulty].eventFrequency - (player.turnCount % difficultySettings[player.difficulty].eventFrequency)
-      : difficultySettings[player.difficulty].eventFrequency;
+    const cadence = difficultySettings[player.difficulty].eventFrequency;
+    const cadenceRemainder = player.turnCount % cadence;
+    const nextIn = player.properties.length === 0 && player.turnCount < STARTER_SCENARIO_TURN
+      ? STARTER_SCENARIO_TURN - player.turnCount
+      : player.turnCount > 0
+        ? (cadenceRemainder === 0 ? cadence : cadence - cadenceRemainder)
+        : cadence;
 
     return (
       <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
@@ -41,7 +46,7 @@ export default function Scenarios() {
             <GlassCard className="text-center py-8">
               <Sparkles size={40} className="text-purple-glow mx-auto mb-3" />
               <p className="text-text-secondary">Scenarios will appear here as you play the game.</p>
-              <p className="text-text-dim text-sm mt-1">Advance turns to trigger random life events and market scenarios.</p>
+              <p className="text-text-dim text-sm mt-1">Your first one is guaranteed early so the run starts with a real decision.</p>
             </GlassCard>
           ) : (
             <>
@@ -93,6 +98,11 @@ export default function Scenarios() {
             <GlassCard accentColor={color} className="relative">
               <button onClick={handleDismiss} className="absolute top-4 right-4 text-text-dim hover:text-white transition-colors"><X size={20} /></button>
               <div className="mb-4"><span className="text-[10px] px-2 py-0.5 rounded font-rajdhani uppercase" style={{ backgroundColor: `${color}20`, color }}>{activeScenario.category}</span></div>
+              <img
+                src={activeScenario.id === 'career-review' ? '/career-review-key-art.png' : activeScenario.image}
+                alt={activeScenario.id === 'career-review' ? 'Career Review' : activeScenario.title}
+                className="mb-4 h-40 w-full rounded-xl object-cover opacity-85"
+              />
               <h2 className="page-title text-xl text-white mb-2">{activeScenario.title}</h2>
               <p className="text-text-secondary text-sm mb-6 leading-relaxed">{activeScenario.description}</p>
               <div className="space-y-2">
