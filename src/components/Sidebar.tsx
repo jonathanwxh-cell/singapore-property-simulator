@@ -101,7 +101,7 @@ const Sidebar = memo(function Sidebar() {
       {!collapsed && (
         <div className="p-4 border-t border-glass-border">
           <div className="text-[10px] text-text-dim font-mono uppercase tracking-wider">
-            Singapore Property Tycoon
+            PropSim Singapore
           </div>
           <div className="text-[10px] text-text-dim/60 mt-1">
             v1.0.0

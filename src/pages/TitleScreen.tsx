@@ -213,7 +213,7 @@ export default function TitleScreen() {
         <div ref={logoRef} className="flex flex-col items-center mb-8 opacity-0">
           <img
             src="/title-logo.png"
-            alt="Property Tycoon: Singapore"
+            alt="PropSim Singapore"
             className="w-[320px] md:w-[450px] lg:w-[500px] h-auto object-contain drop-shadow-[0_0_30px_rgba(0,240,255,0.3)]"
           />
         </div>

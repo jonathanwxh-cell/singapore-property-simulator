@@ -30,11 +30,11 @@ const HUDTopBar = memo(function HUDTopBar() {
           >
             <img
               src="/title-logo.png"
-              alt="SG Property Tycoon"
+              alt="PropSim Singapore"
               className="h-8 w-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity hidden sm:block"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
-            <span className="font-orbitron text-cyan-glow text-sm font-bold tracking-wider hidden xs:block sm:hidden">SGPT</span>
+            <span className="font-orbitron text-cyan-glow text-sm font-bold tracking-wider hidden xs:block sm:hidden">PSIM</span>
           </button>
           {isGameActive && (
             <div className="glass-pill hidden sm:flex items-center gap-2">

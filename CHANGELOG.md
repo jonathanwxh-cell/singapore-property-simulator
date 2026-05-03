@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A scripted Playwright smoke test covering tutorial routing, early scenario trigger, market feed visibility, and a first affordable purchase.
 
 ### Changed
+- **PropSim logo refresh**: replaced the remaining `Property Tycoon` title-logo asset with a new transparent `PROPSIM` mark and updated visible brand labels.
 - **Property browsing**: listings now explain when they are first-timer friendly, upgrader tier, EC eligible, or blocked by a salary ceiling.
 - **Purchase validation**: executive condo purchases now enforce the simplified salary-ceiling and private-home-history rules used by the new eligibility layer.
 - **Smoke coverage**: the Playwright smoke run now checks the new career review art and eligibility summary surfaces on top of the earlier pacing flow.
