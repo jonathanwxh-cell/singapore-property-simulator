@@ -19,15 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README badges for CI status, license, and version.
 - Hybrid life-planning systems including monthly actions, energy, stress, household load, career momentum, side gigs, and scheme-planning decisions.
 - Reusable life-scene artwork for life planning surfaces, action cards, and month-outcome storytelling.
-- Vector-first skyline-and-wordmark logo system for the title screen and HUD.
+- Vector-first skyline-and-wordmark logo component retained as a reusable brand option.
 - Expanded live Singapore market from 34 properties to 80 listings across all 28 districts, with full district coverage and six listing channels.
 - Owned-property operating state including occupancy, vacancy streaks, maintenance drag, property tax, portfolio-aware scenarios, and the `Commercial Operator` progression path.
 
 ### Changed
+- **PropSim logo refresh**: kept the cleaned `PropSim Singapore` brand direction, restored the refreshed transparent logo asset, and updated visible brand labels.
 - Standardized repository metadata in `package.json` with the proper package name, version, description, license, repository, author, keywords, and homepage.
 - Removed `bun.lock`; `package-lock.json` is now the canonical lockfile.
 - Added CI, version, and license badges to the README while preserving the updated gameplay and systems documentation.
-- Replaced the old raster title emblem with the reusable `GameLogo` component on the title screen and HUD.
+- Replaced the old `Property Tycoon` title treatment with the cleaner `PropSim Singapore` title and HUD branding.
 - Upgraded the property browser, market, portfolio, property detail, dashboard, and life-planning surfaces to expose listing channels, market context, affordability guidance, carrying costs, and life-state storytelling more clearly.
 - Property browsing now explains first-timer friendliness, upgrader tiers, EC eligibility, and salary-ceiling blockers.
 - Purchase validation now supports CPF OA for eligible residential upfront costs and enforces simplified EC salary-ceiling and private-home-history rules.

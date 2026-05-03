@@ -3,7 +3,6 @@ import { Settings, Pause, Play, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, memo } from 'react';
 import { selectNetWorth } from '@/engine/selectors';
-import GameLogo from '@/components/GameLogo';
 
 const HUDTopBar = memo(function HUDTopBar() {
   const navigate = useNavigate();
@@ -29,10 +28,13 @@ const HUDTopBar = memo(function HUDTopBar() {
             onClick={() => navigate('/dashboard')}
             className="flex items-center gap-2 group shrink-0"
           >
-            <GameLogo
-              variant="hud"
-              className="opacity-90 group-hover:opacity-100 transition-opacity"
+            <img
+              src="/title-logo.png"
+              alt="PropSim Singapore"
+              className="h-8 w-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity hidden sm:block"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
+            <span className="font-orbitron text-cyan-glow text-sm font-bold tracking-wider hidden xs:block sm:hidden">PSIM</span>
           </button>
           {isGameActive && (
             <div className="glass-pill hidden sm:flex items-center gap-2">
