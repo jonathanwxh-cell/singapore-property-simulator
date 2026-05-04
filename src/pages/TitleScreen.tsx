@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { VolumeX, Volume2 } from 'lucide-react';
+import { useGameStore } from '@/game/useGameStore';
+import { readAutoSave } from '@/game/savePersistence';
 
 gsap.registerPlugin();
 
@@ -110,6 +112,7 @@ export default function TitleScreen() {
   const menuRef = useRef<HTMLDivElement>(null);
   const versionRef = useRef<HTMLDivElement>(null);
   const [soundOn, setSoundOn] = useState(false);
+  const loadGame = useGameStore((state) => state.loadGame);
 
   useGSAP(() => {
     const tl = gsap.timeline();
@@ -168,6 +171,17 @@ export default function TitleScreen() {
         navigate(path);
       },
     });
+  };
+
+  const handleContinue = () => {
+    const savedState = readAutoSave();
+    if (savedState) {
+      loadGame(savedState);
+      handleTransition('/dashboard');
+      return;
+    }
+
+    handleTransition('/saveload');
   };
 
   return (
@@ -244,7 +258,7 @@ export default function TitleScreen() {
             <MenuButton
               label="Continue"
               variant="secondary"
-              onClick={() => handleTransition('/dashboard')}
+              onClick={handleContinue}
             />
             <MenuButton
               label="Load Game"

@@ -1,6 +1,8 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
 import GameLayout from '@/components/GameLayout';
+import { useGameStore } from '@/game/useGameStore';
+import { readAutoSave, shouldHydrateAutoSaveForPath } from '@/game/savePersistence';
 
 // Eagerly load title screen (first impression)
 import TitleScreen from '@/pages/TitleScreen';
@@ -32,9 +34,25 @@ function LoadingFallback() {
   );
 }
 
+function AutoSaveHydrator() {
+  const location = useLocation();
+  const isGameActive = useGameStore((state) => state.isGameActive);
+  const loadGame = useGameStore((state) => state.loadGame);
+
+  useEffect(() => {
+    if (isGameActive || !shouldHydrateAutoSaveForPath(location.pathname)) return;
+
+    const savedState = readAutoSave();
+    if (savedState) loadGame(savedState);
+  }, [isGameActive, loadGame, location.pathname]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <HashRouter>
+      <AutoSaveHydrator />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           {/* Title Screen - no layout (no HUD/Sidebar) */}

@@ -1,11 +1,14 @@
 import { useCallback } from 'react';
 import { useGameStore } from '@/game/useGameStore';
 import type { SaveSlot, GameState } from '@/game/types';
-import { saveSchema } from '@/data/saveSchema';
-import { SAVE_VERSION } from '@/engine/constants';
-
-const SAVE_SLOTS_KEY = 'sgpt_saves';
-const AUTO_SAVE_KEY = 'sgpt_autosave';
+import {
+  AUTO_SAVE_KEY,
+  SAVE_SLOTS_KEY,
+  hasValidAutoSave,
+  parseStoredGameState,
+  readAutoSave,
+  serializeGameState,
+} from '@/game/savePersistence';
 
 export function useSaveLoad() {
   const gameState = useGameStore();
@@ -42,7 +45,7 @@ export function useSaveLoad() {
         year: state.player.year,
         month: state.player.month,
         difficulty: state.player.difficulty,
-        data: JSON.stringify({ ...state, version: SAVE_VERSION }),
+        data: serializeGameState(state),
       };
 
       const existingIndex = slots.findIndex(s => s.id === slotId);
@@ -66,10 +69,10 @@ export function useSaveLoad() {
       const slot = slots.find(s => s.id === slotId);
       if (!slot) return false;
 
-      const parsed = saveSchema.safeParse(JSON.parse(slot.data));
-      if (!parsed.success) return false;
+      const state = parseStoredGameState(slot.data);
+      if (!state) return false;
 
-      useGameStore.getState().loadGame(parsed.data as unknown as GameState);
+      useGameStore.getState().loadGame(state);
       return true;
     } catch {
       return false;
@@ -78,13 +81,10 @@ export function useSaveLoad() {
 
   const loadAutoSave = useCallback((): boolean => {
     try {
-      const data = localStorage.getItem(AUTO_SAVE_KEY);
-      if (!data) return false;
+      const state = readAutoSave();
+      if (!state) return false;
 
-      const parsed = saveSchema.safeParse(JSON.parse(data));
-      if (!parsed.success) return false;
-
-      useGameStore.getState().loadGame(parsed.data as unknown as GameState);
+      useGameStore.getState().loadGame(state);
       return true;
     } catch {
       return false;
@@ -115,10 +115,9 @@ export function useSaveLoad() {
 
   const importSave = useCallback((jsonData: string, slotId: number): boolean => {
     try {
-      const parsed = saveSchema.safeParse(JSON.parse(jsonData));
-      if (!parsed.success) return false;
+      const state = parseStoredGameState(jsonData);
+      if (!state) return false;
 
-      const state: GameState = parsed.data as unknown as GameState;
       const slots = getSaveSlots();
       const slot: SaveSlot = {
         id: slotId,
@@ -148,7 +147,7 @@ export function useSaveLoad() {
   }, [getSaveSlots]);
 
   const hasAutoSave = useCallback((): boolean => {
-    return localStorage.getItem(AUTO_SAVE_KEY) !== null;
+    return hasValidAutoSave();
   }, []);
 
   const downloadSaveFile = useCallback((slotId: number) => {

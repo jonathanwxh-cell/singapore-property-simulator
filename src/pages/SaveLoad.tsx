@@ -28,7 +28,10 @@ export default function SaveLoad() {
 
   const handleLoad = (slotId: number) => {
     if (loadGame(slotId)) {
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
+      if (window.location.hash !== '#/dashboard') {
+        window.location.replace('#/dashboard');
+      }
     }
   };
 

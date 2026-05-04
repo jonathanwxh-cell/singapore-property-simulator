@@ -506,7 +506,7 @@ export default function PropertyDetail() {
 
           <div>
             {isOwned && ownedProperty ? (
-              <GlassCard accentColor="#00E676" className="sticky top-4">
+              <GlassCard accentColor="#00E676" className="lg:sticky lg:top-4 lg:max-h-[36rem] lg:overflow-y-auto">
                 <h3 className="section-title text-white mb-4">Manage Property</h3>
 
                 <div className="space-y-3 mb-5">
@@ -594,7 +594,7 @@ export default function PropertyDetail() {
                 )}
               </GlassCard>
             ) : (
-              <GlassCard accentColor="#00E676" className="sticky top-4">
+              <GlassCard accentColor="#00E676" className="lg:sticky lg:top-4 lg:max-h-[34rem] lg:overflow-y-auto">
                 <h3 className="section-title text-white mb-4">Purchase</h3>
 
                 <div className="space-y-4 mb-6">
@@ -729,23 +729,25 @@ export default function PropertyDetail() {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleBuy}
-                  disabled={!canAfford}
-                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {eligibilityBlocked ? 'Not Eligible Yet' : canAfford ? 'Buy Property' : 'Insufficient Funds'}
-                </button>
+                <div className="sticky bottom-0 -mx-4 -mb-4 mt-4 rounded-b-card border-t border-divider bg-glass-fill/95 p-4 backdrop-blur-xl">
+                  <button
+                    onClick={handleBuy}
+                    disabled={!canAfford}
+                    className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {eligibilityBlocked ? 'Not Eligible Yet' : canAfford ? 'Buy Property' : 'Insufficient Funds'}
+                  </button>
 
-                {visibleMessages.length > 0 && (
-                  <div className="mt-3 space-y-1">
-                    {visibleMessages.map((message) => (
-                      <p key={message} className="text-danger text-xs text-center">
-                        {message}
-                      </p>
-                    ))}
-                  </div>
-                )}
+                  {visibleMessages.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      {visibleMessages.map((message) => (
+                        <p key={message} className="text-danger text-xs text-center">
+                          {message}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </GlassCard>
             )}
           </div>

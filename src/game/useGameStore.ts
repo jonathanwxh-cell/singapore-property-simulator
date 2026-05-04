@@ -6,7 +6,6 @@ import { createRng, newSeed, type Rng } from '@/engine/rng';
 import { advanceTurn } from '@/engine/turn';
 import { buyPropertyPure, sellPropertyPure, applyLoanPure, payLoanPure, renovatePropertyPure, resolveScenarioOption } from '@/engine/actions';
 import { selectNetWorth } from '@/engine/selectors';
-import { SAVE_VERSION } from '@/engine/constants';
 import { estimateInitialCpf } from '@/engine/cpf';
 import { withEvaluatedAchievements } from '@/engine/achievementRules';
 import { normalizeOwnedProperty } from '@/engine/portfolio';
@@ -24,6 +23,7 @@ import type { RepairChoiceId } from '@/data/maintenanceEvents';
 import type { ScenarioOption } from '@/data/scenarios';
 import type { ScenarioResolution } from '@/engine/actions';
 import type { ActionResult } from '@/engine/results';
+import { writeAutoSave } from './savePersistence';
 
 let rng: Rng = createRng(0);
 
@@ -155,8 +155,7 @@ function createInitialSettings(difficulty: Difficulty) {
 
 function saveTurn(state: GameState) {
   try {
-    if (typeof localStorage === 'undefined') return;
-    localStorage.setItem('sgpt_autosave', JSON.stringify({ ...state, version: SAVE_VERSION }));
+    writeAutoSave(state);
   } catch (error) {
     console.warn('Auto-save failed. Progress may not be preserved.', error);
   }
