@@ -80,7 +80,11 @@ async function startDefaultGame(page, baseUrl) {
   await page.getByRole('button', { name: /^Next$/ }).click();
   await expectVisible(page, 'text=Choose Buyer Profile');
   await page.getByRole('button', { name: /^Next$/ }).click();
+  await expectVisible(page, 'text=Choose Your Life Arc');
+  await page.getByRole('button', { name: /^Next$/ }).click();
+  await expectVisible(page, 'text=Select Difficulty');
   await page.getByRole('button', { name: /Start Game/i }).click();
+  await expectVisible(page, 'text=Life Arc');
   await expectVisible(page, 'text=First-Home Mission Rail');
 }
 

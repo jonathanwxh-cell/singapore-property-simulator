@@ -93,6 +93,19 @@ describe('getNextBestMoves', () => {
       route: '/property/hdb-bto-0',
     });
   });
+
+  it('adds route milestone guidance when no critical blocker is present', () => {
+    const moves = getNextBestMoves({
+      player: makePlayer({
+        runRouteId: 'fire-homeowner',
+        cash: 120_000,
+      }),
+    });
+
+    const routeMove = moves.find((move) => move.id.startsWith('route-'));
+    expect(routeMove).toBeDefined();
+    expect(routeMove?.detail).toContain('Life Arc');
+  });
 });
 
 describe('assessDealReadiness', () => {

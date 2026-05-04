@@ -95,7 +95,16 @@ async function startProfile(page, baseUrl, {
     await delay(150);
   }
   await page.getByRole('button', { name: /^Next$/ }).click();
+  await expectVisible(page, 'text=Choose Your Life Arc');
+  const routeLabel = getRouteLabel(householdLabel, residencyLabel);
+  if (routeLabel) {
+    await page.getByRole('button', { name: new RegExp(routeLabel, 'i') }).click();
+    await delay(150);
+  }
+  await page.getByRole('button', { name: /^Next$/ }).click();
+  await expectVisible(page, 'text=Select Difficulty');
   await page.getByRole('button', { name: /Start Game/i }).click();
+  await expectVisible(page, 'text=Life Arc');
   await expectVisible(page, 'text=First-Home Mission Rail');
 }
 
@@ -103,6 +112,13 @@ function getResidencyRateText(residencyLabel) {
   if (/foreigner/i.test(residencyLabel)) return '60% ABSD';
   if (/pr/i.test(residencyLabel)) return '5% first-home ABSD';
   return '0% first-home ABSD';
+}
+
+function getRouteLabel(householdLabel, residencyLabel) {
+  if (/foreigner/i.test(residencyLabel)) return 'Foreign Investor';
+  if (/pr/i.test(residencyLabel)) return 'PR Private-Market Climber';
+  if (/single 35/i.test(householdLabel ?? '')) return 'Single 35 Resale Buyer';
+  return 'BTO-to-Condo Upgrader';
 }
 
 async function run() {

@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/game/useGameStore';
 import { careers } from '@/data/careers';
+import { runRoutes } from '@/data/runRoutes';
 import { difficultySettings } from '@/game/types';
-import type { BuyerProfile, BuyerResidencyStatus, Difficulty, HouseholdProfile } from '@/game/types';
+import type { BuyerProfile, BuyerResidencyStatus, Difficulty, HouseholdProfile, RunRouteId } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
-import { ArrowLeft, ArrowRight, User, GraduationCap, TrendingUp, Cpu, Rocket, Shield, Heart, Home, Users, Globe2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, User, GraduationCap, TrendingUp, Cpu, Rocket, Shield, Heart, Home, Users, Globe2, Compass } from 'lucide-react';
 
 const careerIcons: Record<string, React.ElementType> = {
   graduate: GraduationCap,
@@ -24,6 +25,7 @@ export default function NewGame() {
   const [name, setName] = useState('');
   const [careerId, setCareerId] = useState('graduate');
   const [difficulty, setDifficulty] = useState<Difficulty>('normal');
+  const [runRouteId, setRunRouteId] = useState<RunRouteId>('bto-upgrader');
   const [buyerProfile, setBuyerProfile] = useState<BuyerProfile>({
     residencyStatus: 'sc',
     householdProfile: 'couple-family',
@@ -32,8 +34,13 @@ export default function NewGame() {
 
   const handleStart = () => {
     if (!name.trim()) return;
-    newGame(name.trim(), careerId, difficulty, buyerProfile);
+    newGame(name.trim(), careerId, difficulty, buyerProfile, runRouteId);
     navigate('/dashboard');
+  };
+
+  const applyBuyerProfile = (profile: BuyerProfile) => {
+    setBuyerProfile(profile);
+    setRunRouteId(recommendRunRoute(profile));
   };
 
   return (
@@ -51,7 +58,7 @@ export default function NewGame() {
 
           <h1 className="page-title text-white text-center text-2xl mb-2">New Game</h1>
           <div className="flex justify-center gap-2 mb-2">
-            {[0, 1, 2, 3].map(s => (
+            {[0, 1, 2, 3, 4].map(s => (
               <div key={s} className={`h-1 rounded-full transition-all ${s === step ? 'w-8 bg-cyan-glow' : 'w-4 bg-text-dim/30'}`} />
             ))}
           </div>
@@ -162,12 +169,12 @@ export default function NewGame() {
                     return (
                       <button
                         key={option.value}
-                        onClick={() => setBuyerProfile((profile) => ({
-                          ...profile,
+                        onClick={() => applyBuyerProfile({
+                          ...buyerProfile,
                           householdProfile: option.value,
-                          residencyStatus: option.defaultResidency ?? profile.residencyStatus,
-                          age: option.defaultAge ?? profile.age,
-                        }))}
+                          residencyStatus: option.defaultResidency ?? buyerProfile.residencyStatus,
+                          age: option.defaultAge ?? buyerProfile.age,
+                        })}
                         className={`rounded-xl border p-3 text-left transition-all ${isSelected ? 'border-cyan-glow/60 bg-cyan-glow/10' : 'border-glass-border bg-white/[0.03] hover:border-cyan-glow/40'}`}
                       >
                         <p className="text-white text-sm font-semibold">{option.label}</p>
@@ -194,7 +201,7 @@ export default function NewGame() {
                     return (
                       <button
                         key={option.value}
-                        onClick={() => setBuyerProfile((profile) => ({ ...profile, residencyStatus: option.value }))}
+                        onClick={() => applyBuyerProfile({ ...buyerProfile, residencyStatus: option.value })}
                         className={`w-full rounded-xl border p-3 text-left transition-all ${isSelected ? 'border-success/60 bg-success/10' : 'border-glass-border bg-white/[0.03] hover:border-success/40'}`}
                       >
                         <div className="flex items-center justify-between gap-3">
@@ -231,8 +238,54 @@ export default function NewGame() {
           </div>
         )}
 
-        {/* Step 4: Difficulty */}
+        {/* Step 4: Life Arc */}
         {step === 3 && (
+          <div className="flex flex-col h-full min-h-0">
+            <h2 className="section-title text-cyan-glow text-center text-lg mb-3 shrink-0">Choose Your Life Arc</h2>
+            <div className="flex-1 overflow-y-auto min-h-0 mb-4 pr-1 space-y-2">
+              {runRoutes.map((route) => {
+                const isSelected = runRouteId === route.id;
+                const recommended =
+                  route.recommendedBuyerProfiles.includes(buyerProfile.householdProfile)
+                  && route.recommendedResidency.includes(buyerProfile.residencyStatus);
+                return (
+                  <button
+                    key={route.id}
+                    onClick={() => setRunRouteId(route.id)}
+                    className={`glass-card p-3 text-left transition-all w-full ${isSelected ? 'border-cyan-glow/50 bg-cyan-glow/5' : 'hover:bg-white/5'}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="w-10 h-10 rounded-xl border flex items-center justify-center shrink-0"
+                        style={{ borderColor: `${route.accentColor}66`, backgroundColor: `${route.accentColor}18`, color: route.accentColor }}
+                      >
+                        <Compass size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-rajdhani font-semibold text-white text-sm">{route.label}</h3>
+                          {route.beginnerFriendly && <span className="rounded-full bg-success/15 px-2 py-0.5 text-[9px] font-mono text-success">BEGINNER</span>}
+                          {recommended && <span className="rounded-full bg-cyan-glow/15 px-2 py-0.5 text-[9px] font-mono text-cyan-glow">RECOMMENDED</span>}
+                        </div>
+                        <p className="text-text-secondary text-xs mt-1 leading-relaxed">{route.tagline}</p>
+                        <p className="text-text-dim text-[10px] mt-2">{route.difficultyHint} | Teaches: {route.primaryLessons.join(', ')}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="shrink-0 pb-4">
+              <button onClick={() => setStep(4)} className="btn-primary w-full">
+                Next
+                <ArrowRight size={16} className="inline ml-2" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Difficulty */}
+        {step === 4 && (
           <div className="flex flex-col h-full min-h-0">
             <h2 className="section-title text-cyan-glow text-center text-lg mb-3 shrink-0">Select Difficulty</h2>
             <div className="flex-1 overflow-y-auto min-h-0 mb-4 pr-1 space-y-2">
@@ -335,4 +388,11 @@ function getAgeOptions(householdProfile: HouseholdProfile): number[] {
   if (householdProfile === 'single-under-35') return [27, 30, 34];
   if (householdProfile === 'single-35-plus') return [35, 40, 45];
   return [27, 30, 35, 40, 45];
+}
+
+function recommendRunRoute(profile: BuyerProfile): RunRouteId {
+  if (profile.residencyStatus === 'foreigner' || profile.householdProfile === 'foreigner-investor') return 'foreign-investor';
+  if (profile.residencyStatus === 'spr') return 'pr-private-climber';
+  if (profile.householdProfile === 'single-35-plus') return 'single-resale';
+  return 'bto-upgrader';
 }

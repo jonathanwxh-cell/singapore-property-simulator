@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Run Director life arcs**: route-based new-game choices, dashboard Life Arc milestones, route-aware Decision Coach guidance, scenario weighting, portfolio route ribbons, and game-over replay recaps.
 - `npm run test:scroll` browser regression test covering route-change scroll reset after navigating from long pages.
 - **Singapore profile playability phase**: new-game buyer profiles for Singapore Citizens, PRs, foreigners, family/single/foreign-investor paths, and profile-aware first-home mission guidance.
 - **First-home mission rail and rule glossary**: dashboard and property-detail surfaces now explain ABSD, CPF OA, MOP, room rental, MSR, TDSR, and reserves in plain English.

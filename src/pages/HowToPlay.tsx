@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Building2, Landmark, Sparkles, TrendingUp } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, Compass, Landmark, Sparkles, TrendingUp } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 
 const sections = [
@@ -12,6 +12,11 @@ const sections = [
     title: 'Your First Good Move',
     icon: Building2,
     body: 'Use the early turns to build buying power. Starter scenarios, your salary, and CPF OA can all help you cross the line into your first property much faster.',
+  },
+  {
+    title: 'Guided Life Arc',
+    icon: Compass,
+    body: 'Choose a route like BTO Upgrader, Single 35 Resale Buyer, Heartland Landlord, or FIRE Homeowner. Routes guide your next moves and replay goals, but they do not block valid sandbox choices.',
   },
   {
     title: 'Buying Property',

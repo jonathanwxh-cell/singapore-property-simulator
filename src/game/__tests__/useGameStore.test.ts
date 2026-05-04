@@ -312,6 +312,38 @@ describe('useGameStore', () => {
     expect(player.nextJobSwitchTurn).toBe(24);
   });
 
+  it('stores the selected run route when starting a new game', () => {
+    useGameStore.getState().newGame('Route Tester', 'graduate', 'normal', {
+      residencyStatus: 'sc',
+      householdProfile: 'couple-family',
+      age: 30,
+    }, 'heartland-landlord');
+
+    expect(useGameStore.getState().player.runRouteId).toBe('heartland-landlord');
+  });
+
+  it('infers a route when loading an older save without route state', () => {
+    const baseState = makeState({
+      player: makePlayer({
+        buyerProfile: {
+          residencyStatus: 'foreigner',
+          householdProfile: 'foreigner-investor',
+          age: 40,
+        },
+      }),
+    });
+
+    useGameStore.getState().loadGame({
+      ...baseState,
+      player: {
+        ...baseState.player,
+        runRouteId: undefined,
+      },
+    });
+
+    expect(useGameStore.getState().player.runRouteId).toBe('foreign-investor');
+  });
+
   it('normalizes buyer-profile ages for single-buyer routes', () => {
     useGameStore.getState().newGame('Solo Buyer', 'graduate', 'normal', {
       residencyStatus: 'sc',

@@ -5,6 +5,15 @@ const renovationCategorySchema = z.enum(['kitchen', 'bathroom', 'flooring', 'sma
 const rentStrategySchema = z.enum(['conservative', 'market', 'aggressive']);
 const rentalModeSchema = z.enum(['room-rental', 'whole-unit', 'corporate-lease', 'student-shared', 'commercial-lease']);
 const tenantProfileSchema = z.enum(['local-family', 'expat-pmet', 'student-tenants', 'sme-commercial']);
+const runRouteSchema = z.enum([
+  'bto-upgrader',
+  'single-resale',
+  'pr-private-climber',
+  'foreign-investor',
+  'heartland-landlord',
+  'commercial-operator',
+  'fire-homeowner',
+]);
 const buyerProfileSchema = z.object({
   residencyStatus: z.enum(['sc', 'spr', 'foreigner']),
   householdProfile: z.enum(['couple-family', 'single-35-plus', 'single-under-35', 'foreigner-investor']),
@@ -167,6 +176,7 @@ const playerSchema = z.object({
     bonus: z.number(),
   })).optional(),
   buyerProfile: buyerProfileSchema.optional(),
+  runRouteId: runRouteSchema.optional(),
   reserve: z.object({
     targetMonths: z.number(),
     allocatedCash: z.number(),

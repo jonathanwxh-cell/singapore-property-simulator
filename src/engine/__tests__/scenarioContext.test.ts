@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Player } from '@/game/types';
 import { getEligibleScenarios } from '../scenarioContext';
+import { getRouteWeightedScenarios } from '../scenarioContext';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -82,5 +83,24 @@ describe('getEligibleScenarios', () => {
 
     expect(eligibleWithoutLeasehold.some((scenario) => scenario.id === 'lease-top-up')).toBe(false);
     expect(eligibleWithLeasehold.some((scenario) => scenario.id === 'lease-top-up')).toBe(true);
+  });
+
+  it('weights route-matched scenarios without removing eligible variety', () => {
+    const weighted = getRouteWeightedScenarios(makePlayer({
+      runRouteId: 'heartland-landlord',
+      properties: [{
+        propertyId: 'hdb-bto-1',
+        purchasePrice: 380_000,
+        purchaseDate: '2024-01',
+        currentValue: 380_000,
+        isRented: true,
+        monthlyRental: 1647,
+        renovationLevel: 0,
+      }],
+    }));
+
+    const tenantDefaultCount = weighted.filter((scenario) => scenario.id === 'tenant-default').length;
+    expect(tenantDefaultCount).toBeGreaterThan(1);
+    expect(weighted.some((scenario) => scenario.id === 'market-crash')).toBe(true);
   });
 });

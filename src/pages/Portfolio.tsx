@@ -4,6 +4,7 @@ import { achievements } from '@/data/achievements';
 import GlassCard from '@/components/GlassCard';
 import { Building2, TrendingUp, Award, Target, Home, DollarSign, ShieldAlert, FileClock } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
+import RunArcPanel from '@/components/RunArcPanel';
 import { useNavigate } from 'react-router-dom';
 import { selectNetWorth, selectMonthlyOwnershipCosts, selectMonthlyRentalIncome } from '@/engine/selectors';
 import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
@@ -23,6 +24,7 @@ export default function Portfolio() {
   const investorRoute = describeInvestorRoute(player);
   const landlordOps = getLandlordOpsSummary(player);
   const activeRenovations = player.properties.filter((property) => property.activeRenovation).length;
+  const showOperationsArc = player.runRouteId === 'heartland-landlord' || player.runRouteId === 'commercial-operator';
 
   const unlockedAchievements = achievements.filter(a => player.achievements.includes(a.id));
 
@@ -62,10 +64,16 @@ export default function Portfolio() {
         </div>
 
         <GlassCard accentColor={investorRoute.accentColor} className="mb-6">
-          <p className="label-text text-text-dim text-[10px] mb-2">Current Route</p>
+          <p className="label-text text-text-dim text-[10px] mb-2">Portfolio Style</p>
           <h2 className="section-title text-white mb-2">{investorRoute.label}</h2>
           <p className="text-text-secondary text-sm">{investorRoute.summary}</p>
         </GlassCard>
+
+        {showOperationsArc && (
+          <div className="mb-6">
+            <RunArcPanel player={player} compact onOpenRoute={(route) => navigate(route)} />
+          </div>
+        )}
 
         {player.properties.length > 0 && (
           <GlassCard accentColor="#00F0FF" className="mb-6 overflow-hidden">
