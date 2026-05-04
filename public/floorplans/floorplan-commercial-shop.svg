@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Commercial shop floor plan">
+  <rect width="640" height="420" fill="#100d08"/>
+  <rect x="34" y="34" width="572" height="352" rx="24" fill="#23180c" stroke="#ff9100" stroke-opacity=".42" stroke-width="4"/>
+  <rect x="62" y="62" width="516" height="142" rx="14" fill="#3a2915" stroke="#ffd9a1" stroke-opacity=".35"/>
+  <text x="320" y="139" fill="#fff2dc" font-family="Arial" font-size="24" text-anchor="middle">Retail Frontage</text>
+  <rect x="62" y="224" width="252" height="134" rx="14" fill="#432f18" stroke="#ffd9a1" stroke-opacity=".35"/>
+  <text x="188" y="296" fill="#fff2dc" font-family="Arial" font-size="20" text-anchor="middle">Service / Sales</text>
+  <rect x="334" y="224" width="244" height="76" rx="14" fill="#372817" stroke="#ffd9a1" stroke-opacity=".35"/>
+  <text x="456" y="267" fill="#fff2dc" font-family="Arial" font-size="18" text-anchor="middle">Storage</text>
+  <rect x="334" y="318" width="244" height="40" rx="12" fill="#2d241b" stroke="#ffd9a1" stroke-opacity=".35"/>
+  <text x="456" y="343" fill="#fff2dc" font-family="Arial" font-size="16" text-anchor="middle">Back of House</text>
+</svg>

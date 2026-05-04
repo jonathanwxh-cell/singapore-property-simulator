@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="HDB 3-room floor plan">
+  <rect width="640" height="420" fill="#07111f"/>
+  <rect x="28" y="28" width="584" height="364" rx="22" fill="#0e2138" stroke="#00f0ff" stroke-opacity=".35" stroke-width="4"/>
+  <rect x="54" y="54" width="300" height="170" rx="12" fill="#14375a" stroke="#8be9ff" stroke-opacity=".45"/>
+  <text x="204" y="145" fill="#dffbff" font-family="Arial" font-size="24" text-anchor="middle">Living / Dining</text>
+  <rect x="374" y="54" width="210" height="138" rx="12" fill="#19324d" stroke="#8be9ff" stroke-opacity=".35"/>
+  <text x="479" y="128" fill="#dffbff" font-family="Arial" font-size="20" text-anchor="middle">Bedroom</text>
+  <rect x="54" y="244" width="210" height="120" rx="12" fill="#1d405c" stroke="#8be9ff" stroke-opacity=".35"/>
+  <text x="159" y="309" fill="#dffbff" font-family="Arial" font-size="20" text-anchor="middle">Kitchen</text>
+  <rect x="284" y="244" width="132" height="120" rx="12" fill="#22364b" stroke="#8be9ff" stroke-opacity=".35"/>
+  <text x="350" y="309" fill="#dffbff" font-family="Arial" font-size="18" text-anchor="middle">Bath</text>
+  <rect x="438" y="214" width="146" height="150" rx="12" fill="#19324d" stroke="#8be9ff" stroke-opacity=".35"/>
+  <text x="511" y="294" fill="#dffbff" font-family="Arial" font-size="20" text-anchor="middle">Bedroom</text>
+</svg>

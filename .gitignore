@@ -160,3 +160,4 @@ sketch
 dist/
 output/
 .worktrees/
+playtest-artifacts/

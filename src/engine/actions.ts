@@ -143,6 +143,11 @@ export function buyPropertyPure(
       renovationLevel: 0,
     }),
     listingChannel: property.listingChannel,
+    conditionScore: 72,
+    mopRemainingMonths: property.isHdb ? 60 : 0,
+    completedRenovations: [],
+    openMaintenanceIssues: [],
+    rentStrategy: 'market',
   };
 
   const newLoan: Loan | null = loanAmount > 0

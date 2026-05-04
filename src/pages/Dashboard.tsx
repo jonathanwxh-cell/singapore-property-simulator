@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Wallet, TrendingUp, Building2, ArrowRight, Newspaper, BatteryCharging, Flame, House } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { selectNetWorth, selectMonthlyNetCashflow, selectMonthlyTakeHome, selectMonthlyRentalIncome, selectMonthlyExpenses, selectMonthlyHouseholdLoad } from '@/engine/selectors';
+import { selectAvailableCash, selectNetWorth, selectMonthlyNetCashflow, selectMonthlyTakeHome, selectMonthlyRentalIncome, selectMonthlyExpenses, selectMonthlyHouseholdLoad, selectReservedCash } from '@/engine/selectors';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { deriveEligibilityFlags, EC_MAX_MONTHLY_INCOME } from '@/engine/eligibility';
 import EligibilityBadge from '@/components/EligibilityBadge';
@@ -18,6 +18,8 @@ export default function Dashboard() {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   const netWorth = selectNetWorth(player);
+  const availableCash = selectAvailableCash(player);
+  const reservedCash = selectReservedCash(player);
   const monthlyTakeHome = selectMonthlyTakeHome(player, TAKE_HOME_RATIO);
   const monthlyRental = selectMonthlyRentalIncome(player);
   const monthlyDebt = selectMonthlyExpenses(player);
@@ -37,6 +39,10 @@ export default function Dashboard() {
   });
   const latestCareerReview = player.careerReviewHistory[player.careerReviewHistory.length - 1] ?? null;
   const nextJobSwitchIn = Math.max(player.nextJobSwitchTurn - player.turnCount, 0);
+  const openIssues = player.properties.flatMap((property) => property.openMaintenanceIssues ?? []);
+  const activeRenovations = player.properties.filter((property) => property.activeRenovation);
+  const weakTenant = player.properties.find((property) => property.tenant && property.tenant.satisfaction < 55);
+  const latestOperation = player.operationHistory?.[0] ?? null;
 
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
@@ -54,7 +60,13 @@ export default function Dashboard() {
         </motion.div>
 
         <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard icon={Wallet} label="Cash" value={`S$${(player.cash / 1000).toFixed(1)}K`} color="#00F0FF" />
+          <StatCard
+            icon={Wallet}
+            label="Available Cash"
+            value={`S$${(availableCash / 1000).toFixed(1)}K`}
+            color="#00F0FF"
+            detail={reservedCash > 0 ? `Reserve S$${(reservedCash / 1000).toFixed(1)}K` : 'No reserve set'}
+          />
           <StatCard icon={TrendingUp} label="Net Worth" value={`S$${(netWorth / 1000000).toFixed(2)}M`} color="#00E676" />
           <StatCard icon={Building2} label="Properties" value={String(player.properties.length)} color="#7C4DFF" />
           <StatCard icon={Newspaper} label="Market Index" value={`${market.priceIndex.toFixed(1)}`} color="#FF9100" change={marketChange} />
@@ -144,6 +156,46 @@ export default function Dashboard() {
             </div>
           </GlassCard>
         </motion.div>
+
+        {player.properties.length > 0 && (
+          <motion.div variants={itemVariants} className="mb-6">
+            <GlassCard accentColor={openIssues.length > 0 ? '#FF1744' : activeRenovations.length > 0 ? '#FFD740' : '#00E676'}>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <p className="label-text text-text-dim text-[10px] mb-1">This Month Needs Attention</p>
+                  <h3 className="section-title text-white">Property Operations</h3>
+                </div>
+                <button onClick={() => navigate('/portfolio')} className="btn-secondary text-xs px-3 py-2">Open Portfolio</button>
+              </div>
+              <div className="grid md:grid-cols-4 gap-3">
+                <AttentionCard
+                  label="Repairs"
+                  value={openIssues.length > 0 ? `${openIssues.length} open` : 'Clear'}
+                  detail={openIssues[0] ? `${openIssues[0].category} issue: S$${openIssues[0].estimatedCost.toLocaleString()}` : 'No urgent maintenance on the board.'}
+                  tone={openIssues.length > 0 ? 'bad' : 'good'}
+                />
+                <AttentionCard
+                  label="Upgrades"
+                  value={activeRenovations.length > 0 ? `${activeRenovations.length} active` : 'Ready'}
+                  detail={activeRenovations[0]?.activeRenovation ? `${activeRenovations[0].activeRenovation.label}: ${activeRenovations[0].activeRenovation.remainingMonths} mo left` : 'Pick an upgrade on an owned property detail page.'}
+                  tone={activeRenovations.length > 0 ? 'warn' : 'neutral'}
+                />
+                <AttentionCard
+                  label="Tenants"
+                  value={weakTenant?.tenant ? `${weakTenant.tenant.satisfaction}/100` : 'Stable'}
+                  detail={weakTenant?.tenant ? 'Tenant happiness is slipping. Consider repairs or a defensive rent strategy.' : 'No low-satisfaction leases flagged.'}
+                  tone={weakTenant?.tenant ? 'bad' : 'good'}
+                />
+                <AttentionCard
+                  label="Reserve"
+                  value={`S$${(player.reserve?.allocatedCash ?? 0).toLocaleString()}`}
+                  detail={latestOperation ? latestOperation.title : 'Set aside runway before maintenance bites.'}
+                  tone={(player.reserve?.allocatedCash ?? 0) > 0 ? 'good' : 'warn'}
+                />
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           <motion.div variants={itemVariants}>
@@ -235,6 +287,33 @@ export default function Dashboard() {
   );
 }
 
+function AttentionCard({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone: 'good' | 'warn' | 'bad' | 'neutral';
+}) {
+  const toneClass = {
+    good: 'text-success',
+    warn: 'text-warning',
+    bad: 'text-danger',
+    neutral: 'text-white',
+  } satisfies Record<typeof tone, string>;
+
+  return (
+    <div className="rounded-xl border border-glass-border bg-white/[0.03] p-3">
+      <p className="label-text text-text-dim text-[10px]">{label}</p>
+      <p className={`font-mono text-sm mt-1 ${toneClass[tone]}`}>{value}</p>
+      <p className="text-text-secondary text-xs mt-2 leading-relaxed">{detail}</p>
+    </div>
+  );
+}
+
 function LifeRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
@@ -247,7 +326,7 @@ function LifeRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
   );
 }
 
-function StatCard({ icon: Icon, label, value, color, change }: { icon: React.ElementType; label: string; value: string; color: string; change?: string }) {
+function StatCard({ icon: Icon, label, value, color, change, detail }: { icon: React.ElementType; label: string; value: string; color: string; change?: string; detail?: string }) {
   return (
     <GlassCard className="relative overflow-hidden">
       <div className="absolute top-0 left-4 right-4 h-[2px] rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 12px ${color}` }} />
@@ -256,6 +335,7 @@ function StatCard({ icon: Icon, label, value, color, change }: { icon: React.Ele
         <span className="font-mono text-xl font-bold text-white">{value}</span>
         {change && <span className={`text-[10px] font-mono mb-1 ${change.startsWith('+') ? 'text-success' : 'text-danger'}`}>{change}</span>}
       </div>
+      {detail && <p className="text-text-dim text-[10px] mt-1">{detail}</p>}
     </GlassCard>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Player } from '@/game/types';
-import { advancePortfolioMonth, describeInvestorRoute } from '../portfolio';
+import { advancePortfolioMonth, describeInvestorRoute, describePortfolioHoldingOperations } from '../portfolio';
 import { selectMonthlyOwnershipCosts } from '../selectors';
 import { withEvaluatedAchievements } from '../achievementRules';
 
@@ -108,5 +108,71 @@ describe('advancePortfolioMonth', () => {
     }));
 
     expect(evaluated.achievements).toContain('commercial-operator');
+  });
+
+  it('summarizes active tenant income and operational attention for a holding', () => {
+    const summary = describePortfolioHoldingOperations({
+      propertyId: 'hdb-bto-1',
+      purchasePrice: 380_000,
+      purchaseDate: '2024-01',
+      currentValue: 380_000,
+      isRented: true,
+      monthlyRental: 1_647,
+      renovationLevel: 0,
+      occupancyStatus: 'tenanted',
+      tenant: {
+        profileId: 'local-family',
+        mode: 'room-rental',
+        rentStrategy: 'market',
+        satisfaction: 72,
+        leaseMonthsRemaining: 11,
+        contractedRent: 1_850,
+        renewalIntent: 66,
+      },
+      openMaintenanceIssues: [{
+        id: 'issue-1',
+        category: 'plumbing',
+        severity: 'urgent',
+        estimatedCost: 2_500,
+        satisfactionImpact: -8,
+        valueImpactPct: -0.4,
+        openedTurn: 7,
+      }],
+      activeRenovation: {
+        templateId: 'kitchen-refresh',
+        category: 'kitchen',
+        label: 'Kitchen Refresh',
+        cost: 18_000,
+        durationMonths: 2,
+        remainingMonths: 2,
+        rentUpliftPct: 7,
+        resaleUpliftPct: 3.8,
+        satisfactionUplift: 7,
+        conditionDelta: 12,
+        status: 'active',
+      },
+    });
+
+    expect(summary.statusLabel).toBe('Lease S$1,850/mo');
+    expect(summary.tenantLabel).toBe('Tenant 72/100');
+    expect(summary.attentionTags).toEqual(['Repairs 1', 'Upgrade 2 mo']);
+  });
+
+  it('summarizes vacancy streaks for empty holdings', () => {
+    const summary = describePortfolioHoldingOperations({
+      propertyId: 'hdb-bto-1',
+      purchasePrice: 380_000,
+      purchaseDate: '2024-01',
+      currentValue: 380_000,
+      isRented: false,
+      monthlyRental: 1_647,
+      renovationLevel: 0,
+      occupancyStatus: 'vacant',
+      vacancyMonths: 3,
+    });
+
+    expect(summary.statusLabel).toBe('Vacant 3 mo');
+    expect(summary.tenantLabel).toBe('No tenant');
+    expect(summary.attentionTags).toEqual(['Vacancy 3 mo']);
   });
 });

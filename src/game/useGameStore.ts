@@ -11,6 +11,16 @@ import { estimateInitialCpf } from '@/engine/cpf';
 import { withEvaluatedAchievements } from '@/engine/achievementRules';
 import { normalizeOwnedProperty } from '@/engine/portfolio';
 import { calculateHouseholdLoad, normalizeLifeState } from '@/engine/life';
+import {
+  createDefaultReserve,
+  resolveMaintenanceIssuePure,
+  setReservePlanPure,
+  setTenantStrategyPure,
+  startRenovationPure,
+  type ReservePlanInput,
+  type TenantStrategyInput,
+} from '@/engine/propertyOperations';
+import type { RepairChoiceId } from '@/data/maintenanceEvents';
 import type { ScenarioOption } from '@/data/scenarios';
 import type { ScenarioResolution } from '@/engine/actions';
 import type { ActionResult } from '@/engine/results';
@@ -48,6 +58,8 @@ function withNetWorth(player: Player): Player {
 function withPortfolioDefaults(player: Player): Player {
   return {
     ...player,
+    reserve: player.reserve ?? createDefaultReserve(),
+    operationHistory: player.operationHistory ?? [],
     properties: player.properties.map(normalizeOwnedProperty),
   };
 }
@@ -102,6 +114,8 @@ function createInitialPlayer(name: string, careerId: string, difficulty: Difficu
     ownedPrivateHome: false,
     careerProgressionProfile: createInitialCareerProgressionProfile(),
     careerReviewHistory: [],
+    reserve: createDefaultReserve(),
+    operationHistory: [],
   });
 }
 
@@ -172,6 +186,10 @@ interface GameStore extends GameState {
   applyLoan: (amount: number, interestRate: number, termYears: number, type: 'mortgage' | 'renovation' | 'personal', propertyId?: string) => ActionResult;
   payLoan: (loanId: string, amount: number) => ActionResult;
   renovateProperty: (propertyIndex: number, cost: number) => ActionResult;
+  startRenovation: (propertyIndex: number, templateId: string) => ActionResult;
+  setTenantStrategy: (propertyIndex: number, input: TenantStrategyInput) => ActionResult;
+  resolveMaintenanceIssue: (propertyIndex: number, issueId: string, choiceId: RepairChoiceId) => ActionResult;
+  setReservePlan: (input: ReservePlanInput) => ActionResult;
   toggleRental: (propertyIndex: number) => void;
   updateSettings: (settings: Partial<GameState['settings']>) => void;
   unlockAchievement: (achievementId: string) => void;
@@ -323,6 +341,46 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
+  startRenovation: (propertyIndex, templateId) => {
+    const result = startRenovationPure(get().player, propertyIndex, templateId);
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
+    return result.ok ? { ok: true as const, value: undefined } : result;
+  },
+
+  setTenantStrategy: (propertyIndex, input) => {
+    const result = setTenantStrategyPure(get().player, propertyIndex, input);
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
+    return result.ok ? { ok: true as const, value: undefined } : result;
+  },
+
+  resolveMaintenanceIssue: (propertyIndex, issueId, choiceId) => {
+    const result = resolveMaintenanceIssuePure(get().player, propertyIndex, issueId, choiceId);
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
+    return result.ok ? { ok: true as const, value: undefined } : result;
+  },
+
+  setReservePlan: (input) => {
+    const result = setReservePlanPure(get().player, input);
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
+    return result.ok ? { ok: true as const, value: undefined } : result;
+  },
+
   toggleRental: (propertyIndex) => {
     const { player } = get();
     if (propertyIndex < 0 || propertyIndex >= player.properties.length) return;
@@ -332,6 +390,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...updatedProperties[propertyIndex],
       isRented: nextIsRented,
       occupancyStatus: nextIsRented ? 'tenanted' : 'vacant',
+      tenant: nextIsRented ? updatedProperties[propertyIndex].tenant : undefined,
       vacancyMonths: nextIsRented ? 0 : updatedProperties[propertyIndex].vacancyMonths ?? 0,
     };
     set({ player: finalizePlayer({ ...player, properties: updatedProperties }) });

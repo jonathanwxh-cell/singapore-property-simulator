@@ -94,7 +94,11 @@ async function clickAdvance(page) {
       await button.click();
       return;
     } catch (error) {
-      if (attempt === 2) throw error;
+      if (attempt === 2) {
+        console.error(`Advance button not found at ${page.url()}`);
+        console.error((await page.locator('body').innerText()).slice(0, 1200));
+        throw error;
+      }
       await delay(300);
     }
   }
@@ -158,14 +162,24 @@ async function run() {
     await page.goto(`${baseUrl}/#/portfolio`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Woodlands North Grove 3-Room');
 
+    await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
+    await expectVisible(page, 'text=Property Operations');
+    await expectVisible(page, 'img[alt="Woodlands North Grove 3-Room floor plan"]');
+    await page.getByRole('button', { name: /Room Rental/i }).first().click();
+    await expectVisible(page, 'text=Active lease');
+
     await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
     for (let step = 0; step < 9; step += 1) {
+      await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+      await resolveScenarioIfPresent(page);
       await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
       await clickAdvance(page);
       await resolveScenarioIfPresent(page);
       await delay(200);
     }
 
+    await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+    await resolveScenarioIfPresent(page);
     await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
     await clickAdvance(page);
     await expectVisible(page, 'text=Annual Career Review');

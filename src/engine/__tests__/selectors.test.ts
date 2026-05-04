@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialLifeState } from '@/game/types';
-import { selectAffordabilityReport, selectMonthlyExpenses, selectMonthlyNetCashflow, selectMonthlyRentalIncome, selectMonthlyTakeHome, selectNetWorth } from '../selectors';
+import { selectAffordabilityReport, selectAvailableCash, selectMonthlyExpenses, selectMonthlyNetCashflow, selectMonthlyRentalIncome, selectMonthlyTakeHome, selectNetWorth, selectReservedCash } from '../selectors';
 import { TAKE_HOME_RATIO } from '../constants';
 import type { Player } from '@/game/types';
 
@@ -42,6 +42,37 @@ describe('selectMonthlyRentalIncome', () => {
       ],
     });
     expect(selectMonthlyRentalIncome(player)).toBe(3000);
+  });
+});
+
+describe('reserve-aware cash selectors', () => {
+  it('separates spendable cash from earmarked reserve without changing net worth', () => {
+    const player = makePlayer({
+      cash: 100_000,
+      reserve: {
+        targetMonths: 3,
+        allocatedCash: 15_000,
+        autoTopUpPct: 0,
+      },
+    });
+
+    expect(selectReservedCash(player)).toBe(15_000);
+    expect(selectAvailableCash(player)).toBe(85_000);
+    expect(selectNetWorth(player)).toBe(100_000 + 20_000 + 5_000 + 20_000);
+  });
+
+  it('caps visible reserved cash to current cash to keep imported saves readable', () => {
+    const player = makePlayer({
+      cash: 4_000,
+      reserve: {
+        targetMonths: 3,
+        allocatedCash: 10_000,
+        autoTopUpPct: 0,
+      },
+    });
+
+    expect(selectReservedCash(player)).toBe(4_000);
+    expect(selectAvailableCash(player)).toBe(0);
   });
 });
 

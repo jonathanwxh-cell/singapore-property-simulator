@@ -1,6 +1,54 @@
 import { z } from 'zod';
 import { SAVE_VERSION } from '@/engine/constants';
 
+const renovationCategorySchema = z.enum(['kitchen', 'bathroom', 'flooring', 'smart-home', 'layout', 'commercial-fitout', 'maintenance-overhaul']);
+const rentStrategySchema = z.enum(['conservative', 'market', 'aggressive']);
+const rentalModeSchema = z.enum(['room-rental', 'whole-unit', 'corporate-lease', 'student-shared', 'commercial-lease']);
+const tenantProfileSchema = z.enum(['local-family', 'expat-pmet', 'student-tenants', 'sme-commercial']);
+
+const renovationProjectSchema = z.object({
+  id: z.string(),
+  templateId: z.string(),
+  propertyId: z.string(),
+  category: renovationCategorySchema,
+  label: z.string(),
+  cost: z.number(),
+  durationMonths: z.number(),
+  remainingMonths: z.number(),
+  rentUpliftPct: z.number(),
+  resaleUpliftPct: z.number(),
+  satisfactionUplift: z.number(),
+  riskPct: z.number(),
+  conditionDelta: z.number(),
+  status: z.enum(['planned', 'active', 'completed', 'overrun', 'cancelled']),
+  startedTurn: z.number(),
+});
+
+const tenantStateSchema = z.object({
+  profileId: tenantProfileSchema,
+  rentalMode: rentalModeSchema,
+  leaseStartTurn: z.number(),
+  leaseEndTurn: z.number(),
+  satisfaction: z.number(),
+  rentStrategy: rentStrategySchema,
+  askingRent: z.number(),
+  contractedRent: z.number(),
+  defaultRiskPct: z.number(),
+  renewalIntent: z.number(),
+});
+
+const maintenanceIssueSchema = z.object({
+  id: z.string(),
+  propertyId: z.string(),
+  category: z.enum(['plumbing', 'electrical', 'aircon', 'waterproofing', 'appliance', 'common-area', 'tenant-damage']),
+  severity: z.enum(['minor', 'major', 'urgent']),
+  estimatedCost: z.number(),
+  satisfactionImpact: z.number(),
+  valueImpactPct: z.number(),
+  recurrenceRiskPct: z.number(),
+  status: z.enum(['open', 'repaired', 'deferred', 'insured']),
+});
+
 const ownedPropertySchema = z.object({
   propertyId: z.string(),
   purchasePrice: z.number(),
@@ -16,6 +64,14 @@ const ownedPropertySchema = z.object({
   maintenanceCost: z.number().optional(),
   propertyTax: z.number().optional(),
   listingChannel: z.string().optional(),
+  conditionScore: z.number().optional(),
+  mopRemainingMonths: z.number().optional(),
+  activeRenovation: renovationProjectSchema.optional(),
+  completedRenovations: z.array(renovationCategorySchema).optional(),
+  tenant: tenantStateSchema.optional(),
+  openMaintenanceIssues: z.array(maintenanceIssueSchema).optional(),
+  rentStrategy: rentStrategySchema.optional(),
+  floorPlanId: z.string().optional(),
 });
 
 const loanSchema = z.object({
@@ -102,6 +158,20 @@ const playerSchema = z.object({
     outcome: z.enum(['promotion', 'bonus', 'steady', 'setback']).nullable(),
     salaryDelta: z.number(),
     bonus: z.number(),
+  })).optional(),
+  reserve: z.object({
+    targetMonths: z.number(),
+    allocatedCash: z.number(),
+    autoTopUpPct: z.number(),
+    lastCoveredCost: z.number().optional(),
+  }).optional(),
+  operationHistory: z.array(z.object({
+    id: z.string(),
+    turn: z.number(),
+    propertyId: z.string().optional(),
+    title: z.string(),
+    detail: z.string(),
+    tone: z.enum(['good', 'warn', 'bad', 'neutral']),
   })).optional(),
 });
 

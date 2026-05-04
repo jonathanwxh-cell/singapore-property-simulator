@@ -1,5 +1,6 @@
 import type { OwnedProperty, Player } from '@/game/types';
 import { properties } from '@/data/properties';
+import { advancePropertyOperationsMonth, normalizeOperationProperty } from './propertyOperations';
 
 function roundCost(value: number): number {
   return Math.max(0, Math.round(value));
@@ -16,34 +17,68 @@ export function derivePropertyTax(property: OwnedProperty): number {
 }
 
 export function normalizeOwnedProperty(property: OwnedProperty): OwnedProperty {
+  const operational = normalizeOperationProperty(property);
   return {
-    ...property,
-    occupancyStatus: property.occupancyStatus ?? (property.isRented ? 'tenanted' : 'vacant'),
-    tenantQuality: property.tenantQuality ?? 50,
-    vacancyMonths: property.vacancyMonths ?? 0,
-    maintenanceCost: property.maintenanceCost ?? deriveMaintenanceCost(property),
-    propertyTax: property.propertyTax ?? derivePropertyTax(property),
+    ...operational,
+    occupancyStatus: operational.occupancyStatus ?? (operational.isRented ? 'tenanted' : 'vacant'),
+    tenantQuality: operational.tenantQuality ?? 50,
+    vacancyMonths: operational.vacancyMonths ?? 0,
+    maintenanceCost: operational.maintenanceCost ?? deriveMaintenanceCost(operational),
+    propertyTax: operational.propertyTax ?? derivePropertyTax(operational),
+  };
+}
+
+export interface PortfolioHoldingOperationsSummary {
+  statusLabel: string;
+  tenantLabel: string;
+  attentionTags: string[];
+}
+
+export function describePortfolioHoldingOperations(property: OwnedProperty): PortfolioHoldingOperationsSummary {
+  const tenant = property.tenant;
+  const vacancyMonths = property.vacancyMonths ?? 0;
+  const openRepairCount = property.openMaintenanceIssues?.length ?? 0;
+  const attentionTags: string[] = [];
+
+  if (openRepairCount > 0) {
+    attentionTags.push(`Repairs ${openRepairCount}`);
+  }
+  if (property.activeRenovation) {
+    attentionTags.push(`Upgrade ${property.activeRenovation.remainingMonths} mo`);
+  }
+  if (!property.isRented && vacancyMonths > 0) {
+    attentionTags.push(`Vacancy ${vacancyMonths} mo`);
+  }
+
+  if (tenant) {
+    return {
+      statusLabel: `Lease S$${tenant.contractedRent.toLocaleString()}/mo`,
+      tenantLabel: `Tenant ${tenant.satisfaction}/100`,
+      attentionTags,
+    };
+  }
+
+  if (property.isRented) {
+    return {
+      statusLabel: `Rented S$${property.monthlyRental.toLocaleString()}/mo`,
+      tenantLabel: 'Legacy rental',
+      attentionTags,
+    };
+  }
+
+  return {
+    statusLabel: vacancyMonths > 0 ? `Vacant ${vacancyMonths} mo` : 'Vacant',
+    tenantLabel: 'No tenant',
+    attentionTags,
   };
 }
 
 export function advancePortfolioMonth(player: Player) {
-  const updatedProperties = player.properties.map((property) => {
-    const normalized = normalizeOwnedProperty(property);
-
-    if (normalized.isRented) {
-      return {
-        ...normalized,
-        occupancyStatus: 'tenanted' as const,
-        vacancyMonths: 0,
-      };
-    }
-
-    return {
-      ...normalized,
-      occupancyStatus: normalized.occupancyStatus === 'renovating' ? 'renovating' as const : 'vacant' as const,
-      vacancyMonths: (normalized.vacancyMonths ?? 0) + 1,
-    };
+  const operationsStep = advancePropertyOperationsMonth({
+    ...player,
+    properties: player.properties.map(normalizeOwnedProperty),
   });
+  const updatedProperties = operationsStep.updatedProperties.map(normalizeOwnedProperty);
 
   const monthlyCosts = {
     maintenance: updatedProperties.reduce((sum, property) => sum + (property.maintenanceCost ?? 0), 0),
@@ -53,6 +88,7 @@ export function advancePortfolioMonth(player: Player) {
   return {
     updatedProperties,
     monthlyCosts,
+    operationHistory: operationsStep.operationHistory,
   };
 }
 

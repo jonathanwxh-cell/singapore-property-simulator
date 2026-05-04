@@ -216,6 +216,8 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     ownedPrivateHome: player.ownedPrivateHome,
     careerProgressionProfile,
     careerReviewHistory,
+    reserve: player.reserve,
+    operationHistory: portfolioStep.operationHistory,
   };
   newPlayer.totalNetWorth = selectNetWorth(newPlayer);
 
