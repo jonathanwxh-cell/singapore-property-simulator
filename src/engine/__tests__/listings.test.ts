@@ -5,10 +5,50 @@ describe('listing catalog', () => {
   it('covers every defined district with at least two listings', () => {
     const coverage = buildListingSummary();
 
-    expect(coverage.totalListings).toBeGreaterThanOrEqual(80);
+    expect(coverage.totalListings).toBeGreaterThanOrEqual(120);
     expect(coverage.coveredDistrictCount).toBe(28);
     expect(coverage.uncoveredDistrictIds).toEqual([]);
     expect(coverage.districtsWithSingleListing).toEqual([]);
+  });
+
+  it('keeps listing IDs unique for routing and ownership lookups', () => {
+    const ids = getListingCatalog().map((property) => property.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('uses fictional listing names instead of known real development names', () => {
+    const knownRealDevelopmentNames = [
+      'Parc Canberra',
+      'North Gaia',
+      'Piermont Grand',
+      'The Orchard Residences',
+      'Marina One Residences',
+      'Leedon Green',
+      'The M',
+      'One Pearl Bank',
+      "D'Leedon",
+      'Commonwealth Towers',
+      'Avenue South Residence',
+      'Normanton Park',
+      'Treasure at Tampines',
+      'Corals at Sentosa Cove',
+      'Sky Vue',
+      'J Gateway',
+      'Pasir Ris 8',
+      'Sengkang Grand',
+      'The Clement Canopy',
+      'one-north Eden',
+      'Capitol Suites',
+      'Midtown Bay',
+      'Velocity Medical',
+      'The Arcady',
+    ];
+    const catalogNames = getListingCatalog().map((property) => property.name);
+
+    for (const bannedName of knownRealDevelopmentNames) {
+      expect(catalogNames.some((name) => name.includes(bannedName))).toBe(false);
+    }
   });
 
   it('returns multiple listings for district 22 after expansion', () => {
