@@ -667,6 +667,17 @@ function advanceTenant(property: OwnedProperty): OwnedProperty {
   };
 }
 
+function getPostRenovationOccupancyStatus(property: OwnedProperty): NonNullable<OwnedProperty['occupancyStatus']> {
+  const listing = getListing(property.propertyId);
+  if (property.tenant) {
+    return property.tenant.rentalMode === 'room-rental' ? 'owner-occupied' : 'tenanted';
+  }
+  if (listing?.isHdb && (property.mopRemainingMonths ?? 0) > 0) {
+    return 'owner-occupied';
+  }
+  return 'vacant';
+}
+
 export function advancePropertyOperationsMonth(player: Player): {
   updatedProperties: OwnedProperty[];
   operationHistory: PropertyOperationLogEntry[];
@@ -693,7 +704,7 @@ export function advancePropertyOperationsMonth(player: Player): {
           currentValue: roundMoney(property.currentValue * (1 + completed.resaleUpliftPct / 100)),
           monthlyRental: Math.round(property.monthlyRental * (1 + completed.rentUpliftPct / 100)),
           conditionScore: clamp((property.conditionScore ?? 70) + completed.conditionDelta, 0, 100),
-          occupancyStatus: property.tenant ? 'tenanted' : 'vacant',
+          occupancyStatus: getPostRenovationOccupancyStatus(property),
         };
         operationHistory.unshift({
           id: `op_${nextTurn}_${propertyIndex}_reno_done`,

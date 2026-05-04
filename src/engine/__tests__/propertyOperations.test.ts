@@ -83,6 +83,49 @@ describe('property operations', () => {
     expect(completed.conditionScore).toBeGreaterThan(62);
   });
 
+  it('returns HDB homes under MOP to owner-occupied after disruptive renovations complete', () => {
+    const player = makePlayer({
+      properties: [{
+        propertyId: 'hdb-bto-1',
+        purchasePrice: 380_000,
+        purchaseDate: '2024-01',
+        currentValue: 380_000,
+        isRented: true,
+        monthlyRental: 1_700,
+        renovationLevel: 0,
+        occupancyStatus: 'owner-occupied',
+        mopRemainingMonths: 48,
+        tenant: {
+          profileId: 'local-family',
+          rentalMode: 'room-rental',
+          leaseStartTurn: 46,
+          leaseEndTurn: 58,
+          satisfaction: 76,
+          rentStrategy: 'market',
+          askingRent: 765,
+          contractedRent: 765,
+          defaultRiskPct: 1.5,
+          renewalIntent: 72,
+        },
+      }],
+    });
+
+    const started = startRenovationPure(player, 0, 'kitchen-refresh');
+    expect(started.ok).toBe(true);
+    if (!started.ok) return;
+
+    const monthOne = advancePortfolioMonth(started.value.player);
+    const monthTwo = advancePortfolioMonth({ ...started.value.player, properties: monthOne.updatedProperties });
+    const completed = monthTwo.updatedProperties[0];
+
+    expect(completed.activeRenovation).toBeUndefined();
+    expect(completed.tenant).toBeUndefined();
+    expect(completed.isRented).toBe(false);
+    expect(completed.mopRemainingMonths).toBe(46);
+    expect(completed.occupancyStatus).toBe('owner-occupied');
+    expect(completed.vacancyMonths).toBe(0);
+  });
+
   it('blocks HDB whole-unit rental during MOP but allows owner-occupied room rental', () => {
     const player = makePlayer({
       properties: [{
