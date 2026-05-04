@@ -1,4 +1,4 @@
-import { properties } from '@/data/properties';
+import { properties, isResidentialCategory } from '@/data/properties';
 import type { Player } from '@/game/types';
 import { normalizeBuyerProfile } from '@/game/types';
 import { selectAvailableCash } from './selectors';
@@ -23,7 +23,7 @@ export function getFirstHomeMissions(player: Player): FirstHomeMission[] {
   });
   const firstHome = player.properties.find((property) => {
     const listing = properties.find((candidate) => candidate.id === property.propertyId);
-    return listing ? !listing.type.startsWith('Commercial') : true;
+    return listing ? isResidentialCategory(listing.type) : true;
   });
   const firstHomeRoute = firstHome ? `/property/${firstHome.propertyId}` : '/properties';
   const roomRentalDone = Boolean(firstHome?.tenant?.rentalMode === 'room-rental');
