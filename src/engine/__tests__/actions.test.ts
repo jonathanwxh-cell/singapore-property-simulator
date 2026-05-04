@@ -87,6 +87,17 @@ describe('buyPropertyPure', () => {
     }
   });
 
+  it('floors fractional CPF OA usage so UI-ready purchases are not rejected by cents', () => {
+    const player = makePlayer({ cash: 50_000, cpfOrdinary: 31_578.57, salary: 5_500 });
+    const result = buyPropertyPure(player, 'hdb-bto-0', 66_250, 31_578.57);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.player.properties).toHaveLength(1);
+      expect(result.value.player.cpfOrdinary).toBe(1);
+    }
+  });
+
   it('rejects CPF OA usage on commercial purchases', () => {
     const player = makePlayer({ cash: 5_000_000, cpfOrdinary: 200_000 });
     const result = buyPropertyPure(player, 'commercial-5', 1_000_000, 100_000);

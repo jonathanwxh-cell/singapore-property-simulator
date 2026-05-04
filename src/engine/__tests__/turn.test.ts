@@ -223,7 +223,7 @@ describe('advanceTurn', () => {
   it('respects the CPF wage ceiling', () => {
     const a = advanceTurn({ player: makePlayer({ salary: 5000, cpfOrdinary: 0, cpfSpecial: 0, cpfMedisave: 0 }), market: baseMarket, settings: baseSettings, rng: createRng(1) });
     const b = advanceTurn({ player: makePlayer({ salary: 20_000, cpfOrdinary: 0, cpfSpecial: 0, cpfMedisave: 0 }), market: baseMarket, settings: baseSettings, rng: createRng(1) });
-    const ceiling = advanceTurn({ player: makePlayer({ salary: 6800, cpfOrdinary: 0, cpfSpecial: 0, cpfMedisave: 0 }), market: baseMarket, settings: baseSettings, rng: createRng(1) });
+    const ceiling = advanceTurn({ player: makePlayer({ salary: 8000, cpfOrdinary: 0, cpfSpecial: 0, cpfMedisave: 0 }), market: baseMarket, settings: baseSettings, rng: createRng(1) });
     expect(b.player.cpfOrdinary).toBeGreaterThan(a.player.cpfOrdinary);
     expect(b.player.cpfOrdinary).toBeCloseTo(ceiling.player.cpfOrdinary, 0);
   });

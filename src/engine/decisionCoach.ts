@@ -174,7 +174,7 @@ export function assessDealReadiness({
   const validation = validatePurchase(player, property, downPayment);
   const cpfEligible = !property.type.startsWith('Commercial');
   const cpfApplied = cpfEligible && useCpfOrdinary
-    ? Math.min(player.cpfOrdinary, validation.totalUpfront)
+    ? Math.floor(Math.min(player.cpfOrdinary, validation.totalUpfront))
     : 0;
   const cashRequired = Math.max(0, validation.totalUpfront - cpfApplied);
   const cashShortfall = Math.max(0, cashRequired - player.cash);

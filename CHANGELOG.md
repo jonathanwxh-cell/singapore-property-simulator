@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded the market again to 120+ fictional listings so every district has deeper HDB, condo, landed, and commercial inventory.
 
 ### Changed
+- Updated the CPF wage ceiling and PR ABSD constants to the 2026/current Singapore rule table while keeping the default player profile as Singapore citizen.
 - Property purchase flows now name the main blocker directly, such as TDSR, MSR, cash shortfall, or eligibility, instead of collapsing everything into a generic insufficient-funds state.
 - **PropSim logo refresh**: kept the cleaned `PropSim Singapore` brand direction, restored the refreshed transparent logo asset, and updated visible brand labels.
 - Standardized repository metadata in `package.json` with the proper package name, version, description, license, repository, author, keywords, and homepage.
@@ -41,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smoke coverage now checks career review art and eligibility summary surfaces on top of the earlier pacing flow.
 
 ### Fixed
+- Fixed CPF OA rounding in purchase actions so fractional starting CPF balances can no longer make a UI-ready buy fail internally by less than S$1.
 - Mobile property-detail pages now keep the primary purchase action visible above the bottom navigation so first-time buying is not hidden below a long finance breakdown.
 - Scenario pacing now guarantees an early first-home scenario and then fires scenarios on a stable cadence, preventing long droughts with no events.
 - `How to Play` now opens a dedicated tutorial page instead of sending players to Settings.

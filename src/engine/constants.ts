@@ -27,15 +27,15 @@ export const CREDIT_DELTA_LOAN_TAKEN = -5;
 export const CREDIT_DELTA_LOAN_PAYMENT = 5;
 export const CREDIT_DELTA_LOAN_PAID_OFF = 20;
 
-// ── CPF (2024 rates) ────────────────────────────────────────────────
-export const CPF_WAGE_CEILING = 6800;
+// CPF (2026 rates)
+export const CPF_WAGE_CEILING = 8000;
 export const CPF_OA_INTEREST = 0.025;
 export const CPF_SA_INTEREST = 0.04;
 export const CPF_MA_INTEREST = 0.04;
 export const CPF_EXTRA_INTEREST_THRESHOLD = 60000;
 export const CPF_EXTRA_INTEREST_RATE = 0.01;
 
-// ── BSD tiers (2024) ───────────────────────────────────────────────
+// BSD tiers (current residential property marginal tiers)
 export const BSD_TIERS = [
   { threshold: 180000, rate: 0.01 },
   { threshold: 180000, rate: 0.02 },
@@ -45,16 +45,17 @@ export const BSD_TIERS = [
   { threshold: Infinity, rate: 0.06 },
 ] as const;
 
-// ── ABSD rates (2024) ──────────────────────────────────────────────
+// ABSD rates on or after 27 Apr 2023
 export const ABSD_RATES = {
   citizen_second: 0.20,
   citizen_third_plus: 0.30,
-  pr_second: 0.20,
-  pr_third_plus: 0.30,
+  pr_first: 0.05,
+  pr_second: 0.30,
+  pr_third_plus: 0.35,
   foreigner: 0.60,
 } as const;
 
-// ── LTV / MSR (2024) ──────────────────────────────────────────────
+// LTV / MSR
 export const LTV_FIRST_LOAN = 0.75;
 export const LTV_SECOND_LOAN = 0.45;
 export const LTV_THIRD_PLUS_LOAN = 0.35;

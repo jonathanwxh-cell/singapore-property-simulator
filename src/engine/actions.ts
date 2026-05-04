@@ -80,8 +80,8 @@ export function buyPropertyPure(
 
   const validation = validatePurchase(player, property, downPayment);
   const cpfEligible = canUseCpfForProperty(propertyId);
-  const allowedCpfUse = cpfEligible ? Math.min(validation.totalUpfront, player.cpfOrdinary) : 0;
-  const cpfToUse = Math.max(0, Math.round(cpfOrdinaryUsed));
+  const allowedCpfUse = cpfEligible ? Math.floor(Math.min(validation.totalUpfront, player.cpfOrdinary)) : 0;
+  const cpfToUse = Math.max(0, Math.floor(cpfOrdinaryUsed));
 
   if (!cpfEligible && cpfToUse > 0) {
     return fail('cpf_not_allowed', 'CPF OA can only be used for residential property purchases.');

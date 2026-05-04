@@ -57,12 +57,16 @@ describe('Stamp Duty', () => {
       expect(calculateABSD(500000, 1, false, false)).toBe(300000);
     });
 
-    it('PR first property: 0% ABSD', () => {
-      expect(calculateABSD(500000, 0, false, true)).toBe(0);
+    it('PR first property: 5% ABSD', () => {
+      expect(calculateABSD(500000, 0, false, true)).toBe(25000);
     });
 
-    it('PR second property: 20% ABSD', () => {
-      expect(calculateABSD(500000, 1, false, true)).toBe(100000);
+    it('PR second property: 30% ABSD', () => {
+      expect(calculateABSD(500000, 1, false, true)).toBe(150000);
+    });
+
+    it('PR third+ property: 35% ABSD', () => {
+      expect(calculateABSD(500000, 2, false, true)).toBe(175000);
     });
   });
 

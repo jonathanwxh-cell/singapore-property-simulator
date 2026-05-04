@@ -95,7 +95,7 @@ The financial engine implements actual Singapore property regulations:
 ### CPF (Central Provident Fund)
 
 - **Age-bracket contributions**: OA/SA/MA rates shift at 55, 60, 65, 70
-- **Wage ceiling**: CPF capped at $6,800/month salary
+- **Wage ceiling**: CPF capped at $8,000/month salary in the 2026 rule set
 - **Interest**: OA 2.5%, SA 4%, MA 4% — compounded monthly
 - **Extra interest**: Additional 1% on first $60k across OA+SA (credited to OA)
 - CPF balances count toward net worth
@@ -118,10 +118,10 @@ The financial engine implements actual Singapore property regulations:
 | Profile | 1st Property | 2nd Property | 3rd+ |
 |---------|-------------|-------------|------|
 | Citizen | 0% | 20% | 30% |
-| PR | 0% | 20% | 30% |
+| PR | 5% | 30% | 35% |
 | Foreigner | 60% | 60% | 60% |
 
-> The player is currently always treated as a Singapore citizen. PR rates in `stampDuty.ts` are placeholder (matching citizen rates) until a profile system is added; real SG PR rates are 5% / 30% / 35%. Foreigner rates already match the real 60% rule.
+> The player is currently always treated as a Singapore citizen until a buyer-profile system is added. PR and foreigner rates are present in `stampDuty.ts` so future profile support can use the current rule table.
 
 Both BSD and ABSD are deducted from cash on purchase.
 

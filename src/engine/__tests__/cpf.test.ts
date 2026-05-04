@@ -30,7 +30,7 @@ describe('CPF', () => {
       const result = contributeCpf({ oa: 0, sa: 0, ma: 0 }, 10000, 30);
       const alloc = getCpfAllocation(30);
       const total = alloc.oa + alloc.sa + alloc.ma;
-      const expectedMax = 6800 * total;
+      const expectedMax = 8000 * total;
       expect(result.oa + result.sa + result.ma).toBeCloseTo(expectedMax, 1);
     });
 
