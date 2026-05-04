@@ -1,4 +1,4 @@
-import { properties } from '@/data/properties';
+import { properties, isResidentialCategory } from '@/data/properties';
 import type { Loan, OwnedProperty, Player } from '@/game/types';
 import { difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE } from '@/game/types';
 import type { ActionResult } from './results';
@@ -39,7 +39,7 @@ export interface ScenarioResolution {
 
 function canUseCpfForProperty(propertyId: string): boolean {
   const property = properties.find((candidate) => candidate.id === propertyId);
-  return Boolean(property && !property.type.startsWith('Commercial'));
+  return Boolean(property && isResidentialCategory(property.type));
 }
 
 export function resolveScenarioOption(option: ScenarioOption, rng: Rng): ScenarioResolution {

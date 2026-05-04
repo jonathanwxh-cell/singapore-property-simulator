@@ -1,5 +1,18 @@
 import type { Property } from './properties';
 
+// Hand-curated property listings appended onto the base `properties` array in
+// `properties.ts`. Each entry is a fictional/composite listing — names,
+// prices, yields, and floor plans are simplified game data, not real
+// listings. See the README "Simulation Naming & Data Disclaimer" section.
+//
+// Roughly 86 entries here on top of the ~34 base entries to reach the
+// 120+ market across all 28 districts and six listing channels (New Launch,
+// Resale, Auction, Distressed, Off-Market, Signature). Edit by hand; there
+// is no generator.
+//
+// When adding a listing, keep it under the right `type` and pick a
+// `districtId` and `listingChannel` that aren't already over-represented —
+// the Properties page filters by those facets.
 export const additionalProperties: Property[] = [
   {
     id: 'condo-11',

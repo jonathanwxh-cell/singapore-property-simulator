@@ -1,0 +1,88 @@
+import { maintenanceTemplates, repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
+import type { MaintenanceIssue, OwnedProperty, Player } from '@/game/types';
+import type { ActionResult } from './results';
+import { fail, ok } from './results';
+import { roundMoney } from '@/lib/format';
+import { clamp, normalizeOperationProperty, withOperationLog } from './operationsShared';
+import { createDefaultReserve } from './reserveOperations';
+
+export function resolveMaintenanceIssuePure(
+  player: Player,
+  propertyIndex: number,
+  issueId: string,
+  choiceId: RepairChoiceId,
+): ActionResult<{ player: Player }> {
+  if (propertyIndex < 0 || propertyIndex >= player.properties.length) {
+    return fail('invalid_index', 'Invalid property index.');
+  }
+
+  const property = normalizeOperationProperty(player.properties[propertyIndex]);
+  const issue = (property.openMaintenanceIssues ?? []).find((candidate) => candidate.id === issueId);
+  const choice = repairChoices[choiceId];
+  if (!issue) return fail('maintenance_not_found', 'Maintenance issue not found.');
+  if (!choice) return fail('repair_choice_not_found', 'Repair option not found.');
+
+  const cost = Math.round(issue.estimatedCost * choice.costMultiplier);
+  if (player.cash < cost) return fail('insufficient_cash', 'Not enough cash to resolve this maintenance issue.');
+
+  const reserve = player.reserve ?? createDefaultReserve();
+  const reserveDraw = Math.min(reserve.allocatedCash, cost);
+  const tenant = property.tenant
+    ? {
+        ...property.tenant,
+        satisfaction: clamp(property.tenant.satisfaction + choice.satisfactionDelta - issue.satisfactionImpact * 0.1, 0, 100),
+        renewalIntent: clamp(property.tenant.renewalIntent + choice.satisfactionDelta, 0, 100),
+      }
+    : undefined;
+
+  const updatedProperties = [...player.properties];
+  updatedProperties[propertyIndex] = {
+    ...property,
+    tenant,
+    conditionScore: clamp((property.conditionScore ?? 70) + choice.conditionDelta, 0, 100),
+    openMaintenanceIssues: (property.openMaintenanceIssues ?? []).filter((candidate) => candidate.id !== issueId),
+  };
+
+  const updatedPlayer = withOperationLog({
+    ...player,
+    cash: roundMoney(player.cash - cost),
+    reserve: {
+      ...reserve,
+      allocatedCash: roundMoney(reserve.allocatedCash - reserveDraw),
+      lastCoveredCost: reserveDraw > 0 ? reserveDraw : reserve.lastCoveredCost,
+    },
+    properties: updatedProperties,
+  }, {
+    propertyId: property.propertyId,
+    title: `${choice.label} completed`,
+    detail: reserveDraw > 0
+      ? `S$${cost.toLocaleString()} repair paid, with S$${reserveDraw.toLocaleString()} covered by reserve.`
+      : `S$${cost.toLocaleString()} repair paid from cash.`,
+    tone: choiceId === 'cheap-fix' ? 'warn' : 'good',
+  });
+
+  return ok({ player: updatedPlayer });
+}
+
+// Internal — used by propertyOperations.advancePropertyOperationsMonth.
+export function createMaintenanceIssue(
+  property: OwnedProperty,
+  turn: number,
+  propertyIndex: number,
+): MaintenanceIssue {
+  const template = maintenanceTemplates[(turn + propertyIndex) % maintenanceTemplates.length];
+  const conditionPenalty = Math.max(0, 70 - (property.conditionScore ?? 70)) * 18;
+  return {
+    id: `issue_${turn}_${propertyIndex}_${template.category}`,
+    propertyId: property.propertyId,
+    category: template.category,
+    severity: template.severity,
+    label: template.label,
+    riskTag: template.riskTag,
+    estimatedCost: Math.round(template.baseCost + conditionPenalty),
+    satisfactionImpact: template.satisfactionImpact,
+    valueImpactPct: template.valueImpactPct,
+    recurrenceRiskPct: template.recurrenceRiskPct,
+    status: 'open',
+  };
+}

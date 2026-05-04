@@ -12,6 +12,57 @@ export type PropertyType =
   | 'Commercial Shop'
   | 'Commercial Office';
 
+// PropertyCategory is the durable shape of the property as far as engine
+// rules (CPF eligibility, MSR, salary ceiling, ABSD bands, etc.) are
+// concerned. Use this instead of string-prefix checks like
+// `type.startsWith('Commercial')` — those are brittle, and adding a new
+// type (say 'Commercial Industrial') would silently slip past them.
+//
+//  - 'hdb'                 — HDB BTO and HDB Resale.
+//  - 'ec'                  — Executive Condo (special: has MSR + EC salary
+//                            ceiling, can transition to 'private-residential').
+//  - 'private-residential' — Private Condo and all Landed (Terrace, Semi-D,
+//                            Bungalow). No MSR.
+//  - 'commercial'          — Commercial Shop and Commercial Office. CPF
+//                            cannot be used; no MSR; different stamp duty.
+export type PropertyCategory = 'hdb' | 'ec' | 'private-residential' | 'commercial';
+
+const PROPERTY_TYPE_CATEGORY: Record<PropertyType, PropertyCategory> = {
+  'HDB BTO': 'hdb',
+  'HDB Resale': 'hdb',
+  'Executive Condo': 'ec',
+  'Private Condo': 'private-residential',
+  'Landed Terrace': 'private-residential',
+  'Landed Semi-D': 'private-residential',
+  'Landed Bungalow': 'private-residential',
+  'Commercial Shop': 'commercial',
+  'Commercial Office': 'commercial',
+};
+
+export function getPropertyCategory(type: PropertyType | string): PropertyCategory {
+  // The type argument is widened to string for callers that read it off
+  // serialised state. Any unknown string lands in 'commercial' as the
+  // safest default (CPF blocked, no MSR) — though in practice every save
+  // should round-trip through the saveSchema enum.
+  return PROPERTY_TYPE_CATEGORY[type as PropertyType] ?? 'commercial';
+}
+
+export function isHdbCategory(type: PropertyType | string): boolean {
+  return getPropertyCategory(type) === 'hdb';
+}
+
+export function isResidentialCategory(type: PropertyType | string): boolean {
+  return getPropertyCategory(type) !== 'commercial';
+}
+
+export function isPrivateResidentialCategory(type: PropertyType | string): boolean {
+  return getPropertyCategory(type) === 'private-residential';
+}
+
+export function isCommercialCategory(type: PropertyType | string): boolean {
+  return getPropertyCategory(type) === 'commercial';
+}
+
 export interface Property {
   id: string;
   name: string;
