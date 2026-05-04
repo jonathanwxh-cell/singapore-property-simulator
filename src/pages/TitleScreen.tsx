@@ -242,6 +242,9 @@ export default function TitleScreen() {
           >
             Build wealth across the Lion City
           </span>
+          <p className="mx-auto mt-3 max-w-md text-[11px] leading-relaxed text-text-dim/80">
+            Fictional property names and prices for learning. Real Singapore districts, MRT context, and policy-inspired rules are simplified for gameplay.
+          </p>
         </div>
 
         {/* Main Menu */}

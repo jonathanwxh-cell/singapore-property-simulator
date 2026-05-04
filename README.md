@@ -65,21 +65,21 @@ The dashboard also includes a first-home mission rail and a plain-English rule g
 
 | Type | Price Range | Rental Yield | Example |
 |------|------------|-------------|---------|
-| HDB BTO | $265k–$520k | 4.8–5.9% | Woodlands North Grove |
+| HDB BTO | $265k–$520k | 4.8–5.9% | Northstar Grove |
 | HDB Resale | $295k–$850k | 4.0–5.5% | Bukit Merah View |
-| Executive Condo | $1.0M–$1.42M | 3.5–4.1% | Canberra Grove EC |
-| Private Condo | $980k–$4.2M | 2.4–4.3% | Marina Green Residences |
+| Executive Condo | $1.0M–$1.42M | 3.5–4.1% | Beacon Grove EC |
+| Private Condo | $980k–$4.2M | 2.4–4.3% | Moonrail Grove Residences |
 | Landed Terrace | $2.95M–$4.3M | 2.0–2.4% | East Coast Garden Terrace |
 | Landed Semi-D | $5.8M–$7.6M | 1.6–1.8% | Holland Grove |
 | Landed Bungalow | $22M–$45M | 1.0–1.5% | Sentosa Cove |
-| Commercial Shop | $3.2M–$12M | 3.0–4.3% | Amoy Street Shophouse |
+| Commercial Shop | $3.2M–$12M | 3.0–4.3% | Palmcrest Grove Retail House |
 | Commercial Office | $1.85M–$6.8M | 3.4–5.0% | Jurong Gateway Office |
 
 The market now spans all 28 defined districts with at least 2 live listings each. Inventory is grouped into `New Launch`, `Resale`, `Auction`, `Distressed`, `Off-Market`, and `Signature` channels so the browser feels more like a live market than a flat spreadsheet.
 
 ### Simulation Naming & Data Disclaimer
 
-Property, development, tenant, and listing names are fictional. The simulator intentionally keeps real Singapore geography, district structure, MRT context, CPF-style mechanics, stamp duty concepts, and simplified affordability rules for educational realism, but it is not affiliated with HDB, URA, CPF Board, MAS, any developer, agency, or listing platform. Pricing, yields, floor plans, and scenarios are simplified game data, not investment advice or real listings.
+Property, development, tenant, and listing names are fictional/composite. The simulator intentionally keeps real Singapore geography, district structure, MRT context, CPF-style mechanics, stamp duty concepts, and simplified affordability rules for educational realism, but it is not affiliated with HDB, URA, CPF Board, MAS, any developer, agency, or listing platform. Pricing, yields, floor plans, and scenarios are simplified game data, not investment advice or real listings.
 
 ### Portfolio Depth
 
@@ -226,6 +226,7 @@ maxBorrowable(propertyPrice, existingHousingLoans): number
 npm test           # Run the full vitest suite
 npm run test:smoke # Scripted first-home browser smoke test
 npm run test:profiles # Browser checks for SC, PR, foreigner, and single-buyer profile rules
+npm run test:scroll # Browser check that route changes reset page scroll
 npm run test:watch # Watch mode
 npm run test:ui    # Vitest UI
 ```

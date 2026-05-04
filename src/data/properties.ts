@@ -40,7 +40,7 @@ const baseProperties: Property[] = [
   // HDB BTO Properties
   {
     id: 'hdb-bto-0',
-    name: 'Woodlands North Grove 3-Room',
+    name: 'Northstar Grove 3-Room',
     districtId: 27,
     type: 'HDB BTO',
     price: 265000,
@@ -60,7 +60,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'hdb-bto-1',
-    name: 'Tampines GreenVerde 4-Room',
+    name: 'Canopy Grove 4-Room',
     districtId: 18,
     type: 'HDB BTO',
     price: 380000,
@@ -80,7 +80,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'hdb-bto-2',
-    name: 'Punggol Point Cove 5-Room',
+    name: 'Meridian Grove 5-Room',
     districtId: 19,
     type: 'HDB BTO',
     price: 520000,
@@ -100,7 +100,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'hdb-bto-3',
-    name: 'Tengah Plantation Grove 4-Room',
+    name: 'Harbourlight Grove 4-Room',
     districtId: 24,
     type: 'HDB BTO',
     price: 310000,
@@ -121,7 +121,7 @@ const baseProperties: Property[] = [
   // HDB Resale Properties
   {
     id: 'hdb-resale-0',
-    name: 'Jurong West Ave 5 3-Room',
+    name: 'Silverline Grove 3-Room',
     districtId: 24,
     type: 'HDB Resale',
     price: 295000,
@@ -141,7 +141,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'hdb-resale-1',
-    name: 'Ang Mo Kio Ave 10 Executive Maisonette',
+    name: 'Aster Grove 5-Room',
     districtId: 20,
     type: 'HDB Resale',
     price: 750000,
@@ -161,7 +161,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'hdb-resale-2',
-    name: 'Toa Payoh Lor 1 5-Room Improved',
+    name: 'Ember Grove 4-Room',
     districtId: 12,
     type: 'HDB Resale',
     price: 680000,
@@ -181,7 +181,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'hdb-resale-3',
-    name: 'Clementi Ave 3 4-Room',
+    name: 'Rainwell Grove 4-Room',
     districtId: 21,
     type: 'HDB Resale',
     price: 620000,
@@ -201,7 +201,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'hdb-resale-4',
-    name: 'Yishun Ring Rd 5-Room',
+    name: 'Skylark Grove 5-Room',
     districtId: 27,
     type: 'HDB Resale',
     price: 480000,
@@ -221,7 +221,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'hdb-resale-5',
-    name: 'Bedok North Rd 4-Room',
+    name: 'Fernvale Grove 4-Room',
     districtId: 16,
     type: 'HDB Resale',
     price: 520000,
@@ -242,7 +242,7 @@ const baseProperties: Property[] = [
   // Executive Condo
   {
     id: 'ec-1',
-    name: 'Canberra Grove Executive Condo',
+    name: 'Beacon Grove Executive Condo',
     districtId: 27,
     type: 'Executive Condo',
     price: 1200000,
@@ -262,7 +262,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'ec-2',
-    name: 'Yishun Northvale Executive Condo',
+    name: 'Citrine Grove Executive Condo',
     districtId: 27,
     type: 'Executive Condo',
     price: 1100000,
@@ -282,7 +282,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'ec-3',
-    name: 'Punggol Waterway Executive Condo',
+    name: 'Lattice Grove Executive Condo',
     districtId: 19,
     type: 'Executive Condo',
     price: 1350000,
@@ -303,7 +303,7 @@ const baseProperties: Property[] = [
   // Private Condo
   {
     id: 'condo-1',
-    name: 'Orchard Crown Residences',
+    name: 'Saffron Grove Residences',
     districtId: 9,
     type: 'Private Condo',
     price: 4200000,
@@ -323,7 +323,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'condo-2',
-    name: 'Marina Green Residences',
+    name: 'Moonrail Grove Residences',
     districtId: 1,
     type: 'Private Condo',
     price: 3800000,
@@ -343,7 +343,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'condo-3',
-    name: 'Farrer Garden Residences',
+    name: 'Veridian Grove Residences',
     districtId: 10,
     type: 'Private Condo',
     price: 2800000,
@@ -363,7 +363,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'condo-4',
-    name: 'Bugis Midtown Studio',
+    name: 'Copperleaf Grove Studio',
     districtId: 7,
     type: 'Private Condo',
     price: 1600000,
@@ -383,7 +383,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'condo-5',
-    name: 'Pearl Hill Crown',
+    name: 'Bluepeak Grove Studio',
     districtId: 3,
     type: 'Private Condo',
     price: 1800000,
@@ -403,7 +403,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'condo-6',
-    name: 'Farrer Sculpted Towers',
+    name: 'Solace Grove Residences',
     districtId: 10,
     type: 'Private Condo',
     price: 2200000,
@@ -423,7 +423,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'condo-7',
-    name: 'Queenstown Central Towers',
+    name: 'Rivermint Grove Residences',
     districtId: 3,
     type: 'Private Condo',
     price: 1550000,
@@ -443,7 +443,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'condo-8',
-    name: 'Silat Skyline Residences',
+    name: 'Amberline Grove Residences',
     districtId: 3,
     type: 'Private Condo',
     price: 1650000,
@@ -463,7 +463,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'condo-9',
-    name: 'Kent Ridge Parkview',
+    name: 'Cloudmere Grove Residences',
     districtId: 5,
     type: 'Private Condo',
     price: 1350000,
@@ -483,7 +483,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'condo-10',
-    name: 'Tampines Grand Courts',
+    name: 'Sundial Grove Residences',
     districtId: 18,
     type: 'Private Condo',
     price: 1100000,
@@ -504,7 +504,7 @@ const baseProperties: Property[] = [
   // Landed Properties
   {
     id: 'landed-1',
-    name: 'Joo Chiat Conservation Terrace',
+    name: 'Pinewave Grove Terrace',
     districtId: 15,
     type: 'Landed Terrace',
     price: 3500000,
@@ -524,7 +524,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'landed-2',
-    name: 'Holland Grove Semi-Detached',
+    name: 'Lumen Grove Semi-Detached',
     districtId: 10,
     type: 'Landed Semi-D',
     price: 5800000,
@@ -544,7 +544,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'landed-3',
-    name: 'Sentosa Cove Bungalow',
+    name: 'Gardenia Grove Bungalow',
     districtId: 4,
     type: 'Landed Bungalow',
     price: 22000000,
@@ -564,7 +564,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'landed-4',
-    name: 'Bukit Timah Inter-Terrace',
+    name: 'Quartz Grove Terrace',
     districtId: 21,
     type: 'Landed Terrace',
     price: 4200000,
@@ -584,7 +584,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'landed-5',
-    name: 'Namly Estate Semi-Detached',
+    name: 'Willowmere Grove Semi-Detached',
     districtId: 10,
     type: 'Landed Semi-D',
     price: 7200000,
@@ -604,7 +604,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'landed-6',
-    name: 'Cluny Park GCB',
+    name: 'Starling Grove Bungalow',
     districtId: 10,
     type: 'Landed Bungalow',
     price: 45000000,
@@ -625,7 +625,7 @@ const baseProperties: Property[] = [
   // Commercial Properties
   {
     id: 'commercial-1',
-    name: 'Amoy Street Shophouse',
+    name: 'Palmcrest Grove Retail House',
     districtId: 1,
     type: 'Commercial Shop',
     price: 12000000,
@@ -645,7 +645,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'commercial-2',
-    name: 'Orchard Road Retail Unit',
+    name: 'Dawnridge Grove Retail House',
     districtId: 9,
     type: 'Commercial Shop',
     price: 8500000,
@@ -665,7 +665,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'commercial-3',
-    name: 'Raffles Place Office Unit',
+    name: 'Meadowlink Grove Office Suite',
     districtId: 1,
     type: 'Commercial Office',
     price: 5500000,
@@ -685,7 +685,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'commercial-4',
-    name: 'Katong Shophouse',
+    name: 'Ivorygate Grove Retail House',
     districtId: 15,
     type: 'Commercial Shop',
     price: 6500000,
@@ -705,7 +705,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'commercial-5',
-    name: 'One-North Office Suite',
+    name: 'Bloomwell Grove Office Suite',
     districtId: 5,
     type: 'Commercial Office',
     price: 2800000,
@@ -725,7 +725,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'commercial-6',
-    name: 'Serangoon Garden Shophouse',
+    name: 'Keystone Grove Retail House',
     districtId: 19,
     type: 'Commercial Shop',
     price: 4800000,
@@ -745,7 +745,7 @@ const baseProperties: Property[] = [
   },
   {
     id: 'commercial-7',
-    name: 'Paya Lebar Commercial Quarter Office',
+    name: 'Coralyn Grove Office Suite',
     districtId: 14,
     type: 'Commercial Office',
     price: 3200000,

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `npm run test:scroll` browser regression test covering route-change scroll reset after navigating from long pages.
 - **Singapore profile playability phase**: new-game buyer profiles for Singapore Citizens, PRs, foreigners, family/single/foreign-investor paths, and profile-aware first-home mission guidance.
 - **First-home mission rail and rule glossary**: dashboard and property-detail surfaces now explain ABSD, CPF OA, MOP, room rental, MSR, TDSR, and reserves in plain English.
 - `npm run test:profiles` browser automation covering Singapore Citizen, PR, foreigner, and young-single profile rule paths.
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded the market again to 120+ fictional listings so every district has deeper HDB, condo, landed, and commercial inventory.
 
 ### Changed
+- Public property listing names are now fully fictional/composite while retaining real Singapore district, town, MRT, and policy context separately.
 - Purchase eligibility and ABSD now follow the selected buyer profile instead of always assuming a Singapore Citizen.
 - HDB ownership now presents as owner-occupied by default, with MOP-safe room-rental language separated from whole-flat rental.
 - Updated the CPF wage ceiling and PR ABSD constants to the 2026/current Singapore rule table while keeping the default player profile as Singapore citizen.
@@ -47,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smoke coverage now checks career review art and eligibility summary surfaces on top of the earlier pacing flow.
 
 ### Fixed
+- Game-layout route changes now reset the scroll position so switching tabs/pages starts at the top instead of retaining the previous page's scroll depth.
 - Blocked the legacy whole-flat rental shortcut for HDB flats still inside MOP, while keeping the explicit room-rental tenant strategy available.
 - Fixed CPF OA rounding in purchase actions so fractional starting CPF balances can no longer make a UI-ready buy fail internally by less than S$1.
 - Mobile property-detail pages now keep the primary purchase action visible above the bottom navigation so first-time buying is not hidden below a long finance breakdown.

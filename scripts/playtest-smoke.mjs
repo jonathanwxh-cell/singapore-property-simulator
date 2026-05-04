@@ -115,6 +115,7 @@ async function run() {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
 
     await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
+    await expectVisible(page, 'text=Fictional property names');
 
     await page.getByRole('button', { name: 'How to Play' }).click();
     await expectVisible(page, 'text=How to Play');
@@ -153,21 +154,21 @@ async function run() {
 
     await page.goto(`${baseUrl}/#/properties`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=First-Timer Friendly');
-    await page.getByText('Woodlands North Grove 3-Room').click();
+    await page.getByText('Northstar Grove 3-Room').click();
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');
     await expectVisible(page, 'text=Cash Required');
 
     const buyButton = page.getByRole('button', { name: 'Buy Property' });
-    await expectVisible(page, 'text=Woodlands North Grove 3-Room');
+    await expectVisible(page, 'text=Northstar Grove 3-Room');
     await buyButton.click();
 
     await expectVisible(page, 'text=Portfolio');
     await page.goto(`${baseUrl}/#/portfolio`, { waitUntil: 'networkidle' });
-    await expectVisible(page, 'text=Woodlands North Grove 3-Room');
+    await expectVisible(page, 'text=Northstar Grove 3-Room');
 
     await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Property Operations');
-    await expectVisible(page, 'img[alt="Woodlands North Grove 3-Room floor plan"]');
+    await expectVisible(page, 'img[alt="Northstar Grove 3-Room floor plan"]');
     await page.getByRole('button', { name: /Owner-Occupied Room/i }).first().click();
     await expectVisible(page, 'text=Active owner-occupied room lease');
 

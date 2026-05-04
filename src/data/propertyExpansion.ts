@@ -3,7 +3,7 @@ import type { Property } from './properties';
 export const additionalProperties: Property[] = [
   {
     id: 'condo-11',
-    name: 'The Cantonment Residences',
+    name: 'Hearthstone Grove Residences',
     districtId: 2,
     type: 'Private Condo',
     price: 2100000,
@@ -26,7 +26,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-8',
-    name: 'Pagoda Street Corner Shophouse',
+    name: 'Vellum Grove Retail House',
     districtId: 2,
     type: 'Commercial Shop',
     price: 7400000,
@@ -49,7 +49,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-12',
-    name: 'Sentosa Coral Quay',
+    name: 'Arcadia Grove Residences',
     districtId: 4,
     type: 'Private Condo',
     price: 3900000,
@@ -72,7 +72,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-13',
-    name: 'Civic Hill Sky Residence',
+    name: 'Brighton Grove Residences',
     districtId: 6,
     type: 'Private Condo',
     price: 3400000,
@@ -95,7 +95,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-9',
-    name: 'Clarke Quay Riverside Office Loft',
+    name: 'Nobleleaf Grove Office Suite',
     districtId: 6,
     type: 'Commercial Office',
     price: 4800000,
@@ -118,7 +118,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-14',
-    name: 'Bugis Bay Executive Suite',
+    name: 'Elmora Grove Residences',
     districtId: 7,
     type: 'Private Condo',
     price: 1850000,
@@ -141,7 +141,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-resale-6',
-    name: 'Jalan Besar 4-Room Loft',
+    name: 'Seabright Grove 4-Room',
     districtId: 8,
     type: 'HDB Resale',
     price: 690000,
@@ -164,7 +164,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-10',
-    name: 'Tekka Arcade Retail Unit',
+    name: 'Frostvale Grove Retail House',
     districtId: 8,
     type: 'Commercial Shop',
     price: 3200000,
@@ -187,7 +187,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-15',
-    name: 'Novena Luxe Residences',
+    name: 'Orchidmere Grove Residences',
     districtId: 11,
     type: 'Private Condo',
     price: 2350000,
@@ -210,7 +210,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-11',
-    name: 'Novena Medical Office Suite',
+    name: 'Kindle Grove Office Suite',
     districtId: 11,
     type: 'Commercial Office',
     price: 3600000,
@@ -233,7 +233,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-16',
-    name: 'Balestier Regency',
+    name: 'Crescenta Grove Residences',
     districtId: 12,
     type: 'Private Condo',
     price: 1280000,
@@ -256,7 +256,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-4',
-    name: 'Bidadari Alkaff Breeze 4-Room',
+    name: 'Mapleline Grove 4-Room',
     districtId: 13,
     type: 'HDB BTO',
     price: 460000,
@@ -279,7 +279,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'ec-4',
-    name: 'Potong Pasir Arc Executive Condo',
+    name: 'Northstar Vale Executive Condo',
     districtId: 13,
     type: 'Executive Condo',
     price: 1420000,
@@ -302,7 +302,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-17',
-    name: 'Guillemard Courtyard',
+    name: 'Canopy Vale Residences',
     districtId: 14,
     type: 'Private Condo',
     price: 1320000,
@@ -325,7 +325,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-18',
-    name: 'Bedok Reservoir View',
+    name: 'Meridian Vale Residences',
     districtId: 16,
     type: 'Private Condo',
     price: 1180000,
@@ -348,7 +348,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'landed-7',
-    name: 'Loyang Terrace Court',
+    name: 'Harbourlight Vale Terrace',
     districtId: 17,
     type: 'Landed Terrace',
     price: 2950000,
@@ -371,7 +371,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-19',
-    name: 'Changi Horizon Residences',
+    name: 'Silverline Vale Residences',
     districtId: 17,
     type: 'Private Condo',
     price: 1260000,
@@ -394,7 +394,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-20',
-    name: 'Bishan Skyview Residences',
+    name: 'Aster Vale Residences',
     districtId: 20,
     type: 'Private Condo',
     price: 2050000,
@@ -417,7 +417,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-5',
-    name: 'Jurong Lake Gardens 4-Room',
+    name: 'Ember Vale 4-Room',
     districtId: 22,
     type: 'HDB BTO',
     price: 395000,
@@ -440,7 +440,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-21',
-    name: 'Jurong Gateway South',
+    name: 'Rainwell Vale Residences',
     districtId: 22,
     type: 'Private Condo',
     price: 1480000,
@@ -463,7 +463,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-resale-7',
-    name: 'Bukit Panjang Ring Rd 5-Room',
+    name: 'Skylark Vale 4-Room',
     districtId: 23,
     type: 'HDB Resale',
     price: 510000,
@@ -486,7 +486,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'ec-5',
-    name: 'Phoenix Green Executive Condo',
+    name: 'Fernvale Vale Executive Condo',
     districtId: 23,
     type: 'Executive Condo',
     price: 1080000,
@@ -509,7 +509,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-6',
-    name: 'Tengah Forest Edge 5-Room',
+    name: 'Beacon Vale 5-Room',
     districtId: 24,
     type: 'HDB BTO',
     price: 355000,
@@ -532,7 +532,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-7',
-    name: 'Woodlands North Grove 4-Room',
+    name: 'Citrine Vale 4-Room',
     districtId: 25,
     type: 'HDB BTO',
     price: 340000,
@@ -555,7 +555,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-22',
-    name: 'Woods Square Residence',
+    name: 'Lattice Vale Residences',
     districtId: 25,
     type: 'Private Condo',
     price: 1050000,
@@ -578,7 +578,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'landed-8',
-    name: 'Springleaf Garden Terrace',
+    name: 'Saffron Vale Terrace',
     districtId: 26,
     type: 'Landed Terrace',
     price: 3280000,
@@ -601,7 +601,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-23',
-    name: 'Thomson Canopy',
+    name: 'Moonrail Vale Residences',
     districtId: 26,
     type: 'Private Condo',
     price: 1720000,
@@ -624,7 +624,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'landed-9',
-    name: 'Seletar Park Semi-Detached',
+    name: 'Veridian Vale Semi-Detached',
     districtId: 28,
     type: 'Landed Semi-D',
     price: 6200000,
@@ -647,7 +647,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-24',
-    name: 'Greenwich V Residences',
+    name: 'Copperleaf Vale Residences',
     districtId: 28,
     type: 'Private Condo',
     price: 1580000,
@@ -670,7 +670,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-resale-8',
-    name: 'Pasir Ris St 52 5-Room',
+    name: 'Bluepeak Vale 4-Room',
     districtId: 18,
     type: 'HDB Resale',
     price: 545000,
@@ -693,7 +693,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-25',
-    name: 'Pasir Ris Central Residences',
+    name: 'Solace Vale Residences',
     districtId: 18,
     type: 'Private Condo',
     price: 1420000,
@@ -716,7 +716,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-12',
-    name: 'Punggol Digital District Retail Podium',
+    name: 'Rivermint Vale Retail House',
     districtId: 19,
     type: 'Commercial Shop',
     price: 4600000,
@@ -739,7 +739,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-26',
-    name: 'Sengkang Central Residences',
+    name: 'Amberline Vale Residences',
     districtId: 19,
     type: 'Private Condo',
     price: 1380000,
@@ -762,7 +762,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-resale-9',
-    name: 'Clementi North 5-Room Premium',
+    name: 'Cloudmere Vale 5-Room',
     districtId: 21,
     type: 'HDB Resale',
     price: 760000,
@@ -785,7 +785,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-27',
-    name: 'Clementi Canopy Residences',
+    name: 'Sundial Vale Residences',
     districtId: 21,
     type: 'Private Condo',
     price: 1620000,
@@ -808,7 +808,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-28',
-    name: 'Jurong Innovation Residence',
+    name: 'Pinewave Vale Residences',
     districtId: 22,
     type: 'Private Condo',
     price: 1360000,
@@ -831,7 +831,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-13',
-    name: 'Jurong East Atrium Retail Unit',
+    name: 'Lumen Vale Retail House',
     districtId: 22,
     type: 'Commercial Shop',
     price: 5100000,
@@ -854,7 +854,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-8',
-    name: 'Bukit Panjang Vista 4-Room',
+    name: 'Gardenia Vale 4-Room',
     districtId: 23,
     type: 'HDB BTO',
     price: 325000,
@@ -877,7 +877,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-29',
-    name: 'Admiralty Harbour View',
+    name: 'Quartz Vale Residences',
     districtId: 25,
     type: 'Private Condo',
     price: 980000,
@@ -900,7 +900,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'landed-10',
-    name: 'Upper Thomson Hill Semi-Detached',
+    name: 'Willowmere Vale Semi-Detached',
     districtId: 26,
     type: 'Landed Semi-D',
     price: 7600000,
@@ -923,7 +923,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-9',
-    name: 'Yishun Sapphire 4-Room',
+    name: 'Starling Vale 4-Room',
     districtId: 27,
     type: 'HDB BTO',
     price: 330000,
@@ -946,7 +946,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'ec-6',
-    name: 'Sembawang Springs Executive Condo',
+    name: 'Palmcrest Vale Executive Condo',
     districtId: 27,
     type: 'Executive Condo',
     price: 1180000,
@@ -969,7 +969,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-14',
-    name: 'Marina View Strata Office',
+    name: 'Dawnridge Vale Office Suite',
     districtId: 1,
     type: 'Commercial Office',
     price: 6800000,
@@ -992,7 +992,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-30',
-    name: 'one-north Garden Residences',
+    name: 'Meadowlink Vale Residences',
     districtId: 5,
     type: 'Private Condo',
     price: 1550000,
@@ -1015,7 +1015,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-15',
-    name: 'Bugis Junction Office Loft',
+    name: 'Ivorygate Vale Office Suite',
     districtId: 7,
     type: 'Commercial Office',
     price: 3950000,
@@ -1038,7 +1038,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-31',
-    name: 'River Valley Crest Collection',
+    name: 'Bloomwell Vale Residences',
     districtId: 9,
     type: 'Private Condo',
     price: 2950000,
@@ -1061,7 +1061,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-10',
-    name: 'Kallang Riverfront Vista 4-Room',
+    name: 'Keystone Vale 4-Room',
     districtId: 12,
     type: 'HDB BTO',
     price: 470000,
@@ -1084,7 +1084,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-11',
-    name: 'Queenstown Heritage Green 3-Room',
+    name: 'Coralyn Vale 3-Room',
     districtId: 3,
     type: 'HDB BTO',
     price: 425000,
@@ -1107,7 +1107,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-12',
-    name: 'Hougang Park Link 4-Room',
+    name: 'Hearthstone Vale 4-Room',
     districtId: 19,
     type: 'HDB BTO',
     price: 360000,
@@ -1130,7 +1130,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-13',
-    name: 'Bedok South Bay 4-Room',
+    name: 'Vellum Vale 4-Room',
     districtId: 16,
     type: 'HDB BTO',
     price: 415000,
@@ -1153,7 +1153,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-bto-14',
-    name: 'Marsiling Gateway 5-Room',
+    name: 'Arcadia Vale 5-Room',
     districtId: 25,
     type: 'HDB BTO',
     price: 390000,
@@ -1176,7 +1176,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-resale-10',
-    name: 'Bukit Merah View 4-Room',
+    name: 'Brighton Vale 4-Room',
     districtId: 3,
     type: 'HDB Resale',
     price: 650000,
@@ -1199,7 +1199,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-resale-11',
-    name: 'Serangoon Central 4-Room',
+    name: 'Nobleleaf Vale 4-Room',
     districtId: 19,
     type: 'HDB Resale',
     price: 610000,
@@ -1222,7 +1222,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-resale-12',
-    name: 'Geylang East 3-Room Value Flat',
+    name: 'Elmora Vale 3-Room',
     districtId: 14,
     type: 'HDB Resale',
     price: 365000,
@@ -1245,7 +1245,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-resale-13',
-    name: 'Marine Parade Seaview 5-Room',
+    name: 'Seabright Vale 5-Room',
     districtId: 15,
     type: 'HDB Resale',
     price: 850000,
@@ -1268,7 +1268,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-32',
-    name: 'Tanjong Pagar Urban Suites',
+    name: 'Frostvale Vale Residences',
     districtId: 2,
     type: 'Private Condo',
     price: 1980000,
@@ -1291,7 +1291,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-33',
-    name: 'Keppel Harbour Residences',
+    name: 'Orchidmere Vale Residences',
     districtId: 4,
     type: 'Private Condo',
     price: 2450000,
@@ -1314,7 +1314,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-34',
-    name: 'Alexandra Canal Residences',
+    name: 'Kindle Vale Residences',
     districtId: 3,
     type: 'Private Condo',
     price: 1320000,
@@ -1337,7 +1337,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-35',
-    name: 'Dover Knowledge Park Residences',
+    name: 'Crescenta Vale Residences',
     districtId: 5,
     type: 'Private Condo',
     price: 1280000,
@@ -1360,7 +1360,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-36',
-    name: 'Newton Orchard Fringe Residences',
+    name: 'Mapleline Vale Residences',
     districtId: 11,
     type: 'Private Condo',
     price: 2620000,
@@ -1383,7 +1383,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-37',
-    name: 'MacPherson Metro Residences',
+    name: 'Northstar Vista Residences',
     districtId: 13,
     type: 'Private Condo',
     price: 1120000,
@@ -1406,7 +1406,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-38',
-    name: 'Upper East Coast Breeze',
+    name: 'Canopy Vista Residences',
     districtId: 16,
     type: 'Private Condo',
     price: 1510000,
@@ -1429,7 +1429,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-39',
-    name: 'Tampines Meridian Residences',
+    name: 'Meridian Vista Residences',
     districtId: 18,
     type: 'Private Condo',
     price: 1160000,
@@ -1452,7 +1452,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-40',
-    name: 'Punggol Coastline Residences',
+    name: 'Harbourlight Vista Residences',
     districtId: 19,
     type: 'Private Condo',
     price: 1210000,
@@ -1475,7 +1475,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-41',
-    name: 'Lentor Hillview Residences',
+    name: 'Silverline Vista Residences',
     districtId: 26,
     type: 'Private Condo',
     price: 1680000,
@@ -1498,7 +1498,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-42',
-    name: 'Seletar Aerospace Residences',
+    name: 'Aster Vista Residences',
     districtId: 28,
     type: 'Private Condo',
     price: 1320000,
@@ -1521,7 +1521,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'ec-7',
-    name: 'Tampines Park Executive Condo',
+    name: 'Ember Vista Executive Condo',
     districtId: 18,
     type: 'Executive Condo',
     price: 1280000,
@@ -1544,7 +1544,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'ec-8',
-    name: 'Choa Chu Kang Garden Executive Condo',
+    name: 'Rainwell Vista Executive Condo',
     districtId: 23,
     type: 'Executive Condo',
     price: 1020000,
@@ -1567,7 +1567,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'landed-11',
-    name: 'Pasir Panjang Hill Terrace',
+    name: 'Skylark Vista Terrace',
     districtId: 5,
     type: 'Landed Terrace',
     price: 3880000,
@@ -1590,7 +1590,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'landed-12',
-    name: 'Opera Estate Inter-Terrace',
+    name: 'Fernvale Vista Terrace',
     districtId: 15,
     type: 'Landed Terrace',
     price: 4300000,
@@ -1613,7 +1613,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'landed-13',
-    name: 'Serangoon Gardens Corner Terrace',
+    name: 'Beacon Vista Terrace',
     districtId: 19,
     type: 'Landed Terrace',
     price: 3680000,
@@ -1636,7 +1636,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-16',
-    name: 'Tiong Bahru Heritage Retail',
+    name: 'Citrine Vista Retail House',
     districtId: 3,
     type: 'Commercial Shop',
     price: 5900000,
@@ -1659,7 +1659,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-17',
-    name: 'Ubi Light Industrial Office',
+    name: 'Lattice Vista Office Suite',
     districtId: 14,
     type: 'Commercial Office',
     price: 1850000,
@@ -1682,7 +1682,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-18',
-    name: 'Woodlands Regional Office Pod',
+    name: 'Saffron Vista Office Suite',
     districtId: 25,
     type: 'Commercial Office',
     price: 2400000,
@@ -1705,7 +1705,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-19',
-    name: 'Tampines Central Retail Pod',
+    name: 'Moonrail Vista Retail House',
     districtId: 18,
     type: 'Commercial Shop',
     price: 3600000,
@@ -1728,7 +1728,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-20',
-    name: 'Bishan Central Clinic Suite',
+    name: 'Veridian Vista Office Suite',
     districtId: 20,
     type: 'Commercial Office',
     price: 2850000,
@@ -1751,7 +1751,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-resale-14',
-    name: 'Sengkang Compassvale 4-Room',
+    name: 'Copperleaf Vista 4-Room',
     districtId: 19,
     type: 'HDB Resale',
     price: 535000,
@@ -1774,7 +1774,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'hdb-resale-15',
-    name: 'Choa Chu Kang Central 5-Room',
+    name: 'Bluepeak Vista 5-Room',
     districtId: 23,
     type: 'HDB Resale',
     price: 560000,
@@ -1797,7 +1797,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-43',
-    name: 'Holland Village Walk Residences',
+    name: 'Solace Vista Residences',
     districtId: 10,
     type: 'Private Condo',
     price: 2380000,
@@ -1820,7 +1820,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-44',
-    name: 'Marymount Green Residences',
+    name: 'Rivermint Vista Residences',
     districtId: 20,
     type: 'Private Condo',
     price: 1780000,
@@ -1843,7 +1843,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-45',
-    name: 'Yio Chu Kang Park Residences',
+    name: 'Amberline Vista Residences',
     districtId: 28,
     type: 'Private Condo',
     price: 1220000,
@@ -1866,7 +1866,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'condo-46',
-    name: 'Upper Changi Tech Residences',
+    name: 'Cloudmere Vista Residences',
     districtId: 17,
     type: 'Private Condo',
     price: 1180000,
@@ -1889,7 +1889,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'ec-9',
-    name: 'Jurong West Lake Executive Condo',
+    name: 'Sundial Vista Executive Condo',
     districtId: 22,
     type: 'Executive Condo',
     price: 1160000,
@@ -1912,7 +1912,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'landed-14',
-    name: 'Chestnut Avenue Terrace',
+    name: 'Pinewave Vista Terrace',
     districtId: 23,
     type: 'Landed Terrace',
     price: 3450000,
@@ -1935,7 +1935,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-21',
-    name: 'Alexandra Tech Office Suite',
+    name: 'Lumen Vista Office Suite',
     districtId: 5,
     type: 'Commercial Office',
     price: 2650000,
@@ -1958,7 +1958,7 @@ export const additionalProperties: Property[] = [
   },
   {
     id: 'commercial-22',
-    name: 'East Coast Road Lifestyle Shop',
+    name: 'Gardenia Vista Retail House',
     districtId: 15,
     type: 'Commercial Shop',
     price: 4200000,

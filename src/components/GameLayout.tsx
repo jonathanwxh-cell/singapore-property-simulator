@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import HUDTopBar from './HUDTopBar';
 import Sidebar from './Sidebar';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, BriefcaseBusiness, Building2, TrendingUp, PieChart, Landmark, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGameStore } from '@/game/useGameStore';
@@ -22,6 +22,7 @@ export default function GameLayout() {
   const navigate = useNavigate();
   const currentScenario = useGameStore(state => state.currentScenario);
   const [isMobile, setIsMobile] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 1024);
@@ -36,6 +37,11 @@ export default function GameLayout() {
     }
   }, [currentScenario, location.pathname, navigate]);
 
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname]);
+
   const sidebarWidth = isMobile ? 0 : 224;
   const bottomNavHeight = isMobile ? 56 : 0;
 
@@ -46,6 +52,7 @@ export default function GameLayout() {
 
       {/* Main content area - fills remaining viewport */}
       <main
+        ref={mainRef}
         className="overflow-y-auto"
         style={{
           paddingTop: 64,
