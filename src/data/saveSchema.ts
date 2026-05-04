@@ -47,6 +47,8 @@ const maintenanceIssueSchema = z.object({
   propertyId: z.string(),
   category: z.enum(['plumbing', 'electrical', 'aircon', 'waterproofing', 'appliance', 'common-area', 'tenant-damage']),
   severity: z.enum(['minor', 'major', 'urgent']),
+  label: z.string().optional(),
+  riskTag: z.string().optional(),
   estimatedCost: z.number(),
   satisfactionImpact: z.number(),
   valueImpactPct: z.number(),

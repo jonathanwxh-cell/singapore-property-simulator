@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Owned-property operating state including occupancy, vacancy streaks, maintenance drag, property tax, portfolio-aware scenarios, and the `Commercial Operator` progression path.
 - Fictionalized real-estate development names while preserving Singapore districts, towns, MRT context, and policy realism.
 - Expanded the market again to 120+ fictional listings so every district has deeper HDB, condo, landed, and commercial inventory.
+- **Landlord Ops 2.0**: lease renewal decisions, rent-push vacancy risk, reserve-gap milestones, richer maintenance events, and new landlord/repair visual cards.
 
 ### Changed
 - Public property listing names are now fully fictional/composite while retaining real Singapore district, town, MRT, and policy context separately.
@@ -47,10 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Purchase validation now supports CPF OA for eligible residential upfront costs and enforces simplified EC salary-ceiling and private-home-history rules.
 - Early-game pacing now makes first purchases more reachable through starter homes and a first-home scenario.
 - Smoke coverage now checks career review art and eligibility summary surfaces on top of the earlier pacing flow.
+- Portfolio and property-detail surfaces now expose lease pressure, repair exposure, reserve gaps, and tenant-satisfaction tradeoffs as explicit landlord decisions.
 
 ### Fixed
 - Game-layout route changes now reset the scroll position so switching tabs/pages starts at the top instead of retaining the previous page's scroll depth.
 - Blocked the legacy whole-flat rental shortcut for HDB flats still inside MOP, while keeping the explicit room-rental tenant strategy available.
+- HDB room-rental leases now stay owner-occupied across monthly advancement instead of drifting into generic tenanted status.
 - Fixed CPF OA rounding in purchase actions so fractional starting CPF balances can no longer make a UI-ready buy fail internally by less than S$1.
 - Mobile property-detail pages now keep the primary purchase action visible above the bottom navigation so first-time buying is not hidden below a long finance breakdown.
 - Scenario pacing now guarantees an early first-home scenario and then fires scenarios on a stable cadence, preventing long droughts with no events.

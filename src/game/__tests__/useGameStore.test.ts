@@ -269,6 +269,40 @@ describe('useGameStore', () => {
     expect(useGameStore.getState().player.properties[0].activeRenovation?.templateId).toBe('flooring-paint');
   });
 
+  it('applies tenant lease decisions through store actions', () => {
+    resetStore({
+      player: makePlayer({
+        properties: [{
+          propertyId: 'condo-10',
+          purchasePrice: 1_150_000,
+          purchaseDate: '2028-01',
+          currentValue: 1_180_000,
+          isRented: true,
+          monthlyRental: 3_700,
+          renovationLevel: 0,
+          tenant: {
+            profileId: 'expat-pmet',
+            rentalMode: 'whole-unit',
+            leaseStartTurn: 54,
+            leaseEndTurn: 66,
+            satisfaction: 72,
+            rentStrategy: 'market',
+            askingRent: 3_700,
+            contractedRent: 3_700,
+            defaultRiskPct: 2.5,
+            renewalIntent: 70,
+          },
+        }],
+      }),
+    });
+
+    const result = useGameStore.getState().applyTenantLeaseDecision(0, 'renew');
+
+    expect(result.ok).toBe(true);
+    expect(useGameStore.getState().player.properties[0].tenant?.leaseEndTurn).toBe(12);
+    expect(useGameStore.getState().player.operationHistory?.[0].title).toContain('Lease renewed');
+  });
+
   it('initializes progression defaults for a new game', () => {
     useGameStore.getState().newGame('Plan Test', 'graduate', 'normal');
     const player = useGameStore.getState().player;

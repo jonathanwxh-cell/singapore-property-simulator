@@ -1,0 +1,22 @@
+<svg width="1200" height="640" viewBox="0 0 1200 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="640" fill="#07111F"/>
+  <rect x="86" y="80" width="1028" height="480" rx="36" fill="#0E1C2F" stroke="#1DE9B6" stroke-opacity="0.35" stroke-width="3"/>
+  <rect x="126" y="126" width="360" height="388" rx="26" fill="#102845" stroke="#00F0FF" stroke-opacity="0.28" stroke-width="2"/>
+  <rect x="526" y="126" width="548" height="130" rx="24" fill="#0B1728" stroke="#00F0FF" stroke-opacity="0.22" stroke-width="2"/>
+  <rect x="526" y="286" width="250" height="228" rx="24" fill="#0B1728" stroke="#FFD740" stroke-opacity="0.22" stroke-width="2"/>
+  <rect x="824" y="286" width="250" height="228" rx="24" fill="#0B1728" stroke="#FF9100" stroke-opacity="0.22" stroke-width="2"/>
+  <path d="M166 424L232 338L292 376L362 278L444 418" stroke="#00F0FF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="232" cy="338" r="14" fill="#00E676"/>
+  <circle cx="362" cy="278" r="14" fill="#FFD740"/>
+  <rect x="562" y="166" width="186" height="18" rx="9" fill="#00F0FF" fill-opacity="0.8"/>
+  <rect x="562" y="202" width="396" height="14" rx="7" fill="#D9E7FF" fill-opacity="0.24"/>
+  <rect x="562" y="326" width="128" height="18" rx="9" fill="#FFD740" fill-opacity="0.85"/>
+  <rect x="562" y="368" width="172" height="14" rx="7" fill="#D9E7FF" fill-opacity="0.22"/>
+  <rect x="562" y="400" width="136" height="14" rx="7" fill="#D9E7FF" fill-opacity="0.16"/>
+  <rect x="860" y="326" width="136" height="18" rx="9" fill="#FF9100" fill-opacity="0.85"/>
+  <rect x="860" y="368" width="170" height="14" rx="7" fill="#D9E7FF" fill-opacity="0.22"/>
+  <rect x="860" y="400" width="118" height="14" rx="7" fill="#D9E7FF" fill-opacity="0.16"/>
+  <circle cx="988" cy="192" r="32" fill="#00E676" fill-opacity="0.18" stroke="#00E676" stroke-opacity="0.8" stroke-width="4"/>
+  <path d="M974 192L984 202L1004 178" stroke="#00E676" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="126" y="586" fill="#6D7C96" font-family="Arial, sans-serif" font-size="26" letter-spacing="6">LANDLORD OPS CONTROL ROOM</text>
+</svg>

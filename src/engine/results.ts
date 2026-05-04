@@ -18,6 +18,8 @@ export type ActionFailReason =
   | 'renovation_not_found'
   | 'mop_restricted'
   | 'rental_mode_blocked'
+  | 'tenant_not_found'
+  | 'lease_option_not_found'
   | 'maintenance_not_found'
   | 'repair_choice_not_found';
 

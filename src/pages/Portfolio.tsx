@@ -2,13 +2,14 @@ import { useGameStore } from '@/game/useGameStore';
 import { districts } from '@/data/districts';
 import { achievements } from '@/data/achievements';
 import GlassCard from '@/components/GlassCard';
-import { Building2, TrendingUp, Award, Target, Home, DollarSign } from 'lucide-react';
+import { Building2, TrendingUp, Award, Target, Home, DollarSign, ShieldAlert, FileClock } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
 import { useNavigate } from 'react-router-dom';
 import { selectNetWorth, selectMonthlyOwnershipCosts, selectMonthlyRentalIncome } from '@/engine/selectors';
 import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
 import { describeInvestorRoute, describePortfolioHoldingOperations } from '@/engine/portfolio';
 import { getListingCatalog } from '@/engine/listings';
+import { getLandlordOpsSummary } from '@/engine/propertyOperations';
 
 export default function Portfolio() {
   const { player, toggleRental } = useGameStore();
@@ -20,11 +21,7 @@ export default function Portfolio() {
   const rentalIncome = selectMonthlyRentalIncome(player);
   const ownershipCosts = selectMonthlyOwnershipCosts(player);
   const investorRoute = describeInvestorRoute(player);
-  const occupiedCount = player.properties.filter((property) => property.isRented).length;
-  const occupancyRate = player.properties.length === 0 ? 0 : Math.round((occupiedCount / player.properties.length) * 100);
-  const tenantScores = player.properties.map((property) => property.tenant?.satisfaction).filter((score): score is number => typeof score === 'number');
-  const avgTenantSatisfaction = tenantScores.length === 0 ? null : Math.round(tenantScores.reduce((sum, score) => sum + score, 0) / tenantScores.length);
-  const openIssues = player.properties.reduce((sum, property) => sum + (property.openMaintenanceIssues?.length ?? 0), 0);
+  const landlordOps = getLandlordOpsSummary(player);
   const activeRenovations = player.properties.filter((property) => property.activeRenovation).length;
 
   const unlockedAchievements = achievements.filter(a => player.achievements.includes(a.id));
@@ -71,23 +68,56 @@ export default function Portfolio() {
         </GlassCard>
 
         {player.properties.length > 0 && (
-          <GlassCard accentColor="#00F0FF" className="mb-6">
-            <div className="flex items-start justify-between gap-4 mb-4">
+          <GlassCard accentColor="#00F0FF" className="mb-6 overflow-hidden">
+            <div className="grid lg:grid-cols-[1fr,260px] gap-5">
               <div>
-                <p className="label-text text-text-dim text-[10px] mb-1">Operations Health</p>
-                <h2 className="section-title text-white">Landlord Control Room</h2>
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <p className="label-text text-text-dim text-[10px] mb-1">Operations Health</p>
+                    <h2 className="section-title text-white">Landlord Ops Command</h2>
+                    <p className="text-text-secondary text-sm mt-1">
+                      Lease renewals, repairs, and reserve gaps are now the active landlord loop.
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono text-cyan-glow text-xl">{landlordOps.occupancyRate}%</p>
+                    <p className="text-text-dim text-[10px]">occupancy</p>
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 xl:grid-cols-6 gap-3">
+                  <OpsMetric
+                    label="Tenant Happiness"
+                    value={landlordOps.averageTenantSatisfaction === null ? 'No tenants' : `${landlordOps.averageTenantSatisfaction}/100`}
+                    tone={landlordOps.averageTenantSatisfaction !== null && landlordOps.averageTenantSatisfaction < 55 ? 'bad' : 'good'}
+                  />
+                  <OpsMetric
+                    label="Open Repairs"
+                    value={`${landlordOps.openIssueCount}${landlordOps.urgentIssueCount > 0 ? ` / ${landlordOps.urgentIssueCount} urgent` : ''}`}
+                    tone={landlordOps.openIssueCount > 0 ? 'bad' : 'good'}
+                  />
+                  <OpsMetric
+                    label="Leases Due"
+                    value={String(landlordOps.expiringLeaseCount)}
+                    tone={landlordOps.expiringLeaseCount > 0 ? 'warn' : 'good'}
+                  />
+                  <OpsMetric label="Active Upgrades" value={String(activeRenovations)} tone={activeRenovations > 0 ? 'warn' : 'neutral'} />
+                  <OpsMetric label="Reserve Gap" value={formatCurrency(landlordOps.unprotectedRisk)} tone={landlordOps.unprotectedRisk > 0 ? 'bad' : 'good'} />
+                  <OpsMetric label="Monthly Carry" value={formatCurrency(ownershipCosts)} tone="warn" />
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-mono text-cyan-glow text-xl">{occupancyRate}%</p>
-                <p className="text-text-dim text-[10px]">occupancy</p>
+              <div className="rounded-2xl border border-cyan-glow/20 bg-cyan-glow/5 p-3">
+                <img src="/landlord-ops-command.svg" alt="Landlord operations command dashboard" className="w-full rounded-xl border border-divider bg-void-navy/70" />
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  {landlordOps.milestones.map((milestone) => (
+                    <div key={milestone.id} className={`rounded-lg border p-2 ${milestone.completed ? 'border-success/30 bg-success/10' : milestone.tone === 'warn' ? 'border-warning/30 bg-warning/10' : 'border-glass-border bg-black/20'}`}>
+                      <p className={`font-rajdhani text-[11px] font-semibold uppercase tracking-[0.08em] ${milestone.completed ? 'text-success' : milestone.tone === 'warn' ? 'text-warning' : 'text-text-secondary'}`}>
+                        {milestone.label}
+                      </p>
+                      <p className="text-text-dim text-[10px] mt-1 leading-snug">{milestone.detail}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              <OpsMetric label="Tenant Satisfaction" value={avgTenantSatisfaction === null ? 'No tenants' : `${avgTenantSatisfaction}/100`} tone={avgTenantSatisfaction !== null && avgTenantSatisfaction < 55 ? 'bad' : 'good'} />
-              <OpsMetric label="Open Repairs" value={String(openIssues)} tone={openIssues > 0 ? 'bad' : 'good'} />
-              <OpsMetric label="Active Upgrades" value={String(activeRenovations)} tone={activeRenovations > 0 ? 'warn' : 'neutral'} />
-              <OpsMetric label="Reserve" value={formatCurrency(player.reserve?.allocatedCash ?? 0)} tone={(player.reserve?.allocatedCash ?? 0) > 0 ? 'good' : 'warn'} />
-              <OpsMetric label="Monthly Carry" value={formatCurrency(ownershipCosts)} tone="warn" />
             </div>
           </GlassCard>
         )}
@@ -111,6 +141,8 @@ export default function Portfolio() {
               const carryingCost = (owned.maintenanceCost ?? 0) + (owned.propertyTax ?? 0);
               const opsSummary = describePortfolioHoldingOperations(owned);
               const monthlyLease = owned.tenant?.contractedRent ?? (owned.isRented ? owned.monthlyRental : 0);
+              const leaseMonthsRemaining = owned.tenant ? owned.tenant.leaseEndTurn - player.turnCount : null;
+              const repairExposure = (owned.openMaintenanceIssues ?? []).reduce((sum, issue) => sum + issue.estimatedCost, 0);
 
               return (
                 <GlassCard key={i} className="group">
@@ -145,6 +177,16 @@ export default function Portfolio() {
                       )}
                       {!owned.isRented && (owned.vacancyMonths ?? 0) > 0 && (
                         <p className="text-warning text-[10px] mt-0.5">Vacant for {owned.vacancyMonths} month(s)</p>
+                      )}
+                      {leaseMonthsRemaining !== null && leaseMonthsRemaining <= 2 && (
+                        <p className="text-warning text-[10px] mt-1 flex items-center gap-1">
+                          <FileClock size={11} /> Lease decision due soon: {Math.max(0, leaseMonthsRemaining)} month(s) left.
+                        </p>
+                      )}
+                      {repairExposure > 0 && (
+                        <p className="text-danger text-[10px] mt-1 flex items-center gap-1">
+                          <ShieldAlert size={11} /> Repair exposure: {formatCurrency(repairExposure)}
+                        </p>
                       )}
                     </div>
                     <div className="text-right shrink-0">

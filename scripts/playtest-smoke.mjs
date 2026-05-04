@@ -165,12 +165,17 @@ async function run() {
     await expectVisible(page, 'text=Portfolio');
     await page.goto(`${baseUrl}/#/portfolio`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Northstar Grove 3-Room');
+    await expectVisible(page, 'text=Landlord Ops Command');
+    await expectVisible(page, 'img[alt="Landlord operations command dashboard"]');
 
     await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Property Operations');
     await expectVisible(page, 'img[alt="Northstar Grove 3-Room floor plan"]');
     await page.getByRole('button', { name: /Owner-Occupied Room/i }).first().click();
     await expectVisible(page, 'text=Active owner-occupied room lease');
+    await expectVisible(page, 'text=Lease Decision Board');
+    await page.getByRole('button', { name: /Renew Steady/i }).click();
+    await expectVisible(page, 'text=Satisfaction 80/100');
 
     await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
     for (let step = 0; step < 9; step += 1) {

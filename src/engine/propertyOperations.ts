@@ -9,6 +9,7 @@ import type {
   RentalMode,
   RentStrategy,
   ReserveState,
+  TenantLeaseDecisionId,
   TenantProfileId,
 } from '@/game/types';
 import type { ActionResult } from './results';
@@ -28,6 +29,37 @@ export interface ReservePlanInput {
   targetMonths: number;
   allocatedCash: number;
   autoTopUpPct: number;
+}
+
+export interface TenantLeaseOption {
+  id: TenantLeaseDecisionId;
+  label: string;
+  detail: string;
+  projectedRent: number;
+  rentDelta: number;
+  satisfactionDelta: number;
+  vacancyRiskDelta: number;
+  tone: 'good' | 'warn' | 'bad' | 'neutral';
+}
+
+export interface LandlordOpsMilestone {
+  id: string;
+  label: string;
+  detail: string;
+  completed: boolean;
+  tone: 'good' | 'warn' | 'bad' | 'neutral';
+}
+
+export interface LandlordOpsSummary {
+  occupancyRate: number;
+  averageTenantSatisfaction: number | null;
+  openIssueCount: number;
+  urgentIssueCount: number;
+  estimatedOpenRepairCost: number;
+  reserveProtected: number;
+  unprotectedRisk: number;
+  expiringLeaseCount: number;
+  milestones: LandlordOpsMilestone[];
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -265,6 +297,176 @@ export function setTenantStrategyPure(
   return ok({ player: updatedPlayer });
 }
 
+export function getTenantLeaseOptions(
+  rawProperty: OwnedProperty,
+  currentTurn: number,
+): TenantLeaseOption[] {
+  const property = normalizeOperationProperty(rawProperty);
+  const tenant = property.tenant;
+  if (!tenant) return [];
+
+  const monthsRemaining = Math.max(0, tenant.leaseEndTurn - currentTurn);
+  const currentRent = tenant.contractedRent;
+  const marketRent = Math.round(property.monthlyRental);
+  const raisedRent = Math.round(currentRent * 1.08);
+
+  return [
+    {
+      id: 'renew',
+      label: 'Renew Steady',
+      detail: monthsRemaining <= 2
+        ? 'Lock in another year with minimal drama and a tenant-trust bump.'
+        : 'Offer an early renewal to protect occupancy before the lease window gets noisy.',
+      projectedRent: currentRent,
+      rentDelta: 0,
+      satisfactionDelta: 6,
+      vacancyRiskDelta: -6,
+      tone: 'good',
+    },
+    {
+      id: 'raise-rent',
+      label: 'Raise Rent 8%',
+      detail: 'Push income, but weak renewal intent can turn this into a vacancy.',
+      projectedRent: raisedRent,
+      rentDelta: raisedRent - currentRent,
+      satisfactionDelta: -8,
+      vacancyRiskDelta: 14,
+      tone: tenant.renewalIntent < 45 ? 'bad' : 'warn',
+    },
+    {
+      id: 'reset-market',
+      label: 'Reset To Market',
+      detail: 'Reprice around current market rent to rebuild satisfaction and renewal odds.',
+      projectedRent: marketRent,
+      rentDelta: marketRent - currentRent,
+      satisfactionDelta: 4,
+      vacancyRiskDelta: -4,
+      tone: marketRent < currentRent ? 'warn' : 'neutral',
+    },
+    {
+      id: 'end-lease',
+      label: 'Let Tenant Leave',
+      detail: 'Take vacancy now so you can renovate, reposition, or choose a better tenant profile.',
+      projectedRent: 0,
+      rentDelta: -currentRent,
+      satisfactionDelta: 0,
+      vacancyRiskDelta: 100,
+      tone: 'neutral',
+    },
+  ];
+}
+
+export function applyTenantLeaseDecisionPure(
+  player: Player,
+  propertyIndex: number,
+  decisionId: TenantLeaseDecisionId,
+): ActionResult<{ player: Player }> {
+  if (propertyIndex < 0 || propertyIndex >= player.properties.length) {
+    return fail('invalid_index', 'Invalid property index.');
+  }
+
+  const property = normalizeOperationProperty(player.properties[propertyIndex]);
+  const listing = getListing(property.propertyId);
+  const tenant = property.tenant;
+  if (!listing) return fail('property_not_found', 'Property not found.');
+  if (!tenant) return fail('tenant_not_found', 'No active tenant to manage.');
+
+  const option = getTenantLeaseOptions(property, player.turnCount).find((candidate) => candidate.id === decisionId);
+  if (!option) return fail('lease_option_not_found', 'Lease decision option not found.');
+
+  const updatedProperties = [...player.properties];
+  const isRoomRental = tenant.rentalMode === 'room-rental';
+  const vacancyStatus = isRoomRental || (listing.isHdb && (property.mopRemainingMonths ?? 0) > 0)
+    ? 'owner-occupied'
+    : 'vacant';
+
+  if (decisionId === 'end-lease') {
+    updatedProperties[propertyIndex] = {
+      ...property,
+      tenant: undefined,
+      isRented: false,
+      occupancyStatus: vacancyStatus,
+      vacancyMonths: vacancyStatus === 'vacant' ? (property.vacancyMonths ?? 0) + 1 : 0,
+    };
+
+    return ok({
+      player: withOperationLog({
+        ...player,
+        properties: updatedProperties,
+      }, {
+        propertyId: property.propertyId,
+        title: 'Tenant released',
+        detail: 'The lease was ended intentionally. Reposition the unit before vacancy drags too long.',
+        tone: 'neutral',
+      }),
+    });
+  }
+
+  const intentAfterDecision = clamp(tenant.renewalIntent - option.vacancyRiskDelta, 0, 100);
+  const satisfactionAfterDecision = clamp(tenant.satisfaction + option.satisfactionDelta, 0, 100);
+  const pushedTooHard = decisionId === 'raise-rent' && intentAfterDecision < 25;
+
+  if (pushedTooHard) {
+    updatedProperties[propertyIndex] = {
+      ...property,
+      tenant: undefined,
+      isRented: false,
+      occupancyStatus: vacancyStatus,
+      vacancyMonths: vacancyStatus === 'vacant' ? (property.vacancyMonths ?? 0) + 1 : 0,
+      rentStrategy: 'aggressive',
+    };
+
+    return ok({
+      player: withOperationLog({
+        ...player,
+        properties: updatedProperties,
+      }, {
+        propertyId: property.propertyId,
+        title: 'Rent push caused vacancy',
+        detail: `The proposed ${option.label.toLowerCase()} broke renewal intent. Re-list or renovate before the next tenant.`,
+        tone: 'warn',
+      }),
+    });
+  }
+
+  const nextStrategy = decisionId === 'raise-rent'
+    ? 'aggressive'
+    : decisionId === 'renew'
+      ? tenant.rentStrategy
+      : 'market';
+
+  updatedProperties[propertyIndex] = {
+    ...property,
+    tenant: {
+      ...tenant,
+      rentStrategy: nextStrategy,
+      contractedRent: option.projectedRent,
+      askingRent: option.projectedRent,
+      satisfaction: satisfactionAfterDecision,
+      renewalIntent: intentAfterDecision,
+      defaultRiskPct: roundMoney(clamp(tenant.defaultRiskPct + (decisionId === 'raise-rent' ? 1.5 : decisionId === 'renew' ? -0.3 : -0.1), 0.5, 20)),
+      leaseStartTurn: player.turnCount,
+      leaseEndTurn: player.turnCount + 12,
+    },
+    isRented: true,
+    rentStrategy: nextStrategy,
+    occupancyStatus: isRoomRental ? 'owner-occupied' : 'tenanted',
+    vacancyMonths: 0,
+  };
+
+  return ok({
+    player: withOperationLog({
+      ...player,
+      properties: updatedProperties,
+    }, {
+      propertyId: property.propertyId,
+      title: decisionId === 'renew' ? 'Lease renewed' : decisionId === 'raise-rent' ? 'Lease renewed at higher rent' : 'Lease reset to market',
+      detail: `${option.label}: rent ${option.rentDelta >= 0 ? '+' : '-'}S$${Math.abs(option.rentDelta).toLocaleString()}/mo, satisfaction ${option.satisfactionDelta >= 0 ? '+' : ''}${option.satisfactionDelta}.`,
+      tone: option.tone,
+    }),
+  });
+}
+
 export function resolveMaintenanceIssuePure(
   player: Player,
   propertyIndex: number,
@@ -331,11 +533,78 @@ function createMaintenanceIssue(property: OwnedProperty, turn: number, propertyI
     propertyId: property.propertyId,
     category: template.category,
     severity: template.severity,
+    label: template.label,
+    riskTag: template.riskTag,
     estimatedCost: Math.round(template.baseCost + conditionPenalty),
     satisfactionImpact: template.satisfactionImpact,
     valueImpactPct: template.valueImpactPct,
     recurrenceRiskPct: template.recurrenceRiskPct,
     status: 'open',
+  };
+}
+
+export function getLandlordOpsSummary(player: Player): LandlordOpsSummary {
+  const propertyCount = player.properties.length;
+  const occupiedCount = player.properties.filter((property) => property.isRented).length;
+  const tenantScores = player.properties
+    .map((property) => property.tenant?.satisfaction)
+    .filter((score): score is number => typeof score === 'number');
+  const openIssues = player.properties.flatMap((property) => property.openMaintenanceIssues ?? []);
+  const estimatedOpenRepairCost = openIssues.reduce((sum, issue) => sum + issue.estimatedCost, 0);
+  const reserveProtected = Math.max(0, Math.min(player.cash, player.reserve?.allocatedCash ?? 0));
+  const expiringLeaseCount = player.properties.filter((property) =>
+    property.tenant && property.tenant.leaseEndTurn - player.turnCount <= 2
+  ).length;
+  const averageTenantSatisfaction = tenantScores.length === 0
+    ? null
+    : Math.round(tenantScores.reduce((sum, score) => sum + score, 0) / tenantScores.length);
+  const unprotectedRisk = Math.max(0, estimatedOpenRepairCost - reserveProtected);
+
+  const milestones: LandlordOpsMilestone[] = [
+    {
+      id: 'first-tenant',
+      label: 'First tenant signed',
+      detail: occupiedCount > 0 ? 'You have active rental income on the board.' : 'Sign a lease to start learning the landlord loop.',
+      completed: occupiedCount > 0,
+      tone: occupiedCount > 0 ? 'good' : 'neutral',
+    },
+    {
+      id: 'tenant-whisperer',
+      label: 'Tenant happiness 80+',
+      detail: averageTenantSatisfaction !== null ? `Average satisfaction is ${averageTenantSatisfaction}/100.` : 'No tenant satisfaction score yet.',
+      completed: averageTenantSatisfaction !== null && averageTenantSatisfaction >= 80,
+      tone: averageTenantSatisfaction !== null && averageTenantSatisfaction < 55 ? 'warn' : 'good',
+    },
+    {
+      id: unprotectedRisk > 0 ? 'reserve-gap' : 'reserve-ready',
+      label: unprotectedRisk > 0 ? 'Reserve gap exposed' : 'Reserve can absorb open repairs',
+      detail: unprotectedRisk > 0
+        ? `S$${unprotectedRisk.toLocaleString()} of current repair risk is not protected by reserve.`
+        : reserveProtected > 0
+          ? 'Current open repairs are covered by earmarked reserve.'
+          : 'Set aside reserve before the first large repair arrives.',
+      completed: unprotectedRisk === 0 && reserveProtected > 0,
+      tone: unprotectedRisk > 0 ? 'warn' : reserveProtected > 0 ? 'good' : 'neutral',
+    },
+    {
+      id: 'steady-occupancy',
+      label: 'Portfolio occupancy 80%',
+      detail: propertyCount > 0 ? `${Math.round((occupiedCount / propertyCount) * 100)}% of holdings are income-producing.` : 'Buy and operate a property to start occupancy tracking.',
+      completed: propertyCount > 0 && occupiedCount / propertyCount >= 0.8,
+      tone: propertyCount > 0 && occupiedCount / propertyCount < 0.5 ? 'warn' : 'good',
+    },
+  ];
+
+  return {
+    occupancyRate: propertyCount === 0 ? 0 : Math.round((occupiedCount / propertyCount) * 100),
+    averageTenantSatisfaction,
+    openIssueCount: openIssues.length,
+    urgentIssueCount: openIssues.filter((issue) => issue.severity === 'urgent').length,
+    estimatedOpenRepairCost,
+    reserveProtected,
+    unprotectedRisk,
+    expiringLeaseCount,
+    milestones,
   };
 }
 
@@ -382,7 +651,7 @@ function advanceTenant(property: OwnedProperty): OwnedProperty {
   return {
     ...property,
     isRented: true,
-    occupancyStatus: 'tenanted',
+    occupancyStatus: property.tenant.rentalMode === 'room-rental' ? 'owner-occupied' : 'tenanted',
     vacancyMonths: 0,
     tenant: {
       ...property.tenant,

@@ -19,6 +19,7 @@ export type TenantProfileId = 'local-family' | 'expat-pmet' | 'student-tenants' 
 export type MaintenanceCategory = 'plumbing' | 'electrical' | 'aircon' | 'waterproofing' | 'appliance' | 'common-area' | 'tenant-damage';
 export type MaintenanceSeverity = 'minor' | 'major' | 'urgent';
 export type MaintenanceStatus = 'open' | 'repaired' | 'deferred' | 'insured';
+export type TenantLeaseDecisionId = 'renew' | 'raise-rent' | 'reset-market' | 'end-lease';
 export type LifeActionId =
   | 'focus-at-work'
   | 'take-side-gig'
@@ -102,6 +103,8 @@ export interface MaintenanceIssue {
   propertyId: string;
   category: MaintenanceCategory;
   severity: MaintenanceSeverity;
+  label?: string;
+  riskTag?: string;
   estimatedCost: number;
   satisfactionImpact: number;
   valueImpactPct: number;

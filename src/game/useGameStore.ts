@@ -13,6 +13,7 @@ import { normalizeOwnedProperty } from '@/engine/portfolio';
 import { calculateHouseholdLoad, normalizeLifeState } from '@/engine/life';
 import {
   createDefaultReserve,
+  applyTenantLeaseDecisionPure,
   resolveMaintenanceIssuePure,
   setReservePlanPure,
   setTenantStrategyPure,
@@ -23,6 +24,7 @@ import {
 import type { RepairChoiceId } from '@/data/maintenanceEvents';
 import type { ScenarioOption } from '@/data/scenarios';
 import type { ScenarioResolution } from '@/engine/actions';
+import type { TenantLeaseDecisionId } from './types';
 import type { ActionResult } from '@/engine/results';
 import { writeAutoSave } from './savePersistence';
 
@@ -197,6 +199,7 @@ interface GameStore extends GameState {
   renovateProperty: (propertyIndex: number, cost: number) => ActionResult;
   startRenovation: (propertyIndex: number, templateId: string) => ActionResult;
   setTenantStrategy: (propertyIndex: number, input: TenantStrategyInput) => ActionResult;
+  applyTenantLeaseDecision: (propertyIndex: number, decisionId: TenantLeaseDecisionId) => ActionResult;
   resolveMaintenanceIssue: (propertyIndex: number, issueId: string, choiceId: RepairChoiceId) => ActionResult;
   setReservePlan: (input: ReservePlanInput) => ActionResult;
   toggleRental: (propertyIndex: number) => void;
@@ -362,6 +365,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   setTenantStrategy: (propertyIndex, input) => {
     const result = setTenantStrategyPure(get().player, propertyIndex, input);
+    if (result.ok) {
+      set({ player: finalizePlayer(result.value.player) });
+      const state = get();
+      if (state.settings.autoSave) saveTurn(pickGameState(state));
+    }
+    return result.ok ? { ok: true as const, value: undefined } : result;
+  },
+
+  applyTenantLeaseDecision: (propertyIndex, decisionId) => {
+    const result = applyTenantLeaseDecisionPure(get().player, propertyIndex, decisionId);
     if (result.ok) {
       set({ player: finalizePlayer(result.value.player) });
       const state = get();

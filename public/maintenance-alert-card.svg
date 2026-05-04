@@ -1,0 +1,12 @@
+<svg width="900" height="560" viewBox="0 0 900 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="560" fill="#0A101C"/>
+  <path d="M104 444L262 146C280 112 328 112 346 146L504 444C522 478 498 520 459 520H149C110 520 86 478 104 444Z" fill="#2A1420" stroke="#FF1744" stroke-opacity="0.78" stroke-width="6"/>
+  <path d="M304 226V346" stroke="#FFD740" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="304" cy="408" r="16" fill="#FFD740"/>
+  <rect x="548" y="100" width="252" height="126" rx="24" fill="#10233B" stroke="#00F0FF" stroke-opacity="0.35" stroke-width="3"/>
+  <rect x="588" y="146" width="152" height="18" rx="9" fill="#00F0FF" fill-opacity="0.75"/>
+  <rect x="588" y="184" width="98" height="14" rx="7" fill="#D9E7FF" fill-opacity="0.22"/>
+  <rect x="548" y="266" width="252" height="170" rx="24" fill="#10233B" stroke="#FFD740" stroke-opacity="0.35" stroke-width="3"/>
+  <path d="M598 374C634 322 682 416 728 344" stroke="#FFD740" stroke-width="10" stroke-linecap="round"/>
+  <text x="548" y="496" fill="#6D7C96" font-family="Arial, sans-serif" font-size="22" letter-spacing="5">REPAIR OR RESERVE?</text>
+</svg>

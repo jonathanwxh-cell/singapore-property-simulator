@@ -4,6 +4,7 @@ export interface MaintenanceTemplate {
   category: MaintenanceCategory;
   severity: MaintenanceSeverity;
   label: string;
+  riskTag: string;
   baseCost: number;
   satisfactionImpact: number;
   valueImpactPct: number;
@@ -28,6 +29,7 @@ export const maintenanceTemplates: MaintenanceTemplate[] = [
     category: 'plumbing',
     severity: 'urgent',
     label: 'Burst Pipe',
+    riskTag: 'Emergency plumber',
     baseCost: 2_400,
     satisfactionImpact: -8,
     valueImpactPct: -0.4,
@@ -37,6 +39,7 @@ export const maintenanceTemplates: MaintenanceTemplate[] = [
     category: 'aircon',
     severity: 'major',
     label: 'Aircon Compressor Failure',
+    riskTag: 'Tenant comfort',
     baseCost: 1_600,
     satisfactionImpact: -6,
     valueImpactPct: -0.2,
@@ -46,6 +49,7 @@ export const maintenanceTemplates: MaintenanceTemplate[] = [
     category: 'electrical',
     severity: 'major',
     label: 'Electrical Rewiring Warning',
+    riskTag: 'Safety compliance',
     baseCost: 3_200,
     satisfactionImpact: -7,
     valueImpactPct: -0.5,
@@ -55,10 +59,41 @@ export const maintenanceTemplates: MaintenanceTemplate[] = [
     category: 'tenant-damage',
     severity: 'minor',
     label: 'Tenant Wear and Tear',
+    riskTag: 'Wear and tear',
     baseCost: 900,
     satisfactionImpact: -3,
     valueImpactPct: -0.1,
     recurrenceRiskPct: 10,
+  },
+  {
+    category: 'waterproofing',
+    severity: 'major',
+    label: 'Bathroom Waterproofing Leak',
+    riskTag: 'Neighbour complaint risk',
+    baseCost: 4_800,
+    satisfactionImpact: -7,
+    valueImpactPct: -0.45,
+    recurrenceRiskPct: 15,
+  },
+  {
+    category: 'common-area',
+    severity: 'minor',
+    label: 'Condo MCST Special Levy',
+    riskTag: 'Shared facility cost',
+    baseCost: 2_200,
+    satisfactionImpact: -2,
+    valueImpactPct: -0.05,
+    recurrenceRiskPct: 8,
+  },
+  {
+    category: 'appliance',
+    severity: 'minor',
+    label: 'Washer and Fridge Replacement',
+    riskTag: 'Appliance lifecycle',
+    baseCost: 1_350,
+    satisfactionImpact: -4,
+    valueImpactPct: -0.08,
+    recurrenceRiskPct: 9,
   },
 ];
 

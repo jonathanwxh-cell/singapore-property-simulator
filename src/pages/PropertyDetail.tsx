@@ -18,13 +18,14 @@ import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/el
 import { assessDealReadiness } from '@/engine/decisionCoach';
 import { getRenovationTemplatesForType } from '@/data/renovations';
 import { repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
+import { getTenantLeaseOptions, type TenantLeaseOption } from '@/engine/propertyOperations';
 import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
-import type { OwnedProperty, RentalMode, RentStrategy, TenantProfileId } from '@/game/types';
+import type { OwnedProperty, RentalMode, RentStrategy, TenantLeaseDecisionId, TenantProfileId } from '@/game/types';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { player, buyProperty, sellProperty, toggleRental, startRenovation, setTenantStrategy, resolveMaintenanceIssue, setReservePlan } = useGameStore();
+  const { player, buyProperty, sellProperty, toggleRental, startRenovation, setTenantStrategy, applyTenantLeaseDecision, resolveMaintenanceIssue, setReservePlan } = useGameStore();
   const [downPaymentPercent, setDownPaymentPercent] = useState(25);
   const [showSellConfirm, setShowSellConfirm] = useState(false);
   const [useCpfOrdinary, setUseCpfOrdinary] = useState(true);
@@ -153,6 +154,12 @@ export default function PropertyDetail() {
     setActionError(result.ok ? null : result.message);
   };
 
+  const handleLeaseDecision = (decisionId: TenantLeaseDecisionId) => {
+    if (!isOwned) return;
+    const result = applyTenantLeaseDecision(ownedIndex, decisionId);
+    setActionError(result.ok ? null : result.message);
+  };
+
   const handleRepair = (issueId: string, choiceId: RepairChoiceId) => {
     if (!isOwned) return;
     const result = resolveMaintenanceIssue(ownedIndex, issueId, choiceId);
@@ -178,6 +185,9 @@ export default function PropertyDetail() {
     isCommercial: property.type.startsWith('Commercial'),
     mopRemainingMonths: ownedProperty?.mopRemainingMonths ?? 0,
   });
+  const leaseOptions = ownedProperty ? getTenantLeaseOptions(ownedProperty, player.turnCount) : [];
+  const propertyRepairExposure = ownedProperty?.openMaintenanceIssues?.reduce((sum, issue) => sum + issue.estimatedCost, 0) ?? 0;
+  const propertyUnprotectedRisk = Math.max(0, propertyRepairExposure - reservedCash);
   const floorPlanSrc = getFloorPlanSrc(ownedProperty?.floorPlanId);
   const quickRentalBlockedByMop = Boolean(
     ownedProperty
@@ -405,8 +415,14 @@ export default function PropertyDetail() {
                     <p className="text-text-secondary text-xs mt-2">
                       Target: {player.reserve?.targetMonths ?? 3} month(s) of ownership surprises. Available cash after reserve: {formatCurrency(availableCash)}.
                     </p>
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <OperationMetric label="Open Exposure" value={formatCurrency(propertyRepairExposure)} />
+                      <OperationMetric label="Unprotected" value={formatCurrency(propertyUnprotectedRisk)} />
+                    </div>
                     {player.reserve?.lastCoveredCost ? (
                       <p className="text-success text-[11px] mt-3">Last repair covered: S${player.reserve.lastCoveredCost.toLocaleString()}</p>
+                    ) : propertyUnprotectedRisk > 0 ? (
+                      <p className="text-warning text-[11px] mt-3">Current open issues exceed reserve. A repair will still hit available cash.</p>
                     ) : (
                       <p className="text-text-dim text-[11px] mt-3">This is earmarked inside your cash balance, so the HUD now separates available cash from reserve.</p>
                     )}
@@ -469,6 +485,27 @@ export default function PropertyDetail() {
                         <p className="text-text-secondary text-xs mt-1">
                           Satisfaction {ownedProperty.tenant.satisfaction}/100 | Renewal intent {ownedProperty.tenant.renewalIntent}/100 | Strategy {ownedProperty.tenant.rentStrategy}
                         </p>
+                        <p className="text-text-dim text-[11px] mt-1">
+                          Lease ends in {Math.max(0, ownedProperty.tenant.leaseEndTurn - player.turnCount)} month(s). Decide whether to preserve occupancy, push rent, or reset to market.
+                        </p>
+                      </div>
+                    )}
+                    {leaseOptions.length > 0 && (
+                      <div className="mb-4 rounded-xl border border-cyan-glow/20 bg-cyan-glow/5 p-3">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div>
+                            <p className="label-text text-text-dim text-[10px] mb-1">Renewal Mini-Game</p>
+                            <h5 className="font-rajdhani text-white font-semibold uppercase tracking-[0.1em] text-sm">Lease Decision Board</h5>
+                          </div>
+                          <span className="rounded-full border border-cyan-glow/30 px-2 py-1 text-[10px] font-mono text-cyan-glow">
+                            Tenant Ops 2.0
+                          </span>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-2">
+                          {leaseOptions.map((option) => (
+                            <LeaseOptionButton key={option.id} option={option} onSelect={handleLeaseDecision} />
+                          ))}
+                        </div>
                       </div>
                     )}
                     <div className="grid md:grid-cols-3 gap-3">
@@ -494,14 +531,27 @@ export default function PropertyDetail() {
                       </div>
                     ) : (
                       <div className="space-y-3">
+                        <div className="grid md:grid-cols-[180px,1fr] gap-3 rounded-xl border border-danger/30 bg-danger/10 p-3">
+                          <img src="/maintenance-alert-card.svg" alt="Maintenance alert illustration" className="w-full rounded-lg border border-divider bg-void-navy/70" />
+                          <div>
+                            <p className="font-rajdhani text-danger font-semibold uppercase tracking-[0.12em] text-sm">Maintenance Queue</p>
+                            <p className="text-text-secondary text-xs mt-1 leading-relaxed">
+                              Singapore homes rarely fail on schedule: air-con servicing, waterproofing, appliance replacement, and MCST levies can all bite cashflow. Choose cheap fixes for short-term relief or preventive work to protect satisfaction.
+                            </p>
+                            <p className="text-text-dim text-[11px] mt-2">Open exposure: {formatCurrency(propertyRepairExposure)} | Reserve gap: {formatCurrency(propertyUnprotectedRisk)}</p>
+                          </div>
+                        </div>
                         {ownedProperty.openMaintenanceIssues?.map((issue) => (
                           <div key={issue.id} className="rounded-xl border border-danger/30 bg-danger/10 p-4">
                             <div className="flex items-start justify-between gap-3">
                               <div>
-                                <p className="text-white font-semibold text-sm capitalize">{issue.category.replace('-', ' ')} issue</p>
+                                <p className="text-white font-semibold text-sm">{issue.label ?? `${issue.category.replace('-', ' ')} issue`}</p>
                                 <p className="text-text-secondary text-xs mt-1">
                                   {issue.severity} | Est. S${issue.estimatedCost.toLocaleString()} | Tenant impact {issue.satisfactionImpact}
                                 </p>
+                                {issue.riskTag && (
+                                  <p className="text-warning text-[11px] mt-1">{issue.riskTag}</p>
+                                )}
                               </div>
                               <span className="text-danger text-[10px] font-mono uppercase">{issue.status}</span>
                             </div>
@@ -830,6 +880,52 @@ export default function PropertyDetail() {
       </div>
     </div>
   );
+}
+
+function LeaseOptionButton({
+  option,
+  onSelect,
+}: {
+  option: TenantLeaseOption;
+  onSelect: (decisionId: TenantLeaseDecisionId) => void;
+}) {
+  return (
+    <button
+      onClick={() => onSelect(option.id)}
+      className={`text-left rounded-xl border p-3 transition-colors hover:border-cyan-glow/60 ${leaseOptionToneClass(option.tone)}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-white font-semibold text-sm">{option.label}</p>
+          <p className="text-text-secondary text-xs mt-1 leading-relaxed">{option.detail}</p>
+        </div>
+        <span className="font-mono text-[11px] text-cyan-glow shrink-0">
+          {option.projectedRent > 0 ? formatCurrency(option.projectedRent) : 'Vacate'}
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 mt-3">
+        <OperationMetric label="Rent" value={formatSignedCurrency(option.rentDelta)} />
+        <OperationMetric label="Happy" value={formatSignedNumber(option.satisfactionDelta)} />
+        <OperationMetric label="Vacancy" value={formatSignedNumber(option.vacancyRiskDelta)} />
+      </div>
+    </button>
+  );
+}
+
+function leaseOptionToneClass(tone: TenantLeaseOption['tone']): string {
+  if (tone === 'good') return 'border-success/30 bg-success/10';
+  if (tone === 'warn') return 'border-warning/30 bg-warning/10';
+  if (tone === 'bad') return 'border-danger/30 bg-danger/10';
+  return 'border-glass-border bg-white/[0.03]';
+}
+
+function formatSignedNumber(value: number): string {
+  return `${value >= 0 ? '+' : ''}${value}`;
+}
+
+function formatSignedCurrency(value: number): string {
+  if (value === 0) return 'S$0';
+  return `${value > 0 ? '+' : '-'}${formatCurrency(Math.abs(value))}`;
 }
 
 function OperationMetric({ label, value }: { label: string; value: string }) {

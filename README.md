@@ -23,7 +23,7 @@ The dashboard also includes a first-home mission rail and a plain-English rule g
 1. **Earn** — Monthly salary (career-dependent) flows in after CPF deductions
 2. **Buy** — Browse 120+ fictional live listings across 9 property types, 28 districts, and 6 listing channels
 3. **Finance** — Take mortgages, manage LTV caps and TDSR/MSR limits
-4. **Collect Rent** — Tenant income from rented properties
+4. **Operate** — Sign tenants, renew or reprice leases, manage repairs, protect reserves, and choose upgrade plans
 5. **Advance Turn** — Market moves, loans amortize, CPF compounds, ownership costs hit, and portfolio-aware events fire
 6. **React** — Scenario events (market crashes, cooling measures, tenant defaults, leasehold pressure, renovation opportunities) present choices with probabilistic outcomes
 
@@ -85,6 +85,7 @@ Property, development, tenant, and listing names are fictional/composite. The si
 
 - Owned properties now track occupancy state, vacancy streaks, maintenance drag, and property tax.
 - HDB flats default to owner-occupied status, allow explicit room-rental strategies during MOP, and keep whole-flat rental locked until the MOP path is clear in the simplified model.
+- Landlord Ops 2.0 adds lease renewal decisions, rent-push vacancy risk, tenant satisfaction, emergency reserve gaps, and maintenance issue queues inspired by common Singapore ownership surprises.
 - Portfolio summaries surface investor routes such as `Heartland Landlord` and `Commercial Cashflow Operator`.
 - Contextual scenarios now key off what you actually own, whether it is rented, and whether you are holding aging leasehold stock.
 - Guided-playability surfaces now translate complex mechanics into plain-English next moves, blocker labels, and expected effects so new players can keep momentum.
@@ -170,6 +171,7 @@ src/
 │   ├── listings.ts       # Listing enrichment, district coverage, market mover helpers
 │   ├── portfolio.ts      # Carrying costs, occupancy state, investor-route summaries
 │   ├── scenarioContext.ts# Portfolio-aware scenario gating
+│   ├── propertyOperations.ts # Renovation, tenant, reserve, repair, and lease-decision systems
 │   ├── constants.ts      # All tunable parameters in one place
 │   ├── rng.ts            # Seeded PRNG for deterministic replays
 │   ├── results.ts        # ActionResult<T> discriminated union
