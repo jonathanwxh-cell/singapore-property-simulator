@@ -141,8 +141,11 @@ function createInitialSettings(difficulty: Difficulty) {
 
 function saveTurn(state: GameState) {
   try {
+    if (typeof localStorage === 'undefined') return;
     localStorage.setItem('sgpt_autosave', JSON.stringify({ ...state, version: SAVE_VERSION }));
-  } catch { /* storage unavailable */ }
+  } catch (error) {
+    console.warn('Auto-save failed. Progress may not be preserved.', error);
+  }
 }
 
 function pickGameState(state: GameState): GameState {

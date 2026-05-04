@@ -63,6 +63,7 @@ export function estimateInitialCpf(age: number, monthlySalary: number): CpfBalan
   if (monthsWorked === 0) return { oa: 0, sa: 0, ma: 0 };
 
   let balances: CpfBalances = { oa: 0, sa: 0, ma: 0 };
+  // Cap at 60 months to model recent work history without overstating early CPF compounding.
   for (let m = 0; m < Math.min(monthsWorked, 60); m++) {
     balances = contributeCpf(balances, monthlySalary, age);
     balances = applyCpfInterest(balances);

@@ -3,6 +3,7 @@ import net from 'node:net';
 import process from 'node:process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { chromium } from 'playwright';
+import { createDevServerCommand, createWindowsKillCommand } from './playtest-platform.mjs';
 
 async function getAvailablePort() {
   return await new Promise((resolve, reject) => {
@@ -21,11 +22,8 @@ async function getAvailablePort() {
 }
 
 function startDevServer(port) {
-  const child = spawn('cmd.exe', ['/c', 'npm.cmd', 'run', 'dev', '--', '--host', '127.0.0.1', '--strictPort', '--port', String(port)], {
-    cwd: process.cwd(),
-    stdio: ['ignore', 'pipe', 'pipe'],
-    shell: false,
-  });
+  const { command, args, options } = createDevServerCommand(port);
+  const child = spawn(command, args, options);
 
   child.stdout.on('data', (chunk) => {
     process.stdout.write(chunk);
@@ -39,8 +37,19 @@ function startDevServer(port) {
 
 async function stopDevServer(child) {
   if (!child?.pid) return;
+  if (process.platform !== 'win32') {
+    try {
+      process.kill(-child.pid, 'SIGTERM');
+    } catch {
+      child.kill('SIGTERM');
+    }
+    await delay(500);
+    return;
+  }
+
+  const { command, args } = createWindowsKillCommand(child.pid);
   await new Promise((resolve) => {
-    const killer = spawn('taskkill.exe', ['/pid', String(child.pid), '/t', '/f'], {
+    const killer = spawn(command, args, {
       stdio: 'ignore',
       shell: false,
     });
@@ -145,7 +154,7 @@ async function run() {
     await expectVisible(page, 'text=Woodlands North Grove 3-Room');
     await buyButton.click();
 
-    await expectVisible(page, 'text=Property Browser');
+    await expectVisible(page, 'text=Portfolio');
     await page.goto(`${baseUrl}/#/portfolio`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Woodlands North Grove 3-Room');
 

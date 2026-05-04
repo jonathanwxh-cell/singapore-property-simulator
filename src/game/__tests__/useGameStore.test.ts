@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGameStore } from '../useGameStore';
 import { createInitialLifeState, type GameState, type Player } from '../types';
 
@@ -137,6 +137,45 @@ describe('useGameStore', () => {
     expect(state.player.turnCount).toBe(4);
     expect(state.player.month).toBe(5);
     expect(state.currentScenario).toBe('scenario-market-crash');
+  });
+
+  it('warns when autosave cannot write to localStorage', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const originalLocalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        setItem: () => {
+          throw new Error('quota exceeded');
+        },
+      },
+    });
+
+    try {
+      resetStore({
+        settings: {
+          soundEnabled: true,
+          musicEnabled: false,
+          animationSpeed: 'normal',
+          autoSave: true,
+          difficulty: 'normal',
+        },
+      });
+
+      useGameStore.getState().setCurrentScenario('career-review');
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Auto-save failed. Progress may not be preserved.',
+        expect.any(Error),
+      );
+    } finally {
+      warnSpy.mockRestore();
+      if (originalLocalStorage) {
+        Object.defineProperty(globalThis, 'localStorage', originalLocalStorage);
+      } else {
+        Reflect.deleteProperty(globalThis, 'localStorage');
+      }
+    }
   });
 
   it('unlocks the first property achievement after a successful purchase', () => {
