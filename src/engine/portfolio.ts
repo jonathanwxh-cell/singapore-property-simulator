@@ -28,6 +28,51 @@ export function normalizeOwnedProperty(property: OwnedProperty): OwnedProperty {
   };
 }
 
+export interface PortfolioHoldingOperationsSummary {
+  statusLabel: string;
+  tenantLabel: string;
+  attentionTags: string[];
+}
+
+export function describePortfolioHoldingOperations(property: OwnedProperty): PortfolioHoldingOperationsSummary {
+  const tenant = property.tenant;
+  const vacancyMonths = property.vacancyMonths ?? 0;
+  const openRepairCount = property.openMaintenanceIssues?.length ?? 0;
+  const attentionTags: string[] = [];
+
+  if (openRepairCount > 0) {
+    attentionTags.push(`Repairs ${openRepairCount}`);
+  }
+  if (property.activeRenovation) {
+    attentionTags.push(`Upgrade ${property.activeRenovation.remainingMonths} mo`);
+  }
+  if (!property.isRented && vacancyMonths > 0) {
+    attentionTags.push(`Vacancy ${vacancyMonths} mo`);
+  }
+
+  if (tenant) {
+    return {
+      statusLabel: `Lease S$${tenant.contractedRent.toLocaleString()}/mo`,
+      tenantLabel: `Tenant ${tenant.satisfaction}/100`,
+      attentionTags,
+    };
+  }
+
+  if (property.isRented) {
+    return {
+      statusLabel: `Rented S$${property.monthlyRental.toLocaleString()}/mo`,
+      tenantLabel: 'Legacy rental',
+      attentionTags,
+    };
+  }
+
+  return {
+    statusLabel: vacancyMonths > 0 ? `Vacant ${vacancyMonths} mo` : 'Vacant',
+    tenantLabel: 'No tenant',
+    attentionTags,
+  };
+}
+
 export function advancePortfolioMonth(player: Player) {
   const operationsStep = advancePropertyOperationsMonth({
     ...player,

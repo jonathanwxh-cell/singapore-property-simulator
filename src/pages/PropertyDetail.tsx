@@ -10,7 +10,7 @@ import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/form
 import { listingRarityInfo } from '@/data/listingChannels';
 import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
 import { getListingCatalog } from '@/engine/listings';
-import { selectAffordabilityReport, selectMonthlyNetCashflow, selectPotentialHousingGrant } from '@/engine/selectors';
+import { selectAffordabilityReport, selectAvailableCash, selectMonthlyNetCashflow, selectPotentialHousingGrant, selectReservedCash } from '@/engine/selectors';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { getLtvCap } from '@/engine/ltv';
 import EligibilityBadge from '@/components/EligibilityBadge';
@@ -61,6 +61,8 @@ export default function PropertyDetail() {
   const cpfApplied = cpfEligible && useCpfOrdinary ? Math.min(player.cpfOrdinary, validation.totalUpfront) : 0;
   const cashRequired = Math.max(0, validation.totalUpfront - cpfApplied);
   const monthlySurplus = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
+  const availableCash = selectAvailableCash(player);
+  const reservedCash = selectReservedCash(player);
   const grantSupport = property.isHdb ? selectPotentialHousingGrant(player) : 0;
   const affordability = selectAffordabilityReport(player, cashRequired, monthlySurplus, grantSupport);
   const extraReasons = validation.reasons.filter((reason) => reason.code !== 'insufficient_cash');
@@ -375,17 +377,17 @@ export default function PropertyDetail() {
 
                   <div className="rounded-xl border border-glass-border bg-white/[0.03] p-4">
                     <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm mb-3">Reserve</h4>
-                    <p className="font-mono text-2xl text-cyan-glow">S${(player.reserve?.allocatedCash ?? 0).toLocaleString()}</p>
+                    <p className="font-mono text-2xl text-cyan-glow">{formatCurrency(reservedCash)}</p>
                     <p className="text-text-secondary text-xs mt-2">
-                      Target: {player.reserve?.targetMonths ?? 3} month(s) of ownership surprises.
+                      Target: {player.reserve?.targetMonths ?? 3} month(s) of ownership surprises. Available cash after reserve: {formatCurrency(availableCash)}.
                     </p>
                     {player.reserve?.lastCoveredCost ? (
                       <p className="text-success text-[11px] mt-3">Last repair covered: S${player.reserve.lastCoveredCost.toLocaleString()}</p>
                     ) : (
-                      <p className="text-text-dim text-[11px] mt-3">Repairs can draw this reserve first while still reducing cash honestly.</p>
+                      <p className="text-text-dim text-[11px] mt-3">This is earmarked inside your cash balance, so the HUD now separates available cash from reserve.</p>
                     )}
                     <button onClick={handleReserveTopUp} className="btn-secondary text-xs py-2 w-full mt-4">
-                      Add S$5K Reserve
+                      Earmark S$5K Reserve
                     </button>
                   </div>
                 </div>
@@ -690,6 +692,12 @@ export default function PropertyDetail() {
                       <span className="text-text-secondary text-sm">Your Cash</span>
                       <span className="font-mono text-white">{formatCurrency(player.cash)}</span>
                     </div>
+                    {reservedCash > 0 && (
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-text-secondary text-sm">Available After Reserve</span>
+                        <span className="font-mono text-cyan-glow">{formatCurrency(availableCash)}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="border-t border-divider pt-3 space-y-2">

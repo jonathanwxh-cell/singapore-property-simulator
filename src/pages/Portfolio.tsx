@@ -7,7 +7,7 @@ import PropertyImage from '@/components/PropertyImage';
 import { useNavigate } from 'react-router-dom';
 import { selectNetWorth, selectMonthlyOwnershipCosts, selectMonthlyRentalIncome } from '@/engine/selectors';
 import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
-import { describeInvestorRoute } from '@/engine/portfolio';
+import { describeInvestorRoute, describePortfolioHoldingOperations } from '@/engine/portfolio';
 import { getListingCatalog } from '@/engine/listings';
 
 export default function Portfolio() {
@@ -109,7 +109,8 @@ export default function Portfolio() {
               const gain = owned.currentValue - owned.purchasePrice;
               const gainPercent = (gain / owned.purchasePrice) * 100;
               const carryingCost = (owned.maintenanceCost ?? 0) + (owned.propertyTax ?? 0);
-              const occupancyLabel = owned.occupancyStatus ?? (owned.isRented ? 'tenanted' : 'vacant');
+              const opsSummary = describePortfolioHoldingOperations(owned);
+              const monthlyLease = owned.tenant?.contractedRent ?? (owned.isRented ? owned.monthlyRental : 0);
 
               return (
                 <GlassCard key={i} className="group">
@@ -122,21 +123,25 @@ export default function Portfolio() {
                         <h4 className="font-rajdhani font-semibold text-white truncate group-hover:text-cyan-glow transition-colors">{property.name}</h4>
                         {owned.isRented && (
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-rajdhani font-semibold bg-cyan-glow/20 text-cyan-glow shrink-0">
-                            RENTED
+                            {owned.tenant ? 'LEASE' : 'RENTED'}
                           </span>
                         )}
                       </div>
                       <p className="text-text-secondary text-xs">D{district.id} {district.name} | Purchased: {owned.purchaseDate}</p>
                       <p className="text-text-dim text-[10px] mt-0.5">
-                        {property.listingChannel} | Carry: {formatCurrency(carryingCost)}/mo | Status: {occupancyLabel}
+                        {property.listingChannel} | Carry: {formatCurrency(carryingCost)}/mo | Status: {opsSummary.statusLabel}
                       </p>
-                      {(owned.conditionScore !== undefined || owned.tenant || (owned.openMaintenanceIssues?.length ?? 0) > 0 || owned.activeRenovation) && (
-                        <p className="text-text-dim text-[10px] mt-0.5">
-                          Condition: {owned.conditionScore ?? 70}/100
-                          {owned.tenant ? ` | Tenant: ${owned.tenant.satisfaction}/100` : ''}
-                          {(owned.openMaintenanceIssues?.length ?? 0) > 0 ? ` | Repairs: ${owned.openMaintenanceIssues?.length}` : ''}
-                          {owned.activeRenovation ? ` | Upgrade: ${owned.activeRenovation.remainingMonths} mo left` : ''}
-                        </p>
+                      <p className="text-text-dim text-[10px] mt-0.5">
+                        Condition: {owned.conditionScore ?? 70}/100 | {opsSummary.tenantLabel}
+                      </p>
+                      {opsSummary.attentionTags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {opsSummary.attentionTags.map((tag) => (
+                            <span key={tag} className="rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-[9px] font-mono text-warning">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       )}
                       {!owned.isRented && (owned.vacancyMonths ?? 0) > 0 && (
                         <p className="text-warning text-[10px] mt-0.5">Vacant for {owned.vacancyMonths} month(s)</p>
@@ -146,6 +151,9 @@ export default function Portfolio() {
                       <p className="font-mono text-white text-sm">{formatCompactCurrency(owned.currentValue)}</p>
                       <p className={`font-mono text-xs ${gain >= 0 ? 'text-success' : 'text-danger'}`}>
                         {gain >= 0 ? '+' : ''}{formatPercent(gainPercent, 1)}
+                      </p>
+                      <p className={`font-mono text-[10px] mt-1 ${monthlyLease > 0 ? 'text-cyan-glow' : 'text-text-dim'}`}>
+                        {monthlyLease > 0 ? `${formatCurrency(monthlyLease)}/mo` : 'No rent'}
                       </p>
                       <div className="flex gap-1 mt-1 justify-end">
                         <button

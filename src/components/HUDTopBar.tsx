@@ -2,7 +2,7 @@ import { useGameStore } from '@/game/useGameStore';
 import { Settings, Pause, Play, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, memo } from 'react';
-import { selectNetWorth } from '@/engine/selectors';
+import { selectAvailableCash, selectNetWorth, selectReservedCash } from '@/engine/selectors';
 
 const HUDTopBar = memo(function HUDTopBar() {
   const navigate = useNavigate();
@@ -18,6 +18,8 @@ const HUDTopBar = memo(function HUDTopBar() {
   };
 
   const netWorth = selectNetWorth(player);
+  const availableCash = selectAvailableCash(player);
+  const reservedCash = selectReservedCash(player);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-deep-space/95 backdrop-blur-md border-b border-cyan-glow/30">
@@ -49,7 +51,12 @@ const HUDTopBar = memo(function HUDTopBar() {
         {/* Center: Key Metrics */}
         {isGameActive && (
           <div className="hidden md:flex items-center gap-3">
-            <MetricPill label="Cash" value={formatCash(player.cash)} color="#00F0FF" />
+            <MetricPill
+              label="Available"
+              value={formatCash(availableCash)}
+              color="#00F0FF"
+              detail={reservedCash > 0 ? `${formatCash(reservedCash)} reserve` : undefined}
+            />
             <MetricPill label="Net Worth" value={formatCash(netWorth)} color="#00E676" />
             <MetricPill label="CPF" value={formatCash(player.cpfOrdinary + player.cpfSpecial)} color="#7C4DFF" />
             <MetricPill label="Credit" value={String(player.creditScore)} color="#FFD740" />
@@ -89,9 +96,9 @@ const HUDTopBar = memo(function HUDTopBar() {
   );
 });
 
-function MetricPill({ label, value, color }: { label: string; value: string; color: string }) {
+function MetricPill({ label, value, color, detail }: { label: string; value: string; color: string; detail?: string }) {
   return (
-    <div className="glass-pill flex items-center gap-2">
+    <div className="glass-pill flex items-center gap-2" title={detail}>
       <span className="label-text text-text-dim text-[10px]">{label}</span>
       <span
         className="font-mono text-sm font-bold"
@@ -99,6 +106,7 @@ function MetricPill({ label, value, color }: { label: string; value: string; col
       >
         {value}
       </span>
+      {detail && <span className="font-mono text-[10px] text-text-dim hidden xl:inline">{detail}</span>}
     </div>
   );
 }

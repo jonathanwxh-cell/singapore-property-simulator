@@ -15,6 +15,14 @@ export function selectNetWorth(player: Player): number {
   return player.cash + propertyValue + player.cpfOrdinary + player.cpfSpecial + player.cpfMedisave - outstandingDebt;
 }
 
+export function selectReservedCash(player: Player): number {
+  return Math.max(0, Math.min(player.cash, player.reserve?.allocatedCash ?? 0));
+}
+
+export function selectAvailableCash(player: Player): number {
+  return Math.max(0, player.cash - selectReservedCash(player));
+}
+
 export function selectMonthlyRentalIncome(player: Player): number {
   return player.properties
     .filter(p => p.isRented)

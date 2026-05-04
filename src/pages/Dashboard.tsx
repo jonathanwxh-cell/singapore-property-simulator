@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { Wallet, TrendingUp, Building2, ArrowRight, Newspaper, BatteryCharging, Flame, House } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { selectNetWorth, selectMonthlyNetCashflow, selectMonthlyTakeHome, selectMonthlyRentalIncome, selectMonthlyExpenses, selectMonthlyHouseholdLoad } from '@/engine/selectors';
+import { selectAvailableCash, selectNetWorth, selectMonthlyNetCashflow, selectMonthlyTakeHome, selectMonthlyRentalIncome, selectMonthlyExpenses, selectMonthlyHouseholdLoad, selectReservedCash } from '@/engine/selectors';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { deriveEligibilityFlags, EC_MAX_MONTHLY_INCOME } from '@/engine/eligibility';
 import EligibilityBadge from '@/components/EligibilityBadge';
@@ -18,6 +18,8 @@ export default function Dashboard() {
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   const netWorth = selectNetWorth(player);
+  const availableCash = selectAvailableCash(player);
+  const reservedCash = selectReservedCash(player);
   const monthlyTakeHome = selectMonthlyTakeHome(player, TAKE_HOME_RATIO);
   const monthlyRental = selectMonthlyRentalIncome(player);
   const monthlyDebt = selectMonthlyExpenses(player);
@@ -58,7 +60,13 @@ export default function Dashboard() {
         </motion.div>
 
         <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard icon={Wallet} label="Cash" value={`S$${(player.cash / 1000).toFixed(1)}K`} color="#00F0FF" />
+          <StatCard
+            icon={Wallet}
+            label="Available Cash"
+            value={`S$${(availableCash / 1000).toFixed(1)}K`}
+            color="#00F0FF"
+            detail={reservedCash > 0 ? `Reserve S$${(reservedCash / 1000).toFixed(1)}K` : 'No reserve set'}
+          />
           <StatCard icon={TrendingUp} label="Net Worth" value={`S$${(netWorth / 1000000).toFixed(2)}M`} color="#00E676" />
           <StatCard icon={Building2} label="Properties" value={String(player.properties.length)} color="#7C4DFF" />
           <StatCard icon={Newspaper} label="Market Index" value={`${market.priceIndex.toFixed(1)}`} color="#FF9100" change={marketChange} />
@@ -318,7 +326,7 @@ function LifeRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
   );
 }
 
-function StatCard({ icon: Icon, label, value, color, change }: { icon: React.ElementType; label: string; value: string; color: string; change?: string }) {
+function StatCard({ icon: Icon, label, value, color, change, detail }: { icon: React.ElementType; label: string; value: string; color: string; change?: string; detail?: string }) {
   return (
     <GlassCard className="relative overflow-hidden">
       <div className="absolute top-0 left-4 right-4 h-[2px] rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 12px ${color}` }} />
@@ -327,6 +335,7 @@ function StatCard({ icon: Icon, label, value, color, change }: { icon: React.Ele
         <span className="font-mono text-xl font-bold text-white">{value}</span>
         {change && <span className={`text-[10px] font-mono mb-1 ${change.startsWith('+') ? 'text-success' : 'text-danger'}`}>{change}</span>}
       </div>
+      {detail && <p className="text-text-dim text-[10px] mt-1">{detail}</p>}
     </GlassCard>
   );
 }
