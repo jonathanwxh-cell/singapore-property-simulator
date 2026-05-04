@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Guided playability coach phase**: dashboard next-best-move guidance, deal-readiness verdicts, property-card buy clarity, scenario impact previews, and life-action planning feedback.
 - **Career & Eligibility Lite phase**: annual career reviews, job-switch scenarios, persistent first-home and private-home progression flags, and simplified executive condo eligibility rules.
 - **Progression UI**: dashboard Career Review and Eligibility Summary surfaces, property-browser/detail eligibility badges, and a game-over progression recap.
 - **Custom progression art**: dedicated `career-review-key-art.png` illustration for the career milestone flow.
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded the market again to 120+ fictional listings so every district has deeper HDB, condo, landed, and commercial inventory.
 
 ### Changed
+- Property purchase flows now name the main blocker directly, such as TDSR, MSR, cash shortfall, or eligibility, instead of collapsing everything into a generic insufficient-funds state.
 - **PropSim logo refresh**: kept the cleaned `PropSim Singapore` brand direction, restored the refreshed transparent logo asset, and updated visible brand labels.
 - Standardized repository metadata in `package.json` with the proper package name, version, description, license, repository, author, keywords, and homepage.
 - Removed `bun.lock`; `package-lock.json` is now the canonical lockfile.
@@ -39,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smoke coverage now checks career review art and eligibility summary surfaces on top of the earlier pacing flow.
 
 ### Fixed
+- Mobile property-detail pages now keep the primary purchase action visible above the bottom navigation so first-time buying is not hidden below a long finance breakdown.
 - Scenario pacing now guarantees an early first-home scenario and then fires scenarios on a stable cadence, preventing long droughts with no events.
 - `How to Play` now opens a dedicated tutorial page instead of sending players to Settings.
 - Dashboard and market views now show real monthly price, rental, and rate moves with matching headlines instead of hardcoded repeating percentage text.

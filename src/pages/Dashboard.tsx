@@ -4,16 +4,17 @@ import SceneImage from '@/components/SceneImage';
 import { lifeActions, lifeActionsById } from '@/data/lifeActions';
 import GlassCard from '@/components/GlassCard';
 import { motion } from 'framer-motion';
-import { Wallet, TrendingUp, Building2, ArrowRight, Newspaper, BatteryCharging, Flame, House } from 'lucide-react';
+import { Wallet, TrendingUp, Building2, ArrowRight, Newspaper, BatteryCharging, Flame, House, Compass } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { selectAvailableCash, selectNetWorth, selectMonthlyNetCashflow, selectMonthlyTakeHome, selectMonthlyRentalIncome, selectMonthlyExpenses, selectMonthlyHouseholdLoad, selectReservedCash } from '@/engine/selectors';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { deriveEligibilityFlags, EC_MAX_MONTHLY_INCOME } from '@/engine/eligibility';
 import EligibilityBadge from '@/components/EligibilityBadge';
+import { getNextBestMoves, type CoachUrgency } from '@/engine/decisionCoach';
 
 export default function Dashboard() {
-  const { player, nextTurn, market, isGameActive } = useGameStore();
+  const { player, nextTurn, market, isGameActive, currentScenario } = useGameStore();
   const navigate = useNavigate();
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -43,6 +44,7 @@ export default function Dashboard() {
   const activeRenovations = player.properties.filter((property) => property.activeRenovation);
   const weakTenant = player.properties.find((property) => property.tenant && property.tenant.satisfaction < 55);
   const latestOperation = player.operationHistory?.[0] ?? null;
+  const nextBestMoves = getNextBestMoves({ player, currentScenario });
 
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
@@ -86,6 +88,24 @@ export default function Dashboard() {
                 </p>
                 <p className="text-text-dim text-xs">price index this month</p>
               </div>
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="mb-6">
+          <GlassCard accentColor="#00E676">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <p className="label-text text-text-dim text-[10px] mb-1">Decision Coach</p>
+                <h3 className="section-title text-white">Next Best Move</h3>
+                <p className="text-text-secondary text-sm mt-1">A plain-English queue for what to handle before the next month rolls.</p>
+              </div>
+              <Compass size={24} className="text-success shrink-0" />
+            </div>
+            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3">
+              {nextBestMoves.map((move) => (
+                <DecisionMoveCard key={move.id} move={move} onOpen={() => navigate(move.route)} />
+              ))}
             </div>
           </GlassCard>
         </motion.div>
@@ -285,6 +305,54 @@ export default function Dashboard() {
       </motion.div>
     </div>
   );
+}
+
+function DecisionMoveCard({
+  move,
+  onOpen,
+}: {
+  move: ReturnType<typeof getNextBestMoves>[number];
+  onOpen: () => void;
+}) {
+  const tone = coachToneClasses(move.urgency);
+
+  return (
+    <button
+      onClick={onOpen}
+      className={`rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 ${tone.card}`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className={`text-[10px] font-mono uppercase tracking-[0.18em] ${tone.label}`}>{move.urgency}</span>
+        <ArrowRight size={14} className={tone.label} />
+      </div>
+      <p className="font-rajdhani font-semibold text-white mt-2">{move.title}</p>
+      <p className="text-text-secondary text-xs mt-2 leading-relaxed">{move.detail}</p>
+      <p className={`text-xs font-semibold mt-3 ${tone.label}`}>{move.actionLabel}</p>
+    </button>
+  );
+}
+
+function coachToneClasses(urgency: CoachUrgency) {
+  const classes = {
+    critical: {
+      card: 'border-danger/40 bg-danger/10 hover:border-danger/70',
+      label: 'text-danger',
+    },
+    warn: {
+      card: 'border-warning/40 bg-warning/10 hover:border-warning/70',
+      label: 'text-warning',
+    },
+    good: {
+      card: 'border-success/40 bg-success/10 hover:border-success/70',
+      label: 'text-success',
+    },
+    neutral: {
+      card: 'border-glass-border bg-white/[0.03] hover:border-cyan-glow/50',
+      label: 'text-cyan-glow',
+    },
+  } satisfies Record<CoachUrgency, { card: string; label: string }>;
+
+  return classes[urgency];
 }
 
 function AttentionCard({

@@ -4,6 +4,7 @@ import { lifeActions, lifeActionsById, type LifeActionDefinition } from '@/data/
 import { getLifeOutcomeVisual, lifeOutcomeVisuals } from '@/data/lifeVisuals';
 import { useGameStore } from '@/game/useGameStore';
 import { canTakeSecondaryAction } from '@/engine/life';
+import { getLifeActionFeedback } from '@/engine/decisionCoach';
 import { getListingCatalog } from '@/engine/listings';
 import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
 import { selectAffordabilityReport, selectMonthlyNetCashflow, selectPotentialHousingGrant } from '@/engine/selectors';
@@ -47,6 +48,10 @@ export default function Life() {
   const lastMonthVisual = player.life.lastMonthSummary
     ? getLifeOutcomeVisual(player.life.lastMonthSummary)
     : lifeOutcomeVisuals.balanced;
+  const primaryFeedback = getLifeActionFeedback(player, selectedPrimaryActionId);
+  const secondaryFeedback = selectedSecondaryAction
+    ? getLifeActionFeedback(player, selectedSecondaryAction.id)
+    : null;
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
@@ -179,6 +184,23 @@ export default function Life() {
           <div className="space-y-6">
             <GlassCard accentColor="#00E676">
               <h3 className="section-title text-white mb-4">Monthly Snapshot</h3>
+              <div className="rounded-xl border border-success/30 bg-success/10 p-3 mb-4">
+                <p className="font-rajdhani font-semibold text-success">{primaryFeedback.title}</p>
+                <p className="text-text-secondary text-xs mt-1 leading-relaxed">{primaryFeedback.detail}</p>
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {primaryFeedback.expectedEffects.map((effect) => (
+                    <span key={effect} className="rounded-full border border-success/20 bg-success/10 px-2 py-1 text-[10px] text-success">
+                      {effect}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {secondaryFeedback && (
+                <div className="rounded-xl border border-purple-glow/30 bg-purple-glow/10 p-3 mb-4">
+                  <p className="font-rajdhani font-semibold text-purple-glow">{secondaryFeedback.title}</p>
+                  <p className="text-text-secondary text-xs mt-1 leading-relaxed">{secondaryFeedback.detail}</p>
+                </div>
+              )}
               <div className="space-y-3">
                 <SnapshotRow label="Current monthly surplus" value={formatCurrency(monthlySurplus)} positive={monthlySurplus >= 0} />
                 <SnapshotRow label="Primary action" value={selectedPrimaryAction.label} />
