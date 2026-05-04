@@ -28,6 +28,7 @@ export interface Scenario {
   description: string;
   image: string;
   frequency: 'common' | 'uncommon' | 'rare' | 'very-rare';
+  routeTags?: string[];
   requires?: ScenarioRequirement[];
   options: ScenarioOption[];
 }
@@ -40,6 +41,7 @@ export const scenarios: Scenario[] = [
     description: 'A mix of grants, family support, and lender competition has created an unusually good entry point for first-time buyers. You need to decide how to use the moment.',
     image: '/scenario-personal.jpg',
     frequency: 'common',
+    routeTags: ['first-home'],
     options: [
       { label: 'Claim the grant', description: 'Take a first-home support package and build your buying power now', probability: 0.95, cashImpact: 40000, propertyValueImpact: 0, creditImpact: 5, followUpText: 'The grant gives you a meaningful boost toward your first purchase and improves lender confidence.' },
       { label: 'Build a buffer', description: 'Keep the support in cash so you can stay flexible', probability: 0.95, cashImpact: 25000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'You stayed patient and banked extra dry powder for a cleaner first deal.' },
@@ -53,6 +55,7 @@ export const scenarios: Scenario[] = [
     description: 'Your year-end review is in. The raise has already landed, but how you respond will shape your trajectory and buying power for the next stretch of the run.',
     image: '/scenario-personal.jpg',
     frequency: 'common',
+    routeTags: ['career'],
     options: [
       {
         label: 'Bank the momentum',
@@ -99,6 +102,7 @@ export const scenarios: Scenario[] = [
     description: 'A recruiter reached out with a live opening. This is a clean fork in the road: keep your current stability or trade some certainty for a higher ceiling.',
     image: '/scenario-personal.jpg',
     frequency: 'uncommon',
+    routeTags: ['career'],
     options: [
       {
         label: 'Stay in role',
@@ -188,6 +192,7 @@ export const scenarios: Scenario[] = [
     description: 'The government has introduced new property cooling measures including higher ABSD and tighter LTV limits.',
     image: '/market-trend-bg.jpg',
     frequency: 'uncommon',
+    routeTags: ['policy'],
     options: [
       { label: 'Adapt Strategy', description: 'Focus on properties exempt from new measures', probability: 0.75, cashImpact: 0, propertyValueImpact: -3, creditImpact: 0, followUpText: 'Smart pivot. There are always opportunities even with new restrictions.' },
       { label: 'Wait It Out', description: 'Pause purchases and observe market reaction', probability: 0.85, cashImpact: 0, propertyValueImpact: -5, creditImpact: 0, followUpText: 'Markets typically stabilize after initial shock. Patience is a virtue.' },
@@ -201,6 +206,7 @@ export const scenarios: Scenario[] = [
     description: ' relaxed foreign ownership rules have attracted a wave of international buyers to Singapore property.',
     image: '/scenario-boom.jpg',
     frequency: 'uncommon',
+    routeTags: ['policy', 'private-market'],
     options: [
       { label: 'Sell to Foreigners', description: 'List your premium properties at higher prices', probability: 0.7, cashImpact: 200000, propertyValueImpact: 15, creditImpact: 0, followUpText: 'Foreign buyers paid a premium for your properties. Excellent timing!' },
       { label: 'Hold for More Gains', description: 'Prices may rise further with continued foreign demand', probability: 0.6, cashImpact: 0, propertyValueImpact: 10, creditImpact: 0, followUpText: 'The foreign influx continues to drive prices higher in prime districts.' },
@@ -228,6 +234,7 @@ export const scenarios: Scenario[] = [
     description: 'Your hard work has paid off! You have been promoted to a senior position with a significant pay raise.',
     image: '/scenario-personal.jpg',
     frequency: 'common',
+    routeTags: ['career'],
     options: [
       { label: 'Invest the Raise', description: 'Put the extra income into property investment', probability: 0.85, cashImpact: 100000, propertyValueImpact: 0, creditImpact: 10, followUpText: 'Your increased income improves your borrowing power significantly!' },
       { label: 'Upgrade Lifestyle', description: 'Enjoy the fruits of your labor', probability: 0.9, cashImpact: -30000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'You deserved it. But remember, lifestyle inflation is the enemy of wealth building.' },
@@ -241,6 +248,7 @@ export const scenarios: Scenario[] = [
     description: 'Economic restructuring has led to your company downsizing. You have been retrenched with a modest severance package.',
     image: '/scenario-market-crash.jpg',
     frequency: 'uncommon',
+    routeTags: ['career', 'reserve'],
     options: [
       { label: 'Use Savings', description: 'Tap into your emergency fund while job hunting', probability: 0.7, cashImpact: -40000, propertyValueImpact: 0, creditImpact: -20, followUpText: 'Tough times, but your savings cushion the blow. You found a new job in 3 months.' },
       { label: 'Rent Out Rooms', description: 'Generate rental income from spare rooms', probability: 0.8, cashImpact: 18000, propertyValueImpact: 0, creditImpact: -5, followUpText: 'Rental income helped you stay afloat until you found new employment.' },
@@ -309,6 +317,7 @@ export const scenarios: Scenario[] = [
     description: 'Your tenant has failed to pay rent for 2 months and has disappeared. You need to find a new tenant.',
     image: '/scenario-market-crash.jpg',
     frequency: 'common',
+    routeTags: ['rental'],
     requires: ['rented-property'],
     options: [
       { label: 'Engage Agent', description: 'Pay for a property agent to find new tenant quickly', probability: 0.85, cashImpact: -8000, propertyValueImpact: 0, creditImpact: -5, followUpText: 'New tenant found in 3 weeks. A small price to pay for peace of mind.' },
@@ -323,6 +332,7 @@ export const scenarios: Scenario[] = [
     description: 'Your aging property needs significant repairs. The plumbing and electrical systems require complete overhaul.',
     image: '/scenario-market-crash.jpg',
     frequency: 'common',
+    routeTags: ['maintenance'],
     requires: ['owned-property'],
     options: [
       { label: 'Full Renovation', description: 'Complete overhaul to modern standards', probability: 0.85, cashImpact: -80000, propertyValueImpact: 12, creditImpact: 0, followUpText: 'The renovated property now commands higher rent and increased in value!' },
@@ -337,6 +347,7 @@ export const scenarios: Scenario[] = [
     description: 'Your tenant has been exceptional — always on time, maintains the property well, and wants to renew for 3 years.',
     image: '/scenario-boom.jpg',
     frequency: 'common',
+    routeTags: ['rental'],
     requires: ['rented-property'],
     options: [
       { label: 'Small Rent Increase', description: 'Raise rent modestly to keep them happy', probability: 0.9, cashImpact: 12000, propertyValueImpact: 2, creditImpact: 5, followUpText: 'The tenant gladly accepted the small increase. Stable income for 3 years!' },
@@ -351,6 +362,7 @@ export const scenarios: Scenario[] = [
     description: 'The government is offering lease top-up schemes for aging 99-year lease properties at a discounted rate.',
     image: '/scenario-boom.jpg',
     frequency: 'uncommon',
+    routeTags: ['policy'],
     requires: ['aging-leasehold'],
     options: [
       { label: 'Top Up Lease', description: 'Extend the lease by 50 years', probability: 0.8, cashImpact: -150000, propertyValueImpact: 25, creditImpact: 0, followUpText: 'Brilliant move! The lease extension significantly boosted your property value.' },

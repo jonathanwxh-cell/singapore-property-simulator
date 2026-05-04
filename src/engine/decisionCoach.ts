@@ -4,6 +4,7 @@ import { scenarios, type ScenarioOption } from '@/data/scenarios';
 import type { LifeActionId, Player } from '@/game/types';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { TAKE_HOME_RATIO } from './constants';
+import { getRunArc } from './runDirector';
 import { getDownPaymentAmount, validatePurchase, type PurchaseValidationReason } from './purchase';
 import {
   selectAvailableCash,
@@ -114,6 +115,19 @@ export function getNextBestMoves({ player, currentScenario }: NextBestMoveInput)
       actionLabel: 'Plan Recovery',
       urgency: 'warn',
       priority: 86,
+    });
+  }
+
+  const runArc = getRunArc(player);
+  if (runArc.activeMilestone) {
+    moves.push({
+      id: `route-${runArc.activeMilestone.id}`,
+      title: runArc.activeMilestone.label,
+      detail: `Life Arc: ${runArc.activeMilestone.detail}`,
+      route: runArc.activeMilestone.route,
+      actionLabel: runArc.activeMilestone.actionLabel,
+      urgency: 'neutral',
+      priority: 78,
     });
   }
 

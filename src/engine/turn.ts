@@ -9,7 +9,7 @@ import { generateMarketNews } from './marketNews';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
 import { advancePortfolioMonth } from './portfolio';
 import { resolveLifeMonth } from './life';
-import { getEligibleScenarios } from './scenarioContext';
+import { getRouteWeightedScenarios } from './scenarioContext';
 import {
   TAKE_HOME_RATIO,
   PROPERTY_VALUE_VOL_FACTOR,
@@ -182,7 +182,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   } else if (shouldRunAnnualCareerReview(newTurnCount)) {
     scenarioId = 'career-review';
   } else if (player.turnCount > 0 && newTurnCount % diff.eventFrequency === 0 && rng.next() < SCENARIO_TRIGGER_PROBABILITY) {
-    const regularScenarios = getEligibleScenarios(player).filter(
+    const regularScenarios = getRouteWeightedScenarios(player).filter(
       (scenario) => !['first-home-window', 'job-switch-opportunity', 'career-review'].includes(scenario.id),
     );
     if (regularScenarios.length > 0) {

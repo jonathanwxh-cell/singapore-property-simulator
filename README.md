@@ -12,7 +12,7 @@ A single-player turn-based property investment game set in Singapore's real esta
 
 ## Gameplay
 
-You start with a career, modest savings, and a selectable buyer profile: Singapore Citizen, Singapore PR, foreigner, couple/family, single 35+, single under 35, or foreign-investor style. Each turn is one month. Your goal: reach the target net worth before insolvency strikes you out.
+You start with a career, modest savings, a selectable buyer profile, and a guided life arc such as BTO Upgrader, Single 35 Resale Buyer, PR Private-Market Climber, Heartland Landlord, Commercial Operator, or FIRE Homeowner. Each turn is one month. Your goal: reach the target net worth before insolvency strikes you out.
 
 ### Core Loop
 
@@ -26,6 +26,12 @@ The dashboard also includes a first-home mission rail and a plain-English rule g
 4. **Operate** — Sign tenants, renew or reprice leases, manage repairs, protect reserves, and choose upgrade plans
 5. **Advance Turn** — Market moves, loans amortize, CPF compounds, ownership costs hit, and portfolio-aware events fire
 6. **React** — Scenario events (market crashes, cooling measures, tenant defaults, leasehold pressure, renovation opportunities) present choices with probabilistic outcomes
+
+### Guided Life Arcs
+
+Run Director turns each playthrough into a clearer Singapore property story. Routes guide what the Decision Coach prioritizes, how milestones are framed, which scenario themes get extra weight, and what the endgame recap recommends for the next replay. Routes are advisory rather than restrictive: the simulator still lets players make any purchase or operating move that passes the underlying eligibility and affordability rules.
+
+Beginner-friendly routes include `BTO-to-Condo Upgrader` and `Single 35 Resale Buyer`. More advanced routes include `PR Private-Market Climber`, `Foreign Investor`, `Heartland Landlord`, `Commercial Operator`, and `FIRE / Debt-Free Homeowner`.
 
 ### Win / Lose
 
@@ -86,8 +92,8 @@ Property, development, tenant, and listing names are fictional/composite. The si
 - Owned properties now track occupancy state, vacancy streaks, maintenance drag, and property tax.
 - HDB flats default to owner-occupied status, allow explicit room-rental strategies during MOP, and keep whole-flat rental locked until the MOP path is clear in the simplified model.
 - Landlord Ops 2.0 adds lease renewal decisions, rent-push vacancy risk, tenant satisfaction, emergency reserve gaps, and maintenance issue queues inspired by common Singapore ownership surprises.
-- Portfolio summaries surface investor routes such as `Heartland Landlord` and `Commercial Cashflow Operator`.
-- Contextual scenarios now key off what you actually own, whether it is rented, and whether you are holding aging leasehold stock.
+- Portfolio summaries surface portfolio styles such as `Heartland Landlord` and `Commercial Cashflow Operator`.
+- Contextual scenarios now key off what you actually own, whether it is rented, whether you are holding aging leasehold stock, and which life arc is guiding the run.
 - Guided-playability surfaces now translate complex mechanics into plain-English next moves, blocker labels, and expected effects so new players can keep momentum.
 
 ---

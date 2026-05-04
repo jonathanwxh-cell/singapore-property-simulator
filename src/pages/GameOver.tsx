@@ -7,6 +7,8 @@ import { Trophy, RotateCcw, Home } from 'lucide-react';
 import { careers } from '@/data/careers';
 import { deriveEligibilityFlags } from '@/engine/eligibility';
 import EligibilityBadge from '@/components/EligibilityBadge';
+import { runRoutesById } from '@/data/runRoutes';
+import { scoreRunRoute } from '@/engine/runDirector';
 
 export default function GameOver() {
   const navigate = useNavigate();
@@ -20,6 +22,8 @@ export default function GameOver() {
   const startingSalary = Math.round(career.startingSalary * difficultySettings[player.difficulty].salaryModifier);
   const salaryGrowth = player.salary - startingSalary;
   const latestReview = player.careerReviewHistory[player.careerReviewHistory.length - 1] ?? null;
+  const routeScore = scoreRunRoute(player);
+  const suggestedRoute = runRoutesById[routeScore.suggestedNextRouteId];
   const eligibilityFlags = deriveEligibilityFlags({
     salary: player.salary,
     properties: player.properties,
@@ -59,6 +63,23 @@ export default function GameOver() {
             <div className="bg-white/5 rounded-lg p-3">
               <p className="text-text-dim text-[10px] uppercase">Properties</p>
               <p className="font-mono text-white">{player.properties.length}</p>
+            </div>
+          </div>
+
+          <div className="mb-6 rounded-xl border border-glass-border bg-white/5 p-4 text-left">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p className="label-text text-text-dim text-[10px] mb-1">Route Recap</p>
+                <h2 className="section-title text-white">{routeScore.routeLabel}</h2>
+              </div>
+              <p className="font-mono text-lg text-cyan-glow">{routeScore.score}</p>
+            </div>
+            <p className="text-text-secondary text-sm">{routeScore.summary}</p>
+            <p className="text-text-dim text-xs mt-2">{routeScore.nextLesson}</p>
+            <div className="mt-3 rounded-lg border border-cyan-glow/20 bg-cyan-glow/10 p-3">
+              <p className="text-cyan-glow text-xs font-mono uppercase tracking-[0.08em]">Try next</p>
+              <p className="text-white text-sm font-semibold mt-1">{suggestedRoute.label}</p>
+              <p className="text-text-secondary text-xs mt-1">{suggestedRoute.tagline}</p>
             </div>
           </div>
 

@@ -14,6 +14,7 @@ import EligibilityBadge from '@/components/EligibilityBadge';
 import { getNextBestMoves, type CoachUrgency } from '@/engine/decisionCoach';
 import { getFirstHomeMissions, type FirstHomeMission } from '@/engine/firstHomeMissions';
 import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
+import RunArcPanel from '@/components/RunArcPanel';
 import type { BuyerProfile } from '@/game/types';
 
 export default function Dashboard() {
@@ -95,6 +96,10 @@ export default function Dashboard() {
               </div>
             </div>
           </GlassCard>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="mb-6">
+          <RunArcPanel player={player} onOpenRoute={(route) => navigate(route)} />
         </motion.div>
 
         <motion.div variants={itemVariants} className="mb-6">

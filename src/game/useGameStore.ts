@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement, BuyerProfile } from './types';
+import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement, BuyerProfile, RunRouteId } from './types';
 import { createInitialLifeState, difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE, normalizeBuyerProfile } from './types';
 import { careers } from '@/data/careers';
 import { properties } from '@/data/properties';
@@ -27,6 +27,7 @@ import type { ScenarioResolution } from '@/engine/actions';
 import type { TenantLeaseDecisionId } from './types';
 import type { ActionResult } from '@/engine/results';
 import { writeAutoSave } from './savePersistence';
+import { inferRunRouteId } from '@/engine/runDirector';
 
 let rng: Rng = createRng(0);
 
@@ -81,12 +82,25 @@ function withBuyerProfileDefaults(player: Player): Player {
   };
 }
 
+function withRunRouteDefaults(player: Player): Player {
+  return {
+    ...player,
+    runRouteId: inferRunRouteId(player),
+  };
+}
+
 function finalizePlayer(player: Player): Player {
-  const hydrated = withBuyerProfileDefaults(withLifeDefaults(withPortfolioDefaults(withCareerDefaults(player))));
+  const hydrated = withRunRouteDefaults(withBuyerProfileDefaults(withLifeDefaults(withPortfolioDefaults(withCareerDefaults(player)))));
   return withEvaluatedAchievements(withNetWorth(hydrated));
 }
 
-function createInitialPlayer(name: string, careerId: string, difficulty: Difficulty, buyerProfileInput?: Partial<BuyerProfile>): Player {
+function createInitialPlayer(
+  name: string,
+  careerId: string,
+  difficulty: Difficulty,
+  buyerProfileInput?: Partial<BuyerProfile>,
+  runRouteId?: RunRouteId,
+): Player {
   const career = careers.find(c => c.id === careerId) || careers[0];
   const diff = difficultySettings[difficulty];
   const salary = Math.round(career.startingSalary * diff.salaryModifier);
@@ -126,6 +140,7 @@ function createInitialPlayer(name: string, careerId: string, difficulty: Difficu
     careerProgressionProfile: createInitialCareerProgressionProfile(),
     careerReviewHistory: [],
     buyerProfile,
+    runRouteId,
     reserve: createDefaultReserve(),
     operationHistory: [],
   });
@@ -186,7 +201,7 @@ function pickGameState(state: GameState): GameState {
 }
 
 interface GameStore extends GameState {
-  newGame: (name: string, careerId: string, difficulty: Difficulty, buyerProfile?: Partial<BuyerProfile>) => void;
+  newGame: (name: string, careerId: string, difficulty: Difficulty, buyerProfile?: Partial<BuyerProfile>, runRouteId?: RunRouteId) => void;
   loadGame: (state: GameState) => void;
   nextTurn: () => void;
   setPrimaryLifeAction: (actionId: LifeActionId | null) => void;
@@ -219,11 +234,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   rngSeed: 0,
   rngState: 0,
 
-  newGame: (name, careerId, difficulty, buyerProfile) => {
+  newGame: (name, careerId, difficulty, buyerProfile, runRouteId) => {
     const seed = newSeed();
     rng = createRng(seed);
     set({
-      player: createInitialPlayer(name, careerId, difficulty, buyerProfile),
+      player: createInitialPlayer(name, careerId, difficulty, buyerProfile, runRouteId),
       market: createInitialMarket(),
       settings: createInitialSettings(difficulty),
       isGameActive: true,

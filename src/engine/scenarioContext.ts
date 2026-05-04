@@ -1,6 +1,7 @@
 import { properties } from '@/data/properties';
 import { scenarios, type Scenario, type ScenarioRequirement } from '@/data/scenarios';
 import type { Player } from '@/game/types';
+import { getRouteForPlayer } from './runDirector';
 
 function playerOwnsAnyProperty(player: Player): boolean {
   return player.properties.length > 0;
@@ -54,4 +55,16 @@ export function getEligibleScenarios(player: Player): Scenario[] {
   return scenarios.filter((scenario) =>
     (scenario.requires ?? []).every((requirement) => meetsRequirement(player, requirement))
   );
+}
+
+export function getRouteWeightedScenarios(player: Player): Scenario[] {
+  const eligible = getEligibleScenarios(player);
+  const routeTags = new Set(getRouteForPlayer(player).scenarioTags);
+  const routeMatches = eligible.filter((scenario) =>
+    (scenario.routeTags ?? []).some((tag) => routeTags.has(tag))
+  );
+
+  if (routeMatches.length === 0) return eligible;
+
+  return [...routeMatches, ...routeMatches, ...eligible];
 }

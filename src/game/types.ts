@@ -4,6 +4,17 @@ export type OccupancyStatus = 'owner-occupied' | 'vacant' | 'tenanted' | 'renova
 export type LivingArrangement = 'with-parents' | 'renting-room' | 'renting-flat';
 export type BuyerResidencyStatus = 'sc' | 'spr' | 'foreigner';
 export type HouseholdProfile = 'couple-family' | 'single-35-plus' | 'single-under-35' | 'foreigner-investor';
+export type RunRouteId =
+  | 'bto-upgrader'
+  | 'single-resale'
+  | 'pr-private-climber'
+  | 'foreign-investor'
+  | 'heartland-landlord'
+  | 'commercial-operator'
+  | 'fire-homeowner';
+export type RunRoutePhase = 'foundation' | 'acquisition' | 'ownership' | 'expansion' | 'legacy';
+export type RouteMilestoneStatus = 'locked' | 'active' | 'completed';
+export type RouteMilestoneImpact = 'cash' | 'eligibility' | 'risk' | 'yield' | 'debt' | 'lifestyle';
 export type RenovationCategory =
   | 'kitchen'
   | 'bathroom'
@@ -65,6 +76,60 @@ export interface BuyerProfile {
   residencyStatus: BuyerResidencyStatus;
   householdProfile: HouseholdProfile;
   age: number;
+}
+
+export interface RouteMilestoneTemplate {
+  id: string;
+  label: string;
+  detail: string;
+  route: string;
+  actionLabel: string;
+  impact: RouteMilestoneImpact;
+  phase: RunRoutePhase;
+}
+
+export interface RunRoute {
+  id: RunRouteId;
+  label: string;
+  shortLabel: string;
+  tagline: string;
+  description: string;
+  difficultyHint: string;
+  beginnerFriendly: boolean;
+  accentColor: string;
+  recommendedBuyerProfiles: HouseholdProfile[];
+  recommendedResidency: BuyerResidencyStatus[];
+  primaryLessons: string[];
+  scenarioTags: string[];
+  milestoneTemplates: RouteMilestoneTemplate[];
+}
+
+export interface RouteMilestone extends RouteMilestoneTemplate {
+  status: RouteMilestoneStatus;
+  progressPct: number;
+}
+
+export interface RunArc {
+  route: RunRoute;
+  phase: RunRoutePhase;
+  phaseLabel: string;
+  activeMilestone: RouteMilestone | null;
+  supportingMilestones: RouteMilestone[];
+  milestones: RouteMilestone[];
+  progressPct: number;
+  lesson: string;
+  whyItMatters: string;
+}
+
+export interface RunRouteScore {
+  routeId: RunRouteId;
+  routeLabel: string;
+  score: number;
+  completedMilestones: number;
+  totalMilestones: number;
+  summary: string;
+  nextLesson: string;
+  suggestedNextRouteId: RunRouteId;
 }
 
 export interface RenovationProject {
@@ -228,6 +293,7 @@ export interface Player {
   careerProgressionProfile: CareerProgressionProfile;
   careerReviewHistory: CareerReviewHistoryEntry[];
   buyerProfile?: BuyerProfile;
+  runRouteId?: RunRouteId;
   reserve?: ReserveState;
   operationHistory?: PropertyOperationLogEntry[];
 }
