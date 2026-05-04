@@ -37,6 +37,10 @@ export default function Dashboard() {
   });
   const latestCareerReview = player.careerReviewHistory[player.careerReviewHistory.length - 1] ?? null;
   const nextJobSwitchIn = Math.max(player.nextJobSwitchTurn - player.turnCount, 0);
+  const openIssues = player.properties.flatMap((property) => property.openMaintenanceIssues ?? []);
+  const activeRenovations = player.properties.filter((property) => property.activeRenovation);
+  const weakTenant = player.properties.find((property) => property.tenant && property.tenant.satisfaction < 55);
+  const latestOperation = player.operationHistory?.[0] ?? null;
 
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
@@ -145,6 +149,46 @@ export default function Dashboard() {
           </GlassCard>
         </motion.div>
 
+        {player.properties.length > 0 && (
+          <motion.div variants={itemVariants} className="mb-6">
+            <GlassCard accentColor={openIssues.length > 0 ? '#FF1744' : activeRenovations.length > 0 ? '#FFD740' : '#00E676'}>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <p className="label-text text-text-dim text-[10px] mb-1">This Month Needs Attention</p>
+                  <h3 className="section-title text-white">Property Operations</h3>
+                </div>
+                <button onClick={() => navigate('/portfolio')} className="btn-secondary text-xs px-3 py-2">Open Portfolio</button>
+              </div>
+              <div className="grid md:grid-cols-4 gap-3">
+                <AttentionCard
+                  label="Repairs"
+                  value={openIssues.length > 0 ? `${openIssues.length} open` : 'Clear'}
+                  detail={openIssues[0] ? `${openIssues[0].category} issue: S$${openIssues[0].estimatedCost.toLocaleString()}` : 'No urgent maintenance on the board.'}
+                  tone={openIssues.length > 0 ? 'bad' : 'good'}
+                />
+                <AttentionCard
+                  label="Upgrades"
+                  value={activeRenovations.length > 0 ? `${activeRenovations.length} active` : 'Ready'}
+                  detail={activeRenovations[0]?.activeRenovation ? `${activeRenovations[0].activeRenovation.label}: ${activeRenovations[0].activeRenovation.remainingMonths} mo left` : 'Pick an upgrade on an owned property detail page.'}
+                  tone={activeRenovations.length > 0 ? 'warn' : 'neutral'}
+                />
+                <AttentionCard
+                  label="Tenants"
+                  value={weakTenant?.tenant ? `${weakTenant.tenant.satisfaction}/100` : 'Stable'}
+                  detail={weakTenant?.tenant ? 'Tenant happiness is slipping. Consider repairs or a defensive rent strategy.' : 'No low-satisfaction leases flagged.'}
+                  tone={weakTenant?.tenant ? 'bad' : 'good'}
+                />
+                <AttentionCard
+                  label="Reserve"
+                  value={`S$${(player.reserve?.allocatedCash ?? 0).toLocaleString()}`}
+                  detail={latestOperation ? latestOperation.title : 'Set aside runway before maintenance bites.'}
+                  tone={(player.reserve?.allocatedCash ?? 0) > 0 ? 'good' : 'warn'}
+                />
+              </div>
+            </GlassCard>
+          </motion.div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-6">
           <motion.div variants={itemVariants}>
             <GlassCard>
@@ -231,6 +275,33 @@ export default function Dashboard() {
           </motion.div>
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+function AttentionCard({
+  label,
+  value,
+  detail,
+  tone,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone: 'good' | 'warn' | 'bad' | 'neutral';
+}) {
+  const toneClass = {
+    good: 'text-success',
+    warn: 'text-warning',
+    bad: 'text-danger',
+    neutral: 'text-white',
+  } satisfies Record<typeof tone, string>;
+
+  return (
+    <div className="rounded-xl border border-glass-border bg-white/[0.03] p-3">
+      <p className="label-text text-text-dim text-[10px]">{label}</p>
+      <p className={`font-mono text-sm mt-1 ${toneClass[tone]}`}>{value}</p>
+      <p className="text-text-secondary text-xs mt-2 leading-relaxed">{detail}</p>
     </div>
   );
 }

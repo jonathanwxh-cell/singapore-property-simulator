@@ -18,7 +18,7 @@ export function selectNetWorth(player: Player): number {
 export function selectMonthlyRentalIncome(player: Player): number {
   return player.properties
     .filter(p => p.isRented)
-    .reduce((sum, p) => sum + p.monthlyRental, 0);
+    .reduce((sum, p) => sum + (p.tenant?.contractedRent ?? p.monthlyRental), 0);
 }
 
 export function selectMonthlyTakeHome(player: Player, takeHomeRatio: number): number {

@@ -2,6 +2,21 @@ export type Difficulty = 'easy' | 'normal' | 'hard' | 'tycoon';
 export type MaritalStatus = 'single' | 'married' | 'divorced';
 export type OccupancyStatus = 'vacant' | 'tenanted' | 'renovating' | 'listed';
 export type LivingArrangement = 'with-parents' | 'renting-room' | 'renting-flat';
+export type RenovationCategory =
+  | 'kitchen'
+  | 'bathroom'
+  | 'flooring'
+  | 'smart-home'
+  | 'layout'
+  | 'commercial-fitout'
+  | 'maintenance-overhaul';
+export type RenovationStatus = 'planned' | 'active' | 'completed' | 'overrun' | 'cancelled';
+export type RentStrategy = 'conservative' | 'market' | 'aggressive';
+export type RentalMode = 'room-rental' | 'whole-unit' | 'corporate-lease' | 'student-shared' | 'commercial-lease';
+export type TenantProfileId = 'local-family' | 'expat-pmet' | 'student-tenants' | 'sme-commercial';
+export type MaintenanceCategory = 'plumbing' | 'electrical' | 'aircon' | 'waterproofing' | 'appliance' | 'common-area' | 'tenant-damage';
+export type MaintenanceSeverity = 'minor' | 'major' | 'urgent';
+export type MaintenanceStatus = 'open' | 'repaired' | 'deferred' | 'insured';
 export type LifeActionId =
   | 'focus-at-work'
   | 'take-side-gig'
@@ -43,6 +58,65 @@ export interface PlayerLifeState {
   lastMonthSummary: LifeMonthSummary | null;
 }
 
+export interface RenovationProject {
+  id: string;
+  templateId: string;
+  propertyId: string;
+  category: RenovationCategory;
+  label: string;
+  cost: number;
+  durationMonths: number;
+  remainingMonths: number;
+  rentUpliftPct: number;
+  resaleUpliftPct: number;
+  satisfactionUplift: number;
+  riskPct: number;
+  conditionDelta: number;
+  status: RenovationStatus;
+  startedTurn: number;
+}
+
+export interface TenantState {
+  profileId: TenantProfileId;
+  rentalMode: RentalMode;
+  leaseStartTurn: number;
+  leaseEndTurn: number;
+  satisfaction: number;
+  rentStrategy: RentStrategy;
+  askingRent: number;
+  contractedRent: number;
+  defaultRiskPct: number;
+  renewalIntent: number;
+}
+
+export interface MaintenanceIssue {
+  id: string;
+  propertyId: string;
+  category: MaintenanceCategory;
+  severity: MaintenanceSeverity;
+  estimatedCost: number;
+  satisfactionImpact: number;
+  valueImpactPct: number;
+  recurrenceRiskPct: number;
+  status: MaintenanceStatus;
+}
+
+export interface ReserveState {
+  targetMonths: number;
+  allocatedCash: number;
+  autoTopUpPct: number;
+  lastCoveredCost?: number;
+}
+
+export interface PropertyOperationLogEntry {
+  id: string;
+  turn: number;
+  propertyId?: string;
+  title: string;
+  detail: string;
+  tone: 'good' | 'warn' | 'bad' | 'neutral';
+}
+
 export interface OwnedProperty {
   propertyId: string;
   purchasePrice: number;
@@ -58,6 +132,14 @@ export interface OwnedProperty {
   maintenanceCost?: number;
   propertyTax?: number;
   listingChannel?: string;
+  conditionScore?: number;
+  mopRemainingMonths?: number;
+  activeRenovation?: RenovationProject;
+  completedRenovations?: RenovationCategory[];
+  tenant?: TenantState;
+  openMaintenanceIssues?: MaintenanceIssue[];
+  rentStrategy?: RentStrategy;
+  floorPlanId?: string;
 }
 
 export interface Loan {
@@ -134,6 +216,8 @@ export interface Player {
   ownedPrivateHome: boolean;
   careerProgressionProfile: CareerProgressionProfile;
   careerReviewHistory: CareerReviewHistoryEntry[];
+  reserve?: ReserveState;
+  operationHistory?: PropertyOperationLogEntry[];
 }
 
 export interface MarketState {

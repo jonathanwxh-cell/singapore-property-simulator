@@ -15,11 +15,14 @@ import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { getLtvCap } from '@/engine/ltv';
 import EligibilityBadge from '@/components/EligibilityBadge';
 import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
+import { getRenovationTemplatesForType } from '@/data/renovations';
+import { repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
+import type { RentalMode, RentStrategy, TenantProfileId } from '@/game/types';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { player, buyProperty, sellProperty, toggleRental } = useGameStore();
+  const { player, buyProperty, sellProperty, toggleRental, startRenovation, setTenantStrategy, resolveMaintenanceIssue, setReservePlan } = useGameStore();
   const [downPaymentPercent, setDownPaymentPercent] = useState(25);
   const [showSellConfirm, setShowSellConfirm] = useState(false);
   const [useCpfOrdinary, setUseCpfOrdinary] = useState(true);
@@ -126,8 +129,44 @@ export default function PropertyDetail() {
     toggleRental(ownedIndex);
   };
 
+  const handleStartRenovation = (templateId: string) => {
+    if (!isOwned) return;
+    const result = startRenovation(ownedIndex, templateId);
+    setActionError(result.ok ? null : result.message);
+  };
+
+  const handleTenantPlan = (mode: RentalMode, profileId: TenantProfileId, rentStrategy: RentStrategy) => {
+    if (!isOwned) return;
+    const result = setTenantStrategy(ownedIndex, { mode, profileId, rentStrategy });
+    setActionError(result.ok ? null : result.message);
+  };
+
+  const handleRepair = (issueId: string, choiceId: RepairChoiceId) => {
+    if (!isOwned) return;
+    const result = resolveMaintenanceIssue(ownedIndex, issueId, choiceId);
+    setActionError(result.ok ? null : result.message);
+  };
+
+  const handleReserveTopUp = () => {
+    const current = player.reserve?.allocatedCash ?? 0;
+    const nextAllocation = Math.min(player.cash, current + 5_000);
+    const result = setReservePlan({
+      targetMonths: player.reserve?.targetMonths ?? 3,
+      allocatedCash: nextAllocation,
+      autoTopUpPct: player.reserve?.autoTopUpPct ?? 0,
+    });
+    setActionError(result.ok ? null : result.message);
+  };
+
   const gain = ownedProperty ? ownedProperty.currentValue - ownedProperty.purchasePrice : 0;
   const gainPercent = ownedProperty ? (gain / ownedProperty.purchasePrice) * 100 : 0;
+  const renovationOptions = getRenovationTemplatesForType(property.type);
+  const tenantPlans = getTenantPlans({
+    isHdb: property.isHdb,
+    isCommercial: property.type.startsWith('Commercial'),
+    mopRemainingMonths: ownedProperty?.mopRemainingMonths ?? 0,
+  });
+  const floorPlanSrc = getFloorPlanSrc(ownedProperty?.floorPlanId);
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4 game-screen">
@@ -306,6 +345,161 @@ export default function PropertyDetail() {
                 </div>
               </div>
             </GlassCard>
+
+            {isOwned && ownedProperty && (
+              <GlassCard accentColor="#00F0FF">
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div>
+                    <p className="label-text text-text-dim text-[10px] mb-1">Owner Mode</p>
+                    <h3 className="section-title text-white">Property Operations</h3>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono text-white">{ownedProperty.conditionScore ?? 70}/100</p>
+                    <p className="text-text-dim text-[10px]">condition</p>
+                  </div>
+                </div>
+
+                <div className="grid lg:grid-cols-[1fr,240px] gap-4 mb-5">
+                  <div className="rounded-xl border border-glass-border bg-white/[0.03] p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm">Floor Plan</h4>
+                      <span className="text-text-dim text-[10px] font-mono">{ownedProperty.floorPlanId ?? 'floorplan'}</span>
+                    </div>
+                    <img src={floorPlanSrc} alt={`${property.name} floor plan`} className="w-full rounded-lg border border-divider bg-void-navy/80" />
+                    <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                      <OperationMetric label="Tenant" value={ownedProperty.tenant ? `${ownedProperty.tenant.satisfaction}/100` : 'None'} />
+                      <OperationMetric label="MOP" value={`${ownedProperty.mopRemainingMonths ?? 0} mo`} />
+                      <OperationMetric label="Issues" value={String(ownedProperty.openMaintenanceIssues?.length ?? 0)} />
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-glass-border bg-white/[0.03] p-4">
+                    <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm mb-3">Reserve</h4>
+                    <p className="font-mono text-2xl text-cyan-glow">S${(player.reserve?.allocatedCash ?? 0).toLocaleString()}</p>
+                    <p className="text-text-secondary text-xs mt-2">
+                      Target: {player.reserve?.targetMonths ?? 3} month(s) of ownership surprises.
+                    </p>
+                    {player.reserve?.lastCoveredCost ? (
+                      <p className="text-success text-[11px] mt-3">Last repair covered: S${player.reserve.lastCoveredCost.toLocaleString()}</p>
+                    ) : (
+                      <p className="text-text-dim text-[11px] mt-3">Repairs can draw this reserve first while still reducing cash honestly.</p>
+                    )}
+                    <button onClick={handleReserveTopUp} className="btn-secondary text-xs py-2 w-full mt-4">
+                      Add S$5K Reserve
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  <section>
+                    <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm mb-3">Upgrade Plans</h4>
+                    {ownedProperty.activeRenovation ? (
+                      <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
+                        <p className="text-warning font-semibold text-sm">{ownedProperty.activeRenovation.label} in progress</p>
+                        <p className="text-text-secondary text-xs mt-1">
+                          {ownedProperty.activeRenovation.remainingMonths} month(s) left. Rental disruption and value uplift resolve when complete.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {renovationOptions.slice(0, 4).map((template) => {
+                          const completed = ownedProperty.completedRenovations?.includes(template.category);
+                          const unaffordable = player.cash < template.cost;
+                          return (
+                            <button
+                              key={template.id}
+                              onClick={() => handleStartRenovation(template.id)}
+                              disabled={completed || unaffordable}
+                              className="text-left rounded-xl border border-glass-border bg-white/[0.03] p-4 hover:border-cyan-glow/50 disabled:opacity-45 disabled:hover:border-glass-border transition-colors"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-white font-semibold text-sm">{template.label}</p>
+                                  <p className="text-text-secondary text-xs mt-1 line-clamp-2">{template.description}</p>
+                                </div>
+                                <span className="text-[10px] font-mono text-cyan-glow uppercase">{template.strategy}</span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2 mt-3">
+                                <OperationMetric label="Cost" value={`S$${(template.cost / 1000).toFixed(0)}K`} />
+                                <OperationMetric label="Rent" value={`+${template.rentUpliftPct}%`} />
+                                <OperationMetric label="Value" value={`+${template.resaleUpliftPct}%`} />
+                              </div>
+                              {completed && <p className="text-success text-[11px] mt-2">Completed</p>}
+                              {unaffordable && !completed && <p className="text-danger text-[11px] mt-2">Need more cash</p>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </section>
+
+                  <section>
+                    <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm mb-3">Tenant Strategy</h4>
+                    {ownedProperty.tenant && (
+                      <div className="rounded-lg border border-success/30 bg-success/10 p-3 mb-3">
+                        <p className="text-success font-semibold text-sm">Active lease: S${ownedProperty.tenant.contractedRent.toLocaleString()}/mo</p>
+                        <p className="text-text-secondary text-xs mt-1">
+                          Satisfaction {ownedProperty.tenant.satisfaction}/100 | Renewal intent {ownedProperty.tenant.renewalIntent}/100 | Strategy {ownedProperty.tenant.rentStrategy}
+                        </p>
+                      </div>
+                    )}
+                    <div className="grid md:grid-cols-3 gap-3">
+                      {tenantPlans.map((plan) => (
+                        <button
+                          key={plan.label}
+                          onClick={() => handleTenantPlan(plan.mode, plan.profileId, plan.strategy)}
+                          className="text-left rounded-xl border border-glass-border bg-white/[0.03] p-4 hover:border-success/50 transition-colors"
+                        >
+                          <p className="text-white font-semibold text-sm">{plan.label}</p>
+                          <p className="text-text-secondary text-xs mt-1">{plan.description}</p>
+                          <p className="text-[10px] font-mono text-cyan-glow mt-3 uppercase">{plan.strategy} | {plan.mode}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section>
+                    <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm mb-3">Repairs</h4>
+                    {(ownedProperty.openMaintenanceIssues?.length ?? 0) === 0 ? (
+                      <div className="rounded-lg border border-glass-border bg-white/[0.03] p-3">
+                        <p className="text-text-secondary text-sm">No open maintenance issues. Keep the reserve ready; Singapore homes are patient until they are suddenly not patient.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {ownedProperty.openMaintenanceIssues?.map((issue) => (
+                          <div key={issue.id} className="rounded-xl border border-danger/30 bg-danger/10 p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-white font-semibold text-sm capitalize">{issue.category.replace('-', ' ')} issue</p>
+                                <p className="text-text-secondary text-xs mt-1">
+                                  {issue.severity} | Est. S${issue.estimatedCost.toLocaleString()} | Tenant impact {issue.satisfactionImpact}
+                                </p>
+                              </div>
+                              <span className="text-danger text-[10px] font-mono uppercase">{issue.status}</span>
+                            </div>
+                            <div className="grid sm:grid-cols-3 gap-2 mt-3">
+                              {(Object.keys(repairChoices) as RepairChoiceId[]).map((choiceId) => (
+                                <button
+                                  key={choiceId}
+                                  onClick={() => handleRepair(issue.id, choiceId)}
+                                  className="btn-secondary text-xs py-2"
+                                >
+                                  {repairChoices[choiceId].label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </div>
+
+                {actionError && (
+                  <p className="text-danger text-xs text-center mt-4">{actionError}</p>
+                )}
+              </GlassCard>
+            )}
           </div>
 
           <div>
@@ -343,8 +537,16 @@ export default function PropertyDetail() {
                     <div className="flex items-center justify-between">
                       <span className="text-text-secondary text-sm">Status</span>
                       <span className={`font-mono text-xs ${ownedProperty.isRented ? 'text-cyan-glow' : 'text-text-dim'}`}>
-                        {ownedProperty.isRented ? `Rented (${formatCurrency(ownedProperty.monthlyRental)}/mo)` : 'Vacant'}
+                        {ownedProperty.tenant ? `Lease (${formatCurrency(ownedProperty.tenant.contractedRent)}/mo)` : ownedProperty.isRented ? `Rented (${formatCurrency(ownedProperty.monthlyRental)}/mo)` : ownedProperty.occupancyStatus ?? 'Vacant'}
                       </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-text-secondary text-sm">Condition</span>
+                      <span className="font-mono text-white">{ownedProperty.conditionScore ?? 70}/100</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-text-secondary text-sm">MOP Remaining</span>
+                      <span className="font-mono text-white">{ownedProperty.mopRemainingMonths ?? 0} mo</span>
                     </div>
                   </div>
                 </div>
@@ -385,6 +587,9 @@ export default function PropertyDetail() {
                     </div>
                   )}
                 </div>
+                {actionError && (
+                  <p className="text-danger text-xs text-center mt-3">{actionError}</p>
+                )}
               </GlassCard>
             ) : (
               <GlassCard accentColor="#00E676" className="sticky top-4">
@@ -540,6 +745,112 @@ export default function PropertyDetail() {
       </div>
     </div>
   );
+}
+
+function OperationMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-black/20 p-2">
+      <p className="label-text text-text-dim text-[9px]">{label}</p>
+      <p className="font-mono text-white text-xs mt-0.5">{value}</p>
+    </div>
+  );
+}
+
+function getFloorPlanSrc(floorPlanId?: string): string {
+  const id = floorPlanId ?? 'floorplan-hdb-4-room';
+  return `/floorplans/${id}.svg`;
+}
+
+function getTenantPlans({
+  isHdb,
+  isCommercial,
+  mopRemainingMonths,
+}: {
+  isHdb: boolean;
+  isCommercial: boolean;
+  mopRemainingMonths: number;
+}): Array<{
+  label: string;
+  description: string;
+  mode: RentalMode;
+  profileId: TenantProfileId;
+  strategy: RentStrategy;
+}> {
+  if (isCommercial) {
+    return [
+      {
+        label: 'SME Market Lease',
+        description: 'Balanced commercial yield with manageable default risk.',
+        mode: 'commercial-lease',
+        profileId: 'sme-commercial',
+        strategy: 'market',
+      },
+      {
+        label: 'Corporate Upside',
+        description: 'Push rent harder, but expect more vacancy and fit-out expectations.',
+        mode: 'corporate-lease',
+        profileId: 'sme-commercial',
+        strategy: 'aggressive',
+      },
+      {
+        label: 'Defensive Renewal',
+        description: 'Lower rent to protect occupancy through soft business cycles.',
+        mode: 'commercial-lease',
+        profileId: 'sme-commercial',
+        strategy: 'conservative',
+      },
+    ];
+  }
+
+  if (isHdb && mopRemainingMonths > 0) {
+    return [
+      {
+        label: 'Room Rental',
+        description: 'MOP-safe income while keeping the flat owner-occupied in simplified rules.',
+        mode: 'room-rental',
+        profileId: 'local-family',
+        strategy: 'market',
+      },
+      {
+        label: 'Conservative Room',
+        description: 'Lower rent, better satisfaction, less vacancy pressure.',
+        mode: 'room-rental',
+        profileId: 'local-family',
+        strategy: 'conservative',
+      },
+      {
+        label: 'Student Room',
+        description: 'Useful near education nodes. More wear, but keeps early gameplay active.',
+        mode: 'room-rental',
+        profileId: 'student-tenants',
+        strategy: 'market',
+      },
+    ];
+  }
+
+  return [
+    {
+      label: 'Family Market Lease',
+      description: 'Balanced whole-unit lease with stable demand and moderate wear.',
+      mode: 'whole-unit',
+      profileId: 'local-family',
+      strategy: 'market',
+    },
+    {
+      label: 'Expat Premium',
+      description: 'Higher rent for better-located or better-finished homes.',
+      mode: 'corporate-lease',
+      profileId: 'expat-pmet',
+      strategy: 'aggressive',
+    },
+    {
+      label: 'Defensive Lease',
+      description: 'Trade some rent for occupancy and tenant happiness.',
+      mode: 'whole-unit',
+      profileId: 'local-family',
+      strategy: 'conservative',
+    },
+  ];
 }
 
 function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {

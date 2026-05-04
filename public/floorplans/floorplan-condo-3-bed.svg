@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Condo three-bedroom floor plan">
+  <rect width="640" height="420" fill="#090f1e"/>
+  <rect x="34" y="34" width="572" height="352" rx="30" fill="#111b31" stroke="#ff4081" stroke-opacity=".38" stroke-width="4"/>
+  <rect x="62" y="62" width="318" height="170" rx="16" fill="#1f2f54" stroke="#ffc1dc" stroke-opacity=".35"/>
+  <text x="221" y="153" fill="#fff4fb" font-family="Arial" font-size="24" text-anchor="middle">Living / Balcony</text>
+  <rect x="400" y="62" width="178" height="94" rx="16" fill="#2a3156" stroke="#ffc1dc" stroke-opacity=".35"/>
+  <text x="489" y="114" fill="#fff4fb" font-family="Arial" font-size="18" text-anchor="middle">Master</text>
+  <rect x="400" y="174" width="178" height="76" rx="16" fill="#2a3156" stroke="#ffc1dc" stroke-opacity=".35"/>
+  <text x="489" y="217" fill="#fff4fb" font-family="Arial" font-size="17" text-anchor="middle">Bedroom</text>
+  <rect x="62" y="252" width="174" height="106" rx="16" fill="#263a58" stroke="#ffc1dc" stroke-opacity=".35"/>
+  <text x="149" y="310" fill="#fff4fb" font-family="Arial" font-size="18" text-anchor="middle">Kitchen</text>
+  <rect x="256" y="252" width="118" height="106" rx="16" fill="#30344e" stroke="#ffc1dc" stroke-opacity=".35"/>
+  <text x="315" y="310" fill="#fff4fb" font-family="Arial" font-size="18" text-anchor="middle">Bath</text>
+  <rect x="394" y="272" width="184" height="86" rx="16" fill="#2a3156" stroke="#ffc1dc" stroke-opacity=".35"/>
+  <text x="486" y="320" fill="#fff4fb" font-family="Arial" font-size="18" text-anchor="middle">Bedroom</text>
+</svg>

@@ -12,7 +12,14 @@ export type ActionFailReason =
   | 'msr_exceeded'
   | 'cpf_not_allowed'
   | 'cpf_exceeded'
-  | 'eligibility_blocked';
+  | 'eligibility_blocked'
+  | 'renovation_active'
+  | 'renovation_completed'
+  | 'renovation_not_found'
+  | 'mop_restricted'
+  | 'rental_mode_blocked'
+  | 'maintenance_not_found'
+  | 'repair_choice_not_found';
 
 export type ActionResult<T = void> =
   | { ok: true; value: T }

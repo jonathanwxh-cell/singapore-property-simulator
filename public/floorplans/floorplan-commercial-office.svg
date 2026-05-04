@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Commercial office floor plan">
+  <rect width="640" height="420" fill="#0b1018"/>
+  <rect x="34" y="34" width="572" height="352" rx="24" fill="#121b29" stroke="#ffd740" stroke-opacity=".42" stroke-width="4"/>
+  <rect x="62" y="62" width="308" height="184" rx="14" fill="#26314a" stroke="#fff0a8" stroke-opacity=".35"/>
+  <text x="216" y="160" fill="#fff9d8" font-family="Arial" font-size="23" text-anchor="middle">Open Office</text>
+  <rect x="390" y="62" width="188" height="86" rx="14" fill="#30334a" stroke="#fff0a8" stroke-opacity=".35"/>
+  <text x="484" y="111" fill="#fff9d8" font-family="Arial" font-size="18" text-anchor="middle">Meeting</text>
+  <rect x="390" y="166" width="188" height="80" rx="14" fill="#30334a" stroke="#fff0a8" stroke-opacity=".35"/>
+  <text x="484" y="211" fill="#fff9d8" font-family="Arial" font-size="18" text-anchor="middle">Director</text>
+  <rect x="62" y="266" width="180" height="92" rx="14" fill="#273a42" stroke="#fff0a8" stroke-opacity=".35"/>
+  <text x="152" y="317" fill="#fff9d8" font-family="Arial" font-size="18" text-anchor="middle">Pantry</text>
+  <rect x="262" y="266" width="316" height="92" rx="14" fill="#1f2938" stroke="#fff0a8" stroke-opacity=".35"/>
+  <text x="420" y="317" fill="#fff9d8" font-family="Arial" font-size="18" text-anchor="middle">Reception / Breakout</text>
+</svg>

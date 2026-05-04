@@ -20,6 +20,12 @@ export default function Portfolio() {
   const rentalIncome = selectMonthlyRentalIncome(player);
   const ownershipCosts = selectMonthlyOwnershipCosts(player);
   const investorRoute = describeInvestorRoute(player);
+  const occupiedCount = player.properties.filter((property) => property.isRented).length;
+  const occupancyRate = player.properties.length === 0 ? 0 : Math.round((occupiedCount / player.properties.length) * 100);
+  const tenantScores = player.properties.map((property) => property.tenant?.satisfaction).filter((score): score is number => typeof score === 'number');
+  const avgTenantSatisfaction = tenantScores.length === 0 ? null : Math.round(tenantScores.reduce((sum, score) => sum + score, 0) / tenantScores.length);
+  const openIssues = player.properties.reduce((sum, property) => sum + (property.openMaintenanceIssues?.length ?? 0), 0);
+  const activeRenovations = player.properties.filter((property) => property.activeRenovation).length;
 
   const unlockedAchievements = achievements.filter(a => player.achievements.includes(a.id));
 
@@ -64,6 +70,28 @@ export default function Portfolio() {
           <p className="text-text-secondary text-sm">{investorRoute.summary}</p>
         </GlassCard>
 
+        {player.properties.length > 0 && (
+          <GlassCard accentColor="#00F0FF" className="mb-6">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <p className="label-text text-text-dim text-[10px] mb-1">Operations Health</p>
+                <h2 className="section-title text-white">Landlord Control Room</h2>
+              </div>
+              <div className="text-right">
+                <p className="font-mono text-cyan-glow text-xl">{occupancyRate}%</p>
+                <p className="text-text-dim text-[10px]">occupancy</p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <OpsMetric label="Tenant Satisfaction" value={avgTenantSatisfaction === null ? 'No tenants' : `${avgTenantSatisfaction}/100`} tone={avgTenantSatisfaction !== null && avgTenantSatisfaction < 55 ? 'bad' : 'good'} />
+              <OpsMetric label="Open Repairs" value={String(openIssues)} tone={openIssues > 0 ? 'bad' : 'good'} />
+              <OpsMetric label="Active Upgrades" value={String(activeRenovations)} tone={activeRenovations > 0 ? 'warn' : 'neutral'} />
+              <OpsMetric label="Reserve" value={formatCurrency(player.reserve?.allocatedCash ?? 0)} tone={(player.reserve?.allocatedCash ?? 0) > 0 ? 'good' : 'warn'} />
+              <OpsMetric label="Monthly Carry" value={formatCurrency(ownershipCosts)} tone="warn" />
+            </div>
+          </GlassCard>
+        )}
+
         <h2 className="section-title text-white mb-4">Property Holdings</h2>
         {player.properties.length === 0 ? (
           <GlassCard className="text-center py-8">
@@ -102,6 +130,14 @@ export default function Portfolio() {
                       <p className="text-text-dim text-[10px] mt-0.5">
                         {property.listingChannel} | Carry: {formatCurrency(carryingCost)}/mo | Status: {occupancyLabel}
                       </p>
+                      {(owned.conditionScore !== undefined || owned.tenant || (owned.openMaintenanceIssues?.length ?? 0) > 0 || owned.activeRenovation) && (
+                        <p className="text-text-dim text-[10px] mt-0.5">
+                          Condition: {owned.conditionScore ?? 70}/100
+                          {owned.tenant ? ` | Tenant: ${owned.tenant.satisfaction}/100` : ''}
+                          {(owned.openMaintenanceIssues?.length ?? 0) > 0 ? ` | Repairs: ${owned.openMaintenanceIssues?.length}` : ''}
+                          {owned.activeRenovation ? ` | Upgrade: ${owned.activeRenovation.remainingMonths} mo left` : ''}
+                        </p>
+                      )}
                       {!owned.isRented && (owned.vacancyMonths ?? 0) > 0 && (
                         <p className="text-warning text-[10px] mt-0.5">Vacant for {owned.vacancyMonths} month(s)</p>
                       )}
@@ -162,6 +198,30 @@ export default function Portfolio() {
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+function OpsMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'good' | 'warn' | 'bad' | 'neutral';
+}) {
+  const toneClass = {
+    good: 'text-success',
+    warn: 'text-warning',
+    bad: 'text-danger',
+    neutral: 'text-white',
+  } satisfies Record<typeof tone, string>;
+
+  return (
+    <div className="rounded-xl border border-glass-border bg-white/[0.03] p-3">
+      <p className="label-text text-text-dim text-[10px]">{label}</p>
+      <p className={`font-mono text-sm mt-1 ${toneClass[tone]}`}>{value}</p>
     </div>
   );
 }

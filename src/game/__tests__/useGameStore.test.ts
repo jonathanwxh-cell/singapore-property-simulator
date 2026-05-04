@@ -213,6 +213,36 @@ describe('useGameStore', () => {
     expect(useGameStore.getState().player.properties[0].occupancyStatus).toBe('vacant');
   });
 
+  it('starts renovations and tenant strategies through store actions', () => {
+    resetStore({
+      player: makePlayer({
+        cash: 120_000,
+        properties: [{
+          propertyId: 'hdb-bto-1',
+          purchasePrice: 380_000,
+          purchaseDate: '2024-01',
+          currentValue: 380_000,
+          isRented: false,
+          monthlyRental: 1647,
+          renovationLevel: 0,
+          mopRemainingMonths: 24,
+        }],
+      }),
+    });
+
+    const roomRental = useGameStore.getState().setTenantStrategy(0, {
+      mode: 'room-rental',
+      profileId: 'local-family',
+      rentStrategy: 'market',
+    });
+    expect(roomRental.ok).toBe(true);
+    expect(useGameStore.getState().player.properties[0].tenant?.rentalMode).toBe('room-rental');
+
+    const renovation = useGameStore.getState().startRenovation(0, 'flooring-paint');
+    expect(renovation.ok).toBe(true);
+    expect(useGameStore.getState().player.properties[0].activeRenovation?.templateId).toBe('flooring-paint');
+  });
+
   it('initializes progression defaults for a new game', () => {
     useGameStore.getState().newGame('Plan Test', 'graduate', 'normal');
     const player = useGameStore.getState().player;
