@@ -2,21 +2,30 @@ import { saveSchema } from '@/data/saveSchema';
 import { SAVE_VERSION } from '@/engine/constants';
 import type { GameState } from './types';
 
+// Storage keys are intentionally prefixed `sgpt_*` (Singapore Property Tycoon —
+// the project's original working name). The visible brand has since shifted to
+// "PropSim Singapore", but renaming the keys would orphan every existing
+// player's saves. The legacy prefix is preserved for save compatibility.
 export const SAVE_SLOTS_KEY = 'sgpt_saves';
 export const AUTO_SAVE_KEY = 'sgpt_autosave';
 
-const AUTO_HYDRATE_ROUTES = [
-  '/dashboard',
-  '/life',
-  '/properties',
-  '/property',
-  '/market',
-  '/portfolio',
-  '/bank',
-  '/scenarios',
-  '/settings',
-  '/gameover',
-];
+// Routes where the auto-save should NOT be hydrated, even if `isGameActive`
+// is false:
+//   - '/' is the title screen — hydrating here flashes the dashboard before the user starts.
+//   - '/how-to-play' is a tutorial reachable before a game exists.
+//   - '/newgame' is the explicit "start fresh" flow — auto-hydration would clobber it.
+//   - '/saveload' / '/leaderboard' show save data UI; hydration there is unwanted.
+//
+// All other routes (game screens) auto-hydrate. New game routes are
+// auto-hydrated by default — the safer default than the previous allow-list,
+// which silently dropped auto-save on any newly added screen.
+const NO_AUTO_HYDRATE_ROUTES = new Set([
+  '/',
+  '/how-to-play',
+  '/newgame',
+  '/saveload',
+  '/leaderboard',
+]);
 
 export function serializeGameState(state: GameState): string {
   return JSON.stringify({ ...state, version: SAVE_VERSION });
@@ -52,5 +61,10 @@ export function hasValidAutoSave(): boolean {
 }
 
 export function shouldHydrateAutoSaveForPath(pathname: string): boolean {
-  return AUTO_HYDRATE_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+  if (NO_AUTO_HYDRATE_ROUTES.has(pathname)) return false;
+  // Allow nested paths under denied routes too (e.g. /how-to-play/intro).
+  for (const denied of NO_AUTO_HYDRATE_ROUTES) {
+    if (denied !== '/' && pathname.startsWith(`${denied}/`)) return false;
+  }
+  return true;
 }
