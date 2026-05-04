@@ -15,6 +15,7 @@ import type {
 import type { ActionResult } from './results';
 import { fail, ok } from './results';
 import { getListingCatalog } from './listings';
+import { isCommercialCategory } from '@/data/properties';
 import { roundMoney } from '@/lib/format';
 
 const OPERATION_HISTORY_LIMIT = 12;
@@ -248,10 +249,10 @@ export function setTenantStrategyPure(
   if (listing.isHdb && (property.mopRemainingMonths ?? 0) > 0 && input.mode !== 'room-rental') {
     return fail('mop_restricted', 'HDB MOP blocks whole-unit rental. Use room rental until MOP ends.');
   }
-  if (listing.type.startsWith('Commercial') && !['commercial-lease', 'corporate-lease'].includes(input.mode)) {
+  if (isCommercialCategory(listing.type) && !['commercial-lease', 'corporate-lease'].includes(input.mode)) {
     return fail('rental_mode_blocked', 'Commercial properties need commercial or corporate lease tenants.');
   }
-  if (!listing.type.startsWith('Commercial') && input.mode === 'commercial-lease') {
+  if (!isCommercialCategory(listing.type) && input.mode === 'commercial-lease') {
     return fail('rental_mode_blocked', 'Commercial leases are only available for shop and office properties.');
   }
 

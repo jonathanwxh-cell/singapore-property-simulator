@@ -1,5 +1,5 @@
 import { lifeActionsById } from '@/data/lifeActions';
-import { properties, type Property } from '@/data/properties';
+import { properties, isResidentialCategory, type Property } from '@/data/properties';
 import { scenarios, type ScenarioOption } from '@/data/scenarios';
 import type { LifeActionId, Player } from '@/game/types';
 import { formatCurrency, formatPercent } from '@/lib/format';
@@ -172,7 +172,7 @@ export function assessDealReadiness({
 }: DealReadinessInput): DealReadiness {
   const downPayment = getDownPaymentAmount(property.price, downPaymentPercent);
   const validation = validatePurchase(player, property, downPayment);
-  const cpfEligible = !property.type.startsWith('Commercial');
+  const cpfEligible = isResidentialCategory(property.type);
   const cpfApplied = cpfEligible && useCpfOrdinary
     ? Math.floor(Math.min(player.cpfOrdinary, validation.totalUpfront))
     : 0;

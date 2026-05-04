@@ -1,5 +1,5 @@
 import type { OwnedProperty, Player } from '@/game/types';
-import { properties } from '@/data/properties';
+import { properties, isCommercialCategory } from '@/data/properties';
 import { advancePropertyOperationsMonth, normalizeOperationProperty } from './propertyOperations';
 
 function roundCost(value: number): number {
@@ -125,9 +125,7 @@ export function describeInvestorRoute(player: Player): {
     .map((owned) => properties.find((property) => property.id === owned.propertyId))
     .filter((property): property is NonNullable<typeof property> => property !== undefined);
 
-  const commercialCount = ownedCatalog.filter((property) =>
-    property.type === 'Commercial Shop' || property.type === 'Commercial Office'
-  ).length;
+  const commercialCount = ownedCatalog.filter((property) => isCommercialCategory(property.type)).length;
   const heartlandHdbCount = ownedCatalog.filter((property) => property.isHdb && property.districtId >= 16).length;
   const premiumCount = ownedCatalog.filter((property) => property.districtId <= 10).length;
   const rentedCount = player.properties.filter((property) => property.isRented).length;

@@ -1,5 +1,5 @@
 import { achievements } from '@/data/achievements';
-import { properties } from '@/data/properties';
+import { properties, isCommercialCategory } from '@/data/properties';
 import type { Player } from '@/game/types';
 import { selectNetWorth } from './selectors';
 
@@ -28,7 +28,7 @@ function uniqueDistrictCount(player: Player): number {
 function countCommercial(player: Player): number {
   return player.properties.filter((owned) => {
     const property = properties.find((entry) => entry.id === owned.propertyId);
-    return property?.type === 'Commercial Shop' || property?.type === 'Commercial Office';
+    return Boolean(property && isCommercialCategory(property.type));
   }).length;
 }
 

@@ -1,4 +1,9 @@
-import { properties } from '@/data/properties';
+import {
+  properties,
+  getPropertyCategory,
+  isPrivateResidentialCategory,
+  isResidentialCategory,
+} from '@/data/properties';
 import { normalizeBuyerProfile, type BuyerProfile } from '@/game/types';
 
 export const EC_MAX_MONTHLY_INCOME = 16000;
@@ -82,15 +87,15 @@ export function evaluatePropertyEligibility(input: PropertyEligibilityInput): Pr
   };
 }
 
+// Thin wrappers preserved for backward compat with consumers that pass a
+// string-typed propertyType. New callers should prefer the category
+// helpers from `data/properties.ts` directly.
 export function isResidentialPropertyType(propertyType: string): boolean {
-  return propertyType !== 'Commercial Shop' && propertyType !== 'Commercial Office';
+  return isResidentialCategory(propertyType);
 }
 
 export function isPrivateResidentialPropertyType(propertyType: string): boolean {
-  return propertyType === 'Private Condo'
-    || propertyType === 'Landed Terrace'
-    || propertyType === 'Landed Semi-D'
-    || propertyType === 'Landed Bungalow';
+  return isPrivateResidentialCategory(propertyType);
 }
 
 function isResidentialPropertyId(propertyId: string): boolean {
@@ -99,8 +104,10 @@ function isResidentialPropertyId(propertyId: string): boolean {
 }
 
 function getBuyerProfileBlocker(propertyType: string, buyerProfile: BuyerProfile): string | null {
-  const isHdb = propertyType === 'HDB BTO' || propertyType === 'HDB Resale';
-  const isSubsidized = propertyType === 'HDB BTO' || propertyType === 'Executive Condo';
+  const category = getPropertyCategory(propertyType);
+  const isHdb = category === 'hdb';
+  // BTO and EC are the two subsidised paths; HDB Resale is not.
+  const isSubsidized = propertyType === 'HDB BTO' || category === 'ec';
 
   if (buyerProfile.residencyStatus === 'foreigner' && (isHdb || propertyType === 'Executive Condo')) {
     return 'Foreigners cannot buy HDB flats or executive condos in this simplified Singapore profile model.';
