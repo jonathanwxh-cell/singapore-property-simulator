@@ -195,4 +195,22 @@ describe('advancePortfolioMonth', () => {
     expect(summary.tenantLabel).toBe('No tenant');
     expect(summary.attentionTags).toEqual(['Vacancy 3 mo']);
   });
+
+  it('describes owner-occupied HDB holdings without calling them vacant', () => {
+    const summary = describePortfolioHoldingOperations({
+      propertyId: 'hdb-bto-1',
+      purchasePrice: 380_000,
+      purchaseDate: '2024-01',
+      currentValue: 380_000,
+      isRented: false,
+      monthlyRental: 1_647,
+      renovationLevel: 0,
+      occupancyStatus: 'owner-occupied',
+      vacancyMonths: 0,
+    });
+
+    expect(summary.statusLabel).toBe('Owner-occupied');
+    expect(summary.tenantLabel).toBe('No tenant');
+    expect(summary.attentionTags).toEqual([]);
+  });
 });

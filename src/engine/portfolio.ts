@@ -66,6 +66,30 @@ export function describePortfolioHoldingOperations(property: OwnedProperty): Por
     };
   }
 
+  if (property.occupancyStatus === 'owner-occupied') {
+    return {
+      statusLabel: 'Owner-occupied',
+      tenantLabel: 'No tenant',
+      attentionTags,
+    };
+  }
+
+  if (property.occupancyStatus === 'renovating') {
+    return {
+      statusLabel: 'Renovating',
+      tenantLabel: 'No tenant',
+      attentionTags,
+    };
+  }
+
+  if (property.occupancyStatus === 'listed') {
+    return {
+      statusLabel: 'Listed',
+      tenantLabel: 'No tenant',
+      attentionTags,
+    };
+  }
+
   return {
     statusLabel: vacancyMonths > 0 ? `Vacant ${vacancyMonths} mo` : 'Vacant',
     tenantLabel: 'No tenant',

@@ -307,7 +307,13 @@ export function getTenantLeaseOptions(
 
   const monthsRemaining = Math.max(0, tenant.leaseEndTurn - currentTurn);
   const currentRent = tenant.contractedRent;
-  const marketRent = Math.round(property.monthlyRental);
+  const currentMode = rentalModes[tenant.rentalMode];
+  const currentProfile = getTenantProfile(tenant.profileId);
+  const marketRent = Math.round(
+    property.monthlyRental
+      * (currentMode?.rentMultiplier ?? 1)
+      * (currentProfile?.rentMultiplier ?? 1),
+  );
   const raisedRent = Math.round(currentRent * 1.08);
 
   return [

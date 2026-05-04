@@ -152,6 +152,36 @@ describe('Landlord Ops 2.0', () => {
     expect(result.value.player.operationHistory?.[0].tone).toBe('warn');
   });
 
+  it('keeps reset-to-market rent scoped to the current room-rental mode', () => {
+    const property = {
+      propertyId: 'hdb-bto-3',
+      purchasePrice: 380_000,
+      purchaseDate: '2024-01',
+      currentValue: 390_000,
+      isRented: true,
+      monthlyRental: 1_300,
+      renovationLevel: 0,
+      mopRemainingMonths: 55,
+      tenant: {
+        profileId: 'local-family',
+        rentalMode: 'room-rental',
+        leaseStartTurn: 7,
+        leaseEndTurn: 19,
+        satisfaction: 78,
+        rentStrategy: 'conservative',
+        askingRent: 538,
+        contractedRent: 538,
+        defaultRiskPct: 1.5,
+        renewalIntent: 82,
+      },
+    };
+
+    const resetOption = getTenantLeaseOptions(property, 8).find((option) => option.id === 'reset-market');
+
+    expect(resetOption?.projectedRent).toBe(585);
+    expect(resetOption?.rentDelta).toBe(47);
+  });
+
   it('summarizes reserve exposure, lease pressure, and landlord milestones', () => {
     const issue: MaintenanceIssue = {
       id: 'issue-1',
