@@ -12,6 +12,9 @@ import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { deriveEligibilityFlags, EC_MAX_MONTHLY_INCOME } from '@/engine/eligibility';
 import EligibilityBadge from '@/components/EligibilityBadge';
 import { getNextBestMoves, type CoachUrgency } from '@/engine/decisionCoach';
+import { getFirstHomeMissions, type FirstHomeMission } from '@/engine/firstHomeMissions';
+import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
+import type { BuyerProfile } from '@/game/types';
 
 export default function Dashboard() {
   const { player, nextTurn, market, isGameActive, currentScenario } = useGameStore();
@@ -37,6 +40,7 @@ export default function Dashboard() {
     properties: player.properties,
     firstHomePurchased: player.firstHomePurchased,
     ownedPrivateHome: player.ownedPrivateHome,
+    buyerProfile: player.buyerProfile,
   });
   const latestCareerReview = player.careerReviewHistory[player.careerReviewHistory.length - 1] ?? null;
   const nextJobSwitchIn = Math.max(player.nextJobSwitchTurn - player.turnCount, 0);
@@ -45,6 +49,7 @@ export default function Dashboard() {
   const weakTenant = player.properties.find((property) => property.tenant && property.tenant.satisfaction < 55);
   const latestOperation = player.operationHistory?.[0] ?? null;
   const nextBestMoves = getNextBestMoves({ player, currentScenario });
+  const firstHomeMissions = getFirstHomeMissions(player);
 
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
@@ -110,6 +115,24 @@ export default function Dashboard() {
           </GlassCard>
         </motion.div>
 
+        <motion.div variants={itemVariants} className="mb-6">
+          <GlassCard accentColor="#2979FF">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <p className="label-text text-text-dim text-[10px] mb-1">First-Home Mission Rail</p>
+                <h3 className="section-title text-white">Make The Next Step Obvious</h3>
+                <p className="text-text-secondary text-sm mt-1">A Singapore-specific starter path so new players know how to earn, prepare, buy, and operate without reading the whole ruleset first.</p>
+              </div>
+              <button onClick={() => navigate('/properties')} className="btn-secondary text-xs px-3 py-2 shrink-0">Starter Homes</button>
+            </div>
+            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3">
+              {firstHomeMissions.map((mission) => (
+                <FirstHomeMissionCard key={mission.id} mission={mission} onOpen={() => navigate(mission.route)} />
+              ))}
+            </div>
+          </GlassCard>
+        </motion.div>
+
         <motion.div variants={itemVariants} className="grid xl:grid-cols-[1.3fr,0.9fr] gap-4 mb-6">
           <GlassCard accentColor="#FFD740">
             <div className="grid gap-4 md:grid-cols-[220px,1fr]">
@@ -161,6 +184,9 @@ export default function Dashboard() {
             </div>
             <div className="space-y-2 mt-4 text-sm">
               <p className="text-text-secondary">
+                Buyer profile: <span className="font-mono text-white">{formatBuyerProfile(player.buyerProfile)}</span>
+              </p>
+              <p className="text-text-secondary">
                 Monthly salary: <span className="font-mono text-white">S${player.salary.toLocaleString()}</span>
               </p>
               <p className="text-text-secondary">
@@ -175,6 +201,10 @@ export default function Dashboard() {
               </p>
             </div>
           </GlassCard>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="mb-6">
+          <RuleGlossaryPanel termIds={['absd', 'cpf-oa', 'mop', 'hdb-room-rental', 'msr', 'tdsr', 'reserve-cash']} />
         </motion.div>
 
         {player.properties.length > 0 && (
@@ -332,6 +362,58 @@ function DecisionMoveCard({
   );
 }
 
+function FirstHomeMissionCard({
+  mission,
+  onOpen,
+}: {
+  mission: FirstHomeMission;
+  onOpen: () => void;
+}) {
+  const tone = missionToneClasses(mission);
+
+  return (
+    <button
+      onClick={onOpen}
+      className={`rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 ${tone.card}`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className={`text-[10px] font-mono uppercase tracking-[0.18em] ${tone.label}`}>
+          {mission.completed ? 'done' : mission.tone}
+        </span>
+        <ArrowRight size={14} className={tone.label} />
+      </div>
+      <p className="font-rajdhani font-semibold text-white mt-2">{mission.label}</p>
+      <p className="text-text-secondary text-xs mt-2 leading-relaxed">{mission.detail}</p>
+    </button>
+  );
+}
+
+function missionToneClasses(mission: FirstHomeMission) {
+  if (mission.completed) {
+    return {
+      card: 'border-success/35 bg-success/10 hover:border-success/60',
+      label: 'text-success',
+    };
+  }
+
+  const classes = {
+    good: {
+      card: 'border-success/35 bg-success/10 hover:border-success/60',
+      label: 'text-success',
+    },
+    warn: {
+      card: 'border-warning/40 bg-warning/10 hover:border-warning/70',
+      label: 'text-warning',
+    },
+    neutral: {
+      card: 'border-glass-border bg-white/[0.03] hover:border-cyan-glow/50',
+      label: 'text-cyan-glow',
+    },
+  } satisfies Record<FirstHomeMission['tone'], { card: string; label: string }>;
+
+  return classes[mission.tone];
+}
+
 function coachToneClasses(urgency: CoachUrgency) {
   const classes = {
     critical: {
@@ -433,6 +515,25 @@ function formatCareerOutcome(outcome: 'promotion' | 'bonus' | 'steady' | 'setbac
 
 function formatSignedCurrency(value: number): string {
   return `${value >= 0 ? '+' : '-'}S$${Math.abs(value).toLocaleString()}`;
+}
+
+function formatBuyerProfile(profile?: BuyerProfile): string {
+  if (!profile) return 'Singapore Citizen | Couple / family | Age 30';
+
+  const residency = profile.residencyStatus === 'sc'
+    ? 'Singapore Citizen'
+    : profile.residencyStatus === 'spr'
+      ? 'Singapore PR'
+      : 'Foreigner';
+  const household = profile.householdProfile === 'couple-family'
+    ? 'Couple / family'
+    : profile.householdProfile === 'single-35-plus'
+      ? 'Single 35+'
+      : profile.householdProfile === 'single-under-35'
+        ? 'Single under 35'
+        : 'Foreign investor';
+
+  return `${residency} | ${household} | Age ${profile.age}`;
 }
 
 function CareerMetric({

@@ -36,12 +36,12 @@ describe('advancePortfolioMonth', () => {
   it('applies maintenance, tax, and vacancy drag to vacant properties', () => {
     const player = makePlayer({
       properties: [{
-        propertyId: 'hdb-bto-1',
-        purchasePrice: 380_000,
+        propertyId: 'condo-1',
+        purchasePrice: 1_600_000,
         purchaseDate: '2024-01',
-        currentValue: 380_000,
+        currentValue: 1_600_000,
         isRented: false,
-        monthlyRental: 1647,
+        monthlyRental: 4800,
         renovationLevel: 0,
       }],
     });
@@ -52,6 +52,26 @@ describe('advancePortfolioMonth', () => {
     expect(result.updatedProperties[0].occupancyStatus).toBe('vacant');
     expect(result.monthlyCosts.propertyTax).toBeGreaterThan(0);
     expect(result.monthlyCosts.maintenance).toBeGreaterThan(0);
+  });
+
+  it('keeps unrented HDB holdings owner-occupied instead of vacant', () => {
+    const player = makePlayer({
+      properties: [{
+        propertyId: 'hdb-bto-1',
+        purchasePrice: 380_000,
+        purchaseDate: '2024-01',
+        currentValue: 380_000,
+        isRented: false,
+        monthlyRental: 1647,
+        renovationLevel: 0,
+        mopRemainingMonths: 48,
+      }],
+    });
+
+    const result = advancePortfolioMonth(player);
+
+    expect(result.updatedProperties[0].vacancyMonths).toBe(0);
+    expect(result.updatedProperties[0].occupancyStatus).toBe('owner-occupied');
   });
 
   it('resets vacancy and keeps rented units tenanted', () => {

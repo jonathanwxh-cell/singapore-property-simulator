@@ -69,8 +69,10 @@ export function deriveFloorPlanId(property: OwnedProperty): string {
 }
 
 export function normalizeOperationProperty(property: OwnedProperty): OwnedProperty {
+  const listing = getListing(property.propertyId);
   return {
     ...property,
+    occupancyStatus: property.occupancyStatus ?? (listing?.isHdb ? 'owner-occupied' : 'vacant'),
     conditionScore: property.conditionScore ?? 70,
     mopRemainingMonths: property.mopRemainingMonths ?? 0,
     completedRenovations: property.completedRenovations ?? [],
@@ -246,7 +248,7 @@ export function setTenantStrategyPure(
     rentStrategy: input.rentStrategy,
     isRented: true,
     monthlyRental: property.monthlyRental,
-    occupancyStatus: 'tenanted',
+    occupancyStatus: input.mode === 'room-rental' ? 'owner-occupied' : 'tenanted',
     vacancyMonths: 0,
   };
 
@@ -351,7 +353,15 @@ function advanceTenant(property: OwnedProperty): OwnedProperty {
     if (property.isRented) {
       return {
         ...property,
-        occupancyStatus: 'tenanted',
+        occupancyStatus: property.occupancyStatus === 'owner-occupied' ? 'owner-occupied' : 'tenanted',
+        vacancyMonths: 0,
+      };
+    }
+
+    if (property.occupancyStatus === 'owner-occupied') {
+      return {
+        ...property,
+        isRented: false,
         vacancyMonths: 0,
       };
     }

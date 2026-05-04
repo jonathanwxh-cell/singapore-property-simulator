@@ -127,11 +127,14 @@ async function run() {
     await page.getByPlaceholder('Enter your name...').fill('Codex QA');
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: /^Next$/ }).click();
+    await expectVisible(page, 'text=Choose Buyer Profile');
+    await page.getByRole('button', { name: /^Next$/ }).click();
     await page.getByRole('button', { name: /Start Game/i }).click();
 
     await expectVisible(page, 'text=Market Pulse');
     await expectVisible(page, 'text=Career Review');
     await expectVisible(page, 'text=Eligibility Summary');
+    await expectVisible(page, 'text=First-Home Mission Rail');
     await expectVisible(page, 'img[alt="Career Review"]');
     await expectVisible(page, 'text=Advance to');
 
@@ -165,8 +168,8 @@ async function run() {
     await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Property Operations');
     await expectVisible(page, 'img[alt="Woodlands North Grove 3-Room floor plan"]');
-    await page.getByRole('button', { name: /Room Rental/i }).first().click();
-    await expectVisible(page, 'text=Active lease');
+    await page.getByRole('button', { name: /Owner-Occupied Room/i }).first().click();
+    await expectVisible(page, 'text=Active owner-occupied room lease');
 
     await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
     for (let step = 0; step < 9; step += 1) {

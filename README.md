@@ -12,11 +12,13 @@ A single-player turn-based property investment game set in Singapore's real esta
 
 ## Gameplay
 
-You start as a 27-year-old Singaporean with a career and modest savings. Each turn is one month. Your goal: reach the target net worth before insolvency strikes you out.
+You start with a career, modest savings, and a selectable buyer profile: Singapore Citizen, Singapore PR, foreigner, couple/family, single 35+, single under 35, or foreign-investor style. Each turn is one month. Your goal: reach the target net worth before insolvency strikes you out.
 
 ### Core Loop
 
 The current build includes a Decision Coach layer across the dashboard, property browser, property detail, scenarios, and life-planning screens. It explains the next sensible move, deal blockers, expected life-action effects, and scenario upside/downside before players commit.
+
+The dashboard also includes a first-home mission rail and a plain-English rule glossary so players can understand CPF OA, ABSD, MOP, room rental, MSR, TDSR, and reserves without leaving the game flow.
 
 1. **Earn** — Monthly salary (career-dependent) flows in after CPF deductions
 2. **Buy** — Browse 120+ fictional live listings across 9 property types, 28 districts, and 6 listing channels
@@ -82,6 +84,7 @@ Property, development, tenant, and listing names are fictional. The simulator in
 ### Portfolio Depth
 
 - Owned properties now track occupancy state, vacancy streaks, maintenance drag, and property tax.
+- HDB flats default to owner-occupied status, allow explicit room-rental strategies during MOP, and keep whole-flat rental locked until the MOP path is clear in the simplified model.
 - Portfolio summaries surface investor routes such as `Heartland Landlord` and `Commercial Cashflow Operator`.
 - Contextual scenarios now key off what you actually own, whether it is rented, and whether you are holding aging leasehold stock.
 - Guided-playability surfaces now translate complex mechanics into plain-English next moves, blocker labels, and expected effects so new players can keep momentum.
@@ -121,7 +124,7 @@ The financial engine implements actual Singapore property regulations:
 | PR | 5% | 30% | 35% |
 | Foreigner | 60% | 60% | 60% |
 
-> The player is currently always treated as a Singapore citizen until a buyer-profile system is added. PR and foreigner rates are present in `stampDuty.ts` so future profile support can use the current rule table.
+The selected buyer profile now drives purchase validation and ABSD. The default profile is still a Singapore Citizen couple/family route because it keeps the first-home learning path most approachable.
 
 Both BSD and ABSD are deducted from cash on purchase.
 
@@ -170,7 +173,7 @@ src/
 │   ├── constants.ts      # All tunable parameters in one place
 │   ├── rng.ts            # Seeded PRNG for deterministic replays
 │   ├── results.ts        # ActionResult<T> discriminated union
-│   └── __tests__/        # 130+ tests (vitest)
+│   └── __tests__/        # 185+ tests (vitest)
 ├── game/
 │   ├── types.ts          # Player, Loan, Property, MarketState, GameState
 │   └── useGameStore.ts   # Zustand store — thin wrapper around engine actions
@@ -221,11 +224,13 @@ maxBorrowable(propertyPrice, existingHousingLoans): number
 
 ```bash
 npm test           # Run the full vitest suite
+npm run test:smoke # Scripted first-home browser smoke test
+npm run test:profiles # Browser checks for SC, PR, foreigner, and single-buyer profile rules
 npm run test:watch # Watch mode
 npm run test:ui    # Vitest UI
 ```
 
-Tests cover: CPF allocation and interest, BSD and ABSD tiers, LTV caps, MSR checks, TDSR enforcement, buy and sell flows, shortfall math, mortgage creation, net worth calculations, carrying costs, route progression, scenario eligibility, turn advancement, amortization, insolvency detection, and win or lose conditions.
+Tests cover: CPF allocation and interest, buyer-profile ABSD, HDB/EC eligibility, LTV caps, MSR checks, TDSR enforcement, buy and sell flows, shortfall math, mortgage creation, net worth calculations, carrying costs, route progression, scenario eligibility, turn advancement, amortization, profile browser flows, insolvency detection, and win or lose conditions.
 
 ---
 

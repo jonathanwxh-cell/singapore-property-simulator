@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Singapore profile playability phase**: new-game buyer profiles for Singapore Citizens, PRs, foreigners, family/single/foreign-investor paths, and profile-aware first-home mission guidance.
+- **First-home mission rail and rule glossary**: dashboard and property-detail surfaces now explain ABSD, CPF OA, MOP, room rental, MSR, TDSR, and reserves in plain English.
+- `npm run test:profiles` browser automation covering Singapore Citizen, PR, foreigner, and young-single profile rule paths.
 - **Guided playability coach phase**: dashboard next-best-move guidance, deal-readiness verdicts, property-card buy clarity, scenario impact previews, and life-action planning feedback.
 - **Career & Eligibility Lite phase**: annual career reviews, job-switch scenarios, persistent first-home and private-home progression flags, and simplified executive condo eligibility rules.
 - **Progression UI**: dashboard Career Review and Eligibility Summary surfaces, property-browser/detail eligibility badges, and a game-over progression recap.
@@ -27,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded the market again to 120+ fictional listings so every district has deeper HDB, condo, landed, and commercial inventory.
 
 ### Changed
+- Purchase eligibility and ABSD now follow the selected buyer profile instead of always assuming a Singapore Citizen.
+- HDB ownership now presents as owner-occupied by default, with MOP-safe room-rental language separated from whole-flat rental.
 - Updated the CPF wage ceiling and PR ABSD constants to the 2026/current Singapore rule table while keeping the default player profile as Singapore citizen.
 - Property purchase flows now name the main blocker directly, such as TDSR, MSR, cash shortfall, or eligibility, instead of collapsing everything into a generic insufficient-funds state.
 - **PropSim logo refresh**: kept the cleaned `PropSim Singapore` brand direction, restored the refreshed transparent logo asset, and updated visible brand labels.
@@ -42,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smoke coverage now checks career review art and eligibility summary surfaces on top of the earlier pacing flow.
 
 ### Fixed
+- Blocked the legacy whole-flat rental shortcut for HDB flats still inside MOP, while keeping the explicit room-rental tenant strategy available.
 - Fixed CPF OA rounding in purchase actions so fractional starting CPF balances can no longer make a UI-ready buy fail internally by less than S$1.
 - Mobile property-detail pages now keep the primary purchase action visible above the bottom navigation so first-time buying is not hidden below a long finance breakdown.
 - Scenario pacing now guarantees an early first-home scenario and then fires scenarios on a stable cadence, preventing long droughts with no events.

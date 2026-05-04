@@ -18,7 +18,8 @@ import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/el
 import { assessDealReadiness } from '@/engine/decisionCoach';
 import { getRenovationTemplatesForType } from '@/data/renovations';
 import { repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
-import type { RentalMode, RentStrategy, TenantProfileId } from '@/game/types';
+import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
+import type { OwnedProperty, RentalMode, RentStrategy, TenantProfileId } from '@/game/types';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -78,6 +79,7 @@ export default function PropertyDetail() {
     properties: player.properties,
     firstHomePurchased: player.firstHomePurchased,
     ownedPrivateHome: player.ownedPrivateHome,
+    buyerProfile: player.buyerProfile,
   });
   const eligibility = evaluatePropertyEligibility({
     propertyType: property.type,
@@ -85,6 +87,7 @@ export default function PropertyDetail() {
     properties: player.properties,
     firstHomePurchased: player.firstHomePurchased,
     ownedPrivateHome: player.ownedPrivateHome,
+    buyerProfile: player.buyerProfile,
   });
   const eligibilityBlocked = Boolean(eligibility.blockedReason);
   const cashShortfall = Math.max(0, cashRequired - player.cash);
@@ -176,6 +179,12 @@ export default function PropertyDetail() {
     mopRemainingMonths: ownedProperty?.mopRemainingMonths ?? 0,
   });
   const floorPlanSrc = getFloorPlanSrc(ownedProperty?.floorPlanId);
+  const quickRentalBlockedByMop = Boolean(
+    ownedProperty
+      && property.isHdb
+      && !ownedProperty.isRented
+      && (ownedProperty.mopRemainingMonths ?? 0) > 0
+  );
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4 game-screen">
@@ -337,6 +346,14 @@ export default function PropertyDetail() {
               </div>
             </GlassCard>
 
+            <RuleGlossaryPanel
+              title="Rule Cheatsheet"
+              termIds={property.isHdb
+                ? ['mop', 'hdb-room-rental', 'cpf-oa', 'msr', 'tdsr']
+                : ['absd', 'bsd', 'cpf-oa', 'tdsr', 'reserve-cash']}
+              compact
+            />
+
             <GlassCard accentColor="#FF9100">
               <h3 className="section-title text-white mb-4">Market Analysis</h3>
               <div className="grid grid-cols-3 gap-4">
@@ -446,7 +463,9 @@ export default function PropertyDetail() {
                     <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm mb-3">Tenant Strategy</h4>
                     {ownedProperty.tenant && (
                       <div className="rounded-lg border border-success/30 bg-success/10 p-3 mb-3">
-                        <p className="text-success font-semibold text-sm">Active lease: S${ownedProperty.tenant.contractedRent.toLocaleString()}/mo</p>
+                        <p className="text-success font-semibold text-sm">
+                          Active {formatRentalMode(ownedProperty.tenant.rentalMode)}: S${ownedProperty.tenant.contractedRent.toLocaleString()}/mo
+                        </p>
                         <p className="text-text-secondary text-xs mt-1">
                           Satisfaction {ownedProperty.tenant.satisfaction}/100 | Renewal intent {ownedProperty.tenant.renewalIntent}/100 | Strategy {ownedProperty.tenant.rentStrategy}
                         </p>
@@ -546,7 +565,7 @@ export default function PropertyDetail() {
                     <div className="flex items-center justify-between">
                       <span className="text-text-secondary text-sm">Status</span>
                       <span className={`font-mono text-xs ${ownedProperty.isRented ? 'text-cyan-glow' : 'text-text-dim'}`}>
-                        {ownedProperty.tenant ? `Lease (${formatCurrency(ownedProperty.tenant.contractedRent)}/mo)` : ownedProperty.isRented ? `Rented (${formatCurrency(ownedProperty.monthlyRental)}/mo)` : ownedProperty.occupancyStatus ?? 'Vacant'}
+                        {formatOwnershipStatus(ownedProperty)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between mt-2">
@@ -563,15 +582,23 @@ export default function PropertyDetail() {
                 <div className="space-y-2">
                   <button
                     onClick={handleToggleRental}
+                    disabled={quickRentalBlockedByMop}
                     className={`w-full py-3 rounded-lg font-rajdhani font-semibold text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 ${
-                      ownedProperty.isRented
+                      quickRentalBlockedByMop
+                        ? 'bg-white/5 text-text-dim border border-glass-border cursor-not-allowed'
+                        : ownedProperty.isRented
                         ? 'bg-warning/20 text-warning border border-warning/40 hover:bg-warning/30'
                         : 'bg-cyan-glow/20 text-cyan-glow border border-cyan-glow/40 hover:bg-cyan-glow/30'
                     }`}
                   >
                     <Home size={16} />
-                    {ownedProperty.isRented ? 'Stop Renting' : 'Rent Out'}
+                    {quickRentalBlockedByMop ? 'Whole-Flat Rental Locked' : ownedProperty.isRented ? 'Stop Renting' : 'Rent Out'}
                   </button>
+                  {quickRentalBlockedByMop && (
+                    <p className="text-text-dim text-xs text-center">
+                      MOP still requires owner occupation. Use a room-rental tenant strategy above instead of the whole-flat shortcut.
+                    </p>
+                  )}
 
                   {!showSellConfirm ? (
                     <button
@@ -819,6 +846,27 @@ function getFloorPlanSrc(floorPlanId?: string): string {
   return `/floorplans/${id}.svg`;
 }
 
+function formatOwnershipStatus(ownedProperty: OwnedProperty): string {
+  if (ownedProperty.tenant) {
+    return `${formatRentalMode(ownedProperty.tenant.rentalMode)} (${formatCurrency(ownedProperty.tenant.contractedRent)}/mo)`;
+  }
+
+  if (ownedProperty.isRented) return `Rented (${formatCurrency(ownedProperty.monthlyRental)}/mo)`;
+  if (ownedProperty.occupancyStatus === 'owner-occupied') return 'Owner-occupied';
+  if (ownedProperty.occupancyStatus === 'renovating') return 'Renovating';
+  if (ownedProperty.occupancyStatus === 'listed') return 'Listed';
+  if (ownedProperty.occupancyStatus === 'tenanted') return 'Tenanted';
+  return 'Vacant';
+}
+
+function formatRentalMode(mode: RentalMode): string {
+  if (mode === 'room-rental') return 'owner-occupied room lease';
+  if (mode === 'whole-unit') return 'whole-flat lease';
+  if (mode === 'corporate-lease') return 'corporate lease';
+  if (mode === 'student-shared') return 'student shared lease';
+  return 'commercial lease';
+}
+
 function getTenantPlans({
   isHdb,
   isCommercial,
@@ -863,22 +911,22 @@ function getTenantPlans({
   if (isHdb && mopRemainingMonths > 0) {
     return [
       {
-        label: 'Room Rental',
+        label: 'Owner-Occupied Room',
         description: 'MOP-safe income while keeping the flat owner-occupied in simplified rules.',
         mode: 'room-rental',
         profileId: 'local-family',
         strategy: 'market',
       },
       {
-        label: 'Conservative Room',
-        description: 'Lower rent, better satisfaction, less vacancy pressure.',
+        label: 'Conservative Owner Room',
+        description: 'Lower rent, better satisfaction, and less vacancy pressure while you still live there.',
         mode: 'room-rental',
         profileId: 'local-family',
         strategy: 'conservative',
       },
       {
-        label: 'Student Room',
-        description: 'Useful near education nodes. More wear, but keeps early gameplay active.',
+        label: 'Student Room (Owner-Stay)',
+        description: 'Useful near education nodes. More wear, but keeps early gameplay active without whole-flat rental.',
         mode: 'room-rental',
         profileId: 'student-tenants',
         strategy: 'market',
@@ -888,21 +936,21 @@ function getTenantPlans({
 
   return [
     {
-      label: 'Family Market Lease',
+      label: 'Whole-Flat Family Lease',
       description: 'Balanced whole-unit lease with stable demand and moderate wear.',
       mode: 'whole-unit',
       profileId: 'local-family',
       strategy: 'market',
     },
     {
-      label: 'Expat Premium',
+      label: 'Expat Whole-Unit Premium',
       description: 'Higher rent for better-located or better-finished homes.',
       mode: 'corporate-lease',
       profileId: 'expat-pmet',
       strategy: 'aggressive',
     },
     {
-      label: 'Defensive Lease',
+      label: 'Defensive Whole-Flat Lease',
       description: 'Trade some rent for occupancy and tenant happiness.',
       mode: 'whole-unit',
       profileId: 'local-family',

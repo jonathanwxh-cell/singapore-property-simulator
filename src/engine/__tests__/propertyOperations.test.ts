@@ -114,8 +114,35 @@ describe('property operations', () => {
     if (!roomRental.ok) return;
     expect(roomRental.value.player.properties[0].tenant?.rentalMode).toBe('room-rental');
     expect(roomRental.value.player.properties[0].isRented).toBe(true);
+    expect(roomRental.value.player.properties[0].occupancyStatus).toBe('owner-occupied');
     expect(selectMonthlyRentalIncome(roomRental.value.player)).toBeLessThan(1_700);
     expect(selectMonthlyRentalIncome(roomRental.value.player)).toBeGreaterThan(600);
+  });
+
+  it('unlocks whole-unit HDB rental after MOP reaches zero', () => {
+    const player = makePlayer({
+      properties: [{
+        propertyId: 'hdb-bto-1',
+        purchasePrice: 380_000,
+        purchaseDate: '2024-01',
+        currentValue: 380_000,
+        isRented: false,
+        monthlyRental: 1_700,
+        renovationLevel: 0,
+        mopRemainingMonths: 0,
+      }],
+    });
+
+    const result = setTenantStrategyPure(player, 0, {
+      mode: 'whole-unit',
+      profileId: 'local-family',
+      rentStrategy: 'market',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.player.properties[0].occupancyStatus).toBe('tenanted');
+    expect(result.value.player.properties[0].tenant?.rentalMode).toBe('whole-unit');
   });
 
   it('sets aggressive corporate leases above base rent with higher satisfaction risk', () => {

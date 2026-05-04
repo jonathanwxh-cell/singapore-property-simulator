@@ -20,6 +20,7 @@ import { validatePurchase } from './purchase';
 import { deriveMaintenanceCost, derivePropertyTax } from './portfolio';
 import {
   getSalaryCeilingForProperty,
+  evaluatePropertyEligibility,
   isPrivateResidentialPropertyType,
   isResidentialPropertyType,
 } from './eligibility';
@@ -95,6 +96,18 @@ export function buyPropertyPure(
     return fail(blockingReason.code, blockingReason.message);
   }
 
+  const eligibility = evaluatePropertyEligibility({
+    propertyType: property.type,
+    salary: player.salary,
+    properties: player.properties,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+    buyerProfile: player.buyerProfile,
+  });
+  if (eligibility.blockedReason) {
+    return fail('eligibility_blocked', eligibility.blockedReason);
+  }
+
   const cashRequired = roundMoney(validation.totalUpfront - cpfToUse);
   if (player.cash < cashRequired) {
     return fail('insufficient_cash', `Not enough cash for the remaining upfront cost of S$${Math.round(cashRequired).toLocaleString()} after CPF usage.`);
@@ -121,7 +134,7 @@ export function buyPropertyPure(
     monthlyRental,
     renovationLevel: 0,
     loanId: loanAmount > 0 ? loanId : undefined,
-    occupancyStatus: 'vacant',
+    occupancyStatus: property.isHdb ? 'owner-occupied' : 'vacant',
     tenantQuality: 50,
     vacancyMonths: 0,
     maintenanceCost: deriveMaintenanceCost({

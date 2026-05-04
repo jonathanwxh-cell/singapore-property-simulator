@@ -71,7 +71,7 @@ describe('buyPropertyPure', () => {
     expect(result.value.player.loans).toHaveLength(1);
     expect(result.value.player.loans[0].principal).toBe(280_000);
     expect(result.value.player.loans[0].remainingBalance).toBe(280_000);
-    expect(result.value.player.properties[0].occupancyStatus).toBe('vacant');
+    expect(result.value.player.properties[0].occupancyStatus).toBe('owner-occupied');
     expect(result.value.player.properties[0].vacancyMonths).toBe(0);
     expect(result.value.player.properties[0].maintenanceCost).toBeGreaterThan(0);
     expect(result.value.player.properties[0].propertyTax).toBeGreaterThan(0);
@@ -126,6 +126,40 @@ describe('buyPropertyPure', () => {
     if (result.ok) {
       expect(result.value.player.firstHomePurchased).toBe(true);
       expect(result.value.player.ownedPrivateHome).toBe(true);
+    }
+  });
+
+  it('charges SPR first-property ABSD through the purchase path', () => {
+    const citizen = buyPropertyPure(makePlayer({ cash: 3_000_000 }), 'condo-10', 500_000);
+    const spr = buyPropertyPure(makePlayer({
+      cash: 3_000_000,
+      buyerProfile: {
+        residencyStatus: 'spr',
+        householdProfile: 'couple-family',
+        age: 32,
+      },
+    }), 'condo-10', 500_000);
+
+    expect(citizen.ok).toBe(true);
+    expect(spr.ok).toBe(true);
+    if (!citizen.ok || !spr.ok) return;
+    expect(spr.value.player.cash).toBe(citizen.value.player.cash - 55_000);
+  });
+
+  it('blocks foreigner HDB purchases before cash is deducted', () => {
+    const result = buyPropertyPure(makePlayer({
+      cash: 1_000_000,
+      buyerProfile: {
+        residencyStatus: 'foreigner',
+        householdProfile: 'foreigner-investor',
+        age: 38,
+      },
+    }), 'hdb-bto-0', 100_000);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe('eligibility_blocked');
+      expect(result.message).toContain('Foreigners cannot buy HDB');
     }
   });
 });

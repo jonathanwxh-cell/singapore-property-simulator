@@ -61,4 +61,52 @@ describe('eligibility', () => {
     expect(status.ecEligible).toBe(false);
     expect(status.blockedReason).toContain('ceiling');
   });
+
+  it('blocks foreigners from HDB purchases in the simplified buyer-profile model', () => {
+    const status = evaluatePropertyEligibility({
+      propertyType: 'HDB BTO',
+      salary: 9_000,
+      properties: [],
+      firstHomePurchased: false,
+      ownedPrivateHome: false,
+      buyerProfile: {
+        residencyStatus: 'foreigner',
+        householdProfile: 'foreigner-investor',
+        age: 36,
+      },
+    });
+
+    expect(status.firstTimerFriendly).toBe(false);
+    expect(status.blockedReason).toContain('Foreigners cannot buy HDB');
+  });
+
+  it('blocks single citizens under 35 from the solo HDB path but allows family nuclei', () => {
+    const under35 = evaluatePropertyEligibility({
+      propertyType: 'HDB Resale',
+      salary: 5_000,
+      properties: [],
+      firstHomePurchased: false,
+      ownedPrivateHome: false,
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'single-under-35',
+        age: 29,
+      },
+    });
+    const family = evaluatePropertyEligibility({
+      propertyType: 'HDB Resale',
+      salary: 5_000,
+      properties: [],
+      firstHomePurchased: false,
+      ownedPrivateHome: false,
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'couple-family',
+        age: 29,
+      },
+    });
+
+    expect(under35.blockedReason).toContain('Single buyers under 35');
+    expect(family.blockedReason).toBeNull();
+  });
 });

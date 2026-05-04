@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement } from './types';
-import { createInitialLifeState, difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE } from './types';
+import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement, BuyerProfile } from './types';
+import { createInitialLifeState, difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE, normalizeBuyerProfile } from './types';
 import { careers } from '@/data/careers';
+import { properties } from '@/data/properties';
 import { createRng, newSeed, type Rng } from '@/engine/rng';
 import { advanceTurn } from '@/engine/turn';
 import { buyPropertyPure, sellPropertyPure, applyLoanPure, payLoanPure, renovatePropertyPure, resolveScenarioOption } from '@/engine/actions';
@@ -71,19 +72,27 @@ function withLifeDefaults(player: Player): Player {
   };
 }
 
+function withBuyerProfileDefaults(player: Player): Player {
+  return {
+    ...player,
+    buyerProfile: normalizeBuyerProfile(player.buyerProfile),
+  };
+}
+
 function finalizePlayer(player: Player): Player {
-  const hydrated = withLifeDefaults(withPortfolioDefaults(withCareerDefaults(player)));
+  const hydrated = withBuyerProfileDefaults(withLifeDefaults(withPortfolioDefaults(withCareerDefaults(player))));
   return withEvaluatedAchievements(withNetWorth(hydrated));
 }
 
-function createInitialPlayer(name: string, careerId: string, difficulty: Difficulty): Player {
+function createInitialPlayer(name: string, careerId: string, difficulty: Difficulty, buyerProfileInput?: Partial<BuyerProfile>): Player {
   const career = careers.find(c => c.id === careerId) || careers[0];
   const diff = difficultySettings[difficulty];
   const salary = Math.round(career.startingSalary * diff.salaryModifier);
-  const initialCpf = estimateInitialCpf(27, salary);
+  const buyerProfile = normalizeBuyerProfile(buyerProfileInput);
+  const initialCpf = estimateInitialCpf(buyerProfile.age, salary);
   return finalizePlayer({
     name,
-    age: 27,
+    age: buyerProfile.age,
     careerId,
     salary,
     cash: diff.startingCash,
@@ -114,6 +123,7 @@ function createInitialPlayer(name: string, careerId: string, difficulty: Difficu
     ownedPrivateHome: false,
     careerProgressionProfile: createInitialCareerProgressionProfile(),
     careerReviewHistory: [],
+    buyerProfile,
     reserve: createDefaultReserve(),
     operationHistory: [],
   });
@@ -174,7 +184,7 @@ function pickGameState(state: GameState): GameState {
 }
 
 interface GameStore extends GameState {
-  newGame: (name: string, careerId: string, difficulty: Difficulty) => void;
+  newGame: (name: string, careerId: string, difficulty: Difficulty, buyerProfile?: Partial<BuyerProfile>) => void;
   loadGame: (state: GameState) => void;
   nextTurn: () => void;
   setPrimaryLifeAction: (actionId: LifeActionId | null) => void;
@@ -206,11 +216,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   rngSeed: 0,
   rngState: 0,
 
-  newGame: (name, careerId, difficulty) => {
+  newGame: (name, careerId, difficulty, buyerProfile) => {
     const seed = newSeed();
     rng = createRng(seed);
     set({
-      player: createInitialPlayer(name, careerId, difficulty),
+      player: createInitialPlayer(name, careerId, difficulty, buyerProfile),
       market: createInitialMarket(),
       settings: createInitialSettings(difficulty),
       isGameActive: true,
@@ -384,13 +394,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { player } = get();
     if (propertyIndex < 0 || propertyIndex >= player.properties.length) return;
     const updatedProperties = [...player.properties];
+    const ownedProperty = updatedProperties[propertyIndex];
+    const listing = properties.find((property) => property.id === ownedProperty.propertyId);
+    const blocksWholeFlatRental = listing?.isHdb
+      && !ownedProperty.isRented
+      && (ownedProperty.mopRemainingMonths ?? 0) > 0;
+    if (blocksWholeFlatRental) return;
     const nextIsRented = !updatedProperties[propertyIndex].isRented;
     updatedProperties[propertyIndex] = {
-      ...updatedProperties[propertyIndex],
+      ...ownedProperty,
       isRented: nextIsRented,
-      occupancyStatus: nextIsRented ? 'tenanted' : 'vacant',
-      tenant: nextIsRented ? updatedProperties[propertyIndex].tenant : undefined,
-      vacancyMonths: nextIsRented ? 0 : updatedProperties[propertyIndex].vacancyMonths ?? 0,
+      occupancyStatus: nextIsRented ? 'tenanted' : listing?.isHdb ? 'owner-occupied' : 'vacant',
+      tenant: nextIsRented ? ownedProperty.tenant : undefined,
+      vacancyMonths: nextIsRented ? 0 : ownedProperty.vacancyMonths ?? 0,
     };
     set({ player: finalizePlayer({ ...player, properties: updatedProperties }) });
     const state = get();

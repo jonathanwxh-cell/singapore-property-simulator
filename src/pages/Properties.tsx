@@ -30,6 +30,7 @@ export default function Properties() {
     properties: player.properties,
     firstHomePurchased: player.firstHomePurchased,
     ownedPrivateHome: player.ownedPrivateHome,
+    buyerProfile: player.buyerProfile,
   };
   const flags = deriveEligibilityFlags(eligibilityInput);
 
