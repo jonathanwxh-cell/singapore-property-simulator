@@ -18,9 +18,20 @@ import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/el
 import { assessDealReadiness } from '@/engine/decisionCoach';
 import { getRenovationTemplatesForType } from '@/data/renovations';
 import { repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
-import { getTenantLeaseOptions, type TenantLeaseOption } from '@/engine/propertyOperations';
+import { getTenantLeaseOptions } from '@/engine/propertyOperations';
 import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
-import type { OwnedProperty, RentalMode, RentStrategy, TenantLeaseDecisionId, TenantProfileId } from '@/game/types';
+import type { RentalMode, RentStrategy, TenantLeaseDecisionId, TenantProfileId } from '@/game/types';
+import {
+  DetailItem,
+  LeaseOptionButton,
+  OperationMetric,
+} from './property/PropertyDetailComponents';
+import {
+  formatOwnershipStatus,
+  formatRentalMode,
+  getFloorPlanSrc,
+  getTenantPlans,
+} from './property/propertyDetailFormatters';
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -882,185 +893,3 @@ export default function PropertyDetail() {
   );
 }
 
-function LeaseOptionButton({
-  option,
-  onSelect,
-}: {
-  option: TenantLeaseOption;
-  onSelect: (decisionId: TenantLeaseDecisionId) => void;
-}) {
-  return (
-    <button
-      onClick={() => onSelect(option.id)}
-      className={`text-left rounded-xl border p-3 transition-colors hover:border-cyan-glow/60 ${leaseOptionToneClass(option.tone)}`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-white font-semibold text-sm">{option.label}</p>
-          <p className="text-text-secondary text-xs mt-1 leading-relaxed">{option.detail}</p>
-        </div>
-        <span className="font-mono text-[11px] text-cyan-glow shrink-0">
-          {option.projectedRent > 0 ? formatCurrency(option.projectedRent) : 'Vacate'}
-        </span>
-      </div>
-      <div className="grid grid-cols-3 gap-2 mt-3">
-        <OperationMetric label="Rent" value={formatSignedCurrency(option.rentDelta)} />
-        <OperationMetric label="Happy" value={formatSignedNumber(option.satisfactionDelta)} />
-        <OperationMetric label="Vacancy" value={formatSignedNumber(option.vacancyRiskDelta)} />
-      </div>
-    </button>
-  );
-}
-
-function leaseOptionToneClass(tone: TenantLeaseOption['tone']): string {
-  if (tone === 'good') return 'border-success/30 bg-success/10';
-  if (tone === 'warn') return 'border-warning/30 bg-warning/10';
-  if (tone === 'bad') return 'border-danger/30 bg-danger/10';
-  return 'border-glass-border bg-white/[0.03]';
-}
-
-function formatSignedNumber(value: number): string {
-  return `${value >= 0 ? '+' : ''}${value}`;
-}
-
-function formatSignedCurrency(value: number): string {
-  if (value === 0) return 'S$0';
-  return `${value > 0 ? '+' : '-'}${formatCurrency(Math.abs(value))}`;
-}
-
-function OperationMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg bg-black/20 p-2">
-      <p className="label-text text-text-dim text-[9px]">{label}</p>
-      <p className="font-mono text-white text-xs mt-0.5">{value}</p>
-    </div>
-  );
-}
-
-function getFloorPlanSrc(floorPlanId?: string): string {
-  const id = floorPlanId ?? 'floorplan-hdb-4-room';
-  return `/floorplans/${id}.svg`;
-}
-
-function formatOwnershipStatus(ownedProperty: OwnedProperty): string {
-  if (ownedProperty.tenant) {
-    return `${formatRentalMode(ownedProperty.tenant.rentalMode)} (${formatCurrency(ownedProperty.tenant.contractedRent)}/mo)`;
-  }
-
-  if (ownedProperty.isRented) return `Rented (${formatCurrency(ownedProperty.monthlyRental)}/mo)`;
-  if (ownedProperty.occupancyStatus === 'owner-occupied') return 'Owner-occupied';
-  if (ownedProperty.occupancyStatus === 'renovating') return 'Renovating';
-  if (ownedProperty.occupancyStatus === 'listed') return 'Listed';
-  if (ownedProperty.occupancyStatus === 'tenanted') return 'Tenanted';
-  return 'Vacant';
-}
-
-function formatRentalMode(mode: RentalMode): string {
-  if (mode === 'room-rental') return 'owner-occupied room lease';
-  if (mode === 'whole-unit') return 'whole-flat lease';
-  if (mode === 'corporate-lease') return 'corporate lease';
-  if (mode === 'student-shared') return 'student shared lease';
-  return 'commercial lease';
-}
-
-function getTenantPlans({
-  isHdb,
-  isCommercial,
-  mopRemainingMonths,
-}: {
-  isHdb: boolean;
-  isCommercial: boolean;
-  mopRemainingMonths: number;
-}): Array<{
-  label: string;
-  description: string;
-  mode: RentalMode;
-  profileId: TenantProfileId;
-  strategy: RentStrategy;
-}> {
-  if (isCommercial) {
-    return [
-      {
-        label: 'SME Market Lease',
-        description: 'Balanced commercial yield with manageable default risk.',
-        mode: 'commercial-lease',
-        profileId: 'sme-commercial',
-        strategy: 'market',
-      },
-      {
-        label: 'Corporate Upside',
-        description: 'Push rent harder, but expect more vacancy and fit-out expectations.',
-        mode: 'corporate-lease',
-        profileId: 'sme-commercial',
-        strategy: 'aggressive',
-      },
-      {
-        label: 'Defensive Renewal',
-        description: 'Lower rent to protect occupancy through soft business cycles.',
-        mode: 'commercial-lease',
-        profileId: 'sme-commercial',
-        strategy: 'conservative',
-      },
-    ];
-  }
-
-  if (isHdb && mopRemainingMonths > 0) {
-    return [
-      {
-        label: 'Owner-Occupied Room',
-        description: 'MOP-safe income while keeping the flat owner-occupied in simplified rules.',
-        mode: 'room-rental',
-        profileId: 'local-family',
-        strategy: 'market',
-      },
-      {
-        label: 'Conservative Owner Room',
-        description: 'Lower rent, better satisfaction, and less vacancy pressure while you still live there.',
-        mode: 'room-rental',
-        profileId: 'local-family',
-        strategy: 'conservative',
-      },
-      {
-        label: 'Student Room (Owner-Stay)',
-        description: 'Useful near education nodes. More wear, but keeps early gameplay active without whole-flat rental.',
-        mode: 'room-rental',
-        profileId: 'student-tenants',
-        strategy: 'market',
-      },
-    ];
-  }
-
-  return [
-    {
-      label: 'Whole-Flat Family Lease',
-      description: 'Balanced whole-unit lease with stable demand and moderate wear.',
-      mode: 'whole-unit',
-      profileId: 'local-family',
-      strategy: 'market',
-    },
-    {
-      label: 'Expat Whole-Unit Premium',
-      description: 'Higher rent for better-located or better-finished homes.',
-      mode: 'corporate-lease',
-      profileId: 'expat-pmet',
-      strategy: 'aggressive',
-    },
-    {
-      label: 'Defensive Whole-Flat Lease',
-      description: 'Trade some rent for occupancy and tenant happiness.',
-      mode: 'whole-unit',
-      profileId: 'local-family',
-      strategy: 'conservative',
-    },
-  ];
-}
-
-function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
-  return (
-    <div className="text-center p-3 rounded-lg bg-white/5">
-      <Icon size={18} className="text-cyan-glow mx-auto mb-1" />
-      <p className="label-text text-text-dim text-[10px] mb-0.5">{label}</p>
-      <p className="font-mono text-white text-sm">{value}</p>
-    </div>
-  );
-}
