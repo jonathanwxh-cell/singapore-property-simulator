@@ -15,6 +15,7 @@ import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { getLtvCap } from '@/engine/ltv';
 import EligibilityBadge from '@/components/EligibilityBadge';
 import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
+import { assessDealReadiness } from '@/engine/decisionCoach';
 import { getRenovationTemplatesForType } from '@/data/renovations';
 import { repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
 import type { RentalMode, RentStrategy, TenantProfileId } from '@/game/types';
@@ -57,9 +58,15 @@ export default function PropertyDetail() {
   const effectiveDownPaymentPercent = Math.max(downPaymentPercent, minDownPaymentPercent);
   const downPayment = getDownPaymentAmount(property.price, effectiveDownPaymentPercent);
   const validation = validatePurchase(player, property, downPayment);
+  const dealReadiness = assessDealReadiness({
+    player,
+    property,
+    downPaymentPercent: effectiveDownPaymentPercent,
+    useCpfOrdinary,
+  });
   const cpfEligible = !property.type.startsWith('Commercial');
-  const cpfApplied = cpfEligible && useCpfOrdinary ? Math.min(player.cpfOrdinary, validation.totalUpfront) : 0;
-  const cashRequired = Math.max(0, validation.totalUpfront - cpfApplied);
+  const cpfApplied = dealReadiness.cpfApplied;
+  const cashRequired = dealReadiness.cashRequired;
   const monthlySurplus = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
   const availableCash = selectAvailableCash(player);
   const reservedCash = selectReservedCash(player);
@@ -81,7 +88,7 @@ export default function PropertyDetail() {
   });
   const eligibilityBlocked = Boolean(eligibility.blockedReason);
   const cashShortfall = Math.max(0, cashRequired - player.cash);
-  const canAfford = cashShortfall === 0 && extraReasons.length === 0 && !isOwned && !eligibilityBlocked;
+  const canAfford = dealReadiness.verdict !== 'blocked' && cashShortfall === 0 && extraReasons.length === 0 && !isOwned && !eligibilityBlocked;
   const visibleMessages = Array.from(
     new Set([
       ...(cashShortfall > 0 ? [`You need ${formatCurrency(cashShortfall)} more cash after CPF OA`] : []),
@@ -701,6 +708,32 @@ export default function PropertyDetail() {
                   </div>
 
                   <div className="border-t border-divider pt-3 space-y-2">
+                    <div className={`rounded-lg border px-3 py-3 ${
+                      dealReadiness.verdict === 'ready'
+                        ? 'border-success/30 bg-success/10'
+                        : dealReadiness.verdict === 'stretch'
+                          ? 'border-warning/30 bg-warning/10'
+                          : 'border-danger/30 bg-danger/10'
+                    }`}>
+                      <p className={`text-sm font-semibold ${
+                        dealReadiness.verdict === 'ready'
+                          ? 'text-success'
+                          : dealReadiness.verdict === 'stretch'
+                            ? 'text-warning'
+                            : 'text-danger'
+                      }`}>
+                        {dealReadiness.verdict === 'ready' ? 'Deal ready' : dealReadiness.verdict === 'stretch' ? 'Deal is tight' : 'Deal blocked'}
+                      </p>
+                      <p className="text-text-secondary text-xs mt-1 leading-relaxed">{dealReadiness.headline}</p>
+                      <div className="grid gap-1 mt-3">
+                        {dealReadiness.facts.slice(0, 3).map((fact) => (
+                          <p key={fact} className="text-text-dim text-[11px]">{fact}</p>
+                        ))}
+                      </div>
+                      {dealReadiness.warnings.map((warning) => (
+                        <p key={warning} className="text-warning text-[11px] mt-2 leading-relaxed">{warning}</p>
+                      ))}
+                    </div>
                     <div className="flex items-center justify-between">
                       <span className="text-text-secondary text-sm">Monthly Surplus</span>
                       <span className={`font-mono ${monthlySurplus >= 0 ? 'text-success' : 'text-danger'}`}>
@@ -729,13 +762,13 @@ export default function PropertyDetail() {
                   </div>
                 </div>
 
-                <div className="sticky bottom-0 -mx-4 -mb-4 mt-4 rounded-b-card border-t border-divider bg-glass-fill/95 p-4 backdrop-blur-xl">
+                <div className="sticky bottom-0 -mx-4 -mb-4 mt-4 hidden rounded-b-card border-t border-divider bg-glass-fill/95 p-4 backdrop-blur-xl lg:block">
                   <button
                     onClick={handleBuy}
                     disabled={!canAfford}
                     className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {eligibilityBlocked ? 'Not Eligible Yet' : canAfford ? 'Buy Property' : 'Insufficient Funds'}
+                    {eligibilityBlocked ? 'Not Eligible Yet' : dealReadiness.ctaLabel}
                   </button>
 
                   {visibleMessages.length > 0 && (
@@ -752,6 +785,21 @@ export default function PropertyDetail() {
             )}
           </div>
         </div>
+
+        {!isOwned && (
+          <div className="fixed inset-x-4 bottom-[4.75rem] z-40 rounded-card border border-divider bg-glass-fill/95 p-4 shadow-glass backdrop-blur-xl lg:hidden">
+            <button
+              onClick={handleBuy}
+              disabled={!canAfford}
+              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {eligibilityBlocked ? 'Not Eligible Yet' : dealReadiness.ctaLabel}
+            </button>
+            {visibleMessages.length > 0 && (
+              <p className="mt-2 text-center text-xs text-danger">{visibleMessages[0]}</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

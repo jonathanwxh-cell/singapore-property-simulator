@@ -76,7 +76,7 @@ async function expectVisible(page, selector, timeout = 15000) {
 }
 
 async function resolveScenarioIfPresent(page) {
-  const optionButtons = page.locator('button.group.w-full.text-left:visible');
+  const optionButtons = page.locator('button.group.w-full.text-left:visible:not([disabled])');
   if (await optionButtons.count()) {
     await optionButtons.first().click();
     await expectVisible(page, 'text=Scenario Resolved');

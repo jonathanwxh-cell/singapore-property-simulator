@@ -11,6 +11,7 @@ import { formatCompactCurrency } from '@/lib/format';
 import { useGameStore } from '@/game/useGameStore';
 import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
 import EligibilityBadge from '@/components/EligibilityBadge';
+import { assessDealReadiness } from '@/engine/decisionCoach';
 
 export default function Properties() {
   const navigate = useNavigate();
@@ -130,6 +131,12 @@ export default function Properties() {
             const district = districts.find(d => d.id === property.districtId);
             const typeInfo = propertyTypeInfo[property.type];
             const eligibility = evaluatePropertyEligibility({ ...eligibilityInput, propertyType: property.type });
+            const readiness = assessDealReadiness({
+              player,
+              property,
+              downPaymentPercent: 25,
+              useCpfOrdinary: true,
+            });
             return (
               <GlassCard
                 key={property.id}
@@ -193,6 +200,33 @@ export default function Properties() {
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-cyan-glow font-bold">{formatCompactCurrency(property.price)}</span>
                   <span className="text-success text-xs font-mono">{property.rentalYield}% yield</span>
+                </div>
+                <div className={`mt-3 rounded-lg border px-3 py-2 ${
+                  readiness.verdict === 'ready'
+                    ? 'border-success/30 bg-success/10'
+                    : readiness.verdict === 'stretch'
+                      ? 'border-warning/30 bg-warning/10'
+                      : 'border-danger/30 bg-danger/10'
+                }`}>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className={`text-[10px] font-mono uppercase tracking-[0.16em] ${
+                      readiness.verdict === 'ready'
+                        ? 'text-success'
+                        : readiness.verdict === 'stretch'
+                          ? 'text-warning'
+                          : 'text-danger'
+                    }`}>
+                      {readiness.verdict === 'ready' ? 'Can buy' : readiness.verdict === 'stretch' ? 'Tight' : 'Blocked'}
+                    </span>
+                    <span className="font-mono text-[10px] text-white">{formatCompactCurrency(readiness.cashRequired)} cash</span>
+                  </div>
+                  <p className="text-text-secondary text-[11px] mt-1 line-clamp-1">
+                    {readiness.verdict === 'ready'
+                      ? 'Ready with current CPF and cash.'
+                      : readiness.verdict === 'stretch'
+                        ? 'Buyable, but monthly buffer is thin.'
+                        : readiness.primaryBlocker?.message ?? 'Improve readiness before buying.'}
+                  </p>
                 </div>
               </GlassCard>
             );

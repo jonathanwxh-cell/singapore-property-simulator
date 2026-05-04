@@ -16,6 +16,8 @@ You start as a 27-year-old Singaporean with a career and modest savings. Each tu
 
 ### Core Loop
 
+The current build includes a Decision Coach layer across the dashboard, property browser, property detail, scenarios, and life-planning screens. It explains the next sensible move, deal blockers, expected life-action effects, and scenario upside/downside before players commit.
+
 1. **Earn** — Monthly salary (career-dependent) flows in after CPF deductions
 2. **Buy** — Browse 120+ fictional live listings across 9 property types, 28 districts, and 6 listing channels
 3. **Finance** — Take mortgages, manage LTV caps and TDSR/MSR limits
@@ -82,6 +84,7 @@ Property, development, tenant, and listing names are fictional. The simulator in
 - Owned properties now track occupancy state, vacancy streaks, maintenance drag, and property tax.
 - Portfolio summaries surface investor routes such as `Heartland Landlord` and `Commercial Cashflow Operator`.
 - Contextual scenarios now key off what you actually own, whether it is rented, and whether you are holding aging leasehold stock.
+- Guided-playability surfaces now translate complex mechanics into plain-English next moves, blocker labels, and expected effects so new players can keep momentum.
 
 ---
 

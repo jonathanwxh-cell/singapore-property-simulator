@@ -7,6 +7,7 @@ import GlassCard from '@/components/GlassCard';
 import { Sparkles, CheckCircle, X } from 'lucide-react';
 import type { ScenarioOption } from '@/data/scenarios';
 import { STARTER_SCENARIO_TURN } from '@/engine/constants';
+import { assessScenarioOption, type ScenarioOptionAssessment } from '@/engine/decisionCoach';
 
 export default function Scenarios() {
   const { currentScenario, resolveScenario, player, setCurrentScenario } = useGameStore();
@@ -18,6 +19,9 @@ export default function Scenarios() {
     : null;
 
   const handleOption = (option: ScenarioOption) => {
+    const assessment = assessScenarioOption(player, option);
+    if (!assessment.canChoose) return;
+
     const resolution = resolveScenario(option);
     setResult(resolution.followUpText);
     setResolved(true);
@@ -106,13 +110,41 @@ export default function Scenarios() {
               <h2 className="page-title text-xl text-white mb-2">{activeScenario.title}</h2>
               <p className="text-text-secondary text-sm mb-6 leading-relaxed">{activeScenario.description}</p>
               <div className="space-y-2">
-                {activeScenario.options.map((option, i) => (
-                  <button key={i} onClick={() => handleOption(option)}
-                    className="w-full text-left p-4 rounded-lg border border-glass-border hover:border-cyan-glow/50 hover:bg-cyan-glow/5 transition-all group">
-                    <p className="font-rajdhani font-semibold text-white group-hover:text-cyan-glow transition-colors">{option.label}</p>
-                    <p className="text-text-secondary text-xs mt-1">{option.description}</p>
-                  </button>
-                ))}
+                {activeScenario.options.map((option, i) => {
+                  const assessment = assessScenarioOption(player, option);
+                  const tone = scenarioToneClasses(assessment);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleOption(option)}
+                      disabled={!assessment.canChoose}
+                      className={`w-full text-left p-4 rounded-lg border transition-all group disabled:cursor-not-allowed disabled:opacity-70 ${tone.card}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className={`font-rajdhani font-semibold text-white transition-colors ${assessment.canChoose ? 'group-hover:text-cyan-glow' : ''}`}>{option.label}</p>
+                          <p className="text-text-secondary text-xs mt-1">{option.description}</p>
+                        </div>
+                        <span className={`rounded-full border px-2 py-1 text-[10px] font-mono uppercase tracking-[0.16em] ${tone.badge}`}>
+                          {assessment.tone}
+                        </span>
+                      </div>
+                      <p className={`text-xs mt-3 ${tone.text}`}>{assessment.summary}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        {assessment.facts.map((fact) => (
+                          <span key={fact} className="rounded-full border border-glass-border bg-white/5 px-2 py-1 text-[10px] text-text-secondary">
+                            {fact}
+                          </span>
+                        ))}
+                      </div>
+                      {assessment.warning && (
+                        <p className={`text-xs mt-3 leading-relaxed ${assessment.canChoose ? 'text-warning' : 'text-danger'}`}>
+                          {assessment.warning}
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </GlassCard>
           </motion.div>
@@ -137,4 +169,39 @@ export default function Scenarios() {
   }
 
   return null;
+}
+
+function scenarioToneClasses(assessment: ScenarioOptionAssessment) {
+  if (!assessment.canChoose) {
+    return {
+      card: 'border-danger/50 bg-danger/10',
+      badge: 'border-danger/40 bg-danger/10 text-danger',
+      text: 'text-danger',
+    };
+  }
+
+  const classes = {
+    upside: {
+      card: 'border-success/35 bg-success/10 hover:border-success/70',
+      badge: 'border-success/40 bg-success/10 text-success',
+      text: 'text-success',
+    },
+    safe: {
+      card: 'border-cyan-glow/30 bg-cyan-glow/5 hover:border-cyan-glow/60',
+      badge: 'border-cyan-glow/40 bg-cyan-glow/10 text-cyan-glow',
+      text: 'text-cyan-glow',
+    },
+    caution: {
+      card: 'border-warning/35 bg-warning/10 hover:border-warning/70',
+      badge: 'border-warning/40 bg-warning/10 text-warning',
+      text: 'text-warning',
+    },
+    danger: {
+      card: 'border-danger/50 bg-danger/10 hover:border-danger/70',
+      badge: 'border-danger/40 bg-danger/10 text-danger',
+      text: 'text-danger',
+    },
+  } satisfies Record<ScenarioOptionAssessment['tone'], { card: string; badge: string; text: string }>;
+
+  return classes[assessment.tone];
 }
