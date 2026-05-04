@@ -1,7 +1,9 @@
 export type Difficulty = 'easy' | 'normal' | 'hard' | 'tycoon';
 export type MaritalStatus = 'single' | 'married' | 'divorced';
-export type OccupancyStatus = 'vacant' | 'tenanted' | 'renovating' | 'listed';
+export type OccupancyStatus = 'owner-occupied' | 'vacant' | 'tenanted' | 'renovating' | 'listed';
 export type LivingArrangement = 'with-parents' | 'renting-room' | 'renting-flat';
+export type BuyerResidencyStatus = 'sc' | 'spr' | 'foreigner';
+export type HouseholdProfile = 'couple-family' | 'single-35-plus' | 'single-under-35' | 'foreigner-investor';
 export type RenovationCategory =
   | 'kitchen'
   | 'bathroom'
@@ -56,6 +58,12 @@ export interface PlayerLifeState {
     householdSupport: number;
   };
   lastMonthSummary: LifeMonthSummary | null;
+}
+
+export interface BuyerProfile {
+  residencyStatus: BuyerResidencyStatus;
+  householdProfile: HouseholdProfile;
+  age: number;
 }
 
 export interface RenovationProject {
@@ -216,6 +224,7 @@ export interface Player {
   ownedPrivateHome: boolean;
   careerProgressionProfile: CareerProgressionProfile;
   careerReviewHistory: CareerReviewHistoryEntry[];
+  buyerProfile?: BuyerProfile;
   reserve?: ReserveState;
   operationHistory?: PropertyOperationLogEntry[];
 }
@@ -322,6 +331,27 @@ export const INITIAL_MONTH = 1;
 export const INITIAL_AGE = 27;
 export const MAX_CREDIT_SCORE = 850;
 export const MIN_CREDIT_SCORE = 300;
+
+export const DEFAULT_BUYER_PROFILE: BuyerProfile = {
+  residencyStatus: 'sc',
+  householdProfile: 'couple-family',
+  age: 30,
+};
+
+export function normalizeBuyerProfile(profile?: Partial<BuyerProfile> | null): BuyerProfile {
+  const householdProfile = profile?.householdProfile ?? DEFAULT_BUYER_PROFILE.householdProfile;
+  let age = Math.max(21, Math.round(profile?.age ?? DEFAULT_BUYER_PROFILE.age));
+
+  if (householdProfile === 'single-35-plus') age = Math.max(35, age);
+  if (householdProfile === 'single-under-35') age = Math.min(34, age);
+
+  return {
+    ...DEFAULT_BUYER_PROFILE,
+    ...profile,
+    householdProfile,
+    age,
+  };
+}
 
 export function createInitialLifeState(overrides: Partial<PlayerLifeState> = {}): PlayerLifeState {
   return {

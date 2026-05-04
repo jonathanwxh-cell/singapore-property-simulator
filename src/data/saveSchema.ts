@@ -5,6 +5,11 @@ const renovationCategorySchema = z.enum(['kitchen', 'bathroom', 'flooring', 'sma
 const rentStrategySchema = z.enum(['conservative', 'market', 'aggressive']);
 const rentalModeSchema = z.enum(['room-rental', 'whole-unit', 'corporate-lease', 'student-shared', 'commercial-lease']);
 const tenantProfileSchema = z.enum(['local-family', 'expat-pmet', 'student-tenants', 'sme-commercial']);
+const buyerProfileSchema = z.object({
+  residencyStatus: z.enum(['sc', 'spr', 'foreigner']),
+  householdProfile: z.enum(['couple-family', 'single-35-plus', 'single-under-35', 'foreigner-investor']),
+  age: z.number(),
+});
 
 const renovationProjectSchema = z.object({
   id: z.string(),
@@ -58,7 +63,7 @@ const ownedPropertySchema = z.object({
   monthlyRental: z.number(),
   renovationLevel: z.number(),
   loanId: z.string().optional(),
-  occupancyStatus: z.enum(['vacant', 'tenanted', 'renovating', 'listed']).optional(),
+  occupancyStatus: z.enum(['owner-occupied', 'vacant', 'tenanted', 'renovating', 'listed']).optional(),
   tenantQuality: z.number().optional(),
   vacancyMonths: z.number().optional(),
   maintenanceCost: z.number().optional(),
@@ -159,6 +164,7 @@ const playerSchema = z.object({
     salaryDelta: z.number(),
     bonus: z.number(),
   })).optional(),
+  buyerProfile: buyerProfileSchema.optional(),
   reserve: z.object({
     targetMonths: z.number(),
     allocatedCash: z.number(),

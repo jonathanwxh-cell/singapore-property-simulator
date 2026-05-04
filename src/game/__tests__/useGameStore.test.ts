@@ -210,7 +210,33 @@ describe('useGameStore', () => {
 
     useGameStore.getState().toggleRental(0);
     expect(useGameStore.getState().player.properties[0].isRented).toBe(false);
-    expect(useGameStore.getState().player.properties[0].occupancyStatus).toBe('vacant');
+    expect(useGameStore.getState().player.properties[0].occupancyStatus).toBe('owner-occupied');
+  });
+
+  it('blocks whole-flat HDB rental toggle during MOP', () => {
+    resetStore({
+      player: makePlayer({
+        properties: [{
+          propertyId: 'hdb-bto-1',
+          purchasePrice: 380_000,
+          purchaseDate: '2024-01',
+          currentValue: 380_000,
+          isRented: false,
+          monthlyRental: 1647,
+          renovationLevel: 0,
+          occupancyStatus: 'owner-occupied',
+          mopRemainingMonths: 48,
+        }],
+      }),
+    });
+
+    useGameStore.getState().toggleRental(0);
+
+    expect(useGameStore.getState().player.properties[0]).toMatchObject({
+      isRented: false,
+      occupancyStatus: 'owner-occupied',
+      mopRemainingMonths: 48,
+    });
   });
 
   it('starts renovations and tenant strategies through store actions', () => {
@@ -250,6 +276,22 @@ describe('useGameStore', () => {
     expect(player.firstHomePurchased).toBe(false);
     expect(player.careerProgressionProfile.reviewCount).toBe(0);
     expect(player.nextJobSwitchTurn).toBe(24);
+  });
+
+  it('normalizes buyer-profile ages for single-buyer routes', () => {
+    useGameStore.getState().newGame('Solo Buyer', 'graduate', 'normal', {
+      residencyStatus: 'sc',
+      householdProfile: 'single-35-plus',
+      age: 27,
+    });
+    expect(useGameStore.getState().player.buyerProfile?.age).toBe(35);
+
+    useGameStore.getState().newGame('Young Buyer', 'graduate', 'normal', {
+      residencyStatus: 'sc',
+      householdProfile: 'single-under-35',
+      age: 40,
+    });
+    expect(useGameStore.getState().player.buyerProfile?.age).toBe(34);
   });
 
   it('hydrates missing progression fields when loading older saves', () => {

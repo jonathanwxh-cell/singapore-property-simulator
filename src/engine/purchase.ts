@@ -1,5 +1,5 @@
 import type { Property } from '@/data/properties';
-import type { Player } from '@/game/types';
+import { normalizeBuyerProfile, type Player } from '@/game/types';
 import { difficultySettings } from '@/game/types';
 import { formatCurrency, formatPercent, roundMoney } from '@/lib/format';
 import {
@@ -11,7 +11,7 @@ import { calcMonthlyPayment, calcTDSR } from './finance';
 import { getLtvCap, checkMsr, maxBorrowable } from './ltv';
 import type { ActionFailReason } from './results';
 import { selectMonthlyExpenses } from './selectors';
-import { calculateABSD, calculateBSD } from './stampDuty';
+import { calculateABSDForProfile, calculateBSD } from './stampDuty';
 
 export interface PurchaseValidationReason {
   code: ActionFailReason;
@@ -48,8 +48,9 @@ export function validatePurchase(player: Player, property: Property, downPayment
   const roundedDownPayment = roundMoney(downPayment);
   const propertyCount = player.properties.length;
   const isOwned = player.properties.some((ownedProperty) => ownedProperty.propertyId === property.id);
+  const buyerProfile = normalizeBuyerProfile(player.buyerProfile);
   const bsd = roundMoney(calculateBSD(property.price));
-  const absd = roundMoney(calculateABSD(property.price, propertyCount));
+  const absd = roundMoney(calculateABSDForProfile(property.price, propertyCount, buyerProfile.residencyStatus));
   const totalUpfront = roundMoney(roundedDownPayment + bsd + absd);
   const shortfall = Math.max(0, roundMoney(totalUpfront - player.cash));
   const mortgageAmount = Math.max(0, roundMoney(property.price - roundedDownPayment));

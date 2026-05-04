@@ -1,4 +1,5 @@
 import { BSD_TIERS, ABSD_RATES } from './constants';
+import type { BuyerResidencyStatus } from '@/game/types';
 
 export function calculateBSD(price: number): number {
   let duty = 0;
@@ -17,6 +18,22 @@ export function calculateBSD(price: number): number {
 export function calculateABSD(price: number, propertyCount: number, isCitizen: boolean = true, isPr: boolean = false): number {
   if (!isCitizen && !isPr) return round2(price * ABSD_RATES.foreigner);
   if (isPr) {
+    if (propertyCount === 0) return round2(price * ABSD_RATES.pr_first);
+    if (propertyCount === 1) return round2(price * ABSD_RATES.pr_second);
+    return round2(price * ABSD_RATES.pr_third_plus);
+  }
+  if (propertyCount === 0) return 0;
+  if (propertyCount === 1) return round2(price * ABSD_RATES.citizen_second);
+  return round2(price * ABSD_RATES.citizen_third_plus);
+}
+
+export function calculateABSDForProfile(
+  price: number,
+  propertyCount: number,
+  residencyStatus: BuyerResidencyStatus = 'sc',
+): number {
+  if (residencyStatus === 'foreigner') return round2(price * ABSD_RATES.foreigner);
+  if (residencyStatus === 'spr') {
     if (propertyCount === 0) return round2(price * ABSD_RATES.pr_first);
     if (propertyCount === 1) return round2(price * ABSD_RATES.pr_second);
     return round2(price * ABSD_RATES.pr_third_plus);

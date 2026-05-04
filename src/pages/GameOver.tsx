@@ -25,6 +25,7 @@ export default function GameOver() {
     properties: player.properties,
     firstHomePurchased: player.firstHomePurchased,
     ownedPrivateHome: player.ownedPrivateHome,
+    buyerProfile: player.buyerProfile,
   });
 
   return (

@@ -30,6 +30,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:profiles": "node scripts/playtest-profiles.mjs",
     "test:smoke": "node scripts/playtest-smoke.mjs",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
