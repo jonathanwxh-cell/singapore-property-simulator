@@ -17,7 +17,7 @@ You start as a 27-year-old Singaporean with a career and modest savings. Each tu
 ### Core Loop
 
 1. **Earn** — Monthly salary (career-dependent) flows in after CPF deductions
-2. **Buy** — Browse 80 live listings across 9 property types, 28 districts, and 6 listing channels
+2. **Buy** — Browse 120+ fictional live listings across 9 property types, 28 districts, and 6 listing channels
 3. **Finance** — Take mortgages, manage LTV caps and TDSR/MSR limits
 4. **Collect Rent** — Tenant income from rented properties
 5. **Advance Turn** — Market moves, loans amortize, CPF compounds, ownership costs hit, and portfolio-aware events fire
@@ -57,21 +57,25 @@ You start as a 27-year-old Singaporean with a career and modest savings. Each tu
 
 ---
 
-## Property Types (80 listings)
+## Property Types (120+ fictional listings)
 
 | Type | Price Range | Rental Yield | Example |
 |------|------------|-------------|---------|
-| HDB BTO | $310k–$520k | 4.8–5.8% | Tampines GreenVerde |
-| HDB Resale | $480k–$750k | 4.2–5.0% | Ang Mo Kio EM |
-| Executive Condo | $1.1M–$1.35M | 3.5–3.9% | Parc Canberra |
-| Private Condo | $1.1M–$4.2M | 2.4–4.0% | Marina One Residences |
-| Landed Terrace | $3.5M–$4.2M | 2.0–2.2% | Joo Chiat Conservation |
-| Landed Semi-D | $5.8M–$7.2M | 1.6–1.8% | Holland Grove |
+| HDB BTO | $265k–$520k | 4.8–5.9% | Woodlands North Grove |
+| HDB Resale | $295k–$850k | 4.0–5.5% | Bukit Merah View |
+| Executive Condo | $1.0M–$1.42M | 3.5–4.1% | Canberra Grove EC |
+| Private Condo | $980k–$4.2M | 2.4–4.3% | Marina Green Residences |
+| Landed Terrace | $2.95M–$4.3M | 2.0–2.4% | East Coast Garden Terrace |
+| Landed Semi-D | $5.8M–$7.6M | 1.6–1.8% | Holland Grove |
 | Landed Bungalow | $22M–$45M | 1.0–1.5% | Sentosa Cove |
-| Commercial Shop | $4.8M–$12M | 2.8–3.3% | Amoy Street Shophouse |
-| Commercial Office | $2.8M–$5.5M | 3.5–4.2% | Raffles Place Office |
+| Commercial Shop | $3.2M–$12M | 3.0–4.3% | Amoy Street Shophouse |
+| Commercial Office | $1.85M–$6.8M | 3.4–5.0% | Jurong Gateway Office |
 
 The market now spans all 28 defined districts with at least 2 live listings each. Inventory is grouped into `New Launch`, `Resale`, `Auction`, `Distressed`, `Off-Market`, and `Signature` channels so the browser feels more like a live market than a flat spreadsheet.
+
+### Simulation Naming & Data Disclaimer
+
+Property, development, tenant, and listing names are fictional. The simulator intentionally keeps real Singapore geography, district structure, MRT context, CPF-style mechanics, stamp duty concepts, and simplified affordability rules for educational realism, but it is not affiliated with HDB, URA, CPF Board, MAS, any developer, agency, or listing platform. Pricing, yields, floor plans, and scenarios are simplified game data, not investment advice or real listings.
 
 ### Portfolio Depth
 

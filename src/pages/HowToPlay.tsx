@@ -71,6 +71,13 @@ export default function HowToPlay() {
           </div>
         </GlassCard>
 
+        <GlassCard accentColor="#FFD740" className="mb-6">
+          <h2 className="section-title text-white mb-3">Realism Note</h2>
+          <p className="text-text-secondary text-sm leading-relaxed">
+            Property names, tenant names, listing copy, yields, and floor plans are fictional game data. The sim keeps real Singapore-style geography, policies, and affordability pressure for learning, but it is not affiliated with HDB, URA, CPF Board, MAS, developers, agencies, or listing platforms.
+          </p>
+        </GlassCard>
+
         <div className="flex flex-col sm:flex-row gap-3">
           <button onClick={() => navigate('/newgame')} className="btn-primary flex items-center justify-center gap-2">
             Start New Game
