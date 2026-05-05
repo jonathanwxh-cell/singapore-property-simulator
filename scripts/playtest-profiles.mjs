@@ -149,7 +149,8 @@ async function run() {
       residencyLabel: 'Singapore Citizen',
     });
     await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
-    await expectVisible(page, 'text=Single buyers under 35 need a family nucleus');
+    await expectVisible(page, 'text=Single buyers under 35 cannot use the solo HDB path yet');
+    await expectVisible(page, 'text=wait until 35');
 
     await startProfile(page, baseUrl, {
       name: 'Foreigner QA',
@@ -159,7 +160,7 @@ async function run() {
     await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Foreigners cannot buy HDB flats or executive condos');
     await page.goto(`${baseUrl}/#/property/condo-4`, { waitUntil: 'networkidle' });
-    await expectVisible(page, 'text=ABSD (Additional)');
+    await expectVisible(page, 'text=ABSD 60%');
 
     await startProfile(page, baseUrl, {
       name: 'PR QA',
@@ -169,7 +170,7 @@ async function run() {
     await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=SPR households cannot buy new HDB BTO flats');
     await page.goto(`${baseUrl}/#/property/condo-4`, { waitUntil: 'networkidle' });
-    await expectVisible(page, 'text=ABSD (Additional)');
+    await expectVisible(page, 'text=ABSD 5%');
 
     await browser.close();
     browser = null;
