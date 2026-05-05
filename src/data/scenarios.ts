@@ -12,6 +12,7 @@ export interface ScenarioOption {
   description: string;
   probability: number;
   cashImpact: number;
+  cpfOrdinaryImpact?: number;
   propertyValueImpact: number;
   creditImpact: number;
   salaryDeltaPct?: number;
@@ -43,7 +44,7 @@ export const scenarios: Scenario[] = [
     frequency: 'common',
     routeTags: ['first-home'],
     options: [
-      { label: 'Claim the grant', description: 'Take a first-home support package and build your buying power now', probability: 0.95, cashImpact: 40000, propertyValueImpact: 0, creditImpact: 5, followUpText: 'The grant gives you a meaningful boost toward your first purchase and improves lender confidence.' },
+      { label: 'Claim the grant', description: 'Take a first-home support package credited to CPF OA and build your buying power now', probability: 0.95, cashImpact: 0, cpfOrdinaryImpact: 40000, propertyValueImpact: 0, creditImpact: 5, followUpText: 'The grant is credited to CPF OA, boosting eligible first-home buying power without inflating spendable cash.' },
       { label: 'Build a buffer', description: 'Keep the support in cash so you can stay flexible', probability: 0.95, cashImpact: 25000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'You stayed patient and banked extra dry powder for a cleaner first deal.' },
       { label: 'Side-hustle for momentum', description: 'Take on short-term extra work to accelerate your deposit', probability: 0.85, cashImpact: 18000, propertyValueImpact: 0, creditImpact: 10, followUpText: 'The extra effort is paying off. Your finances look stronger heading into your first application.' },
     ],
@@ -446,8 +447,8 @@ export const scenarios: Scenario[] = [
     image: '/scenario-boom.jpg',
     frequency: 'rare',
     options: [
-      { label: 'Claim and Buy', description: 'Use the grant toward a new property purchase', probability: 0.85, cashImpact: -200000, propertyValueImpact: 15, creditImpact: 0, followUpText: 'The grant significantly reduced your purchase cost. Excellent timing!' },
-      { label: 'Claim and Save', description: 'Bank the grant for future opportunities', probability: 0.9, cashImpact: 80000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'Free money from the government! Added to your investment war chest.' },
+      { label: 'Claim and Buy', description: 'Use the CPF OA grant toward a new property purchase', probability: 0.85, cashImpact: -200000, cpfOrdinaryImpact: 80000, propertyValueImpact: 15, creditImpact: 0, followUpText: 'The grant was credited to CPF OA, reducing eligible purchase pressure while the deal still used real cash.' },
+      { label: 'Claim and Save', description: 'Keep the grant in CPF OA for future eligible housing use', probability: 0.9, cashImpact: 0, cpfOrdinaryImpact: 80000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'The grant landed in CPF OA instead of spendable cash, improving future housing affordability.' },
       { label: 'Upgrade Property', description: 'Use the grant for renovation works', probability: 0.8, cashImpact: -50000, propertyValueImpact: 15, creditImpact: 0, followUpText: 'The renovation transformed your property. Value increased significantly!' },
     ],
   },

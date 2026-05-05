@@ -6,6 +6,10 @@ export const CPF_TOTAL_CONTRIB_RATIO = 0.37;
 export const TDSR_LIMIT = 0.55;
 export const CREDIT_SCORE_FLOOR = 400;
 export const DEFAULT_MORTGAGE_TERM_YEARS = 30;
+export const HDB_CONCESSIONARY_LOAN_INTEREST = 2.6;
+export const HDB_CONCESSIONARY_LTV = 0.90;
+export const HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT = 10;
+export const HDB_RESALE_LEVY_ESTIMATE = 40_000;
 
 // Market dynamics
 export const PROPERTY_VALUE_VOL_FACTOR = 0.05;

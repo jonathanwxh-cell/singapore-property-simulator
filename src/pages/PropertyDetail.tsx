@@ -12,7 +12,7 @@ import { listingRarityInfo } from '@/data/listingChannels';
 import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
 import { getListingCatalog } from '@/engine/listings';
 import { selectAffordabilityReport, selectAvailableCash, selectMonthlyNetCashflow, selectPotentialHousingGrant, selectReservedCash } from '@/engine/selectors';
-import { TAKE_HOME_RATIO } from '@/engine/constants';
+import { HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT, TAKE_HOME_RATIO } from '@/engine/constants';
 import { getLtvCap } from '@/engine/ltv';
 import EligibilityBadge from '@/components/EligibilityBadge';
 import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
@@ -21,7 +21,7 @@ import { getRenovationTemplatesForType } from '@/data/renovations';
 import { repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
 import { getTenantLeaseOptions } from '@/engine/propertyOperations';
 import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
-import type { RentalMode, RentStrategy, TenantLeaseDecisionId, TenantProfileId } from '@/game/types';
+import type { MortgageFinancingMode, RentalMode, RentStrategy, TenantLeaseDecisionId, TenantProfileId } from '@/game/types';
 import {
   DetailItem,
   LeaseOptionButton,
@@ -38,7 +38,8 @@ export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { player, buyProperty, sellProperty, toggleRental, startRenovation, setTenantStrategy, applyTenantLeaseDecision, resolveMaintenanceIssue, setReservePlan } = useGameStore();
-  const [downPaymentPercent, setDownPaymentPercent] = useState(25);
+  const [downPaymentPercent, setDownPaymentPercent] = useState(HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT);
+  const [financingMode, setFinancingMode] = useState<MortgageFinancingMode>('hdb-concessionary');
   const [showSellConfirm, setShowSellConfirm] = useState(false);
   const [useCpfOrdinary, setUseCpfOrdinary] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -68,15 +69,19 @@ export default function PropertyDetail() {
   const typeInfo = propertyTypeInfo[property.type];
   const rarityInfo = listingRarityInfo[property.listingRarity];
   const activeHousingLoans = player.loans.filter(l => l.type === 'mortgage' && !l.isPaid).length;
-  const minDownPaymentPercent = Math.round((1 - getLtvCap(activeHousingLoans)) * 100);
+  const effectiveFinancingMode: MortgageFinancingMode = property.isHdb ? financingMode : 'bank';
+  const minDownPaymentPercent = effectiveFinancingMode === 'hdb-concessionary'
+    ? HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT
+    : Math.round((1 - getLtvCap(activeHousingLoans)) * 100);
   const effectiveDownPaymentPercent = Math.max(downPaymentPercent, minDownPaymentPercent);
   const downPayment = getDownPaymentAmount(property.price, effectiveDownPaymentPercent);
-  const validation = validatePurchase(player, property, downPayment);
+  const validation = validatePurchase(player, property, downPayment, effectiveFinancingMode);
   const dealReadiness = assessDealReadiness({
     player,
     property,
     downPaymentPercent: effectiveDownPaymentPercent,
     useCpfOrdinary,
+    financingMode: effectiveFinancingMode,
   });
   const cpfEligible = !property.type.startsWith('Commercial');
   const cpfApplied = dealReadiness.cpfApplied;
@@ -129,7 +134,7 @@ export default function PropertyDetail() {
       setActionError(`You need ${formatCurrency(cashShortfall)} more cash after CPF OA.`);
       return;
     }
-    const result = buyProperty(property.id, validation.downPayment, cpfApplied);
+    const result = buyProperty(property.id, validation.downPayment, cpfApplied, effectiveFinancingMode);
     if (result.ok) {
       setActionError(null);
       navigate('/portfolio');
@@ -403,7 +408,7 @@ export default function PropertyDetail() {
             <RuleGlossaryPanel
               title="Rule Cheatsheet"
               termIds={property.isHdb
-                ? ['hfe', 'mop', 'hdb-room-rental', 'cpf-oa', 'msr', 'tdsr', 'cov', 'cpf-refund']
+                ? ['hfe', 'hdb-loan', 'hdb-resale-levy', 'mop', 'hdb-room-rental', 'cpf-oa', 'msr', 'tdsr', 'cov', 'cpf-refund']
                 : property.type.startsWith('Commercial')
                   ? ['commercial-bsd', 'sora', 'reserve-cash', 'tdsr']
                   : ['absd', 'bsd', 'cpf-oa', 'tdsr', 'sora', 'reserve-cash']}
@@ -756,6 +761,49 @@ export default function PropertyDetail() {
                     <span className="font-mono text-white">{formatCurrency(property.psf)}</span>
                   </div>
 
+                  {property.isHdb && (
+                    <div className="rounded-xl border border-glass-border bg-white/[0.03] p-3">
+                      <p className="label-text mb-2 text-[10px] text-text-dim">Financing</p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFinancingMode('hdb-concessionary');
+                            setDownPaymentPercent(HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT);
+                            setActionError(null);
+                          }}
+                          className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                            effectiveFinancingMode === 'hdb-concessionary'
+                              ? 'border-success/40 bg-success/10 text-white'
+                              : 'border-glass-border bg-black/20 text-text-secondary hover:border-success/30'
+                          }`}
+                        >
+                          <span className="block font-rajdhani text-sm font-semibold">HDB loan</span>
+                          <span className="block text-[11px]">10% starter down, 2.6% fixed</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFinancingMode('bank');
+                            setDownPaymentPercent(Math.max(downPaymentPercent, Math.round((1 - getLtvCap(activeHousingLoans)) * 100)));
+                            setActionError(null);
+                          }}
+                          className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                            effectiveFinancingMode === 'bank'
+                              ? 'border-cyan-glow/40 bg-cyan-glow/10 text-white'
+                              : 'border-glass-border bg-black/20 text-text-secondary hover:border-cyan-glow/30'
+                          }`}
+                        >
+                          <span className="block font-rajdhani text-sm font-semibold">Bank loan</span>
+                          <span className="block text-[11px]">Market rate, stricter LTV cash</span>
+                        </button>
+                      </div>
+                      <p className="mt-2 text-[11px] leading-relaxed text-text-dim">
+                        Simplified game model: HDB concessionary financing makes the starter path playable, while MSR/TDSR still check monthly safety.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="slider-block">
                     <label className="label-text text-text-dim text-xs block mb-2">
                       Down Payment: {effectiveDownPaymentPercent}%
@@ -783,10 +831,21 @@ export default function PropertyDetail() {
                       <span className="font-mono text-cyan-glow">{formatCurrency(validation.downPayment)}</span>
                     </div>
                     {validation.mortgageAmount > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-text-secondary text-sm">Loan Amount</span>
-                        <span className="font-mono text-warning">{formatCurrency(validation.mortgageAmount)}</span>
-                      </div>
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-text-secondary text-sm">Loan Amount</span>
+                          <span className="font-mono text-warning">{formatCurrency(validation.mortgageAmount)}</span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-text-secondary text-sm">Loan Type</span>
+                          <span className="font-mono text-[11px] text-text-secondary">
+                            {validation.financingMode === 'hdb-concessionary' ? 'HDB 2.6% fixed' : `${formatPercent(validation.loanInterestRate, 1)} bank`}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {validation.mortgageAmount <= 0 && (
+                      <p className="mt-1 text-[11px] text-text-dim">All-cash deal: no mortgage, so TDSR/MSR loan checks do not apply.</p>
                     )}
                   </div>
 
@@ -816,8 +875,14 @@ export default function PropertyDetail() {
                     </div>
                     {validation.absd > 0 && (
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-text-secondary text-sm"><GlossaryTerm termId="absd">ABSD</GlossaryTerm> ({player.properties.length > 0 ? '2nd+' : 'Additional'})</span>
+                        <span className="text-text-secondary text-sm"><GlossaryTerm termId="absd">ABSD</GlossaryTerm> {formatPercent(validation.absdRate * 100)} ({player.properties.length > 0 ? '2nd+' : 'Additional'})</span>
                         <span className="font-mono text-danger">{formatCurrency(validation.absd)}</span>
+                      </div>
+                    )}
+                    {validation.hdbResaleLevy > 0 && (
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-text-secondary text-sm"><GlossaryTerm termId="hdb-resale-levy">HDB Resale Levy</GlossaryTerm></span>
+                        <span className="font-mono text-warning">{formatCurrency(validation.hdbResaleLevy)}</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between">

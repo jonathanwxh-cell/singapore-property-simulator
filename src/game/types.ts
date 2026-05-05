@@ -31,6 +31,7 @@ export type MaintenanceCategory = 'plumbing' | 'electrical' | 'aircon' | 'waterp
 export type MaintenanceSeverity = 'minor' | 'major' | 'urgent';
 export type MaintenanceStatus = 'open' | 'repaired' | 'deferred' | 'insured';
 export type TenantLeaseDecisionId = 'renew' | 'raise-rent' | 'reset-market' | 'end-lease';
+export type MortgageFinancingMode = 'bank' | 'hdb-concessionary';
 export type LifeActionId =
   | 'focus-at-work'
   | 'take-side-gig'
@@ -217,6 +218,8 @@ export interface OwnedProperty {
   openMaintenanceIssues?: MaintenanceIssue[];
   rentStrategy?: RentStrategy;
   floorPlanId?: string;
+  financingMode?: MortgageFinancingMode;
+  hdbResaleLevyPaid?: number;
 }
 
 export interface Loan {
@@ -230,6 +233,7 @@ export interface Loan {
   startDate: string;
   propertyId?: string;
   isPaid: boolean;
+  financingMode?: MortgageFinancingMode;
 }
 
 export interface MarketNewsItem {
@@ -319,6 +323,7 @@ export interface GameSettings {
   animationSpeed: 'slow' | 'normal' | 'fast';
   autoSave: boolean;
   difficulty: Difficulty;
+  compactMode: boolean;
 }
 
 export interface GameState {

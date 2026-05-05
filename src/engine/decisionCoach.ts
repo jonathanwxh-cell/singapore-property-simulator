@@ -12,6 +12,7 @@ import {
   selectMonthlyNetCashflow,
   selectPotentialHousingGrant,
 } from './selectors';
+import type { MortgageFinancingMode } from '@/game/types';
 
 export type CoachUrgency = 'critical' | 'warn' | 'good' | 'neutral';
 
@@ -35,6 +36,7 @@ export interface DealReadinessInput {
   property: Property;
   downPaymentPercent: number;
   useCpfOrdinary: boolean;
+  financingMode?: MortgageFinancingMode;
 }
 
 export interface DealReadiness {
@@ -155,11 +157,13 @@ export function getNextBestMoves({ player, currentScenario }: NextBestMoveInput)
 
   if (player.properties.length === 0) {
     const starter = properties.find((property) => property.id === 'hdb-bto-0') ?? [...properties].sort((a, b) => a.price - b.price)[0];
+    const financingMode = starter.isHdb ? 'hdb-concessionary' : 'bank';
     const readiness = assessDealReadiness({
       player,
       property: starter,
-      downPaymentPercent: 25,
+      downPaymentPercent: starter.isHdb ? 10 : 25,
       useCpfOrdinary: true,
+      financingMode,
     });
 
     moves.push({
@@ -205,9 +209,10 @@ export function assessDealReadiness({
   property,
   downPaymentPercent,
   useCpfOrdinary,
+  financingMode = 'bank',
 }: DealReadinessInput): DealReadiness {
   const downPayment = getDownPaymentAmount(property.price, downPaymentPercent);
-  const validation = validatePurchase(player, property, downPayment);
+  const validation = validatePurchase(player, property, downPayment, financingMode);
   const cpfEligible = isResidentialCategory(property.type);
   const cpfApplied = cpfEligible && useCpfOrdinary
     ? Math.floor(Math.min(player.cpfOrdinary, validation.totalUpfront))
@@ -267,20 +272,25 @@ export function assessDealReadiness({
       `Cash needed after CPF: ${formatCurrency(cashRequired)}`,
       `CPF OA applied: ${formatCurrency(cpfApplied)}`,
       `New mortgage payment: ${formatCurrency(validation.monthlyPayment)}/mo`,
+      validation.hdbResaleLevy > 0 ? `Estimated resale levy: ${formatCurrency(validation.hdbResaleLevy)}` : null,
+      validation.absd > 0 ? `ABSD rate: ${formatPercent(validation.absdRate * 100)}` : null,
+      validation.mortgageAmount <= 0 ? 'No new mortgage: TDSR/MSR loan checks do not apply.' : null,
       `TDSR after purchase: ${formatPercent(validation.tdsrRatio * 100, 1)}`,
-    ],
+    ].filter((fact): fact is string => Boolean(fact)),
     warnings,
   };
 }
 
 export function assessScenarioOption(player: Player, option: ScenarioOption): ScenarioOptionAssessment {
   const projectedCash = player.cash + option.cashImpact;
+  const cpfOrdinaryImpact = option.cpfOrdinaryImpact ?? 0;
   const facts = [
     `Cash ${formatSignedCurrency(option.cashImpact)}`,
+    cpfOrdinaryImpact !== 0 ? `CPF OA ${formatSignedCurrency(cpfOrdinaryImpact)}` : null,
     `Property value ${formatSignedPercent(option.propertyValueImpact)}`,
     `Credit ${option.creditImpact >= 0 ? '+' : ''}${option.creditImpact}`,
     `${Math.round(option.probability * 100)}% success chance`,
-  ];
+  ].filter((fact): fact is string => Boolean(fact));
 
   if (option.cashImpact < 0 && projectedCash < 0) {
     return {
@@ -292,11 +302,14 @@ export function assessScenarioOption(player: Player, option: ScenarioOption): Sc
     };
   }
 
-  if (option.cashImpact > 0 || option.propertyValueImpact > 0 || (option.salaryDeltaPct ?? 0) > 0) {
+  if (option.cashImpact > 0 || cpfOrdinaryImpact > 0 || option.propertyValueImpact > 0 || (option.salaryDeltaPct ?? 0) > 0) {
+    const upsideLabel = cpfOrdinaryImpact > 0 && option.cashImpact <= 0
+      ? `${formatSignedCurrency(cpfOrdinaryImpact)} CPF OA support`
+      : `${formatSignedCurrency(option.cashImpact)} cash potential`;
     return {
       canChoose: true,
       tone: 'upside',
-      summary: `${option.label}: ${formatSignedCurrency(option.cashImpact)} cash potential`,
+      summary: `${option.label}: ${upsideLabel}`,
       warning: option.probability < 0.75 ? 'Upside exists, but the outcome is not guaranteed.' : null,
       facts,
     };

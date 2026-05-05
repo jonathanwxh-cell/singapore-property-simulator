@@ -5,6 +5,7 @@ const renovationCategorySchema = z.enum(['kitchen', 'bathroom', 'flooring', 'sma
 const rentStrategySchema = z.enum(['conservative', 'market', 'aggressive']);
 const rentalModeSchema = z.enum(['room-rental', 'whole-unit', 'corporate-lease', 'student-shared', 'commercial-lease']);
 const tenantProfileSchema = z.enum(['local-family', 'expat-pmet', 'student-tenants', 'sme-commercial']);
+const mortgageFinancingModeSchema = z.enum(['bank', 'hdb-concessionary']);
 const runRouteSchema = z.enum([
   'bto-upgrader',
   'single-resale',
@@ -89,6 +90,8 @@ const ownedPropertySchema = z.object({
   openMaintenanceIssues: z.array(maintenanceIssueSchema).optional(),
   rentStrategy: rentStrategySchema.optional(),
   floorPlanId: z.string().optional(),
+  financingMode: mortgageFinancingModeSchema.optional(),
+  hdbResaleLevyPaid: z.number().optional(),
 });
 
 const loanSchema = z.object({
@@ -102,6 +105,7 @@ const loanSchema = z.object({
   startDate: z.string(),
   propertyId: z.string().optional(),
   isPaid: z.boolean(),
+  financingMode: mortgageFinancingModeSchema.optional(),
 });
 
 const playerSchema = z.object({
@@ -228,6 +232,7 @@ export const saveSchema = z.object({
     animationSpeed: z.enum(['slow', 'normal', 'fast']),
     autoSave: z.boolean(),
     difficulty: z.enum(['easy', 'normal', 'hard', 'tycoon']),
+    compactMode: z.boolean().optional(),
   }),
   isGameActive: z.boolean(),
   currentScenario: z.string().nullable(),

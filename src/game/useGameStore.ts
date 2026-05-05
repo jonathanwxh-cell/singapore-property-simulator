@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement, BuyerProfile, RunRouteId } from './types';
+import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement, BuyerProfile, MortgageFinancingMode, RunRouteId } from './types';
 import { createInitialLifeState, difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE, normalizeBuyerProfile } from './types';
 import { careers } from '@/data/careers';
 import { properties } from '@/data/properties';
@@ -177,6 +177,15 @@ function createInitialSettings(difficulty: Difficulty) {
     animationSpeed: 'normal' as const,
     autoSave: true,
     difficulty,
+    compactMode: false,
+  };
+}
+
+function withHydratedSettings(settings: GameState['settings']): GameState['settings'] {
+  return {
+    ...createInitialSettings(settings.difficulty),
+    ...settings,
+    compactMode: settings.compactMode ?? false,
   };
 }
 
@@ -204,10 +213,11 @@ interface GameStore extends GameState {
   newGame: (name: string, careerId: string, difficulty: Difficulty, buyerProfile?: Partial<BuyerProfile>, runRouteId?: RunRouteId) => void;
   loadGame: (state: GameState) => void;
   nextTurn: () => void;
+  advanceMonths: (months: number) => void;
   setPrimaryLifeAction: (actionId: LifeActionId | null) => void;
   setSecondaryLifeAction: (actionId: LifeActionId | null) => void;
   setLivingArrangement: (arrangement: LivingArrangement) => void;
-  buyProperty: (propertyId: string, downPayment: number, cpfOrdinaryUsed?: number) => ActionResult;
+  buyProperty: (propertyId: string, downPayment: number, cpfOrdinaryUsed?: number, financingMode?: MortgageFinancingMode) => ActionResult;
   sellProperty: (propertyIndex: number) => ActionResult;
   applyLoan: (amount: number, interestRate: number, termYears: number, type: 'mortgage' | 'renovation' | 'personal', propertyId?: string) => ActionResult;
   payLoan: (loanId: string, amount: number) => ActionResult;
@@ -257,6 +267,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...state,
       market: withHydratedMarket(state.market),
       player: finalizePlayer(state.player),
+      settings: withHydratedSettings(state.settings),
       isGameActive: true,
     });
   },
@@ -276,6 +287,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     };
     set(nextState);
     if (settings.autoSave) saveTurn(nextState);
+  },
+
+  advanceMonths: (months) => {
+    const turnsToAdvance = Math.max(0, Math.floor(months));
+    for (let i = 0; i < turnsToAdvance; i += 1) {
+      const state = get();
+      if (state.currentScenario || !state.isGameActive) return;
+      get().nextTurn();
+    }
   },
 
   setPrimaryLifeAction: (actionId) => {
@@ -321,8 +341,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }));
   },
 
-  buyProperty: (propertyId, downPayment, cpfOrdinaryUsed = 0) => {
-    const result = buyPropertyPure(get().player, propertyId, downPayment, cpfOrdinaryUsed);
+  buyProperty: (propertyId, downPayment, cpfOrdinaryUsed = 0, financingMode = 'bank') => {
+    const result = buyPropertyPure(get().player, propertyId, downPayment, cpfOrdinaryUsed, financingMode);
     if (result.ok) {
       set({ player: finalizePlayer(result.value.player) });
       const state = get();
@@ -470,6 +490,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       player: finalizePlayer({
         ...state.player,
         cash: state.player.cash + resolution.cashDelta,
+        cpfOrdinary: state.player.cpfOrdinary + resolution.cpfOrdinaryDelta,
         salary: Math.max(1000, Math.round(state.player.salary * (1 + resolution.salaryDeltaPct))),
         creditScore: Math.max(MIN_CREDIT_SCORE, Math.min(MAX_CREDIT_SCORE, state.player.creditScore + resolution.creditDelta)),
         careerGrowthModifier: round2(Math.max(0.5, state.player.careerGrowthModifier + resolution.careerGrowthModifierDelta)),

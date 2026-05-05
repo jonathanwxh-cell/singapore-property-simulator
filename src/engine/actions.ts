@@ -1,6 +1,6 @@
 import { properties, isResidentialCategory } from '@/data/properties';
-import type { Loan, OwnedProperty, Player } from '@/game/types';
-import { difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE } from '@/game/types';
+import type { Loan, MortgageFinancingMode, OwnedProperty, Player } from '@/game/types';
+import { MAX_CREDIT_SCORE, MIN_CREDIT_SCORE } from '@/game/types';
 import type { ActionResult } from './results';
 import { fail, ok } from './results';
 import {
@@ -27,6 +27,7 @@ import {
 
 export interface ScenarioResolution {
   cashDelta: number;
+  cpfOrdinaryDelta: number;
   creditDelta: number;
   propertyValueImpactPct: number;
   salaryDeltaPct: number;
@@ -59,6 +60,7 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
   if (success) {
     return {
       cashDelta: option.cashImpact,
+      cpfOrdinaryDelta: option.cpfOrdinaryImpact ?? 0,
       creditDelta: option.creditImpact,
       propertyValueImpactPct: option.propertyValueImpact,
       salaryDeltaPct: option.salaryDeltaPct ?? 0,
@@ -71,6 +73,7 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
   }
   return {
     cashDelta: Math.round(option.cashImpact * 0.5),
+    cpfOrdinaryDelta: Math.round((option.cpfOrdinaryImpact ?? 0) * 0.5),
     creditDelta: -10,
     propertyValueImpactPct: Math.round(option.propertyValueImpact * 0.5),
     salaryDeltaPct: 0,
@@ -87,11 +90,12 @@ export function buyPropertyPure(
   propertyId: string,
   downPayment: number,
   cpfOrdinaryUsed = 0,
+  financingMode: MortgageFinancingMode = 'bank',
 ): ActionResult<{ player: Player }> {
   const property = properties.find(p => p.id === propertyId);
   if (!property) return fail('property_not_found', 'Property not found.');
 
-  const validation = validatePurchase(player, property, downPayment);
+  const validation = validatePurchase(player, property, downPayment, financingMode);
   const cpfEligible = canUseCpfForProperty(propertyId);
   const allowedCpfUse = cpfEligible ? Math.floor(Math.min(validation.totalUpfront, player.cpfOrdinary)) : 0;
   const cpfToUse = Math.max(0, Math.floor(cpfOrdinaryUsed));
@@ -134,7 +138,6 @@ export function buyPropertyPure(
   }
 
   const loanAmount = validation.mortgageAmount;
-  const diff = difficultySettings[player.difficulty];
   const loanId = `loan_t${player.turnCount}_${player.loans.length}`;
   const monthlyRental = Math.round(property.price * property.rentalYield / 100 / 12);
   const owned: OwnedProperty = {
@@ -173,6 +176,8 @@ export function buyPropertyPure(
     completedRenovations: [],
     openMaintenanceIssues: [],
     rentStrategy: 'market',
+    financingMode: validation.financingMode,
+    hdbResaleLevyPaid: validation.hdbResaleLevy,
   };
 
   const newLoan: Loan | null = loanAmount > 0
@@ -181,12 +186,13 @@ export function buyPropertyPure(
         type: 'mortgage',
         principal: loanAmount,
         remainingBalance: loanAmount,
-        interestRate: diff.loanInterest,
+        interestRate: validation.loanInterestRate,
         monthlyPayment: validation.monthlyPayment,
         termYears: DEFAULT_MORTGAGE_TERM_YEARS,
         startDate: `${player.year}-${String(player.month).padStart(2, '0')}`,
         propertyId: property.id,
         isPaid: false,
+        financingMode: validation.financingMode,
       }
     : null;
 

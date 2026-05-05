@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Finance realism priority pass**: HDB concessionary starter-stage financing, CPF OA grant credits, MOP countdown with quiet-month blitzing, compact mode, explicit worst-case listing readouts, and HDB resale-levy explainers.
 - **Local profiles and phone transfer saves**: Save / Load now supports multiple player profiles, profile-scoped autosaves and slots, whole-profile export/import files, and copyable transfer bundles for moving runs across iPhone, Android, and desktop browsers.
 - **UX rescue pass**: Monthly Intent cards on the Home Command Center let players pick a cash, deal-hunting, recovery, or landlord-ops stance before advancing the month.
 - **First Owner Checklist**: owned property detail pages now surface MOP-safe room rental, reserve protection, and return-to-plan actions immediately after purchase.
@@ -41,6 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Landlord Ops 2.0**: lease renewal decisions, rent-push vacancy risk, reserve-gap milestones, richer maintenance events, and new landlord/repair visual cards.
 
 ### Changed
+- Housing grant scenarios now credit CPF OA instead of spendable cash, and scenario previews distinguish CPF OA support from cash windfalls.
+- Purchase math now exposes explicit ABSD rates, HDB resale-levy estimates, financing mode, and loan interest so property cards teach the blocker instead of hiding it in totals.
+- Single-under-35 HDB blockers now name practical alternate routes: private property, family nucleus, or waiting for the 35+ single-buyer resale path.
 - Property detail rule cheatsheets now show only terms relevant to the current property type, including commercial BSD for commercial assets instead of residential ABSD framing.
 - Decision Coach now prioritizes MOP-safe room-rental setup immediately after buying an owner-occupied HDB, before generic route or cash-grind goals.
 - New Game now treats the guided beginner run as the primary action, with the full setup wizard framed as customization.
@@ -66,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Portfolio and property-detail surfaces now expose lease pressure, repair exposure, reserve gaps, and tenant-satisfaction tradeoffs as explicit landlord decisions.
 
 ### Fixed
+- The Buy page hero action buttons now stay above the mobile bottom navigation after the finance-realism additions.
 - Mobile scenario dialogs now align from the top and scroll inside the overlay, preventing clipped choices on short iPhone and Android screens.
 - Mobile Dashboard and Life advance-month CTAs now stay in the content flow and clear the bottom navigation, including short Android-style viewports.
 - Mobile property purchase pages now keep the `Buy Property` CTA in-flow instead of pinning it over purchase math and deal explanations.

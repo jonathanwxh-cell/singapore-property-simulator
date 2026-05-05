@@ -163,7 +163,7 @@ function getBuyerProfileBlocker(propertyType: string, buyerProfile: BuyerProfile
   }
 
   if (isHdb && buyerProfile.householdProfile === 'single-under-35') {
-    return 'Single buyers under 35 need a family nucleus or a later-life single-buyer path before buying HDB in this simplified model.';
+    return 'Single buyers under 35 cannot use the solo HDB path yet. Alternatives: buy private, form an eligible family nucleus, or wait until 35 for the single-buyer resale route in this simplified model.';
   }
 
   if (isSubsidized && buyerProfile.householdProfile === 'foreigner-investor') {
