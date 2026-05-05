@@ -107,6 +107,8 @@ describe('eligibility', () => {
     });
 
     expect(under35.blockedReason).toContain('Single buyers under 35');
+    expect(under35.blockedReason).toContain('private');
+    expect(under35.blockedReason).toContain('wait until 35');
     expect(family.blockedReason).toBeNull();
   });
 

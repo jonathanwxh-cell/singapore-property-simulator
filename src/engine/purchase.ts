@@ -1,18 +1,21 @@
 import type { Property } from '@/data/properties';
 import { getPropertyCategory } from '@/data/properties';
-import { normalizeBuyerProfile, type Player } from '@/game/types';
+import { normalizeBuyerProfile, type MortgageFinancingMode, type Player } from '@/game/types';
 import { difficultySettings } from '@/game/types';
 import { formatCurrency, formatPercent, roundMoney } from '@/lib/format';
 import {
   CREDIT_SCORE_FLOOR,
   DEFAULT_MORTGAGE_TERM_YEARS,
+  HDB_CONCESSIONARY_LOAN_INTEREST,
+  HDB_CONCESSIONARY_LTV,
+  HDB_RESALE_LEVY_ESTIMATE,
   TDSR_LIMIT,
 } from './constants';
 import { calcMonthlyPayment, calcTDSR } from './finance';
 import { getLtvCap, checkMsr, maxBorrowable } from './ltv';
 import type { ActionFailReason } from './results';
 import { selectMonthlyExpenses } from './selectors';
-import { calculateABSDForProfile, calculateBSDForCategory } from './stampDuty';
+import { calculateABSDForProfile, calculateABSDRateForProfile, calculateBSDForCategory } from './stampDuty';
 
 export interface PurchaseValidationReason {
   code: ActionFailReason;
@@ -25,10 +28,14 @@ export interface PurchaseValidation {
   downPayment: number;
   bsd: number;
   absd: number;
+  absdRate: number;
+  hdbResaleLevy: number;
   totalUpfront: number;
   shortfall: number;
   mortgageAmount: number;
   monthlyPayment: number;
+  loanInterestRate: number;
+  financingMode: MortgageFinancingMode;
   maxLoan: number;
   ltvCap: number;
   ltvAllowed: boolean;
@@ -45,7 +52,12 @@ export function getDownPaymentAmount(price: number, downPaymentPercent: number):
   return roundMoney(price * (downPaymentPercent / 100));
 }
 
-export function validatePurchase(player: Player, property: Property, downPayment: number): PurchaseValidation {
+export function validatePurchase(
+  player: Player,
+  property: Property,
+  downPayment: number,
+  financingMode: MortgageFinancingMode = 'bank',
+): PurchaseValidation {
   const roundedDownPayment = roundMoney(downPayment);
   const propertyCount = player.properties.length;
   const isOwned = player.properties.some((ownedProperty) => ownedProperty.propertyId === property.id);
@@ -55,15 +67,27 @@ export function validatePurchase(player: Player, property: Property, downPayment
   const absd = propertyCategory === 'commercial'
     ? 0
     : roundMoney(calculateABSDForProfile(property.price, propertyCount, buyerProfile.residencyStatus));
-  const totalUpfront = roundMoney(roundedDownPayment + bsd + absd);
+  const absdRate = propertyCategory === 'commercial'
+    ? 0
+    : calculateABSDRateForProfile(propertyCount, buyerProfile.residencyStatus);
+  const hdbResaleLevy = calculateHdbResaleLevy(player, property);
+  const totalUpfront = roundMoney(roundedDownPayment + bsd + absd + hdbResaleLevy);
   const shortfall = Math.max(0, roundMoney(totalUpfront - player.cash));
   const mortgageAmount = Math.max(0, roundMoney(property.price - roundedDownPayment));
   const activeHousingLoans = player.loans.filter((loan) => loan.type === 'mortgage' && !loan.isPaid).length;
-  const ltvCap = getLtvCap(activeHousingLoans);
-  const maxLoan = maxBorrowable(property.price, activeHousingLoans);
+  const hdbConcessionaryAllowed = property.isHdb && activeHousingLoans === 0;
+  const ltvCap = financingMode === 'hdb-concessionary' && hdbConcessionaryAllowed
+    ? HDB_CONCESSIONARY_LTV
+    : getLtvCap(activeHousingLoans);
+  const maxLoan = financingMode === 'hdb-concessionary' && hdbConcessionaryAllowed
+    ? roundMoney(property.price * HDB_CONCESSIONARY_LTV)
+    : maxBorrowable(property.price, activeHousingLoans);
   const ltvAllowed = mortgageAmount <= maxLoan;
   const diff = difficultySettings[player.difficulty];
-  const monthlyPayment = calcMonthlyPayment(mortgageAmount, diff.loanInterest, DEFAULT_MORTGAGE_TERM_YEARS);
+  const loanInterestRate = financingMode === 'hdb-concessionary'
+    ? HDB_CONCESSIONARY_LOAN_INTEREST
+    : diff.loanInterest;
+  const monthlyPayment = calcMonthlyPayment(mortgageAmount, loanInterestRate, DEFAULT_MORTGAGE_TERM_YEARS);
   const tdsrRatio = mortgageAmount > 0 ? calcTDSR(selectMonthlyExpenses(player), monthlyPayment, player.salary) : 0;
   const tdsrAllowed = mortgageAmount <= 0 || tdsrRatio <= TDSR_LIMIT;
   const creditAllowed = mortgageAmount <= 0 || player.creditScore >= CREDIT_SCORE_FLOOR;
@@ -79,6 +103,13 @@ export function validatePurchase(player: Player, property: Property, downPayment
     reasons.push({
       code: 'already_owned',
       message: 'You already own this property.',
+    });
+  }
+
+  if (financingMode === 'hdb-concessionary' && !hdbConcessionaryAllowed) {
+    reasons.push({
+      code: 'financing_not_allowed',
+      message: 'HDB concessionary loan is only available for HDB listings without another active housing loan in this simplified model.',
     });
   }
 
@@ -132,10 +163,14 @@ export function validatePurchase(player: Player, property: Property, downPayment
     downPayment: roundedDownPayment,
     bsd,
     absd,
+    absdRate,
+    hdbResaleLevy,
     totalUpfront,
     shortfall,
     mortgageAmount,
     monthlyPayment,
+    loanInterestRate,
+    financingMode,
     maxLoan,
     ltvCap,
     ltvAllowed,
@@ -147,4 +182,10 @@ export function validatePurchase(player: Player, property: Property, downPayment
     isOwned,
     activeHousingLoans,
   };
+}
+
+export function calculateHdbResaleLevy(player: Player, property: Property): number {
+  if (property.type !== 'HDB BTO') return 0;
+  if (!player.firstHomePurchased) return 0;
+  return HDB_RESALE_LEVY_ESTIMATE;
 }

@@ -212,7 +212,7 @@ describe('assessScenarioOption', () => {
     expect(assessment.warning).toContain('overdraw');
   });
 
-  it('marks windfalls as upside so players can distinguish shocks from opportunities', () => {
+  it('marks CPF grant windfalls as upside without presenting them as spendable cash', () => {
     const firstHome = scenarios.find((scenario) => scenario.id === 'first-home-window');
     const grant = firstHome?.options.find((option) => option.label === 'Claim the grant');
     if (!grant) throw new Error('Expected first-home grant fixture.');
@@ -221,7 +221,8 @@ describe('assessScenarioOption', () => {
 
     expect(assessment.canChoose).toBe(true);
     expect(assessment.tone).toBe('upside');
-    expect(assessment.summary).toContain('+S$40,000');
+    expect(assessment.summary).toContain('CPF OA');
+    expect(assessment.facts).toContain('CPF OA +S$40,000');
   });
 });
 

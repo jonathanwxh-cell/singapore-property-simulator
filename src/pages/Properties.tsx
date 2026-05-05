@@ -25,7 +25,7 @@ const filterPresets: Array<{ id: FilterPreset; label: string; detail: string }> 
 
 export default function Properties() {
   const navigate = useNavigate();
-  const { player } = useGameStore();
+  const { player, settings, updateSettings } = useGameStore();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
@@ -53,8 +53,9 @@ export default function Properties() {
       readiness: assessDealReadiness({
         player,
         property,
-        downPaymentPercent: 25,
+        downPaymentPercent: property.isHdb ? 10 : 25,
         useCpfOrdinary: true,
+        financingMode: property.isHdb ? 'hdb-concessionary' : 'bank',
       }),
     }))
     .sort((a, b) => {
@@ -97,11 +98,26 @@ export default function Properties() {
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="page-title text-white">Buy Properties</h1>
-          <p className="text-text-secondary mt-1 font-rajdhani">
-            Start with the recommended deal, then open filters only when you want to browse like an expert.
-          </p>
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="page-title text-white">Buy Properties</h1>
+            {!settings.compactMode && (
+              <p className="text-text-secondary mt-1 font-rajdhani">
+                Start with the recommended deal, then open filters only when you want to browse like an expert.
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => updateSettings({ compactMode: !settings.compactMode })}
+            className={`self-start rounded-full border px-4 py-2 text-[10px] font-mono uppercase tracking-[0.18em] ${
+              settings.compactMode
+                ? 'border-success/35 bg-success/10 text-success'
+                : 'border-glass-border bg-white/[0.04] text-text-secondary'
+            }`}
+          >
+            {settings.compactMode ? 'Compact on' : 'Compact mode'}
+          </button>
         </div>
 
         {bestNextBuy && (
@@ -122,19 +138,21 @@ export default function Properties() {
                   </span>
                 </div>
                 <h2 className="section-title text-white text-2xl">{bestNextBuy.property.name}</h2>
-                <p className="text-text-secondary text-sm mt-2 max-w-3xl">{bestNextBuy.readiness.headline}</p>
-                <div className="grid sm:grid-cols-3 gap-3 mt-4">
-                  <HeroFact label="Price" value={formatCompactCurrency(bestNextBuy.property.price)} />
-                  <HeroFact label="Cash Needed" value={formatCompactCurrency(bestNextBuy.readiness.cashRequired)} />
-                  <HeroFact label="Yield" value={`${bestNextBuy.property.rentalYield}%`} />
-                </div>
-                <div className="flex flex-wrap gap-2 mt-5">
+                {!settings.compactMode && (
+                  <p className="text-text-secondary text-sm mt-2 max-w-3xl">{bestNextBuy.readiness.headline}</p>
+                )}
+                <div className="flex flex-wrap gap-2 mt-4">
                   <button onClick={() => navigate(`/property/${bestNextBuy.property.id}`)} className="btn-primary px-4 py-3 text-sm">
                     Review Deal
                   </button>
                   <button onClick={() => handlePresetChange('starter')} className="btn-secondary px-4 py-3 text-sm">
                     Starter List
                   </button>
+                </div>
+                <div className="grid sm:grid-cols-3 gap-3 mt-4">
+                  <HeroFact label="Price" value={formatCompactCurrency(bestNextBuy.property.price)} />
+                  <HeroFact label="Cash Needed" value={formatCompactCurrency(bestNextBuy.readiness.cashRequired)} />
+                  <HeroFact label="Yield" value={`${bestNextBuy.property.rentalYield}%`} />
                 </div>
               </div>
             </div>
@@ -287,10 +305,12 @@ export default function Properties() {
             const readiness = assessDealReadiness({
               player,
               property,
-              downPaymentPercent: 25,
+              downPaymentPercent: property.isHdb ? 10 : 25,
               useCpfOrdinary: true,
+              financingMode: property.isHdb ? 'hdb-concessionary' : 'bank',
             });
             const signal = dynamicSignals.find((entry) => entry.propertyId === property.id);
+            const worstCase = getWorstCaseReadout(property);
             return (
               <GlassCard
                 key={property.id}
@@ -328,9 +348,11 @@ export default function Properties() {
                   <MapPin size={12} />
                   <span>D{district?.id} {district?.name} ({district?.region})</span>
                 </div>
-                <p className="text-text-dim text-[11px] mb-2 line-clamp-2">
-                  {property.strategyTag} | {property.districtTheme}
-                </p>
+                {!settings.compactMode && (
+                  <p className="text-text-dim text-[11px] mb-2 line-clamp-2">
+                    {property.strategyTag} | {property.districtTheme}
+                  </p>
+                )}
 
                 <div className="flex items-center gap-4 text-text-dim text-xs mb-3">
                   <span className="flex items-center gap-1"><Bed size={12} /> {property.bedrooms || '-'}</span>
@@ -379,14 +401,22 @@ export default function Properties() {
                     </span>
                     <span className="font-mono text-[10px] text-white">{formatCompactCurrency(readiness.cashRequired)} cash</span>
                   </div>
-                  <p className="text-text-secondary text-[11px] mt-1 line-clamp-1">
-                    {readiness.verdict === 'ready'
-                      ? 'Ready with current CPF and cash.'
-                      : readiness.verdict === 'stretch'
-                        ? 'Buyable, but monthly buffer is thin.'
-                        : readiness.primaryBlocker?.message ?? 'Improve readiness before buying.'}
-                  </p>
+                  {!settings.compactMode && (
+                    <p className="text-text-secondary text-[11px] mt-1 line-clamp-1">
+                      {readiness.verdict === 'ready'
+                        ? 'Ready with current CPF and cash.'
+                        : readiness.verdict === 'stretch'
+                          ? 'Buyable, but monthly buffer is thin.'
+                          : readiness.primaryBlocker?.message ?? 'Improve readiness before buying.'}
+                    </p>
+                  )}
                 </div>
+                {!settings.compactMode && (
+                  <div className="mt-2 rounded-lg border border-warning/20 bg-warning/10 px-3 py-2">
+                    <p className="label-text text-[9px] text-warning">Worst case</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{worstCase}</p>
+                  </div>
+                )}
               </GlassCard>
             );
           })}
@@ -420,4 +450,17 @@ function MarketFact({ label, value, detail }: { label: string; value: string; de
       <p className="text-text-secondary text-xs mt-1">{detail}</p>
     </div>
   );
+}
+
+function getWorstCaseReadout(property: ReturnType<typeof getListingCatalog>[number]): string {
+  if (property.isHdb) {
+    return 'MOP locks exits and whole-unit rental; budget for room-rental setup, repairs, and a slower upgrade path.';
+  }
+  if (property.type.startsWith('Commercial')) {
+    return 'Vacancy and fit-out costs can wipe out yield; keep reserves before chasing headline rent.';
+  }
+  if (property.type.startsWith('Landed')) {
+    return 'Large repairs plus rate shocks can overwhelm cashflow if you stretch the loan.';
+  }
+  return 'Rate hikes, ABSD, and vacancy can turn a thin-buffer condo into negative monthly cashflow.';
 }

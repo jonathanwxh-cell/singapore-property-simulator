@@ -89,6 +89,22 @@ export const ruleGlossaryEntries: RuleGlossaryEntry[] = [
     example: 'A couple-family route should check first-home readiness before assuming a BTO or resale flat is available.',
   },
   {
+    id: 'hdb-loan',
+    label: 'HDB Loan',
+    summary: 'Concessionary financing',
+    detail: 'A simplified HDB concessionary path in the game: lower starter down payment and a 2.6% fixed-rate mortgage for eligible HDB listings.',
+    whyItMatters: 'It makes the first-home route feel different from private bank financing while still keeping MSR and TDSR safety checks in play.',
+    example: 'A starter BTO may work with 10% down under the HDB loan toggle, but fail if you switch back to bank financing.',
+  },
+  {
+    id: 'hdb-resale-levy',
+    label: 'Resale Levy',
+    summary: 'Second subsidised HDB cost',
+    detail: 'A simplified estimate of the levy that can apply when moving from one subsidised HDB path into another subsidised flat.',
+    whyItMatters: 'It stops repeat subsidised purchases from feeling like free resets and teaches players to budget for policy friction.',
+    example: 'After selling a first subsidised BTO, a later BTO may show an estimated resale levy in upfront costs.',
+  },
+  {
     id: 'cov',
     label: 'COV',
     summary: 'Cash Over Valuation',

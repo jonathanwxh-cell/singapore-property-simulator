@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { applyLoanPure, buyPropertyPure, payLoanPure, renovatePropertyPure, sellPropertyPure } from '../actions';
+import { properties } from '@/data/properties';
+import {
+  applyLoanPure,
+  buyPropertyPure,
+  payLoanPure,
+  renovatePropertyPure,
+  resolveScenarioOption,
+  sellPropertyPure,
+} from '../actions';
 import { createInitialLifeState, type Player } from '@/game/types';
+import { validatePurchase } from '../purchase';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -75,6 +84,25 @@ describe('buyPropertyPure', () => {
     expect(result.value.player.properties[0].vacancyMonths).toBe(0);
     expect(result.value.player.properties[0].maintenanceCost).toBeGreaterThan(0);
     expect(result.value.player.properties[0].propertyTax).toBeGreaterThan(0);
+  });
+
+  it('supports an HDB concessionary loan path with 10% down and 2.6% interest', () => {
+    const player = makePlayer({ cash: 80_000, salary: 5_500 });
+    const result = buyPropertyPure(player, 'hdb-bto-0', 26_500, 0, 'hdb-concessionary');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.player.properties[0].financingMode).toBe('hdb-concessionary');
+    expect(result.value.player.loans[0].principal).toBe(238_500);
+    expect(result.value.player.loans[0].interestRate).toBe(2.6);
+    expect(result.value.player.loans[0].financingMode).toBe('hdb-concessionary');
+  });
+
+  it('still rejects a bank-financed HDB purchase that tries to use only 10% down', () => {
+    const result = buyPropertyPure(makePlayer({ cash: 200_000, salary: 5_500 }), 'hdb-bto-0', 26_500);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toBe('ltv_exceeded');
   });
 
   it('uses CPF OA for eligible residential upfront costs', () => {
@@ -426,5 +454,65 @@ describe('buyPropertyPure stamp duty + LTV + MSR', () => {
     const result = buyPropertyPure(player, 'hdb-bto-1', 50_000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('ltv_exceeded');
+  });
+});
+
+describe('validatePurchase Singapore policy surfaces', () => {
+  it('estimates resale levy on a second subsidized HDB purchase after first-home history', () => {
+    const property = properties.find((candidate) => candidate.id === 'hdb-bto-1');
+    if (!property) throw new Error('Expected HDB BTO fixture.');
+
+    const validation = validatePurchase(
+      makePlayer({ firstHomePurchased: true, cash: 200_000, salary: 6_500 }),
+      property,
+      38_000,
+      'hdb-concessionary',
+    );
+
+    expect(validation.hdbResaleLevy).toBe(40_000);
+    expect(validation.totalUpfront).toBe(84_000);
+  });
+
+  it('exposes the ABSD rate so second-property cards can show the explicit 20% charge', () => {
+    const property = properties.find((candidate) => candidate.id === 'condo-10');
+    if (!property) throw new Error('Expected condo fixture.');
+
+    const validation = validatePurchase(
+      makePlayer({
+        cash: 2_000_000,
+        properties: [{
+          propertyId: 'hdb-bto-0',
+          purchasePrice: 265_000,
+          purchaseDate: '2024-01',
+          currentValue: 265_000,
+          isRented: false,
+          monthlyRental: 1_300,
+          renovationLevel: 0,
+        }],
+      }),
+      property,
+      500_000,
+    );
+
+    expect(validation.absdRate).toBe(0.2);
+  });
+});
+
+describe('resolveScenarioOption', () => {
+  it('credits housing grants to CPF OA instead of spendable cash', () => {
+    const resolution = resolveScenarioOption({
+      label: 'Claim grant',
+      description: 'First-home support is credited to CPF OA.',
+      probability: 1,
+      cashImpact: 0,
+      cpfOrdinaryImpact: 40_000,
+      propertyValueImpact: 0,
+      creditImpact: 5,
+      followUpText: 'Grant credited to CPF OA.',
+    }, { next: () => 0 } as never);
+
+    expect(resolution.success).toBe(true);
+    expect(resolution.cashDelta).toBe(0);
+    expect(resolution.cpfOrdinaryDelta).toBe(40_000);
   });
 });

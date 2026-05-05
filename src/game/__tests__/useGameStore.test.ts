@@ -56,6 +56,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
       animationSpeed: 'normal',
       autoSave: false,
       difficulty: 'normal',
+      compactMode: false,
     },
     isGameActive: true,
     currentScenario: null,
@@ -90,6 +91,14 @@ describe('useGameStore', () => {
       trainingTrackId: null,
       trainingMonthsRemaining: 0,
     });
+  });
+
+  it('supports compact mode as a saved frictionless-play setting', () => {
+    expect(useGameStore.getState().settings.compactMode).toBe(false);
+
+    useGameStore.getState().updateSettings({ compactMode: true });
+
+    expect(useGameStore.getState().settings.compactMode).toBe(true);
   });
 
   it('stores monthly life actions in player state', () => {
@@ -419,5 +428,51 @@ describe('useGameStore', () => {
     expect(player.careerGrowthModifier).toBeCloseTo(1.2);
     expect(player.careerRiskModifier).toBeCloseTo(1.08);
     expect(player.careerVolatilityModifier).toBeCloseTo(0.04);
+  });
+
+  it('applies scenario CPF OA deltas separately from spendable cash', () => {
+    resetStore({
+      player: makePlayer({ cash: 100_000, cpfOrdinary: 20_000 }),
+    });
+
+    const resolution = useGameStore.getState().resolveScenario({
+      label: 'Claim grant',
+      description: 'First-home support is credited to CPF OA.',
+      probability: 1,
+      cashImpact: 0,
+      cpfOrdinaryImpact: 40_000,
+      propertyValueImpact: 0,
+      creditImpact: 0,
+      followUpText: 'Grant credited to CPF OA.',
+    });
+
+    expect(resolution.success).toBe(true);
+    const player = useGameStore.getState().player;
+    expect(player.cash).toBe(100_000);
+    expect(player.cpfOrdinary).toBe(60_000);
+  });
+
+  it('blitz-advances multiple quiet months for low-friction MOP waiting', () => {
+    resetStore({
+      player: makePlayer({
+        properties: [{
+          propertyId: 'hdb-bto-0',
+          purchasePrice: 265_000,
+          purchaseDate: '2024-01',
+          currentValue: 265_000,
+          isRented: false,
+          monthlyRental: 1_300,
+          renovationLevel: 0,
+          occupancyStatus: 'owner-occupied',
+          mopRemainingMonths: 60,
+        }],
+      }),
+    });
+
+    useGameStore.getState().advanceMonths(3);
+
+    const player = useGameStore.getState().player;
+    expect(player.turnCount).toBe(3);
+    expect(player.properties[0].mopRemainingMonths).toBe(57);
   });
 });

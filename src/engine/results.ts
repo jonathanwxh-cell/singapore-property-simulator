@@ -13,6 +13,7 @@ export type ActionFailReason =
   | 'cpf_not_allowed'
   | 'cpf_exceeded'
   | 'eligibility_blocked'
+  | 'financing_not_allowed'
   | 'renovation_active'
   | 'renovation_completed'
   | 'renovation_not_found'

@@ -47,6 +47,7 @@ import {
   BatteryCharging,
   BookOpen,
   Building2,
+  FastForward,
   Flame,
   House,
   Newspaper,
@@ -57,7 +58,17 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { player, market, isGameActive, currentScenario, setPrimaryLifeAction, setSecondaryLifeAction } = useGameStore();
+  const {
+    player,
+    market,
+    settings,
+    isGameActive,
+    currentScenario,
+    setPrimaryLifeAction,
+    setSecondaryLifeAction,
+    advanceMonths,
+    updateSettings,
+  } = useGameStore();
   const navigate = useNavigate();
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -93,6 +104,12 @@ export default function Dashboard() {
   const monthlyIntents = getMonthlyIntentOptions(player);
   const firstHomeMissions = getFirstHomeMissions(player);
   const hasPropertyAttention = openIssues.length > 0 || activeRenovations.length > 0 || Boolean(weakTenant);
+  const mopHolding = player.properties
+    .map((holding) => ({
+      holding,
+      listing: properties.find((property) => property.id === holding.propertyId),
+    }))
+    .find(({ listing, holding }) => Boolean(listing?.isHdb && (holding.mopRemainingMonths ?? 0) > 0));
 
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
@@ -141,8 +158,25 @@ export default function Dashboard() {
         </motion.div>
 
         <motion.div variants={itemVariants} className="mb-6">
-          <MonthlyIntentPanel intents={monthlyIntents} onSelect={handleSelectIntent} />
+          <MonthlyIntentPanel
+            intents={monthlyIntents}
+            compactMode={settings.compactMode}
+            onSelect={handleSelectIntent}
+            onToggleCompact={() => updateSettings({ compactMode: !settings.compactMode })}
+          />
         </motion.div>
+
+        {mopHolding && (
+          <motion.div variants={itemVariants} className="mb-6">
+            <MopCountdownPanel
+              propertyName={mopHolding.listing?.name ?? 'HDB flat'}
+              monthsRemaining={mopHolding.holding.mopRemainingMonths ?? 0}
+              onOpenProperty={() => navigate(`/property/${mopHolding.holding.propertyId}`)}
+              onPlanLife={() => navigate('/life')}
+              onBlitz={() => advanceMonths(3)}
+            />
+          </motion.div>
+        )}
 
         {player.properties.length > 0 && hasPropertyAttention && (
           <motion.div variants={itemVariants} className="mb-6">
@@ -346,10 +380,14 @@ export default function Dashboard() {
 
 function MonthlyIntentPanel({
   intents,
+  compactMode,
   onSelect,
+  onToggleCompact,
 }: {
   intents: MonthlyIntentOption[];
+  compactMode: boolean;
   onSelect: (intent: MonthlyIntentOption) => void;
+  onToggleCompact: () => void;
 }) {
   return (
     <GlassCard accentColor="#00F0FF">
@@ -361,9 +399,22 @@ function MonthlyIntentPanel({
             Pick a stance before advancing. This keeps the sim from becoming autopilot while still setting life actions for you.
           </p>
         </div>
-        <span className="rounded-full border border-cyan-glow/25 bg-cyan-glow/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-cyan-glow">
-          1 click plan
-        </span>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onToggleCompact}
+            className={`rounded-full border px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] ${
+              compactMode
+                ? 'border-success/35 bg-success/10 text-success'
+                : 'border-cyan-glow/25 bg-cyan-glow/10 text-cyan-glow'
+            }`}
+          >
+            {compactMode ? 'Compact on' : 'Compact off'}
+          </button>
+          <span className="rounded-full border border-cyan-glow/25 bg-cyan-glow/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-cyan-glow">
+            1 click plan
+          </span>
+        </div>
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {intents.map((intent) => (
@@ -386,17 +437,21 @@ function MonthlyIntentPanel({
               <span className="text-[10px] text-text-dim">Use plan</span>
             </div>
             <p className="font-rajdhani text-lg font-semibold text-white">{intent.label}</p>
-            <p className="mt-2 text-xs leading-relaxed text-text-secondary">{intent.detail}</p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <div className="rounded-lg bg-white/5 p-2">
-                <p className="label-text text-[9px] text-success">Upside</p>
-                <p className="mt-1 text-[11px] text-text-secondary">{intent.upside}</p>
-              </div>
-              <div className="rounded-lg bg-white/5 p-2">
-                <p className="label-text text-[9px] text-warning">Tradeoff</p>
-                <p className="mt-1 text-[11px] text-text-secondary">{intent.risk}</p>
-              </div>
-            </div>
+            {!compactMode && (
+              <>
+                <p className="mt-2 text-xs leading-relaxed text-text-secondary">{intent.detail}</p>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-white/5 p-2">
+                    <p className="label-text text-[9px] text-success">Upside</p>
+                    <p className="mt-1 text-[11px] text-text-secondary">{intent.upside}</p>
+                  </div>
+                  <div className="rounded-lg bg-white/5 p-2">
+                    <p className="label-text text-[9px] text-warning">Tradeoff</p>
+                    <p className="mt-1 text-[11px] text-text-secondary">{intent.risk}</p>
+                  </div>
+                </div>
+              </>
+            )}
           </button>
         ))}
       </div>
@@ -425,6 +480,54 @@ function ActionTile({
       <p className="font-rajdhani text-lg font-semibold text-white">{title}</p>
       <p className="mt-1 text-xs text-text-secondary">{detail}</p>
     </button>
+  );
+}
+
+function MopCountdownPanel({
+  propertyName,
+  monthsRemaining,
+  onOpenProperty,
+  onPlanLife,
+  onBlitz,
+}: {
+  propertyName: string;
+  monthsRemaining: number;
+  onOpenProperty: () => void;
+  onPlanLife: () => void;
+  onBlitz: () => void;
+}) {
+  const elapsedMonths = Math.max(0, 60 - monthsRemaining);
+  const progressPct = Math.min(100, Math.round((elapsedMonths / 60) * 100));
+
+  return (
+    <GlassCard accentColor="#FFD740">
+      <div className="grid gap-4 lg:grid-cols-[1fr,auto] lg:items-center">
+        <div>
+          <p className="label-text mb-1 text-[10px] text-warning">MOP Countdown</p>
+          <h3 className="section-title text-white">{propertyName}: {monthsRemaining} months left</h3>
+          <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+            The HDB path should not feel like dead time. Use room rental, life-income moves, or blitz quiet months until the next decision point appears.
+          </p>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-warning" style={{ width: `${progressPct}%` }} />
+          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[32rem]">
+          <button type="button" onClick={onOpenProperty} className="btn-primary py-3 text-sm">
+            Start Room Rental
+          </button>
+          <button type="button" onClick={onPlanLife} className="btn-secondary py-3 text-sm">
+            Plan Side Income
+          </button>
+          <button type="button" onClick={onBlitz} className="btn-secondary py-3 text-sm">
+            <span className="inline-flex items-center justify-center gap-2">
+              <FastForward size={15} />
+              Blitz 3 Months
+            </span>
+          </button>
+        </div>
+      </div>
+    </GlassCard>
   );
 }
 
