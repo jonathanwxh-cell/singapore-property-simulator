@@ -151,6 +151,9 @@ export default function TitleScreen() {
           <p className="mx-auto mt-3 max-w-md text-[11px] leading-relaxed text-text-dim/80">
             Fictional property names and prices for learning. Real Singapore districts, MRT context, and policy-inspired rules are simplified for gameplay.
           </p>
+          <p className="mx-auto mt-2 max-w-md text-[11px] leading-relaxed text-cyan-glow/80">
+            New to ABSD, CPF, HDB, or MOP? No prior property knowledge needed.
+          </p>
         </div>
 
         {/* Main Menu */}
@@ -188,6 +191,11 @@ export default function TitleScreen() {
               label="How to Play"
               variant="secondary"
               onClick={() => handleTransition('/how-to-play')}
+            />
+            <MenuButton
+              label="Learn the Rules"
+              variant="secondary"
+              onClick={() => handleTransition('/learn')}
             />
             <MenuButton
               label="Quit"

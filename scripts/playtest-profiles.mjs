@@ -81,7 +81,7 @@ async function startProfile(page, baseUrl, {
   await expectVisible(page, 'text=Enter Your Name');
   await page.getByPlaceholder('Enter your name...').fill(name);
   await delay(150);
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /^Next$/ }).click();
   await expectVisible(page, 'text=Choose Your Career');
   await page.getByRole('button', { name: /^Next$/ }).click();
   await expectVisible(page, 'text=Choose Buyer Profile');
@@ -104,6 +104,7 @@ async function startProfile(page, baseUrl, {
   await page.getByRole('button', { name: /^Next$/ }).click();
   await expectVisible(page, 'text=Select Difficulty');
   await page.getByRole('button', { name: /Start Game/i }).click();
+  await expectVisible(page, 'text=Home Command Center');
   await expectVisible(page, 'text=Life Arc');
   await expectVisible(page, 'text=First-Home Mission Rail');
 }

@@ -75,7 +75,7 @@ async function startDefaultGame(page, baseUrl) {
   await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'New Game' }).click();
   await page.getByPlaceholder('Enter your name...').fill('Scroll QA');
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /^Next$/ }).click();
   await expectVisible(page, 'text=Choose Your Career');
   await page.getByRole('button', { name: /^Next$/ }).click();
   await expectVisible(page, 'text=Choose Buyer Profile');
@@ -84,6 +84,7 @@ async function startDefaultGame(page, baseUrl) {
   await page.getByRole('button', { name: /^Next$/ }).click();
   await expectVisible(page, 'text=Select Difficulty');
   await page.getByRole('button', { name: /Start Game/i }).click();
+  await expectVisible(page, 'text=Home Command Center');
   await expectVisible(page, 'text=Life Arc');
   await expectVisible(page, 'text=First-Home Mission Rail');
 }
@@ -112,8 +113,8 @@ async function run() {
       throw new Error(`Setup failed: expected the property page to scroll deeply, got ${scrolledBeforeNavigation}.`);
     }
 
-    await page.getByRole('button', { name: /^Market$/ }).click();
-    await expectVisible(page, 'text=Market News Feed');
+    await page.getByRole('button', { name: /^Learn$/ }).click();
+    await expectVisible(page, 'text=Learn Singapore Property Without Prereqs');
     await delay(100);
     const afterNavigation = await main.evaluate((element) => element.scrollTop);
     if (afterNavigation !== 0) {

@@ -141,6 +141,38 @@ describe('assessDealReadiness', () => {
     expect(readiness.ctaLabel).toContain('TDSR');
     expect(readiness.primaryBlocker?.code).toBe('tdsr_exceeded');
   });
+
+  it('treats ownership eligibility blockers as blocked deals', () => {
+    const property = properties.find((candidate) => candidate.id === 'hdb-resale-0');
+    if (!property) throw new Error('Expected resale property fixture.');
+
+    const readiness = assessDealReadiness({
+      player: makePlayer({
+        cash: 500_000,
+        cpfOrdinary: 100_000,
+        firstHomePurchased: true,
+        properties: [{
+          propertyId: 'hdb-bto-0',
+          purchasePrice: 265_000,
+          purchaseDate: '2024-01',
+          currentValue: 265_000,
+          isRented: false,
+          monthlyRental: 1_300,
+          renovationLevel: 0,
+          occupancyStatus: 'owner-occupied',
+          mopRemainingMonths: 60,
+        }],
+      }),
+      property,
+      downPaymentPercent: 55,
+      useCpfOrdinary: true,
+    });
+
+    expect(readiness.verdict).toBe('blocked');
+    expect(readiness.primaryBlocker?.code).toBe('mop_restricted');
+    expect(readiness.headline).toContain('MOP');
+    expect(readiness.ctaLabel).toBe('Blocked: MOP');
+  });
 });
 
 describe('assessScenarioOption', () => {

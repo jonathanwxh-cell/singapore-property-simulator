@@ -2,6 +2,7 @@ import { useGameStore } from '@/game/useGameStore';
 import { districts } from '@/data/districts';
 import { achievements } from '@/data/achievements';
 import GlassCard from '@/components/GlassCard';
+import ProgressivePanel from '@/components/ProgressivePanel';
 import { Building2, TrendingUp, Award, Target, Home, DollarSign, ShieldAlert, FileClock } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
 import RunArcPanel from '@/components/RunArcPanel';
@@ -25,13 +26,58 @@ export default function Portfolio() {
   const landlordOps = getLandlordOpsSummary(player);
   const activeRenovations = player.properties.filter((property) => property.activeRenovation).length;
   const showOperationsArc = player.runRouteId === 'heartland-landlord' || player.runRouteId === 'commercial-operator';
+  const portfolioRisk = landlordOps.openIssueCount > 0
+    ? `${landlordOps.openIssueCount} repair issue(s)`
+    : landlordOps.expiringLeaseCount > 0
+      ? `${landlordOps.expiringLeaseCount} lease decision(s)`
+      : landlordOps.unprotectedRisk > 0
+        ? `${formatCurrency(landlordOps.unprotectedRisk)} reserve gap`
+        : 'No urgent ops risk';
+  const portfolioAction = landlordOps.openIssueCount > 0 || landlordOps.expiringLeaseCount > 0
+    ? 'Review property operations before the next month.'
+    : player.properties.length === 0
+      ? 'Buy your first property to unlock landlord operations.'
+      : 'Portfolio is stable. Consider upgrades, reserves, or the next acquisition.';
 
   const unlockedAchievements = achievements.filter(a => player.achievements.includes(a.id));
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4 game-screen">
       <div className="max-w-6xl mx-auto">
-        <h1 className="page-title text-white mb-6">Portfolio</h1>
+        <div className="mb-6">
+          <h1 className="page-title text-white">Own Portfolio</h1>
+          <p className="text-text-secondary mt-1 font-rajdhani">
+            Attention first, then deeper landlord operations, achievements, and long-term holdings.
+          </p>
+        </div>
+
+        <GlassCard accentColor={landlordOps.openIssueCount > 0 ? '#FF1744' : landlordOps.expiringLeaseCount > 0 ? '#FFD740' : '#00E676'} className="mb-6">
+          <div className="grid gap-4 lg:grid-cols-[1fr,220px]">
+            <div>
+              <p className="label-text text-text-dim text-[10px] mb-1">Portfolio Health</p>
+              <h2 className="section-title text-white">
+                {player.properties.length === 0
+                  ? 'No owned property yet'
+                  : landlordOps.openIssueCount > 0
+                    ? 'Repairs need attention'
+                    : landlordOps.expiringLeaseCount > 0
+                      ? 'Lease decision coming up'
+                      : 'Holdings are stable'}
+              </h2>
+              <p className="text-text-secondary text-sm mt-2 max-w-3xl">{portfolioAction}</p>
+            </div>
+            <div className="rounded-2xl border border-glass-border bg-black/20 p-4">
+              <p className="label-text text-text-dim text-[10px]">Main Risk</p>
+              <p className={`font-mono text-lg mt-1 ${portfolioRisk === 'No urgent ops risk' ? 'text-success' : 'text-warning'}`}>{portfolioRisk}</p>
+              <button
+                onClick={() => player.properties[0] ? navigate(`/property/${player.properties[0].propertyId}`) : navigate('/properties')}
+                className="btn-secondary w-full text-xs py-2 mt-4"
+              >
+                {player.properties.length === 0 ? 'Find First Buy' : 'Manage Holding'}
+              </button>
+            </div>
+          </div>
+        </GlassCard>
 
         <div className="grid md:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
           <GlassCard accentColor="#00E676">
@@ -229,32 +275,38 @@ export default function Portfolio() {
           </div>
         )}
 
-        <h2 className="section-title text-white mb-4">Achievements</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {achievements.map((a) => {
-            const unlocked = player.achievements.includes(a.id);
-            return (
-              <GlassCard key={a.id} className={unlocked ? 'border-purple-glow/30' : 'opacity-50'} accentColor={unlocked ? '#7C4DFF' : undefined}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${unlocked ? 'bg-purple-glow/20' : 'bg-white/5'}`}>
-                    <Award size={16} className={unlocked ? 'text-purple-glow' : 'text-text-dim'} />
+        <ProgressivePanel
+          title="Achievements"
+          eyebrow="Long-term goals"
+          summary={`${unlockedAchievements.length}/${achievements.length} unlocked. Kept here so portfolio management stays attention-first.`}
+          accentColor="#7C4DFF"
+        >
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {achievements.map((a) => {
+              const unlocked = player.achievements.includes(a.id);
+              return (
+                <GlassCard key={a.id} className={unlocked ? 'border-purple-glow/30' : 'opacity-50'} accentColor={unlocked ? '#7C4DFF' : undefined}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${unlocked ? 'bg-purple-glow/20' : 'bg-white/5'}`}>
+                      <Award size={16} className={unlocked ? 'text-purple-glow' : 'text-text-dim'} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`font-rajdhani font-semibold text-sm truncate ${unlocked ? 'text-white' : 'text-text-dim'}`}>
+                        {a.name}
+                      </h4>
+                      <p className="text-text-dim text-[10px] truncate">{a.description}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-mono text-[10px]" style={{ color: unlocked ? '#FFD700' : '#4A5568' }}>
+                        {a.points}pts
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className={`font-rajdhani font-semibold text-sm truncate ${unlocked ? 'text-white' : 'text-text-dim'}`}>
-                      {a.name}
-                    </h4>
-                    <p className="text-text-dim text-[10px] truncate">{a.description}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-mono text-[10px]" style={{ color: unlocked ? '#FFD700' : '#4A5568' }}>
-                      {a.points}pts
-                    </p>
-                  </div>
-                </div>
-              </GlassCard>
-            );
-          })}
-        </div>
+                </GlassCard>
+              );
+            })}
+          </div>
+        </ProgressivePanel>
       </div>
     </div>
   );

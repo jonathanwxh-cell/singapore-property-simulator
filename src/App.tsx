@@ -15,6 +15,7 @@ const Life = lazy(() => import('@/pages/Life'));
 const Properties = lazy(() => import('@/pages/Properties'));
 const PropertyDetail = lazy(() => import('@/pages/PropertyDetail'));
 const Market = lazy(() => import('@/pages/Market'));
+const Learn = lazy(() => import('@/pages/Learn'));
 const Portfolio = lazy(() => import('@/pages/Portfolio'));
 const Bank = lazy(() => import('@/pages/Bank'));
 const Scenarios = lazy(() => import('@/pages/Scenarios'));
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="/properties" element={<Properties />} />
             <Route path="/property/:id" element={<PropertyDetail />} />
             <Route path="/market" element={<Market />} />
+            <Route path="/learn" element={<Learn />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/bank" element={<Bank />} />
             <Route path="/scenarios" element={<Scenarios />} />

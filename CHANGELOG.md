@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Learning Layer 1.0**: a dedicated Learn hub, casual-player prerequisite framing, richer Singapore rule glossary entries, and inline glossary chips for ABSD, BSD, CPF OA, MOP, MSR, and TDSR.
+- **Guided Command Center UX**: a tested monthly objective helper, `This Month` dashboard hero, persistent desktop/mobile `Next Month` CTA, grouped Home/Life/Buy/Own/Learn navigation, and progressive-detail panels that keep advanced systems available without overwhelming first-time players.
 - **Run Director life arcs**: route-based new-game choices, dashboard Life Arc milestones, route-aware Decision Coach guidance, scenario weighting, portfolio route ribbons, and game-over replay recaps.
 - `npm run test:scroll` browser regression test covering route-change scroll reset after navigating from long pages.
 - **Singapore profile playability phase**: new-game buyer profiles for Singapore Citizens, PRs, foreigners, family/single/foreign-investor paths, and profile-aware first-home mission guidance.
@@ -33,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Landlord Ops 2.0**: lease renewal decisions, rent-push vacancy risk, reserve-gap milestones, richer maintenance events, and new landlord/repair visual cards.
 
 ### Changed
+- The `Learn` navigation item now opens a beginner-friendly education hub instead of sending players to the market page.
+- Dashboard, Buy, Own, and Life pages now lead with one modern-game-style decision surface before exposing detailed finance, market, landlord, and rule systems.
 - Public property listing names are now fully fictional/composite while retaining real Singapore district, town, MRT, and policy context separately.
 - Purchase eligibility and ABSD now follow the selected buyer profile instead of always assuming a Singapore Citizen.
 - HDB ownership now presents as owner-occupied by default, with MOP-safe room-rental language separated from whole-flat rental.
@@ -52,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Portfolio and property-detail surfaces now expose lease pressure, repair exposure, reserve gaps, and tenant-satisfaction tradeoffs as explicit landlord decisions.
 
 ### Fixed
+- First residential purchases now become owner-occupied by default, while MOP-active public-housing homes block second residential buys with clear MOP-specific copy.
 - Game-layout route changes now reset the scroll position so switching tabs/pages starts at the top instead of retaining the previous page's scroll depth.
 - Blocked the legacy whole-flat rental shortcut for HDB flats still inside MOP, while keeping the explicit room-rental tenant strategy available.
 - HDB room-rental leases now stay owner-occupied across monthly advancement instead of drifting into generic tenanted status.

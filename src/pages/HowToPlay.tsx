@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Building2, Compass, Landmark, Sparkles, TrendingUp } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Building2, Compass, Landmark, Sparkles, TrendingUp } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
+import GlossaryTerm from '@/components/GlossaryTerm';
 
 const sections = [
   {
@@ -51,6 +52,25 @@ export default function HowToPlay() {
           </p>
         </div>
 
+        <GlassCard accentColor="#FFD740" className="mb-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-warning/10 border border-warning/30 flex items-center justify-center">
+                  <BookOpen size={18} className="text-warning" />
+                </div>
+                <h2 className="section-title text-white">Who This Game Is For</h2>
+              </div>
+              <p className="text-text-secondary text-sm leading-relaxed max-w-2xl">
+                No prior property knowledge is required. The game is built for casual tycoon players, Singapore property beginners, and curious players who want CPF/HDB-style realism explained as playable choices.
+              </p>
+            </div>
+            <button onClick={() => navigate('/learn')} className="btn-secondary shrink-0">
+              Open Learn Hub
+            </button>
+          </div>
+        </GlassCard>
+
         <div className="grid md:grid-cols-2 gap-4 mb-6">
           {sections.map(({ title, icon: Icon, body }) => (
             <GlassCard key={title}>
@@ -70,10 +90,17 @@ export default function HowToPlay() {
           <div className="space-y-2 text-sm text-text-secondary">
             <p>1. Start a new run and choose a career that matches your appetite for growth versus stability.</p>
             <p>2. Watch for the early first-home scenario and decide whether to boost cash, grants, or credit strength.</p>
-            <p>3. Browse the cheapest HDB and entry-level listings first. Use CPF OA where it is allowed to reduce cash strain.</p>
+            <p>3. Browse the cheapest HDB and entry-level listings first. Use <GlossaryTerm termId="cpf-oa" /> where it is allowed to reduce cash strain.</p>
             <p>4. Check the monthly market headline before buying. Rising rates can punish leverage, while supply squeezes can reward patience.</p>
             <p>5. Once you own property, manage rent, loans, and timing rather than mindlessly advancing turns.</p>
           </div>
+        </GlassCard>
+
+        <GlassCard accentColor="#00F0FF" className="mb-6">
+          <h2 className="section-title text-white mb-3">Terms You Will See Early</h2>
+          <p className="text-text-secondary text-sm leading-relaxed">
+            Singapore property rules have acronyms, but you can treat them like game mechanics. <GlossaryTerm termId="absd" /> and <GlossaryTerm termId="bsd" /> affect upfront cash. <GlossaryTerm termId="mop" /> affects what you can do after buying. <GlossaryTerm termId="tdsr" /> and <GlossaryTerm termId="msr" /> explain why banks may reject an over-stretched deal.
+          </p>
         </GlassCard>
 
         <GlassCard accentColor="#FFD740" className="mb-6">
@@ -90,6 +117,9 @@ export default function HowToPlay() {
           </button>
           <button onClick={() => navigate('/leaderboard')} className="btn-secondary">
             View Leaderboard
+          </button>
+          <button onClick={() => navigate('/learn')} className="btn-secondary">
+            Learn the Rules
           </button>
         </div>
       </div>

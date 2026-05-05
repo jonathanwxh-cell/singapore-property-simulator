@@ -1,20 +1,31 @@
-import { useGameStore } from '@/game/useGameStore';
-import { properties } from '@/data/properties';
-import SceneImage from '@/components/SceneImage';
-import { lifeActions, lifeActionsById } from '@/data/lifeActions';
-import GlassCard from '@/components/GlassCard';
-import { motion } from 'framer-motion';
-import { Wallet, TrendingUp, Building2, ArrowRight, Newspaper, BatteryCharging, Flame, House, Compass } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { selectAvailableCash, selectNetWorth, selectMonthlyNetCashflow, selectMonthlyTakeHome, selectMonthlyRentalIncome, selectMonthlyExpenses, selectMonthlyHouseholdLoad, selectReservedCash } from '@/engine/selectors';
-import { TAKE_HOME_RATIO } from '@/engine/constants';
-import { deriveEligibilityFlags, EC_MAX_MONTHLY_INCOME } from '@/engine/eligibility';
-import EligibilityBadge from '@/components/EligibilityBadge';
-import { getNextBestMoves } from '@/engine/decisionCoach';
-import { getFirstHomeMissions } from '@/engine/firstHomeMissions';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import CommandCenterHero from '@/components/CommandCenterHero';
+import GlassCard from '@/components/GlassCard';
+import ProgressivePanel from '@/components/ProgressivePanel';
 import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
 import RunArcPanel from '@/components/RunArcPanel';
+import SceneImage from '@/components/SceneImage';
+import { properties } from '@/data/properties';
+import { lifeActions, lifeActionsById } from '@/data/lifeActions';
+import { TAKE_HOME_RATIO } from '@/engine/constants';
+import { getCommandCenterState } from '@/engine/commandCenter';
+import { getNextBestMoves } from '@/engine/decisionCoach';
+import { deriveEligibilityFlags, EC_MAX_MONTHLY_INCOME } from '@/engine/eligibility';
+import { getFirstHomeMissions } from '@/engine/firstHomeMissions';
+import {
+  selectAvailableCash,
+  selectMonthlyExpenses,
+  selectMonthlyHouseholdLoad,
+  selectMonthlyNetCashflow,
+  selectMonthlyRentalIncome,
+  selectMonthlyTakeHome,
+  selectNetWorth,
+  selectReservedCash,
+} from '@/engine/selectors';
+import { useGameStore } from '@/game/useGameStore';
+import EligibilityBadge from '@/components/EligibilityBadge';
 import {
   AttentionCard,
   CareerMetric,
@@ -30,9 +41,22 @@ import {
   formatSignedCurrency,
   formatSignedPercent,
 } from './dashboard/dashboardFormatters';
+import {
+  Banknote,
+  BatteryCharging,
+  BookOpen,
+  Building2,
+  Flame,
+  House,
+  Newspaper,
+  PieChart,
+  ShoppingBag,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react';
 
 export default function Dashboard() {
-  const { player, nextTurn, market, isGameActive, currentScenario } = useGameStore();
+  const { player, market, isGameActive, currentScenario } = useGameStore();
   const navigate = useNavigate();
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -44,6 +68,7 @@ export default function Dashboard() {
   const monthlyDebt = selectMonthlyExpenses(player);
   const monthlyHouseholdLoad = selectMonthlyHouseholdLoad(player);
   const monthlyNetCashflow = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
+  const commandState = getCommandCenterState(player, currentScenario);
   const selectedPrimaryAction = lifeActions.find((action) => action.id === (player.life.selectedPrimaryActionId ?? 'focus-at-work'))
     ?? lifeActionsById['focus-at-work'];
   const selectedSecondaryAction = player.life.selectedSecondaryActionId
@@ -65,6 +90,7 @@ export default function Dashboard() {
   const latestOperation = player.operationHistory?.[0] ?? null;
   const nextBestMoves = getNextBestMoves({ player, currentScenario });
   const firstHomeMissions = getFirstHomeMissions(player);
+  const hasPropertyAttention = openIssues.length > 0 || activeRenovations.length > 0 || Boolean(weakTenant);
 
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
@@ -75,13 +101,19 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
-      <motion.div variants={containerVariants} initial="hidden" animate="show" className="max-w-6xl mx-auto">
-        <motion.div variants={itemVariants} className="mb-6">
-          <h1 className="page-title text-white">Welcome, {player.name}</h1>
-          <p className="text-text-secondary mt-1 font-rajdhani">{monthNames[player.month - 1]} {player.year} | Turn {player.turnCount} | Age {player.age}</p>
+      <motion.div variants={containerVariants} initial="hidden" animate="show" className="mx-auto max-w-6xl">
+        <motion.div variants={itemVariants} className="mb-5 pt-1">
+          <h1 className="page-title text-white">Home Command Center</h1>
+          <p className="mt-1 font-rajdhani text-text-secondary">
+            {monthNames[player.month - 1]} {player.year} | Turn {player.turnCount} | Age {player.age} | Welcome, {player.name}
+          </p>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <motion.div variants={itemVariants}>
+          <CommandCenterHero state={commandState} onNavigate={navigate} />
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
             icon={Wallet}
             label="Available Cash"
@@ -94,182 +126,119 @@ export default function Dashboard() {
           <StatCard icon={Newspaper} label="Market Index" value={`${market.priceIndex.toFixed(1)}`} color="#FF9100" change={marketChange} />
         </motion.div>
 
-        <motion.div variants={itemVariants} className="mb-6">
-          <GlassCard accentColor={market.lastEvent === 'crash' ? '#FF1744' : market.lastEvent === 'boom' ? '#00E676' : '#00F0FF'}>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="section-title text-white mb-1">Market Pulse</h3>
-                <p className="text-white font-medium">{market.lastHeadline ?? 'The market is waiting for a catalyst.'}</p>
-                <p className="text-text-secondary text-sm mt-2 max-w-3xl">{market.lastSummary ?? 'Advance a turn to generate the next headline.'}</p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className={`font-mono text-lg ${marketChange.startsWith('-') ? 'text-danger' : marketChange.startsWith('+') ? 'text-success' : 'text-text-secondary'}`}>
-                  {marketChange}
-                </p>
-                <p className="text-text-dim text-xs">price index this month</p>
-              </div>
-            </div>
-          </GlassCard>
+        <motion.div variants={itemVariants} className="mb-6 grid gap-3 md:grid-cols-4">
+          <ActionTile icon={Banknote} title="Earn" detail="Life actions, side gigs, schemes" onClick={() => navigate('/life')} />
+          <ActionTile icon={ShoppingBag} title="Buy" detail="Best next listing and filters" onClick={() => navigate('/properties')} />
+          <ActionTile icon={PieChart} title="Own" detail="Tenants, repairs, upgrades" onClick={() => navigate('/portfolio')} />
+          <ActionTile icon={BookOpen} title="Learn" detail="Market, bank, rules, saves" onClick={() => navigate('/market')} />
         </motion.div>
 
-        <motion.div variants={itemVariants} className="mb-6">
-          <RunArcPanel player={player} onOpenRoute={(route) => navigate(route)} />
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="mb-6">
-          <GlassCard accentColor="#00E676">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <p className="label-text text-text-dim text-[10px] mb-1">Decision Coach</p>
-                <h3 className="section-title text-white">Next Best Move</h3>
-                <p className="text-text-secondary text-sm mt-1">A plain-English queue for what to handle before the next month rolls.</p>
-              </div>
-              <Compass size={24} className="text-success shrink-0" />
-            </div>
-            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3">
-              {nextBestMoves.map((move) => (
-                <DecisionMoveCard key={move.id} move={move} onOpen={() => navigate(move.route)} />
-              ))}
-            </div>
-          </GlassCard>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="mb-6">
-          <GlassCard accentColor="#2979FF">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <p className="label-text text-text-dim text-[10px] mb-1">First-Home Mission Rail</p>
-                <h3 className="section-title text-white">Make The Next Step Obvious</h3>
-                <p className="text-text-secondary text-sm mt-1">A Singapore-specific starter path so new players know how to earn, prepare, buy, and operate without reading the whole ruleset first.</p>
-              </div>
-              <button onClick={() => navigate('/properties')} className="btn-secondary text-xs px-3 py-2 shrink-0">Starter Homes</button>
-            </div>
-            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3">
-              {firstHomeMissions.map((mission) => (
-                <FirstHomeMissionCard key={mission.id} mission={mission} onOpen={() => navigate(mission.route)} />
-              ))}
-            </div>
-          </GlassCard>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="grid xl:grid-cols-[1.3fr,0.9fr] gap-4 mb-6">
-          <GlassCard accentColor="#FFD740">
-            <div className="grid gap-4 md:grid-cols-[220px,1fr]">
-              <img
-                src="/career-review-key-art.png"
-                alt="Career Review"
-                className="h-44 w-full rounded-xl object-cover opacity-90"
-              />
-              <div>
-                <h3 className="section-title text-white mb-2">Career Review</h3>
-                {latestCareerReview ? (
-                  <>
-                    <p className="text-white font-medium">{formatCareerOutcome(latestCareerReview.outcome)}</p>
-                    <p className="text-text-secondary text-sm mt-1">
-                      Your latest annual review has already rolled into salary and buying power. Use the next few turns to decide whether to press or protect that momentum.
-                    </p>
-                    <div className="grid sm:grid-cols-3 gap-3 mt-4">
-                      <CareerMetric label="Salary Delta" value={formatSignedCurrency(latestCareerReview.salaryDelta)} tone={latestCareerReview.salaryDelta >= 0 ? 'good' : 'blocked'} />
-                      <CareerMetric label="Bonus" value={latestCareerReview.bonus > 0 ? `S$${latestCareerReview.bonus.toLocaleString()}` : 'None'} tone={latestCareerReview.bonus > 0 ? 'good' : 'warn'} />
-                      <CareerMetric label="Review Count" value={String(player.careerProgressionProfile.reviewCount)} tone="warn" />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-white font-medium">First annual review pending</p>
-                    <p className="text-text-secondary text-sm mt-1">
-                      Your first formal review arrives on turn 12. After that, salary growth, setbacks, and job-switch choices become part of the housing climb.
-                    </p>
-                  </>
-                )}
-                <p className="text-text-dim text-xs mt-4">
-                  Next job-switch window in <span className="font-mono text-white">{nextJobSwitchIn}</span> turns.
-                </p>
-              </div>
-            </div>
-          </GlassCard>
-
-          <GlassCard accentColor="#FF9100">
-            <h3 className="section-title text-white mb-2">Eligibility Summary</h3>
-            <div className="flex flex-wrap gap-2">
-              {eligibilityFlags.firstTimer && <EligibilityBadge label="First-Timer" tone="good" />}
-              {eligibilityFlags.homeowner && <EligibilityBadge label="Homeowner" tone="warn" />}
-              {eligibilityFlags.upgrader && <EligibilityBadge label="Upgrader" tone="warn" />}
-              {eligibilityFlags.ecEligible && <EligibilityBadge label="EC Eligible" tone="good" />}
-              {!eligibilityFlags.ecEligible && player.salary > EC_MAX_MONTHLY_INCOME && (
-                <EligibilityBadge label="EC Ceiling Exceeded" tone="blocked" />
-              )}
-              {player.ownedPrivateHome && <EligibilityBadge label="Private-Home Owner" tone="warn" />}
-            </div>
-            <div className="space-y-2 mt-4 text-sm">
-              <p className="text-text-secondary">
-                Buyer profile: <span className="font-mono text-white">{formatBuyerProfile(player.buyerProfile)}</span>
-              </p>
-              <p className="text-text-secondary">
-                Monthly salary: <span className="font-mono text-white">S${player.salary.toLocaleString()}</span>
-              </p>
-              <p className="text-text-secondary">
-                EC ceiling: <span className="font-mono text-white">S${EC_MAX_MONTHLY_INCOME.toLocaleString()}</span>
-              </p>
-              <p className="text-text-secondary">
-                {eligibilityFlags.firstTimer
-                  ? 'You are still on your first-home rung, so HDB and early support listings should feel the cleanest to pursue.'
-                  : eligibilityFlags.homeowner
-                    ? 'You have crossed into the upgrader stage. Private condos and larger moves should start feeling more intentional now.'
-                    : 'You have first-home history but no current residential holding, which keeps the run flexible for a reset or bigger next move.'}
-              </p>
-            </div>
-          </GlassCard>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="mb-6">
-          <RuleGlossaryPanel termIds={['absd', 'cpf-oa', 'mop', 'hdb-room-rental', 'msr', 'tdsr', 'reserve-cash']} />
-        </motion.div>
-
-        {player.properties.length > 0 && (
+        {player.properties.length > 0 && hasPropertyAttention && (
           <motion.div variants={itemVariants} className="mb-6">
-            <GlassCard accentColor={openIssues.length > 0 ? '#FF1744' : activeRenovations.length > 0 ? '#FFD740' : '#00E676'}>
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <p className="label-text text-text-dim text-[10px] mb-1">This Month Needs Attention</p>
-                  <h3 className="section-title text-white">Property Operations</h3>
-                </div>
-                <button onClick={() => navigate('/portfolio')} className="btn-secondary text-xs px-3 py-2">Open Portfolio</button>
-              </div>
-              <div className="grid md:grid-cols-4 gap-3">
-                <AttentionCard
-                  label="Repairs"
-                  value={openIssues.length > 0 ? `${openIssues.length} open` : 'Clear'}
-                  detail={openIssues[0] ? `${openIssues[0].category} issue: S$${openIssues[0].estimatedCost.toLocaleString()}` : 'No urgent maintenance on the board.'}
-                  tone={openIssues.length > 0 ? 'bad' : 'good'}
-                />
-                <AttentionCard
-                  label="Upgrades"
-                  value={activeRenovations.length > 0 ? `${activeRenovations.length} active` : 'Ready'}
-                  detail={activeRenovations[0]?.activeRenovation ? `${activeRenovations[0].activeRenovation.label}: ${activeRenovations[0].activeRenovation.remainingMonths} mo left` : 'Pick an upgrade on an owned property detail page.'}
-                  tone={activeRenovations.length > 0 ? 'warn' : 'neutral'}
-                />
-                <AttentionCard
-                  label="Tenants"
-                  value={weakTenant?.tenant ? `${weakTenant.tenant.satisfaction}/100` : 'Stable'}
-                  detail={weakTenant?.tenant ? 'Tenant happiness is slipping. Consider repairs or a defensive rent strategy.' : 'No low-satisfaction leases flagged.'}
-                  tone={weakTenant?.tenant ? 'bad' : 'good'}
-                />
-                <AttentionCard
-                  label="Reserve"
-                  value={`S$${(player.reserve?.allocatedCash ?? 0).toLocaleString()}`}
-                  detail={latestOperation ? latestOperation.title : 'Set aside runway before maintenance bites.'}
-                  tone={(player.reserve?.allocatedCash ?? 0) > 0 ? 'good' : 'warn'}
-                />
-              </div>
-            </GlassCard>
+            <PropertyOperationsPanel
+              openIssues={openIssues}
+              activeRenovations={activeRenovations}
+              weakTenant={weakTenant}
+              latestOperationTitle={latestOperation?.title}
+              reserveCash={player.reserve?.allocatedCash ?? 0}
+              onOpenPortfolio={() => navigate('/portfolio')}
+            />
           </motion.div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="mb-6 grid gap-4 xl:grid-cols-[1.3fr,0.9fr]">
           <motion.div variants={itemVariants}>
-            <GlassCard>
-              <h3 className="section-title text-white mb-4">Monthly Cashflow</h3>
+            <CareerReviewPanel
+              latestCareerReview={latestCareerReview}
+              nextJobSwitchIn={nextJobSwitchIn}
+            />
+          </motion.div>
+          <motion.div variants={itemVariants}>
+            <EligibilitySummaryPanel
+              eligibilityFlags={eligibilityFlags}
+              player={player}
+            />
+          </motion.div>
+        </div>
+
+        <div className="space-y-4">
+          <motion.div variants={itemVariants}>
+            <ProgressivePanel
+              title="Decision Coach"
+              eyebrow="Optional depth"
+              summary="The full next-best-move queue is still here when you want a more tactical read."
+              accentColor="#00E676"
+              defaultOpen={commandState.panelDefaults.coach === 'open'}
+            >
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {nextBestMoves.map((move) => (
+                  <DecisionMoveCard key={move.id} move={move} onOpen={() => navigate(move.route)} />
+                ))}
+              </div>
+            </ProgressivePanel>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <ProgressivePanel
+              title="First-Home Mission Rail"
+              eyebrow="Guided path"
+              summary="Starter missions are grouped here so beginners get help without four more cards shouting at them immediately."
+              accentColor="#2979FF"
+              defaultOpen={commandState.panelDefaults.firstHome === 'open'}
+            >
+              <div className="mb-4 flex justify-end">
+                <button onClick={() => navigate('/properties')} className="btn-secondary px-3 py-2 text-xs">Starter Homes</button>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {firstHomeMissions.map((mission) => (
+                  <FirstHomeMissionCard key={mission.id} mission={mission} onOpen={() => navigate(mission.route)} />
+                ))}
+              </div>
+            </ProgressivePanel>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <ProgressivePanel
+              title="Market Pulse"
+              eyebrow="World state"
+              summary={market.lastHeadline ?? 'The market is waiting for a catalyst.'}
+              accentColor={market.lastEvent === 'crash' ? '#FF1744' : market.lastEvent === 'boom' ? '#00E676' : '#00F0FF'}
+              defaultOpen={commandState.panelDefaults.market === 'open'}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-medium text-white">{market.lastHeadline ?? 'The market is waiting for a catalyst.'}</p>
+                  <p className="mt-2 max-w-3xl text-sm text-text-secondary">{market.lastSummary ?? 'Advance a turn to generate the next headline.'}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className={`font-mono text-lg ${marketChange.startsWith('-') ? 'text-danger' : marketChange.startsWith('+') ? 'text-success' : 'text-text-secondary'}`}>
+                    {marketChange}
+                  </p>
+                  <p className="text-xs text-text-dim">price index this month</p>
+                </div>
+              </div>
+            </ProgressivePanel>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <ProgressivePanel
+              title="Life Arc"
+              eyebrow="Route progress"
+              summary="Your long-term route is available here, but the command center now turns it into one current objective first."
+              accentColor="#FFD740"
+              defaultOpen={commandState.panelDefaults.route === 'open'}
+            >
+              <RunArcPanel player={player} onOpenRoute={(route) => navigate(route)} />
+            </ProgressivePanel>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <ProgressivePanel
+              title="Monthly Cashflow"
+              eyebrow="Finance detail"
+              summary={`${monthlyNetCashflow >= 0 ? 'Surplus' : 'Burn'}: S$${Math.abs(monthlyNetCashflow).toLocaleString()}/mo after life, loans, and property costs.`}
+              defaultOpen={commandState.panelDefaults.cashflow === 'open'}
+            >
               <div className="space-y-3">
                 <CashflowRow label="Salary (after CPF)" value={monthlyTakeHome} type="income" />
                 <CashflowRow label="Rental Income" value={monthlyRental} type="income" />
@@ -279,76 +248,84 @@ export default function Dashboard() {
                 <div className="border-t border-divider" />
                 <CashflowRow label="Net Cashflow" value={monthlyNetCashflow} type={monthlyNetCashflow >= 0 ? 'income' : 'expense'} isTotal />
               </div>
-            </GlassCard>
+            </ProgressivePanel>
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <GlassCard>
-              <h3 className="section-title text-white mb-4">Portfolio</h3>
+            <ProgressivePanel
+              title="Rules Glossary"
+              eyebrow="Learn"
+              summary="CPF, ABSD, MOP, MSR, TDSR, reserves, and room rental explained only when you need the rulebook."
+              defaultOpen={commandState.panelDefaults.rules === 'open'}
+            >
+              <RuleGlossaryPanel termIds={['absd', 'cpf-oa', 'mop', 'hdb-room-rental', 'msr', 'tdsr', 'reserve-cash']} />
+            </ProgressivePanel>
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="grid gap-4 lg:grid-cols-2">
+            <ProgressivePanel
+              title="Mini Portfolio"
+              eyebrow="Own"
+              summary={player.properties.length === 0 ? 'No properties yet. The Own tab wakes up after your first purchase.' : `${player.properties.length} holding(s) in the run.`}
+              defaultOpen={commandState.panelDefaults.portfolio === 'open'}
+            >
               {player.properties.length === 0 ? (
-                <div className="text-center py-6"><Building2 size={32} className="text-text-dim mx-auto mb-2" /><p className="text-text-secondary text-sm">No properties yet. Visit the Properties page to start investing!</p></div>
+                <div className="py-6 text-center">
+                  <Building2 size={32} className="mx-auto mb-2 text-text-dim" />
+                  <p className="text-sm text-text-secondary">No properties yet. Visit Buy to start investing.</p>
+                </div>
               ) : (
                 <div className="space-y-2">
-                  {player.properties.slice(0, 5).map((p, i) => {
-                    const propInfo = properties.find(prop => prop.id === p.propertyId);
+                  {player.properties.slice(0, 5).map((holding, index) => {
+                    const propInfo = properties.find((property) => property.id === holding.propertyId);
                     return (
-                      <div key={i} className="flex items-center justify-between py-2 border-b border-divider last:border-0 cursor-pointer hover:bg-white/5 rounded px-2 -mx-2 transition-colors"
-                        onClick={() => propInfo && navigate(`/property/${propInfo.id}`)}>
-                        <div><p className="text-white text-sm font-medium hover:text-cyan-glow transition-colors">{propInfo ? propInfo.name : `Property #${i + 1}`}</p><p className="text-text-dim text-xs">Purchased: {p.purchaseDate}</p></div>
-                        <div className="text-right"><p className="text-cyan-glow font-mono text-sm">S${(p.currentValue / 1000).toFixed(0)}K</p><p className={`text-[10px] ${p.isRented ? 'text-cyan-glow' : 'text-text-dim'}`}>{p.isRented ? 'Rented' : 'Vacant'}</p></div>
-                      </div>
+                      <button
+                        key={`${holding.propertyId}-${index}`}
+                        type="button"
+                        className="flex w-full items-center justify-between rounded px-2 py-2 text-left transition-colors hover:bg-white/5"
+                        onClick={() => propInfo && navigate(`/property/${propInfo.id}`)}
+                      >
+                        <span>
+                          <span className="block text-sm font-medium text-white">{propInfo ? propInfo.name : `Property #${index + 1}`}</span>
+                          <span className="block text-xs text-text-dim">Purchased: {holding.purchaseDate}</span>
+                        </span>
+                        <span className="text-right">
+                          <span className="block font-mono text-sm text-cyan-glow">S${(holding.currentValue / 1000).toFixed(0)}K</span>
+                          <span className={`block text-[10px] ${holding.isRented ? 'text-cyan-glow' : 'text-text-dim'}`}>{holding.isRented ? 'Rented' : 'Vacant'}</span>
+                        </span>
+                      </button>
                     );
                   })}
                 </div>
               )}
-            </GlassCard>
-          </motion.div>
+            </ProgressivePanel>
 
-          <motion.div variants={itemVariants} className="space-y-4">
-            <GlassCard accentColor={selectedPrimaryAction.accent} className="overflow-hidden" padding="none">
-              <SceneImage
-                src={selectedPrimaryAction.image}
-                alt={selectedPrimaryAction.imageAlt}
-                className="h-36 w-full object-cover"
-              />
-              <div className="p-4">
-              <h3 className="section-title text-white mb-3">Life Planning</h3>
-              <p className="text-[10px] font-mono uppercase tracking-[0.22em]" style={{ color: selectedPrimaryAction.accent }}>
-                {selectedPrimaryAction.visualLabel}
-              </p>
-              <p className="text-text-secondary text-xs mt-2 mb-4 leading-relaxed">
-                {selectedPrimaryAction.heroHint}
-              </p>
-              <div className="space-y-2 mb-4">
-                <LifeRow icon={BatteryCharging} label="Energy" value={`${player.life.energy}/100`} />
-                <LifeRow icon={Flame} label="Stress" value={`${player.life.stress}/100`} />
-                <LifeRow icon={House} label="Household" value={`S$${player.life.householdLoad.toLocaleString()}/mo`} />
+            <ProgressivePanel
+              title="Life Planning Detail"
+              eyebrow="Life"
+              summary={`${selectedPrimaryAction.label} selected. Energy ${player.life.energy}/100, stress ${player.life.stress}/100.`}
+              accentColor={selectedPrimaryAction.accent}
+              defaultOpen={commandState.panelDefaults.life === 'open'}
+            >
+              <div className="overflow-hidden rounded-xl border border-divider">
+                <SceneImage
+                  src={selectedPrimaryAction.image}
+                  alt={selectedPrimaryAction.imageAlt}
+                  className="h-36 w-full object-cover"
+                />
+                <div className="space-y-3 bg-black/20 p-4">
+                  <p className="text-[10px] font-mono uppercase tracking-[0.22em]" style={{ color: selectedPrimaryAction.accent }}>
+                    {selectedPrimaryAction.visualLabel}
+                  </p>
+                  <p className="text-xs leading-relaxed text-text-secondary">{selectedPrimaryAction.heroHint}</p>
+                  <LifeRow icon={BatteryCharging} label="Energy" value={`${player.life.energy}/100`} />
+                  <LifeRow icon={Flame} label="Stress" value={`${player.life.stress}/100`} />
+                  <LifeRow icon={House} label="Household" value={`S$${player.life.householdLoad.toLocaleString()}/mo`} />
+                  <p className="text-xs text-text-secondary">Secondary action: <span className="text-white">{selectedSecondaryAction?.label ?? 'None'}</span></p>
+                  <button onClick={() => navigate('/life')} className="btn-secondary w-full py-3 text-sm">Plan Life Actions</button>
+                </div>
               </div>
-              <p className="text-text-secondary text-xs mb-2">
-                Primary action: <span className="text-white">{selectedPrimaryAction.label}</span>
-              </p>
-              <p className="text-text-secondary text-xs mb-4">
-                Secondary action: <span className="text-white">{selectedSecondaryAction?.label ?? 'None'}</span>
-              </p>
-              <button onClick={() => navigate('/life')} className="w-full btn-secondary text-sm py-3">Plan Life Actions</button>
-              </div>
-            </GlassCard>
-            <GlassCard accentColor="#00F0FF">
-              <h3 className="section-title text-white mb-4">Actions</h3>
-              <div className="space-y-2">
-                <button onClick={() => navigate('/properties')} className="w-full btn-secondary text-sm py-3">Browse Properties</button>
-                <button onClick={() => navigate('/life')} className="w-full btn-secondary text-sm py-3">Manage Life</button>
-                <button onClick={() => navigate('/bank')} className="w-full btn-secondary text-sm py-3">Manage Loans</button>
-                <button onClick={() => navigate('/market')} className="w-full btn-secondary text-sm py-3">Market Overview</button>
-              </div>
-            </GlassCard>
-            <GlassCard accentColor="#00E676">
-              <h3 className="section-title text-white mb-2">Next Turn</h3>
-              <p className="text-text-secondary text-xs mb-4">Advance one month. Collect rent, pay loans, and trigger market changes.</p>
-              <button onClick={nextTurn} className="btn-primary w-full flex items-center justify-center gap-2">
-                Advance to {monthNames[player.month % 12]} {player.month === 12 ? player.year + 1 : player.year}<ArrowRight size={16} />
-              </button>
-            </GlassCard>
+            </ProgressivePanel>
           </motion.div>
         </div>
       </motion.div>
@@ -356,3 +333,168 @@ export default function Dashboard() {
   );
 }
 
+function ActionTile({
+  icon: Icon,
+  title,
+  detail,
+  onClick,
+}: {
+  icon: React.ElementType;
+  title: string;
+  detail: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-2xl border border-glass-border bg-white/[0.04] p-4 text-left transition-all hover:border-cyan-glow/40 hover:bg-cyan-glow/10"
+    >
+      <Icon size={20} className="mb-3 text-cyan-glow" />
+      <p className="font-rajdhani text-lg font-semibold text-white">{title}</p>
+      <p className="mt-1 text-xs text-text-secondary">{detail}</p>
+    </button>
+  );
+}
+
+function PropertyOperationsPanel({
+  openIssues,
+  activeRenovations,
+  weakTenant,
+  latestOperationTitle,
+  reserveCash,
+  onOpenPortfolio,
+}: {
+  openIssues: Array<{ category: string; estimatedCost: number }>;
+  activeRenovations: Array<{ activeRenovation?: { label: string; remainingMonths: number } }>;
+  weakTenant?: { tenant?: { satisfaction: number } };
+  latestOperationTitle?: string;
+  reserveCash: number;
+  onOpenPortfolio: () => void;
+}) {
+  return (
+    <GlassCard accentColor={openIssues.length > 0 ? '#FF1744' : activeRenovations.length > 0 ? '#FFD740' : '#00E676'}>
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <p className="label-text mb-1 text-[10px] text-text-dim">This Month Needs Attention</p>
+          <h3 className="section-title text-white">Property Operations</h3>
+        </div>
+        <button onClick={onOpenPortfolio} className="btn-secondary px-3 py-2 text-xs">Open Portfolio</button>
+      </div>
+      <div className="grid gap-3 md:grid-cols-4">
+        <AttentionCard
+          label="Repairs"
+          value={openIssues.length > 0 ? `${openIssues.length} open` : 'Clear'}
+          detail={openIssues[0] ? `${openIssues[0].category} issue: S$${openIssues[0].estimatedCost.toLocaleString()}` : 'No urgent maintenance on the board.'}
+          tone={openIssues.length > 0 ? 'bad' : 'good'}
+        />
+        <AttentionCard
+          label="Upgrades"
+          value={activeRenovations.length > 0 ? `${activeRenovations.length} active` : 'Ready'}
+          detail={activeRenovations[0]?.activeRenovation ? `${activeRenovations[0].activeRenovation.label}: ${activeRenovations[0].activeRenovation.remainingMonths} mo left` : 'Pick an upgrade on an owned property detail page.'}
+          tone={activeRenovations.length > 0 ? 'warn' : 'neutral'}
+        />
+        <AttentionCard
+          label="Tenants"
+          value={weakTenant?.tenant ? `${weakTenant.tenant.satisfaction}/100` : 'Stable'}
+          detail={weakTenant?.tenant ? 'Tenant happiness is slipping. Consider repairs or a defensive rent strategy.' : 'No low-satisfaction leases flagged.'}
+          tone={weakTenant?.tenant ? 'bad' : 'good'}
+        />
+        <AttentionCard
+          label="Reserve"
+          value={`S$${reserveCash.toLocaleString()}`}
+          detail={latestOperationTitle ?? 'Set aside runway before maintenance bites.'}
+          tone={reserveCash > 0 ? 'good' : 'warn'}
+        />
+      </div>
+    </GlassCard>
+  );
+}
+
+function CareerReviewPanel({
+  latestCareerReview,
+  nextJobSwitchIn,
+}: {
+  latestCareerReview: ReturnType<typeof useGameStore.getState>['player']['careerReviewHistory'][number] | null;
+  nextJobSwitchIn: number;
+}) {
+  return (
+    <GlassCard accentColor="#FFD740">
+      <div className="grid gap-4 md:grid-cols-[220px,1fr]">
+        <img
+          src="/career-review-key-art.png"
+          alt="Career Review"
+          className="h-44 w-full rounded-xl object-cover opacity-90"
+        />
+        <div>
+          <h3 className="section-title mb-2 text-white">Career Review</h3>
+          {latestCareerReview ? (
+            <>
+              <p className="font-medium text-white">{formatCareerOutcome(latestCareerReview.outcome)}</p>
+              <p className="mt-1 text-sm text-text-secondary">
+                Your latest annual review has already rolled into salary and buying power.
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <CareerMetric label="Salary Delta" value={formatSignedCurrency(latestCareerReview.salaryDelta)} tone={latestCareerReview.salaryDelta >= 0 ? 'good' : 'blocked'} />
+                <CareerMetric label="Bonus" value={latestCareerReview.bonus > 0 ? `S$${latestCareerReview.bonus.toLocaleString()}` : 'None'} tone={latestCareerReview.bonus > 0 ? 'good' : 'warn'} />
+                <CareerMetric label="Review Turn" value={String(latestCareerReview.turn)} tone="warn" />
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="font-medium text-white">First annual review pending</p>
+              <p className="mt-1 text-sm text-text-secondary">
+                Your first formal review arrives on turn 12. Salary growth and job-switch choices then become part of the housing climb.
+              </p>
+            </>
+          )}
+          <p className="mt-4 text-xs text-text-dim">
+            Next job-switch window in <span className="font-mono text-white">{nextJobSwitchIn}</span> turns.
+          </p>
+        </div>
+      </div>
+    </GlassCard>
+  );
+}
+
+function EligibilitySummaryPanel({
+  eligibilityFlags,
+  player,
+}: {
+  eligibilityFlags: ReturnType<typeof deriveEligibilityFlags>;
+  player: ReturnType<typeof useGameStore.getState>['player'];
+}) {
+  return (
+    <GlassCard accentColor="#FF9100">
+      <h3 className="section-title mb-2 text-white">Eligibility Summary</h3>
+      <div className="flex flex-wrap gap-2">
+        {eligibilityFlags.firstTimer && <EligibilityBadge label="First-Timer" tone="good" />}
+        {eligibilityFlags.homeowner && <EligibilityBadge label="Homeowner" tone="warn" />}
+        {eligibilityFlags.upgrader && <EligibilityBadge label="Upgrader" tone="warn" />}
+        {eligibilityFlags.ecEligible && <EligibilityBadge label="EC Eligible" tone="good" />}
+        {!eligibilityFlags.ecEligible && player.salary > EC_MAX_MONTHLY_INCOME && (
+          <EligibilityBadge label="EC Ceiling Exceeded" tone="blocked" />
+        )}
+        {player.ownedPrivateHome && <EligibilityBadge label="Private-Home Owner" tone="warn" />}
+      </div>
+      <div className="mt-4 space-y-2 text-sm">
+        <p className="text-text-secondary">
+          Buyer profile: <span className="font-mono text-white">{formatBuyerProfile(player.buyerProfile)}</span>
+        </p>
+        <p className="text-text-secondary">
+          Monthly salary: <span className="font-mono text-white">S${player.salary.toLocaleString()}</span>
+        </p>
+        <p className="text-text-secondary">
+          EC ceiling: <span className="font-mono text-white">S${EC_MAX_MONTHLY_INCOME.toLocaleString()}</span>
+        </p>
+        <p className="text-text-secondary">
+          {eligibilityFlags.firstTimer
+            ? 'You are still on your first-home rung, so HDB and early support listings should feel the cleanest to pursue.'
+            : eligibilityFlags.homeowner
+              ? 'You have crossed into the upgrader stage. Private condos and larger moves should start feeling more intentional now.'
+              : 'You have first-home history but no current residential holding, which keeps the run flexible for a reset or bigger next move.'}
+        </p>
+      </div>
+    </GlassCard>
+  );
+}

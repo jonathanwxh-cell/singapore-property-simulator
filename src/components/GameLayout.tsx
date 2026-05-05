@@ -3,26 +3,33 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import HUDTopBar from './HUDTopBar';
 import Sidebar from './Sidebar';
 import { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, BriefcaseBusiness, Building2, TrendingUp, PieChart, Landmark, Sparkles } from 'lucide-react';
+import { LayoutDashboard, BriefcaseBusiness, Building2, TrendingUp, PieChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGameStore } from '@/game/useGameStore';
+import NextMonthCTA from './NextMonthCTA';
 
 const mobileNavItems = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Home', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Life', path: '/life', icon: BriefcaseBusiness },
-  { label: 'Properties', path: '/properties', icon: Building2 },
-  { label: 'Market', path: '/market', icon: TrendingUp },
-  { label: 'Portfolio', path: '/portfolio', icon: PieChart },
-  { label: 'Bank', path: '/bank', icon: Landmark },
-  { label: 'Scenarios', path: '/scenarios', icon: Sparkles },
+  { label: 'Buy', path: '/properties', icon: Building2 },
+  { label: 'Own', path: '/portfolio', icon: PieChart },
+  { label: 'Learn', path: '/learn', icon: TrendingUp },
 ];
 
 export default function GameLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentScenario = useGameStore(state => state.currentScenario);
+  const isGameActive = useGameStore(state => state.isGameActive);
   const [isMobile, setIsMobile] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
+  const shellControlsVisible = isGameActive && ![
+    '/newgame',
+    '/saveload',
+    '/settings',
+    '/gameover',
+    '/leaderboard',
+  ].includes(location.pathname);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 1024);
@@ -32,23 +39,23 @@ export default function GameLayout() {
   }, []);
 
   useEffect(() => {
-    if (currentScenario && location.pathname !== '/scenarios') {
+    if (shellControlsVisible && currentScenario && location.pathname !== '/scenarios') {
       navigate('/scenarios');
     }
-  }, [currentScenario, location.pathname, navigate]);
+  }, [currentScenario, location.pathname, navigate, shellControlsVisible]);
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [location.pathname]);
 
-  const sidebarWidth = isMobile ? 0 : 224;
-  const bottomNavHeight = isMobile ? 56 : 0;
+  const sidebarWidth = isMobile || !shellControlsVisible ? 0 : 224;
+  const bottomNavHeight = isMobile && shellControlsVisible ? 116 : 0;
 
   return (
     <div className="bg-deep-space text-white" style={{ height: '100dvh', overflow: 'hidden' }}>
       <HUDTopBar />
-      <Sidebar />
+      {shellControlsVisible && <Sidebar />}
 
       {/* Main content area - fills remaining viewport */}
       <main
@@ -75,8 +82,10 @@ export default function GameLayout() {
       </main>
 
       {/* Mobile bottom nav */}
-      {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center gap-1 px-2 overflow-x-auto lg:hidden">
+      {isMobile && shellControlsVisible && (
+        <>
+        <NextMonthCTA variant="floating" />
+        <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center justify-around gap-1 px-2 lg:hidden">
           {mobileNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -95,6 +104,7 @@ export default function GameLayout() {
             );
           })}
         </nav>
+        </>
       )}
     </div>
   );

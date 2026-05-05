@@ -6,13 +6,12 @@ import {
   Building2,
   TrendingUp,
   PieChart,
-  Landmark,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
 import { useState, memo } from 'react';
 import { cn } from '@/lib/utils';
+import NextMonthCTA from './NextMonthCTA';
 
 interface NavItem {
   label: string;
@@ -21,13 +20,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Home', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Life', path: '/life', icon: BriefcaseBusiness },
-  { label: 'Properties', path: '/properties', icon: Building2 },
-  { label: 'Market', path: '/market', icon: TrendingUp },
-  { label: 'Portfolio', path: '/portfolio', icon: PieChart },
-  { label: 'Bank', path: '/bank', icon: Landmark },
-  { label: 'Scenarios', path: '/scenarios', icon: Sparkles },
+  { label: 'Buy', path: '/properties', icon: Building2 },
+  { label: 'Own', path: '/portfolio', icon: PieChart },
+  { label: 'Learn', path: '/learn', icon: TrendingUp },
 ];
 
 const Sidebar = memo(function Sidebar() {
@@ -101,7 +98,8 @@ const Sidebar = memo(function Sidebar() {
 
       {/* Bottom info */}
       {!collapsed && (
-        <div className="p-4 border-t border-glass-border">
+        <div className="space-y-3 p-4 border-t border-glass-border">
+          <NextMonthCTA variant="sidebar" />
           <div className="text-[10px] text-text-dim font-mono uppercase tracking-wider">
             PropSim Singapore
           </div>
