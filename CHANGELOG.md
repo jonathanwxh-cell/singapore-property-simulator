@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Portfolio and property-detail surfaces now expose lease pressure, repair exposure, reserve gaps, and tenant-satisfaction tradeoffs as explicit landlord decisions.
 
 ### Fixed
+- Mobile dashboard now suppresses the duplicate floating `Next Month` CTA when the Command Center hero already provides an inline advance button, keeping Spendable Cash and Monthly Surplus readable on iPhone Safari.
 - Mobile transaction pages no longer show the floating `Next Month` CTA over the buy action.
 - Scenario `Continue` now returns players to the Home Command Center instead of leaving them on the long scenario library page.
 - HDB homes still inside MOP now block sale attempts with explicit MOP copy.

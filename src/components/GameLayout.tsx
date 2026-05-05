@@ -51,9 +51,11 @@ export default function GameLayout() {
 
   const sidebarWidth = isMobile || !shellControlsVisible ? 0 : 224;
   const bottomNavHeight = isMobile && shellControlsVisible ? 116 : 0;
+  const routesWithInlineAdvance = ['/dashboard', '/life'];
   const showFloatingAdvance = isMobile
     && shellControlsVisible
-    && ['/dashboard', '/life', '/portfolio', '/market', '/bank', '/learn'].includes(location.pathname);
+    && !routesWithInlineAdvance.includes(location.pathname)
+    && ['/portfolio', '/market', '/bank', '/learn'].includes(location.pathname);
 
   return (
     <div className="bg-deep-space text-white" style={{ height: '100dvh', overflow: 'hidden' }}>
