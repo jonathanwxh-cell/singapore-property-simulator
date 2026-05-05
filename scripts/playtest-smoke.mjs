@@ -104,6 +104,41 @@ async function clickAdvance(page) {
   }
 }
 
+function boxesOverlap(a, b) {
+  if (!a || !b) return false;
+  return a.x < b.x + b.width
+    && a.x + a.width > b.x
+    && a.y < b.y + b.height
+    && a.y + a.height > b.y;
+}
+
+async function assertMobileDashboardAdvanceDoesNotCoverVitals(page) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await delay(150);
+
+  const advanceButtons = page.getByRole('button', { name: /Next Month/i });
+  const advanceCount = await advanceButtons.count();
+  if (advanceCount !== 1) {
+    throw new Error(`Mobile dashboard should expose one Next Month CTA, got ${advanceCount}.`);
+  }
+
+  const vitalCards = [
+    page.locator('div.rounded-2xl').filter({ hasText: 'Spendable Cash' }).first(),
+    page.locator('div.rounded-2xl').filter({ hasText: 'Monthly Surplus' }).first(),
+  ];
+  const ctaBox = await advanceButtons.first().boundingBox();
+
+  for (const card of vitalCards) {
+    const cardText = await card.innerText();
+    const cardBox = await card.boundingBox();
+    if (boxesOverlap(ctaBox, cardBox)) {
+      throw new Error(`Mobile Next Month CTA overlaps the ${cardText.split('\n')[0]} stat card.`);
+    }
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+}
+
 async function run() {
   const port = await getAvailablePort();
   const baseUrl = `http://127.0.0.1:${port}`;
@@ -163,6 +198,7 @@ async function run() {
     await expectVisible(page, 'text=First-Home Mission Rail');
     await expectVisible(page, 'img[alt="Career Review"]');
     await expectVisible(page, 'text=Advance to');
+    await assertMobileDashboardAdvanceDoesNotCoverVitals(page);
 
     await page.getByRole('button', { name: /Advance to/i }).first().click();
     await expectVisible(page, 'text=Turn 1');
