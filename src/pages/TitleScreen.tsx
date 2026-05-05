@@ -105,7 +105,7 @@ export default function TitleScreen() {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 min-h-[100dvh] w-full overflow-hidden"
+      className="fixed inset-0 min-h-[100dvh] w-full overflow-y-auto overflow-x-hidden"
       style={{ backgroundColor: '#060B14' }}
     >
       {/* Background layers */}
@@ -140,7 +140,7 @@ export default function TitleScreen() {
       <Particles />
 
       {/* Content Layer */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] px-4">
+      <div className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-4 py-8">
         {/* Logo & Title */}
         <div ref={logoRef} className="flex flex-col items-center mb-8 opacity-0">
           <img

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateBSD, calculateABSD, calculateTotalStampDuty } from '../stampDuty';
+import { calculateBSD, calculateABSD, calculateBSDForCategory, calculateTotalStampDuty } from '../stampDuty';
 
 describe('Stamp Duty', () => {
   describe('BSD', () => {
@@ -35,6 +35,11 @@ describe('Stamp Duty', () => {
 
     it('returns 0 for $0 property', () => {
       expect(calculateBSD(0)).toBe(0);
+    });
+
+    it('uses non-residential BSD tiers for commercial property', () => {
+      expect(calculateBSDForCategory(1_000_000, 'commercial')).toBe(24_600);
+      expect(calculateBSDForCategory(5_000_000, 'commercial')).toBe(144_600);
     });
   });
 

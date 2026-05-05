@@ -7,7 +7,7 @@ import ProgressivePanel from '@/components/ProgressivePanel';
 import { Search, MapPin, Bed, Bath, Maximize, Sparkles, SlidersHorizontal } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
 import { useNavigate } from 'react-router-dom';
-import { buildListingSummary, getListingCatalog } from '@/engine/listings';
+import { buildListingSummary, getDynamicListingSignals, getListingCatalog } from '@/engine/listings';
 import { formatCompactCurrency } from '@/lib/format';
 import { useGameStore } from '@/game/useGameStore';
 import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
@@ -36,6 +36,7 @@ export default function Properties() {
 
   const catalog = getListingCatalog();
   const summary = buildListingSummary();
+  const dynamicSignals = getDynamicListingSignals(player.turnCount);
   const propertyTypes = Object.keys(propertyTypeInfo);
   const channelOptions = Object.keys(listingChannelInfo);
   const eligibilityInput = {
@@ -139,6 +140,42 @@ export default function Properties() {
             </div>
           </GlassCard>
         )}
+
+        <GlassCard accentColor="#FFD740" className="mb-6">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="label-text mb-1 text-[10px] text-warning">Changing board</p>
+              <h2 className="section-title text-white">This Month's Market Signals</h2>
+              <p className="mt-1 text-sm text-text-secondary">
+                Signals rotate with the month so browsing feels like scouting, not a static catalogue.
+              </p>
+            </div>
+            <span className="rounded-full border border-warning/25 bg-warning/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-warning">
+              Turn {player.turnCount}
+            </span>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {dynamicSignals.map((signal) => {
+              const signaledProperty = catalog.find((property) => property.id === signal.propertyId);
+              if (!signaledProperty) return null;
+              return (
+                <button
+                  key={`${signal.propertyId}-${signal.label}`}
+                  type="button"
+                  onClick={() => navigate(`/property/${signal.propertyId}`)}
+                  className="rounded-xl border border-glass-border bg-white/[0.03] p-4 text-left transition-all hover:border-warning/40 hover:bg-warning/10"
+                >
+                  <p className={`text-[10px] font-mono uppercase tracking-[0.18em] ${signal.tone === 'urgent' ? 'text-danger' : signal.tone === 'value' ? 'text-success' : 'text-warning'}`}>
+                    {signal.label}
+                  </p>
+                  <p className="mt-2 font-rajdhani font-semibold text-white">{signaledProperty.name}</p>
+                  <p className="mt-1 text-xs text-text-dim">D{signaledProperty.districtId} | {signaledProperty.listingChannel} | expires in {signal.expiresInMonths} mo</p>
+                  <p className="mt-2 text-xs leading-relaxed text-text-secondary">{signal.detail}</p>
+                </button>
+              );
+            })}
+          </div>
+        </GlassCard>
 
         <ProgressivePanel
           title="Market Breadth"
@@ -253,6 +290,7 @@ export default function Properties() {
               downPaymentPercent: 25,
               useCpfOrdinary: true,
             });
+            const signal = dynamicSignals.find((entry) => entry.propertyId === property.id);
             return (
               <GlassCard
                 key={property.id}
@@ -274,6 +312,11 @@ export default function Properties() {
                     <span className="px-2 py-1 rounded text-[10px] font-rajdhani font-semibold bg-black/60 text-white border border-white/10">
                       {property.listingChannel}
                     </span>
+                    {signal && (
+                      <span className="px-2 py-1 rounded text-[10px] font-rajdhani font-semibold bg-warning/20 text-warning border border-warning/30">
+                        {signal.label}
+                      </span>
+                    )}
                   </div>
                   <div className="absolute bottom-2 left-2 text-[10px] font-mono text-white bg-black/50 px-2 py-0.5 rounded">
                     PSF: S${property.psf.toLocaleString()}

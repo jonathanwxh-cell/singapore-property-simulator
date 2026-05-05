@@ -172,6 +172,8 @@ async function run() {
     await page.getByRole('button', { name: /Claim the grant/i }).click();
     await expectVisible(page, 'text=Scenario Resolved');
     await page.getByRole('button', { name: 'Continue' }).click();
+    await expectVisible(page, 'text=Home Command Center');
+    await expectVisible(page, 'text=This Month');
 
     await page.goto(`${baseUrl}/#/market`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Market News Feed');
@@ -179,6 +181,7 @@ async function run() {
 
     await page.goto(`${baseUrl}/#/properties`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Best next buy for you');
+    await expectVisible(page, "text=This Month's Market Signals");
     await expectVisible(page, 'text=First-Timer Friendly');
     await page.getByRole('button', { name: 'Review Deal' }).click();
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');
@@ -186,7 +189,14 @@ async function run() {
 
     const buyButton = page.getByRole('button', { name: 'Buy Property' });
     await expectVisible(page, 'text=Northstar Grove 3-Room');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await delay(150);
+    const nextMonthOnTransactionPage = await page.getByRole('button', { name: /Next Month/i }).count();
+    if (nextMonthOnTransactionPage > 0) {
+      throw new Error('Mobile transaction page should not show floating Next Month over the buy CTA.');
+    }
     await buyButton.click();
+    await page.setViewportSize({ width: 1440, height: 1100 });
 
     await expectVisible(page, 'text=Portfolio');
     await page.goto(`${baseUrl}/#/portfolio`, { waitUntil: 'networkidle' });
@@ -195,6 +205,8 @@ async function run() {
     await expectVisible(page, 'img[alt="Landlord operations command dashboard"]');
 
     await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
+    await expectVisible(page, 'text=First Owner Checklist');
+    await expectVisible(page, 'text=Start MOP-Safe Room Rental');
     await expectVisible(page, 'text=Property Operations');
     await expectVisible(page, 'img[alt="Northstar Grove 3-Room floor plan"]');
     await page.getByRole('button', { name: /Owner-Occupied Room/i }).first().click();

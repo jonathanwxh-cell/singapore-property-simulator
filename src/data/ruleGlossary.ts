@@ -80,6 +80,46 @@ export const ruleGlossaryEntries: RuleGlossaryEntry[] = [
     whyItMatters: 'Reserved cash makes you less likely to spiral when maintenance, vacancies, or rate shocks hit.',
     example: 'Keeping S$15K reserved can be the difference between a bad month and insolvency.',
   },
+  {
+    id: 'hfe',
+    label: 'HFE Letter',
+    summary: 'HDB Flat Eligibility check',
+    detail: 'A real HDB buying journey starts with eligibility and financing clarity before shopping seriously. The simulator keeps this simplified, but treats first-home readiness as more than just clicking buy.',
+    whyItMatters: 'HFE-style readiness helps players understand why grants, loan size, CPF, and household profile matter before a BTO or resale move.',
+    example: 'A couple-family route should check first-home readiness before assuming a BTO or resale flat is available.',
+  },
+  {
+    id: 'cov',
+    label: 'COV',
+    summary: 'Cash Over Valuation',
+    detail: 'For resale flats, a bid above valuation may require extra cash that CPF and loans cannot cover in full. The game can surface this as a deal-specific cash surprise.',
+    whyItMatters: 'COV is one reason a resale flat can look affordable on price but still fail the upfront cash check.',
+    example: 'A popular mature-estate resale flat may need extra cash even when your loan and CPF look strong.',
+  },
+  {
+    id: 'sora',
+    label: 'SORA',
+    summary: 'Rate benchmark pressure',
+    detail: 'Singapore mortgage packages often reprice around bank and benchmark-rate conditions rather than a simple central-bank slider. The game simplifies this into monthly rate pressure.',
+    whyItMatters: 'Rate movement affects monthly payments, TDSR headroom, refinance timing, and whether a stretched deal remains comfortable.',
+    example: 'A rate spike can turn a safe-looking condo upgrade into a cashflow warning.',
+  },
+  {
+    id: 'commercial-bsd',
+    label: 'Commercial BSD',
+    summary: 'Non-residential stamp duty',
+    detail: 'Commercial property still has buyer stamp duty, but it is not ABSD and does not use the residential ABSD path in this simulator.',
+    whyItMatters: 'This avoids teaching players that foreigners pay residential ABSD on commercial offices or shops.',
+    example: 'A foreign investor buying an office unit pays the commercial purchase friction, not the 60% residential ABSD model.',
+  },
+  {
+    id: 'cpf-refund',
+    label: 'CPF Refund',
+    summary: 'CPF returned on sale',
+    detail: 'Real residential sales often require CPF used for housing, plus accrued interest, to be refunded back to CPF before cash proceeds are fully spendable. The game keeps this simplified.',
+    whyItMatters: 'Sale proceeds are not the same as instant free cash, especially when CPF and loans were used heavily.',
+    example: 'Selling after using CPF OA may leave less spendable cash than the headline capital gain suggests.',
+  },
 ];
 
 const glossaryById = new Map(ruleGlossaryEntries.map((entry) => [entry.id, entry]));

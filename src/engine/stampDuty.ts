@@ -1,11 +1,29 @@
 import { BSD_TIERS, ABSD_RATES } from './constants';
+import type { PropertyCategory } from '@/data/properties';
 import type { BuyerResidencyStatus } from '@/game/types';
 
+const COMMERCIAL_BSD_TIERS = [
+  { threshold: 180000, rate: 0.01 },
+  { threshold: 180000, rate: 0.02 },
+  { threshold: Infinity, rate: 0.03 },
+] as const;
+
 export function calculateBSD(price: number): number {
+  return calculateDutyFromTiers(price, BSD_TIERS);
+}
+
+export function calculateBSDForCategory(price: number, category: PropertyCategory): number {
+  return calculateDutyFromTiers(price, category === 'commercial' ? COMMERCIAL_BSD_TIERS : BSD_TIERS);
+}
+
+function calculateDutyFromTiers(
+  price: number,
+  tiers: ReadonlyArray<{ threshold: number; rate: number }>,
+): number {
   let duty = 0;
   let prevThreshold = 0;
 
-  for (const tier of BSD_TIERS) {
+  for (const tier of tiers) {
     if (price <= prevThreshold) break;
     const taxableInTier = Math.min(price, prevThreshold + tier.threshold) - prevThreshold;
     duty += taxableInTier * tier.rate;

@@ -209,6 +209,14 @@ export function sellPropertyPure(player: Player, propertyIndex: number): ActionR
   }
 
   const property = player.properties[propertyIndex];
+  const listing = properties.find((candidate) => candidate.id === property.propertyId);
+  if (listing?.isHdb && (property.mopRemainingMonths ?? 0) > 0) {
+    return fail(
+      'mop_restricted',
+      `This HDB is still inside MOP (${property.mopRemainingMonths} months left), so selling is blocked in the simplified Singapore rules.`,
+    );
+  }
+
   const saleValue = Math.round(property.currentValue);
   const profit = saleValue - property.purchasePrice;
 

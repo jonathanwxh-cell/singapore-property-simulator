@@ -105,6 +105,24 @@ describe('buyPropertyPure', () => {
     if (!result.ok) expect(result.reason).toBe('cpf_not_allowed');
   });
 
+  it('does not charge residential ABSD on a commercial purchase', () => {
+    const citizen = buyPropertyPure(makePlayer({ cash: 5_000_000, salary: 50_000 }), 'commercial-5', 1_000_000);
+    const foreigner = buyPropertyPure(makePlayer({
+      cash: 5_000_000,
+      salary: 50_000,
+      buyerProfile: {
+        residencyStatus: 'foreigner',
+        householdProfile: 'foreigner-investor',
+        age: 38,
+      },
+    }), 'commercial-5', 1_000_000);
+
+    expect(citizen.ok).toBe(true);
+    expect(foreigner.ok).toBe(true);
+    if (!citizen.ok || !foreigner.ok) return;
+    expect(foreigner.value.player.cash).toBe(citizen.value.player.cash);
+  });
+
   it('rejects executive condo purchases when the salary ceiling is exceeded', () => {
     const result = buyPropertyPure(makePlayer({ cash: 2_000_000, salary: 17_500 }), 'ec-1', 500_000);
     expect(result.ok).toBe(false);
@@ -234,6 +252,30 @@ describe('payLoanPure', () => {
 });
 
 describe('sellPropertyPure', () => {
+  it('blocks selling an HDB while MOP is still active', () => {
+    const player = makePlayer({
+      cash: 0,
+      properties: [{
+        propertyId: 'hdb-bto-0',
+        purchasePrice: 265_000,
+        purchaseDate: '2024-01',
+        currentValue: 285_000,
+        isRented: false,
+        monthlyRental: 1300,
+        renovationLevel: 0,
+        mopRemainingMonths: 48,
+      }],
+    });
+
+    const result = sellPropertyPure(player, 0);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.reason).toBe('mop_restricted');
+      expect(result.message).toContain('MOP');
+    }
+  });
+
   it('records capital gain (saleValue - purchasePrice), independent of outstanding loan', () => {
     const player = makePlayer({
       cash: 0,
@@ -332,7 +374,13 @@ describe('loanId uniqueness across buy → sell → buy in same turn', () => {
     const r1 = buyPropertyPure(player, 'hdb-bto-1', 100_000);
     expect(r1.ok).toBe(true);
     if (!r1.ok) return;
-    player = r1.value.player;
+    player = {
+      ...r1.value.player,
+      properties: r1.value.player.properties.map((property) => ({
+        ...property,
+        mopRemainingMonths: 0,
+      })),
+    };
     const firstLoanId = player.loans[0].id;
 
     const r2 = sellPropertyPure(player, 0);

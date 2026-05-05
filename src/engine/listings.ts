@@ -12,6 +12,14 @@ export interface ListingProperty extends Property {
   districtTheme: string;
 }
 
+export interface DynamicListingSignal {
+  propertyId: string;
+  label: string;
+  detail: string;
+  tone: 'hot' | 'value' | 'urgent';
+  expiresInMonths: number;
+}
+
 function inferArchetype(property: Property): string {
   if (property.archetypeId) return property.archetypeId;
 
@@ -174,4 +182,42 @@ export function getMarketMovers() {
       detail: byPrestige ? `Avg. ${byPrestige.averagePrice.toLocaleString('en-SG')} price point` : 'No data',
     },
   ];
+}
+
+export function getDynamicListingSignals(turnCount: number, count = 3): DynamicListingSignal[] {
+  const catalog = getListingCatalog();
+  if (catalog.length === 0) return [];
+
+  const signalTemplates = [
+    {
+      label: 'District Heat',
+      detail: 'Recent enquiry momentum is pulling attention here this month.',
+      tone: 'hot' as const,
+      expiresInMonths: 3,
+    },
+    {
+      label: 'Quiet Value Window',
+      detail: 'This listing screens as less crowded versus nearby alternatives.',
+      tone: 'value' as const,
+      expiresInMonths: 2,
+    },
+    {
+      label: 'Expiring Lead',
+      detail: 'A special channel window is closing soon; review before it rotates out.',
+      tone: 'urgent' as const,
+      expiresInMonths: 1,
+    },
+  ];
+
+  return signalTemplates.slice(0, count).map((template, index) => {
+    const seed = (turnCount * 17) + (index * 23) + 7;
+    const property = catalog[seed % catalog.length];
+    return {
+      propertyId: property.id,
+      label: template.label,
+      detail: template.detail,
+      tone: template.tone,
+      expiresInMonths: template.expiresInMonths,
+    };
+  });
 }

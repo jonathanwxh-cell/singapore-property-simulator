@@ -158,7 +158,7 @@ export default function Learn() {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
-            onClick={() => navigate(isGameActive ? '/dashboard' : '/newgame')}
+            onClick={isGameActive ? () => navigate('/dashboard') : startBeginnerRun}
             className="btn-primary flex items-center justify-center gap-2"
           >
             {isGameActive ? 'Back to Home Command Center' : 'Start Beginner Run'}

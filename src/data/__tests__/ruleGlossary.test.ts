@@ -20,4 +20,12 @@ describe('rule glossary', () => {
   it('returns undefined for unknown single-term lookups', () => {
     expect(getRuleGlossaryEntry('not-a-real-rule')).toBeUndefined();
   });
+
+  it('covers local realism terms needed by the first-home and commercial paths', () => {
+    const entries = getRuleGlossaryEntries(['hfe', 'cov', 'sora', 'commercial-bsd', 'cpf-refund']);
+
+    expect(entries.map((entry) => entry.id)).toEqual(['hfe', 'cov', 'sora', 'commercial-bsd', 'cpf-refund']);
+    expect(entries.find((entry) => entry.id === 'commercial-bsd')?.detail).toContain('not ABSD');
+    expect(entries.find((entry) => entry.id === 'cpf-refund')?.whyItMatters.toLowerCase()).toContain('sale proceeds');
+  });
 });
