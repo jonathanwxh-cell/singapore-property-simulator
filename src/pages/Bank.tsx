@@ -105,7 +105,7 @@ export default function Bank() {
                     <span className="font-mono text-cyan-glow">S${estimatedMonthly.toLocaleString()}</span>
                   </div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-text-secondary text-sm"><GlossaryTerm termId="tdsr">TDSR</GlossaryTerm> ({TDSR_LIMIT * 100}% cap)</span>
+                    <span className="text-text-secondary text-sm"><GlossaryTerm termId="tdsr">TDSR</GlossaryTerm> ({Math.round(TDSR_LIMIT * 100)}% cap)</span>
                     <span className={`font-mono ${tdsr > TDSR_LIMIT ? 'text-danger' : 'text-success'}`}>{(tdsr * 100).toFixed(1)}%</span>
                   </div>
                   <div className="flex items-center justify-between mb-1">

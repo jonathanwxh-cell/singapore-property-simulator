@@ -81,7 +81,7 @@ async function startProfile(page, baseUrl, {
   await expectVisible(page, 'text=Enter Your Name');
   await page.getByPlaceholder('Enter your name...').fill(name);
   await delay(150);
-  await page.getByRole('button', { name: /^Next$/ }).click();
+  await page.getByRole('button', { name: 'Customize Run' }).click();
   await expectVisible(page, 'text=Choose Your Career');
   await page.getByRole('button', { name: /^Next$/ }).click();
   await expectVisible(page, 'text=Choose Buyer Profile');

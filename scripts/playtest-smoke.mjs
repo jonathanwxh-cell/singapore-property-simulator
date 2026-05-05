@@ -116,6 +116,13 @@ async function run() {
 
     await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Fictional property names');
+    await expectVisible(page, 'text=Start Guided Run');
+
+    await page.getByRole('button', { name: 'Start Guided Run' }).click();
+    await expectVisible(page, 'text=Home Command Center');
+    await expectVisible(page, 'text=This Month');
+
+    await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
 
     await page.getByRole('button', { name: 'How to Play' }).click();
     await expectVisible(page, 'text=How to Play');
@@ -135,7 +142,8 @@ async function run() {
 
     await page.getByRole('button', { name: 'New Game' }).click();
     await page.getByPlaceholder('Enter your name...').fill('Codex QA');
-    await page.getByRole('button', { name: /^Next$/ }).click();
+    await expectVisible(page, 'text=Start Recommended Run');
+    await page.getByRole('button', { name: 'Customize Run' }).click();
     await page.getByRole('button', { name: /^Next$/ }).click();
     await expectVisible(page, 'text=Choose Buyer Profile');
     await page.getByRole('button', { name: /^Next$/ }).click();
