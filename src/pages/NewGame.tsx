@@ -6,7 +6,8 @@ import { runRoutes } from '@/data/runRoutes';
 import { difficultySettings } from '@/game/types';
 import type { BuyerProfile, BuyerResidencyStatus, Difficulty, HouseholdProfile, RunRouteId } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
-import { ArrowLeft, ArrowRight, User, GraduationCap, TrendingUp, Cpu, Rocket, Shield, Heart, Home, Users, Globe2, Compass } from 'lucide-react';
+import GlossaryTerm from '@/components/GlossaryTerm';
+import { ArrowLeft, ArrowRight, User, GraduationCap, TrendingUp, Cpu, Rocket, Shield, Heart, Home, Users, Globe2, Compass, BookOpen } from 'lucide-react';
 
 const careerIcons: Record<string, React.ElementType> = {
   graduate: GraduationCap,
@@ -69,25 +70,44 @@ export default function NewGame() {
           <div className="flex flex-col flex-1">
             <h2 className="section-title text-cyan-glow text-center text-lg mb-4 shrink-0">Enter Your Name</h2>
             <div className="flex-1 flex items-start justify-center pt-8">
-              <GlassCard className="max-w-md w-full">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-full bg-void-navy border-2 border-cyan-glow/30 flex items-center justify-center">
-                    <User size={28} className="text-cyan-glow" />
+              <div className="max-w-md w-full space-y-4">
+                <GlassCard>
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-16 h-16 rounded-full bg-void-navy border-2 border-cyan-glow/30 flex items-center justify-center">
+                      <User size={28} className="text-cyan-glow" />
+                    </div>
+                    <div className="flex-1">
+                      <label className="label-text text-text-dim text-xs block mb-2">Player Name</label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Enter your name..."
+                        className="w-full bg-void-navy border border-glass-border rounded-input px-4 py-3 text-white font-mono placeholder:text-text-dim/50 focus:border-cyan-glow focus:outline-none transition-colors"
+                        maxLength={20}
+                        autoFocus
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <label className="label-text text-text-dim text-xs block mb-2">Player Name</label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter your name..."
-                      className="w-full bg-void-navy border border-glass-border rounded-input px-4 py-3 text-white font-mono placeholder:text-text-dim/50 focus:border-cyan-glow focus:outline-none transition-colors"
-                      maxLength={20}
-                      autoFocus
-                    />
+                </GlassCard>
+
+                <GlassCard accentColor="#FFD740">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-warning/10 border border-warning/30 flex items-center justify-center shrink-0">
+                      <BookOpen size={18} className="text-warning" />
+                    </div>
+                    <div>
+                      <p className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm">Beginner Friendly</p>
+                      <p className="text-text-secondary text-xs mt-1 leading-relaxed">
+                        You do not need to know Singapore property terms. The game will teach <GlossaryTerm termId="absd" />, <GlossaryTerm termId="cpf-oa" />, and <GlossaryTerm termId="mop" /> as you play.
+                      </p>
+                      <button type="button" onClick={() => navigate('/learn')} className="mt-3 text-xs font-mono uppercase tracking-[0.12em] text-warning hover:text-white">
+                        Preview Learn Hub
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </GlassCard>
+                </GlassCard>
+              </div>
             </div>
             <div className="shrink-0 pb-4">
               <button
@@ -192,7 +212,7 @@ export default function NewGame() {
                   </div>
                   <div>
                     <h3 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm">Residency & Duties</h3>
-                    <p className="text-text-secondary text-xs mt-1">ABSD and public-housing access now follow your selected simplified buyer profile.</p>
+                    <p className="text-text-secondary text-xs mt-1"><GlossaryTerm termId="absd" /> and public-housing access now follow your selected simplified buyer profile.</p>
                   </div>
                 </div>
                 <div className="space-y-2">

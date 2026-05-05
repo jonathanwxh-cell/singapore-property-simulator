@@ -114,7 +114,7 @@ async function run() {
     }
 
     await page.getByRole('button', { name: /^Learn$/ }).click();
-    await expectVisible(page, 'text=Market News Feed');
+    await expectVisible(page, 'text=Learn Singapore Property Without Prereqs');
     await delay(100);
     const afterNavigation = await main.evaluate((element) => element.scrollTop);
     if (afterNavigation !== 0) {

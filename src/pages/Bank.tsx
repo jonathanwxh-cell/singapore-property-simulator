@@ -4,6 +4,7 @@ import { TDSR_LIMIT, CREDIT_SCORE_FLOOR } from '@/engine/constants';
 import { getLtvCap } from '@/engine/ltv';
 import { difficultySettings } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
+import GlossaryTerm from '@/components/GlossaryTerm';
 import { Landmark, Wallet, TrendingDown, Plus, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
@@ -29,7 +30,7 @@ export default function Bank() {
         <h1 className="page-title text-white mb-6">Bank & Loans</h1>
 
         <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <GlassCard accentColor="#00F0FF"><Wallet size={18} className="text-cyan-glow mb-2" /><p className="label-text text-text-dim text-[10px]">CPF Ordinary</p><p className="font-mono text-lg text-white">S${(player.cpfOrdinary / 1000).toFixed(1)}K</p><p className="text-text-dim text-[10px] mt-1">For housing & investment</p></GlassCard>
+          <GlassCard accentColor="#00F0FF"><Wallet size={18} className="text-cyan-glow mb-2" /><p className="label-text text-text-dim text-[10px]"><GlossaryTerm termId="cpf-oa">CPF Ordinary</GlossaryTerm></p><p className="font-mono text-lg text-white">S${(player.cpfOrdinary / 1000).toFixed(1)}K</p><p className="text-text-dim text-[10px] mt-1">For housing & investment</p></GlassCard>
           <GlassCard accentColor="#7C4DFF"><Landmark size={18} className="text-purple-glow mb-2" /><p className="label-text text-text-dim text-[10px]">CPF Special</p><p className="font-mono text-lg text-white">S${(player.cpfSpecial / 1000).toFixed(1)}K</p><p className="text-text-dim text-[10px] mt-1">For retirement</p></GlassCard>
           <GlassCard accentColor="#FF1744"><TrendingDown size={18} className="text-danger mb-2" /><p className="label-text text-text-dim text-[10px]">CPF Medisave</p><p className="font-mono text-lg text-white">S${(player.cpfMedisave / 1000).toFixed(1)}K</p><p className="text-text-dim text-[10px] mt-1">For healthcare</p></GlassCard>
         </div>
@@ -104,7 +105,7 @@ export default function Bank() {
                     <span className="font-mono text-cyan-glow">S${estimatedMonthly.toLocaleString()}</span>
                   </div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-text-secondary text-sm">TDSR ({TDSR_LIMIT * 100}% cap)</span>
+                    <span className="text-text-secondary text-sm"><GlossaryTerm termId="tdsr">TDSR</GlossaryTerm> ({TDSR_LIMIT * 100}% cap)</span>
                     <span className={`font-mono ${tdsr > TDSR_LIMIT ? 'text-danger' : 'text-success'}`}>{(tdsr * 100).toFixed(1)}%</span>
                   </div>
                   <div className="flex items-center justify-between mb-1">

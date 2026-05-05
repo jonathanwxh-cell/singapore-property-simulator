@@ -119,9 +119,18 @@ async function run() {
 
     await page.getByRole('button', { name: 'How to Play' }).click();
     await expectVisible(page, 'text=How to Play');
+    await expectVisible(page, 'text=Who This Game Is For');
     await expectVisible(page, 'text=Quickstart');
+    await expectVisible(page, 'text=Terms You Will See Early');
 
-    await page.getByRole('button', { name: /Back to Menu/i }).click();
+    await page.getByRole('button', { name: 'Learn the Rules' }).click();
+    await expectVisible(page, 'text=Learn Singapore Property Without Prereqs');
+    await expectVisible(page, 'text=Who this game is for');
+    await expectVisible(page, "text=Additional Buyer's Stamp Duty");
+    await page.getByRole('button', { name: /Explain ABSD/i }).first().click();
+    await expectVisible(page, 'text=Why it matters');
+
+    await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=New Game');
 
     await page.getByRole('button', { name: 'New Game' }).click();

@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { label: 'Life', path: '/life', icon: BriefcaseBusiness },
   { label: 'Buy', path: '/properties', icon: Building2 },
   { label: 'Own', path: '/portfolio', icon: PieChart },
-  { label: 'Learn', path: '/market', icon: TrendingUp },
+  { label: 'Learn', path: '/learn', icon: TrendingUp },
 ];
 
 const Sidebar = memo(function Sidebar() {

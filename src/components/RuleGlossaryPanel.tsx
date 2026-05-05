@@ -33,6 +33,11 @@ export default function RuleGlossaryPanel({
               <p className="text-[10px] font-mono text-cyan-glow">{entry.summary}</p>
             </div>
             <p className="text-text-secondary text-xs mt-2 leading-relaxed">{entry.detail}</p>
+            <div className="mt-3 rounded-lg border border-success/20 bg-success/10 p-2">
+              <p className="text-[9px] font-mono uppercase tracking-[0.16em] text-success">Why it matters</p>
+              <p className="text-text-secondary text-xs mt-1 leading-relaxed">{entry.whyItMatters}</p>
+            </div>
+            <p className="text-text-dim text-[11px] mt-2 leading-relaxed">Example: {entry.example}</p>
           </div>
         ))}
       </div>

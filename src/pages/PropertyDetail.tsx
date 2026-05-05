@@ -5,6 +5,7 @@ import { useGameStore } from '@/game/useGameStore';
 import GlassCard from '@/components/GlassCard';
 import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, Home, DollarSign, CheckCircle } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
+import GlossaryTerm from '@/components/GlossaryTerm';
 import { useState } from 'react';
 import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
 import { listingRarityInfo } from '@/data/listingChannels';
@@ -634,7 +635,7 @@ export default function PropertyDetail() {
                       <span className="font-mono text-white">{ownedProperty.conditionScore ?? 70}/100</span>
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <span className="text-text-secondary text-sm">MOP Remaining</span>
+                      <span className="text-text-secondary text-sm"><GlossaryTerm termId="mop">MOP</GlossaryTerm> Remaining</span>
                       <span className="font-mono text-white">{ownedProperty.mopRemainingMonths ?? 0} mo</span>
                     </div>
                   </div>
@@ -757,12 +758,12 @@ export default function PropertyDetail() {
 
                   <div className="border-t border-divider pt-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-text-secondary text-sm">BSD (Stamp Duty)</span>
+                      <span className="text-text-secondary text-sm"><GlossaryTerm termId="bsd">BSD</GlossaryTerm> Stamp Duty</span>
                       <span className="font-mono text-text-dim">{formatCurrency(validation.bsd)}</span>
                     </div>
                     {validation.absd > 0 && (
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-text-secondary text-sm">ABSD ({player.properties.length > 0 ? '2nd+' : 'Additional'})</span>
+                        <span className="text-text-secondary text-sm"><GlossaryTerm termId="absd">ABSD</GlossaryTerm> ({player.properties.length > 0 ? '2nd+' : 'Additional'})</span>
                         <span className="font-mono text-danger">{formatCurrency(validation.absd)}</span>
                       </div>
                     )}
@@ -775,7 +776,7 @@ export default function PropertyDetail() {
                   <div className="border-t border-divider pt-3">
                     {cpfApplied > 0 && (
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-text-secondary text-sm">CPF OA Applied</span>
+                        <span className="text-text-secondary text-sm"><GlossaryTerm termId="cpf-oa">CPF OA</GlossaryTerm> Applied</span>
                         <span className="font-mono text-success">-S${cpfApplied.toLocaleString()}</span>
                       </div>
                     )}
