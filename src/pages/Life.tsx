@@ -1,4 +1,6 @@
 import GlassCard from '@/components/GlassCard';
+import NextMonthCTA from '@/components/NextMonthCTA';
+import ProgressivePanel from '@/components/ProgressivePanel';
 import SceneImage from '@/components/SceneImage';
 import { lifeActions, lifeActionsById } from '@/data/lifeActions';
 import { getLifeOutcomeVisual, lifeOutcomeVisuals } from '@/data/lifeVisuals';
@@ -10,7 +12,7 @@ import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
 import { selectAffordabilityReport, selectMonthlyNetCashflow, selectPotentialHousingGrant } from '@/engine/selectors';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { formatCurrency } from '@/lib/format';
-import { BatteryCharging, BriefcaseBusiness, Flame, House, Sparkles } from 'lucide-react';
+import { BatteryCharging, Flame, House } from 'lucide-react';
 import {
   HeroMetric,
   LifeActionOptionCard,
@@ -31,8 +33,6 @@ export default function Life() {
     setPrimaryLifeAction,
     setSecondaryLifeAction,
     setLivingArrangement,
-    nextTurn,
-    currentScenario,
   } = useGameStore();
 
   const monthlySurplus = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
@@ -64,9 +64,9 @@ export default function Life() {
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="mb-6">
-          <h1 className="page-title text-white">Life Planning</h1>
+          <h1 className="page-title text-white">Plan This Month</h1>
           <p className="text-text-secondary mt-1 font-rajdhani">
-            Shape the month before the market shapes you. Build income, manage stress, and plan your first move into property.
+            Pick one main life move, check energy and stress, then advance the month from the same screen.
           </p>
         </div>
 
@@ -87,24 +87,25 @@ export default function Life() {
                   {selectedPrimaryAction.heroHint}
                 </p>
               </div>
-              <div className="grid sm:grid-cols-3 gap-3">
-                <HeroMetric label="Energy" value={`${player.life.energy}/100`} tone="text-cyan-glow" />
-                <HeroMetric label="Stress" value={`${player.life.stress}/100`} tone="text-warning" />
-                <HeroMetric
-                  label="Monthly Surplus"
-                  value={formatCurrency(monthlySurplus)}
-                  tone={monthlySurplus >= 0 ? 'text-success' : 'text-danger'}
-                />
+              <div className="space-y-3">
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <HeroMetric label="Energy" value={`${player.life.energy}/100`} tone="text-cyan-glow" />
+                  <HeroMetric label="Stress" value={`${player.life.stress}/100`} tone="text-warning" />
+                  <HeroMetric
+                    label="Monthly Surplus"
+                    value={formatCurrency(monthlySurplus)}
+                    tone={monthlySurplus >= 0 ? 'text-success' : 'text-danger'}
+                  />
+                </div>
+                <NextMonthCTA variant="inline" />
               </div>
             </div>
           </div>
         </GlassCard>
 
-        <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
           <LifeStatCard icon={BatteryCharging} label="Energy" value={`${player.life.energy}/100`} color="#00F0FF" />
           <LifeStatCard icon={Flame} label="Stress" value={`${player.life.stress}/100`} color="#FF1744" />
-          <LifeStatCard icon={Sparkles} label="Reputation" value={`${player.life.reputation}/100`} color="#FFD740" />
-          <LifeStatCard icon={BriefcaseBusiness} label="Momentum" value={`${player.life.careerMomentum}`} color="#7C4DFF" />
           <LifeStatCard icon={House} label="Household Load" value={formatCurrency(player.life.householdLoad)} color="#00E676" />
         </div>
 
@@ -160,8 +161,12 @@ export default function Life() {
               </div>
             </GlassCard>
 
-            <GlassCard accentColor="#7C4DFF">
-              <h3 className="section-title text-white mb-2">Secondary Action</h3>
+            <ProgressivePanel
+              title="Secondary Action"
+              eyebrow="Optional extra push"
+              summary={canTakeSecondAction ? 'Energy and stress allow one extra move this month.' : 'Unlocks when energy is high and stress is low.'}
+              accentColor="#7C4DFF"
+            >
               {canTakeSecondAction ? (
                 <>
                   <p className="text-text-secondary text-sm mb-4">Energy and stress are healthy enough for one extra push this month.</p>
@@ -185,7 +190,7 @@ export default function Life() {
                   </p>
                 </div>
               )}
-            </GlassCard>
+            </ProgressivePanel>
           </div>
 
           <div className="space-y-6">
@@ -216,8 +221,12 @@ export default function Life() {
               </div>
             </GlassCard>
 
-            <GlassCard accentColor="#FF9100">
-              <h3 className="section-title text-white mb-4">Scheme Progress</h3>
+            <ProgressivePanel
+              title="Scheme Progress"
+              eyebrow="Helper systems"
+              summary={`Potential first-home support: ${formatCurrency(grantSupport)}.`}
+              accentColor="#FF9100"
+            >
               <div className="space-y-4">
                 <ProgressLine label="SkillsFuture-style momentum" value={player.life.schemeProgress.skillsFuture} max={100} />
                 <ProgressLine label="First-home grant planning" value={player.life.schemeProgress.firstTimerGrant} max={50} />
@@ -226,10 +235,14 @@ export default function Life() {
                   Current potential first-home support: {formatCurrency(grantSupport)}
                 </p>
               </div>
-            </GlassCard>
+            </ProgressivePanel>
 
-            <GlassCard accentColor="#FFD740">
-              <h3 className="section-title text-white mb-4">Closest Property Path</h3>
+            <ProgressivePanel
+              title="Closest Property Path"
+              eyebrow="Buying helper"
+              summary={`${cheapestListing.name}: ${affordability.monthsAtCurrentPace === 0 ? 'fundable now' : affordability.monthsAtCurrentPace === null ? 'needs positive surplus' : `${affordability.monthsAtCurrentPace} month(s) away`}.`}
+              accentColor="#FFD740"
+            >
               <p className="text-white font-rajdhani font-semibold">{cheapestListing.name}</p>
               <p className="text-text-secondary text-sm mt-1">
                 Target upfront: {formatCurrency(purchaseValidation.totalUpfront)} | Cash shortfall: {formatCurrency(affordability.shortfall)}
@@ -244,10 +257,14 @@ export default function Life() {
               <p className="text-text-dim text-xs mt-3">
                 Best accelerators: Side Gig for cash, Property Hustle for referrals, and Plan Schemes for first-home support.
               </p>
-            </GlassCard>
+            </ProgressivePanel>
 
-            <GlassCard accentColor="#2979FF">
-              <h3 className="section-title text-white mb-4">Last Month</h3>
+            <ProgressivePanel
+              title="Last Month"
+              eyebrow="Outcome log"
+              summary={player.life.lastMonthSummary ? lastMonthVisual.label : 'No life outcome yet. Advance one month to create the first recap.'}
+              accentColor="#2979FF"
+            >
               {player.life.lastMonthSummary ? (
                 <div className="space-y-3">
                   <SceneImage
@@ -285,15 +302,7 @@ export default function Life() {
               ) : (
                 <p className="text-text-secondary text-sm">No life-month summary yet. Advance a month after planning to see how the new loop resolves.</p>
               )}
-            </GlassCard>
-
-            <button
-              onClick={nextTurn}
-              disabled={Boolean(currentScenario)}
-              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Advance Month
-            </button>
+            </ProgressivePanel>
           </div>
         </div>
       </div>

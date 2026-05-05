@@ -76,7 +76,7 @@ async function expectVisible(page, selector, timeout = 15000) {
 }
 
 async function resolveScenarioIfPresent(page) {
-  const optionButtons = page.locator('button.group.w-full.text-left:visible:not([disabled])');
+  const optionButtons = page.locator('div.fixed.inset-0 button.group.w-full.text-left:visible:not([disabled])');
   if (await optionButtons.count()) {
     await optionButtons.first().click();
     await expectVisible(page, 'text=Scenario Resolved');
@@ -88,7 +88,7 @@ async function resolveScenarioIfPresent(page) {
 async function clickAdvance(page) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      const button = page.getByRole('button', { name: /Advance to/i });
+      const button = page.getByRole('button', { name: /Advance to/i }).first();
       await button.waitFor({ state: 'visible', timeout: 15000 });
       await delay(150);
       await button.click();
@@ -126,7 +126,7 @@ async function run() {
 
     await page.getByRole('button', { name: 'New Game' }).click();
     await page.getByPlaceholder('Enter your name...').fill('Codex QA');
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: /^Next$/ }).click();
     await page.getByRole('button', { name: /^Next$/ }).click();
     await expectVisible(page, 'text=Choose Buyer Profile');
     await page.getByRole('button', { name: /^Next$/ }).click();
@@ -136,19 +136,21 @@ async function run() {
     await expectVisible(page, 'text=Select Difficulty');
     await page.getByRole('button', { name: /Start Game/i }).click();
 
+    await expectVisible(page, 'text=Home Command Center');
+    await expectVisible(page, 'text=This Month');
     await expectVisible(page, 'text=Market Pulse');
     await expectVisible(page, 'text=Life Arc');
-    await expectVisible(page, 'text=BTO-to-Condo Upgrader');
+    await expectVisible(page, 'text=Next Month');
     await expectVisible(page, 'text=Career Review');
     await expectVisible(page, 'text=Eligibility Summary');
     await expectVisible(page, 'text=First-Home Mission Rail');
     await expectVisible(page, 'img[alt="Career Review"]');
     await expectVisible(page, 'text=Advance to');
 
-    await page.getByRole('button', { name: /Advance to/i }).click();
+    await page.getByRole('button', { name: /Advance to/i }).first().click();
     await expectVisible(page, 'text=Turn 1');
 
-    await page.getByRole('button', { name: /Advance to/i }).click();
+    await page.getByRole('button', { name: /Advance to/i }).first().click();
     await expectVisible(page, 'text=First-Home Window Opens');
     await page.getByRole('button', { name: /Claim the grant/i }).click();
     await expectVisible(page, 'text=Scenario Resolved');
@@ -159,8 +161,9 @@ async function run() {
     await expectVisible(page, 'text=Turn 2');
 
     await page.goto(`${baseUrl}/#/properties`, { waitUntil: 'networkidle' });
+    await expectVisible(page, 'text=Best next buy for you');
     await expectVisible(page, 'text=First-Timer Friendly');
-    await page.getByText('Northstar Grove 3-Room').click();
+    await page.getByRole('button', { name: 'Review Deal' }).click();
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');
     await expectVisible(page, 'text=Cash Required');
 
@@ -199,7 +202,7 @@ async function run() {
     await clickAdvance(page);
     await expectVisible(page, 'text=Annual Career Review');
     await expectVisible(page, 'img[alt="Career Review"]');
-    await page.locator('button.group.w-full.text-left:visible').first().click();
+    await page.locator('div.fixed.inset-0 button.group.w-full.text-left:visible:not([disabled])').first().click();
     await expectVisible(page, 'text=Scenario Resolved');
     await page.getByRole('button', { name: 'Continue' }).click();
     await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });

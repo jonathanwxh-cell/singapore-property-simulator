@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Guided Command Center UX**: a tested monthly objective helper, `This Month` dashboard hero, persistent desktop/mobile `Next Month` CTA, grouped Home/Life/Buy/Own/Learn navigation, and progressive-detail panels that keep advanced systems available without overwhelming first-time players.
 - **Run Director life arcs**: route-based new-game choices, dashboard Life Arc milestones, route-aware Decision Coach guidance, scenario weighting, portfolio route ribbons, and game-over replay recaps.
 - `npm run test:scroll` browser regression test covering route-change scroll reset after navigating from long pages.
 - **Singapore profile playability phase**: new-game buyer profiles for Singapore Citizens, PRs, foreigners, family/single/foreign-investor paths, and profile-aware first-home mission guidance.
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Landlord Ops 2.0**: lease renewal decisions, rent-push vacancy risk, reserve-gap milestones, richer maintenance events, and new landlord/repair visual cards.
 
 ### Changed
+- Dashboard, Buy, Own, and Life pages now lead with one modern-game-style decision surface before exposing detailed finance, market, landlord, and rule systems.
 - Public property listing names are now fully fictional/composite while retaining real Singapore district, town, MRT, and policy context separately.
 - Purchase eligibility and ABSD now follow the selected buyer profile instead of always assuming a Singapore Citizen.
 - HDB ownership now presents as owner-occupied by default, with MOP-safe room-rental language separated from whole-flat rental.
