@@ -107,6 +107,27 @@ export function getNextBestMoves({ player, currentScenario }: NextBestMoveInput)
     });
   }
 
+  const ownerOccupiedHdbDuringMop = player.properties.find((ownedProperty) => {
+    const listing = properties.find((property) => property.id === ownedProperty.propertyId);
+    return Boolean(
+      listing?.isHdb
+      && !ownedProperty.tenant
+      && (ownedProperty.mopRemainingMonths ?? 0) > 0
+      && (ownedProperty.occupancyStatus ?? 'owner-occupied') === 'owner-occupied',
+    );
+  });
+  if (ownerOccupiedHdbDuringMop) {
+    moves.push({
+      id: 'start-room-rental',
+      title: 'Start a MOP-safe room rental',
+      detail: 'Whole-flat rental is locked during MOP, but an owner-occupied room lease can teach yield without breaking the simplified rules.',
+      route: `/property/${ownerOccupiedHdbDuringMop.propertyId}`,
+      actionLabel: 'Start Room Rental',
+      urgency: 'good',
+      priority: 96,
+    });
+  }
+
   if (player.life.stress >= 70 || player.life.energy <= 35) {
     moves.push({
       id: 'recover-life',

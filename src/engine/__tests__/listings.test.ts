@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDistrictOpportunityCards, buildListingSummary, getListingsByDistrict, getListingCatalog, getMarketMovers } from '../listings';
+import { buildDistrictOpportunityCards, buildListingSummary, getDynamicListingSignals, getListingsByDistrict, getListingCatalog, getMarketMovers } from '../listings';
 
 describe('listing catalog', () => {
   it('covers every defined district with at least two listings', () => {
@@ -80,5 +80,14 @@ describe('listing catalog', () => {
     expect(movers).toHaveLength(3);
     expect(movers.every((mover) => mover.title.length > 0)).toBe(true);
     expect(cards.find((card) => card.districtId === 22)?.listingCount).toBeGreaterThanOrEqual(4);
+  });
+
+  it('builds deterministic listing signals so the market board changes by turn', () => {
+    const turnOne = getDynamicListingSignals(1);
+    const turnEight = getDynamicListingSignals(8);
+
+    expect(turnOne).toHaveLength(3);
+    expect(turnOne.every((signal) => signal.propertyId.length > 0)).toBe(true);
+    expect(turnOne.map((signal) => signal.propertyId)).not.toEqual(turnEight.map((signal) => signal.propertyId));
   });
 });

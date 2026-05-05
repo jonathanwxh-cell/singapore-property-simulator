@@ -94,6 +94,30 @@ describe('getNextBestMoves', () => {
     });
   });
 
+  it('prioritizes MOP-safe room rental after buying an owner-occupied HDB', () => {
+    const moves = getNextBestMoves({
+      player: makePlayer({
+        properties: [{
+          propertyId: 'hdb-bto-0',
+          purchasePrice: 265_000,
+          purchaseDate: '2024-01',
+          currentValue: 265_000,
+          isRented: false,
+          monthlyRental: 1300,
+          renovationLevel: 0,
+          occupancyStatus: 'owner-occupied',
+          mopRemainingMonths: 60,
+        }],
+      }),
+    });
+
+    expect(moves[0]).toMatchObject({
+      id: 'start-room-rental',
+      route: '/property/hdb-bto-0',
+      actionLabel: 'Start Room Rental',
+    });
+  });
+
   it('adds route milestone guidance when no critical blocker is present', () => {
     const moves = getNextBestMoves({
       player: makePlayer({

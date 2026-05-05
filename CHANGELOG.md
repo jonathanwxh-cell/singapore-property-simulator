@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **UX rescue pass**: Monthly Intent cards on the Home Command Center let players pick a cash, deal-hunting, recovery, or landlord-ops stance before advancing the month.
+- **First Owner Checklist**: owned property detail pages now surface MOP-safe room rental, reserve protection, and return-to-plan actions immediately after purchase.
+- **Dynamic market signals**: the Buy page now rotates deterministic district-heat, quiet-value, and expiring-lead cards by turn so browsing feels less static.
+- **Singapore realism glossary expansion**: added HFE, COV, SORA, commercial BSD, and CPF refund explainers for first-home and commercial-property learning paths.
 - **One-click beginner start**: title and New Game now offer a recommended Singapore Citizen BTO-upgrader run that lands directly in the Home Command Center.
 - **Learning Layer 1.0**: a dedicated Learn hub, casual-player prerequisite framing, richer Singapore rule glossary entries, and inline glossary chips for ABSD, BSD, CPF OA, MOP, MSR, and TDSR.
 - **Guided Command Center UX**: a tested monthly objective helper, `This Month` dashboard hero, persistent desktop/mobile `Next Month` CTA, grouped Home/Life/Buy/Own/Learn navigation, and progressive-detail panels that keep advanced systems available without overwhelming first-time players.
@@ -36,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Landlord Ops 2.0**: lease renewal decisions, rent-push vacancy risk, reserve-gap milestones, richer maintenance events, and new landlord/repair visual cards.
 
 ### Changed
+- Property detail rule cheatsheets now show only terms relevant to the current property type, including commercial BSD for commercial assets instead of residential ABSD framing.
+- Decision Coach now prioritizes MOP-safe room-rental setup immediately after buying an owner-occupied HDB, before generic route or cash-grind goals.
 - New Game now treats the guided beginner run as the primary action, with the full setup wizard framed as customization.
 - The Dashboard Learn tile now opens the Learn hub instead of the market page.
 - The `Learn` navigation item now opens a beginner-friendly education hub instead of sending players to the market page.
@@ -59,6 +65,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Portfolio and property-detail surfaces now expose lease pressure, repair exposure, reserve gaps, and tenant-satisfaction tradeoffs as explicit landlord decisions.
 
 ### Fixed
+- Mobile transaction pages no longer show the floating `Next Month` CTA over the buy action.
+- Scenario `Continue` now returns players to the Home Command Center instead of leaving them on the long scenario library page.
+- HDB homes still inside MOP now block sale attempts with explicit MOP copy.
+- Commercial purchases now avoid residential ABSD and use simplified non-residential BSD tiers.
+- The Learn hub bottom `Start Beginner Run` button now starts the guided run directly instead of routing to setup.
+- The title screen can scroll on shorter screens so secondary onboarding actions remain reachable.
 - Active scenarios can no longer be dismissed without choosing an outcome.
 - Save slots are disabled until a run is active, preventing blank default saves.
 - Life planning no longer allows the same action to be selected as both primary and secondary.

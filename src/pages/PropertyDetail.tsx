@@ -235,7 +235,7 @@ export default function PropertyDetail() {
               )}
               {isOwned && ownedProperty?.isRented && (
                 <span className="px-2 py-1 rounded text-[10px] font-rajdhani font-semibold bg-cyan-glow/20 text-cyan-glow">
-                  Rented Out
+                  {ownedProperty.tenant?.rentalMode === 'room-rental' ? 'Room Rented' : 'Rented Out'}
                 </span>
               )}
               {!isOwned && eligibilityFlags.firstTimer && eligibility.firstTimerFriendly && (
@@ -257,6 +257,37 @@ export default function PropertyDetail() {
             </p>
           </div>
         </div>
+
+        {isOwned && ownedProperty && (
+          <GlassCard accentColor="#00E676" className="mb-6">
+            <div className="grid gap-4 lg:grid-cols-[1fr,auto] lg:items-center">
+              <div>
+                <p className="label-text mb-1 text-[10px] text-success">First Owner Checklist</p>
+                <h2 className="section-title text-white">Make this property do something this month</h2>
+                <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+                  The first owned month should not feel like a spreadsheet. Pick one clear ownership action: room-rent safely during MOP, protect a reserve, or go back to the command center.
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[34rem]">
+                {property.isHdb && (ownedProperty.mopRemainingMonths ?? 0) > 0 && !ownedProperty.tenant && (
+                  <button
+                    type="button"
+                    onClick={() => handleTenantPlan('room-rental', 'local-family', 'market')}
+                    className="btn-primary py-3 text-sm"
+                  >
+                    Start MOP-Safe Room Rental
+                  </button>
+                )}
+                <button type="button" onClick={handleReserveTopUp} className="btn-secondary py-3 text-sm">
+                  Protect S$5K Reserve
+                </button>
+                <button type="button" onClick={() => navigate('/dashboard')} className="btn-secondary py-3 text-sm">
+                  Back to Monthly Plan
+                </button>
+              </div>
+            </div>
+          </GlassCard>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
@@ -371,8 +402,10 @@ export default function PropertyDetail() {
             <RuleGlossaryPanel
               title="Rule Cheatsheet"
               termIds={property.isHdb
-                ? ['mop', 'hdb-room-rental', 'cpf-oa', 'msr', 'tdsr']
-                : ['absd', 'bsd', 'cpf-oa', 'tdsr', 'reserve-cash']}
+                ? ['hfe', 'mop', 'hdb-room-rental', 'cpf-oa', 'msr', 'tdsr', 'cov', 'cpf-refund']
+                : property.type.startsWith('Commercial')
+                  ? ['commercial-bsd', 'sora', 'reserve-cash', 'tdsr']
+                  : ['absd', 'bsd', 'cpf-oa', 'tdsr', 'sora', 'reserve-cash']}
               compact
             />
 
@@ -642,6 +675,15 @@ export default function PropertyDetail() {
                 </div>
 
                 <div className="space-y-2">
+                  {quickRentalBlockedByMop && !ownedProperty.tenant && (
+                    <button
+                      type="button"
+                      onClick={() => handleTenantPlan('room-rental', 'local-family', 'market')}
+                      className="w-full rounded-lg border border-success/40 bg-success/20 py-3 text-sm font-semibold uppercase tracking-wider text-success transition-all hover:bg-success/30"
+                    >
+                      Start MOP-Safe Room Rental
+                    </button>
+                  )}
                   <button
                     onClick={handleToggleRental}
                     disabled={quickRentalBlockedByMop}
@@ -654,7 +696,7 @@ export default function PropertyDetail() {
                     }`}
                   >
                     <Home size={16} />
-                    {quickRentalBlockedByMop ? 'Whole-Flat Rental Locked' : ownedProperty.isRented ? 'Stop Renting' : 'Rent Out'}
+                    {quickRentalBlockedByMop ? 'Whole-Flat Rental Locked' : ownedProperty.tenant?.rentalMode === 'room-rental' ? 'End Room Lease' : ownedProperty.isRented ? 'Stop Renting' : 'Rent Out'}
                   </button>
                   {quickRentalBlockedByMop && (
                     <p className="text-text-dim text-xs text-center">

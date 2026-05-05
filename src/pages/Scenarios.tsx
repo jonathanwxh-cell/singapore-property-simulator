@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/game/useGameStore';
 import { scenarios, categoryColors } from '@/data/scenarios';
 import { difficultySettings } from '@/game/types';
@@ -11,6 +12,7 @@ import { assessScenarioOption, type ScenarioOptionAssessment } from '@/engine/de
 
 export default function Scenarios() {
   const { currentScenario, resolveScenario, player, setCurrentScenario } = useGameStore();
+  const navigate = useNavigate();
   const [result, setResult] = useState<string | null>(null);
   const [resolved, setResolved] = useState(false);
 
@@ -31,6 +33,7 @@ export default function Scenarios() {
     setResult(null);
     setResolved(false);
     setCurrentScenario(null);
+    navigate('/dashboard');
   };
 
   if (!activeScenario && !result) {

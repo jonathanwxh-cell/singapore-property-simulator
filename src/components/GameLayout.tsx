@@ -51,6 +51,9 @@ export default function GameLayout() {
 
   const sidebarWidth = isMobile || !shellControlsVisible ? 0 : 224;
   const bottomNavHeight = isMobile && shellControlsVisible ? 116 : 0;
+  const showFloatingAdvance = isMobile
+    && shellControlsVisible
+    && ['/dashboard', '/life', '/portfolio', '/market', '/bank', '/learn'].includes(location.pathname);
 
   return (
     <div className="bg-deep-space text-white" style={{ height: '100dvh', overflow: 'hidden' }}>
@@ -84,7 +87,7 @@ export default function GameLayout() {
       {/* Mobile bottom nav */}
       {isMobile && shellControlsVisible && (
         <>
-        <NextMonthCTA variant="floating" />
+        {showFloatingAdvance && <NextMonthCTA variant="floating" />}
         <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center justify-around gap-1 px-2 lg:hidden">
           {mobileNavItems.map((item) => {
             const isActive = location.pathname === item.path;

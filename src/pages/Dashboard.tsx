@@ -12,6 +12,7 @@ import { lifeActions, lifeActionsById } from '@/data/lifeActions';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { getCommandCenterState } from '@/engine/commandCenter';
 import { getNextBestMoves } from '@/engine/decisionCoach';
+import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
 import { deriveEligibilityFlags, EC_MAX_MONTHLY_INCOME } from '@/engine/eligibility';
 import { getFirstHomeMissions } from '@/engine/firstHomeMissions';
 import {
@@ -56,7 +57,7 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { player, market, isGameActive, currentScenario } = useGameStore();
+  const { player, market, isGameActive, currentScenario, setPrimaryLifeAction, setSecondaryLifeAction } = useGameStore();
   const navigate = useNavigate();
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -89,6 +90,7 @@ export default function Dashboard() {
   const weakTenant = player.properties.find((property) => property.tenant && property.tenant.satisfaction < 55);
   const latestOperation = player.operationHistory?.[0] ?? null;
   const nextBestMoves = getNextBestMoves({ player, currentScenario });
+  const monthlyIntents = getMonthlyIntentOptions(player);
   const firstHomeMissions = getFirstHomeMissions(player);
   const hasPropertyAttention = openIssues.length > 0 || activeRenovations.length > 0 || Boolean(weakTenant);
 
@@ -98,6 +100,11 @@ export default function Dashboard() {
 
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
   const itemVariants = { hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } } };
+  const handleSelectIntent = (intent: MonthlyIntentOption) => {
+    setPrimaryLifeAction(intent.primaryActionId);
+    setSecondaryLifeAction(intent.secondaryActionId);
+    navigate(intent.route);
+  };
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
@@ -131,6 +138,10 @@ export default function Dashboard() {
           <ActionTile icon={ShoppingBag} title="Buy" detail="Best next listing and filters" onClick={() => navigate('/properties')} />
           <ActionTile icon={PieChart} title="Own" detail="Tenants, repairs, upgrades" onClick={() => navigate('/portfolio')} />
           <ActionTile icon={BookOpen} title="Learn" detail="Rules, blockers, first-run help" onClick={() => navigate('/learn')} />
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="mb-6">
+          <MonthlyIntentPanel intents={monthlyIntents} onSelect={handleSelectIntent} />
         </motion.div>
 
         {player.properties.length > 0 && hasPropertyAttention && (
@@ -330,6 +341,66 @@ export default function Dashboard() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+function MonthlyIntentPanel({
+  intents,
+  onSelect,
+}: {
+  intents: MonthlyIntentOption[];
+  onSelect: (intent: MonthlyIntentOption) => void;
+}) {
+  return (
+    <GlassCard accentColor="#00F0FF">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="label-text mb-1 text-[10px] text-cyan-glow">Choose your month</p>
+          <h3 className="section-title text-white">Monthly Intent</h3>
+          <p className="mt-1 text-sm text-text-secondary">
+            Pick a stance before advancing. This keeps the sim from becoming autopilot while still setting life actions for you.
+          </p>
+        </div>
+        <span className="rounded-full border border-cyan-glow/25 bg-cyan-glow/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-cyan-glow">
+          1 click plan
+        </span>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        {intents.map((intent) => (
+          <button
+            key={intent.id}
+            type="button"
+            onClick={() => onSelect(intent)}
+            className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 ${
+              intent.recommended
+                ? 'border-success/40 bg-success/10'
+                : intent.tone === 'warn'
+                  ? 'border-warning/30 bg-warning/10'
+                  : 'border-glass-border bg-white/[0.03] hover:border-cyan-glow/40'
+            }`}
+          >
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <span className={`text-[10px] font-mono uppercase tracking-[0.18em] ${intent.recommended ? 'text-success' : 'text-text-dim'}`}>
+                {intent.recommended ? 'Recommended' : intent.tone}
+              </span>
+              <span className="text-[10px] text-text-dim">Use plan</span>
+            </div>
+            <p className="font-rajdhani text-lg font-semibold text-white">{intent.label}</p>
+            <p className="mt-2 text-xs leading-relaxed text-text-secondary">{intent.detail}</p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="rounded-lg bg-white/5 p-2">
+                <p className="label-text text-[9px] text-success">Upside</p>
+                <p className="mt-1 text-[11px] text-text-secondary">{intent.upside}</p>
+              </div>
+              <div className="rounded-lg bg-white/5 p-2">
+                <p className="label-text text-[9px] text-warning">Tradeoff</p>
+                <p className="mt-1 text-[11px] text-text-secondary">{intent.risk}</p>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </GlassCard>
   );
 }
 
