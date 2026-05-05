@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Local profiles and phone transfer saves**: Save / Load now supports multiple player profiles, profile-scoped autosaves and slots, whole-profile export/import files, and copyable transfer bundles for moving runs across iPhone, Android, and desktop browsers.
 - **UX rescue pass**: Monthly Intent cards on the Home Command Center let players pick a cash, deal-hunting, recovery, or landlord-ops stance before advancing the month.
 - **First Owner Checklist**: owned property detail pages now surface MOP-safe room rental, reserve protection, and return-to-plan actions immediately after purchase.
 - **Dynamic market signals**: the Buy page now rotates deterministic district-heat, quiet-value, and expiring-lead cards by turn so browsing feels less static.

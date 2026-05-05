@@ -344,6 +344,14 @@ export interface SaveSlot {
   data: string;
 }
 
+export interface SaveProfile {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: string;
+  lastPlayedAt: string;
+}
+
 export const difficultySettings: Record<Difficulty, {
   startingCash: number;
   salaryModifier: number;

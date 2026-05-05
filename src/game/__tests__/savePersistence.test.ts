@@ -3,9 +3,19 @@ import { SAVE_VERSION } from '@/engine/constants';
 import type { GameState } from '../types';
 import {
   AUTO_SAVE_KEY,
+  DEFAULT_PROFILE_ID,
+  createPlayerProfile,
+  exportProfileBundle,
+  getActiveProfileId,
+  getPlayerProfiles,
+  importProfileBundle,
   parseStoredGameState,
+  readAutoSave,
+  readSaveSlots,
   serializeGameState,
+  setActiveProfileId,
   shouldHydrateAutoSaveForPath,
+  writeSaveSlots,
   writeAutoSave,
 } from '../savePersistence';
 
@@ -120,5 +130,80 @@ describe('save persistence', () => {
     expect(shouldHydrateAutoSaveForPath('/')).toBe(false);
     expect(shouldHydrateAutoSaveForPath('/newgame')).toBe(false);
     expect(shouldHydrateAutoSaveForPath('/saveload')).toBe(false);
+  });
+
+  it('scopes autosaves and manual save slots by active local profile', () => {
+    const alice = createPlayerProfile('Alice');
+    const bob = createPlayerProfile('Bob');
+
+    expect(alice).not.toBeNull();
+    expect(bob).not.toBeNull();
+    expect(setActiveProfileId(alice?.id ?? '')).toBe(true);
+    writeAutoSave(makeState({ player: { ...makeState().player, name: 'Alice Player' } }));
+    writeSaveSlots([
+      {
+        id: 1,
+        name: 'Alice Slot',
+        date: '2026-01-01T00:00:00.000Z',
+        playerName: 'Alice Player',
+        netWorth: 90000,
+        turnCount: 3,
+        year: 2024,
+        month: 4,
+        difficulty: 'normal',
+        data: serializeGameState(makeState({ player: { ...makeState().player, name: 'Alice Player' } })),
+      },
+    ]);
+
+    expect(setActiveProfileId(bob?.id ?? '')).toBe(true);
+    writeAutoSave(makeState({ player: { ...makeState().player, name: 'Bob Player' } }));
+    writeSaveSlots([]);
+
+    expect(readAutoSave(alice?.id)?.player.name).toBe('Alice Player');
+    expect(readAutoSave(bob?.id)?.player.name).toBe('Bob Player');
+    expect(readSaveSlots(alice?.id)).toHaveLength(1);
+    expect(readSaveSlots(bob?.id)).toHaveLength(0);
+    expect(getActiveProfileId()).toBe(bob?.id);
+  });
+
+  it('keeps legacy guest saves on the default profile for backwards compatibility', () => {
+    writeAutoSave(makeState({ player: { ...makeState().player, name: 'Guest Player' } }), DEFAULT_PROFILE_ID);
+
+    expect(localStorage.getItem(AUTO_SAVE_KEY)).not.toBeNull();
+    expect(readAutoSave(DEFAULT_PROFILE_ID)?.player.name).toBe('Guest Player');
+    expect(getPlayerProfiles()[0].id).toBe(DEFAULT_PROFILE_ID);
+  });
+
+  it('exports and imports a whole profile bundle for device transfer', () => {
+    const profile = createPlayerProfile('Phone Transfer');
+    expect(profile).not.toBeNull();
+    expect(setActiveProfileId(profile?.id ?? '')).toBe(true);
+
+    const state = makeState({ player: { ...makeState().player, name: 'Mobile Player' } });
+    writeAutoSave(state);
+    writeSaveSlots([
+      {
+        id: 2,
+        name: 'Checkpoint',
+        date: '2026-01-02T00:00:00.000Z',
+        playerName: 'Mobile Player',
+        netWorth: 120000,
+        turnCount: 6,
+        year: 2024,
+        month: 7,
+        difficulty: 'normal',
+        data: serializeGameState(state),
+      },
+    ]);
+
+    const bundle = exportProfileBundle(profile?.id);
+    localStorage.clear();
+
+    const imported = importProfileBundle(bundle);
+
+    expect(imported.ok).toBe(true);
+    expect(imported.profile.name).toContain('Phone Transfer');
+    expect(readAutoSave(imported.profile.id)?.player.name).toBe('Mobile Player');
+    expect(readSaveSlots(imported.profile.id)[0].name).toBe('Checkpoint');
   });
 });

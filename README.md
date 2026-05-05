@@ -27,6 +27,20 @@ The dashboard also includes a first-home mission rail and a plain-English rule g
 5. **Advance Turn** — Market moves, loans amortize, CPF compounds, ownership costs hit, and portfolio-aware events fire
 6. **React** — Scenario events (market crashes, cooling measures, tenant defaults, leasehold pressure, renovation opportunities) present choices with probabilistic outcomes
 
+### Save Profiles & Phone Transfer
+
+The Save / Load hub supports multiple local player profiles on the same device. Each profile has its own autosave and five manual slots, so different people can play without overwriting each other.
+
+Cross-device continuation is supported through manual profile transfer:
+
+1. Open **Save / Load Game** on the old phone.
+2. Choose the player profile.
+3. Use **Download Profile** or **Copy Code** under Cloud / Phone Transfer.
+4. Send the file or code through iCloud Drive, Google Drive, AirDrop, WhatsApp, email, or another trusted channel.
+5. Open the game on the new phone and use **Import Profile**.
+
+This is not account-based cloud sync yet. It is a cloud-drive-friendly transfer bundle that works across iPhone, Android, and desktop browsers without a login.
+
 ### Guided Life Arcs
 
 Run Director turns each playthrough into a clearer Singapore property story. Routes guide what the Decision Coach prioritizes, how milestones are framed, which scenario themes get extra weight, and what the endgame recap recommends for the next replay. Routes are advisory rather than restrictive: the simulator still lets players make any purchase or operating move that passes the underlying eligibility and affordability rules.
