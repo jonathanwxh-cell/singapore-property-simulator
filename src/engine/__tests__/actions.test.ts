@@ -129,6 +129,49 @@ describe('buyPropertyPure', () => {
     }
   });
 
+  it('marks the first private residential purchase as owner-occupied', () => {
+    const result = buyPropertyPure(makePlayer({ cash: 3_000_000 }), 'condo-10', 500_000);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.player.properties[0].occupancyStatus).toBe('owner-occupied');
+  });
+
+  it('blocks a private residential purchase while an HDB MOP is still active', () => {
+    const first = buyPropertyPure(makePlayer({ cash: 5_000_000 }), 'hdb-bto-0', 265_000);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    const second = buyPropertyPure(first.value.player, 'condo-10', 1_100_000);
+
+    expect(second.ok).toBe(false);
+    if (!second.ok) {
+      expect(second.reason).toBe('mop_restricted');
+      expect(second.message).toContain('MOP');
+    }
+  });
+
+  it('blocks buying a second HDB while still holding a public-housing home', () => {
+    const first = buyPropertyPure(makePlayer({ cash: 5_000_000 }), 'hdb-bto-0', 265_000);
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    const afterMop = {
+      ...first.value.player,
+      properties: first.value.player.properties.map((property) => ({
+        ...property,
+        mopRemainingMonths: 0,
+      })),
+    };
+    const second = buyPropertyPure(afterMop, 'hdb-resale-0', 295_000);
+
+    expect(second.ok).toBe(false);
+    if (!second.ok) {
+      expect(second.reason).toBe('eligibility_blocked');
+      expect(second.message).toContain('public-housing');
+    }
+  });
+
   it('charges SPR first-property ABSD through the purchase path', () => {
     const citizen = buyPropertyPure(makePlayer({ cash: 3_000_000 }), 'condo-10', 500_000);
     const spr = buyPropertyPure(makePlayer({

@@ -856,7 +856,7 @@ export default function PropertyDetail() {
                     disabled={!canAfford}
                     className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {eligibilityBlocked ? 'Not Eligible Yet' : dealReadiness.ctaLabel}
+                    {dealReadiness.ctaLabel}
                   </button>
 
                   {visibleMessages.length > 0 && (
@@ -881,7 +881,7 @@ export default function PropertyDetail() {
               disabled={!canAfford}
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {eligibilityBlocked ? 'Not Eligible Yet' : dealReadiness.ctaLabel}
+              {dealReadiness.ctaLabel}
             </button>
             {visibleMessages.length > 0 && (
               <p className="mt-2 text-center text-xs text-danger">{visibleMessages[0]}</p>

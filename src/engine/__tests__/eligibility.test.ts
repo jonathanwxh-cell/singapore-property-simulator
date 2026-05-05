@@ -109,4 +109,28 @@ describe('eligibility', () => {
     expect(under35.blockedReason).toContain('Single buyers under 35');
     expect(family.blockedReason).toBeNull();
   });
+
+  it('blocks another residential purchase while a public-housing MOP is active', () => {
+    const status = evaluatePropertyEligibility({
+      propertyType: 'Private Condo',
+      salary: 9_000,
+      properties: [{ propertyId: 'hdb-bto-0', mopRemainingMonths: 24 }],
+      firstHomePurchased: true,
+      ownedPrivateHome: false,
+    });
+
+    expect(status.blockedReason).toContain('MOP');
+  });
+
+  it('blocks a second public-housing purchase while holding an existing HDB or EC', () => {
+    const status = evaluatePropertyEligibility({
+      propertyType: 'HDB Resale',
+      salary: 9_000,
+      properties: [{ propertyId: 'hdb-bto-0', mopRemainingMonths: 0 }],
+      firstHomePurchased: true,
+      ownedPrivateHome: false,
+    });
+
+    expect(status.blockedReason).toContain('public-housing');
+  });
 });

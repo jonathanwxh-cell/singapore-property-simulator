@@ -6,6 +6,7 @@ import { formatCurrency, formatPercent } from '@/lib/format';
 import { TAKE_HOME_RATIO } from './constants';
 import { getRunArc } from './runDirector';
 import { getDownPaymentAmount, validatePurchase, type PurchaseValidationReason } from './purchase';
+import { evaluatePropertyEligibility } from './eligibility';
 import {
   selectAvailableCash,
   selectMonthlyNetCashflow,
@@ -194,8 +195,23 @@ export function assessDealReadiness({
   const cashShortfall = Math.max(0, cashRequired - player.cash);
   const monthlySurplus = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
   const monthlySurplusAfterDebt = monthlySurplus - validation.monthlyPayment;
+  const eligibility = evaluatePropertyEligibility({
+    propertyType: property.type,
+    salary: player.salary,
+    properties: player.properties,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+    buyerProfile: player.buyerProfile,
+  });
   const structuralBlocker = validation.reasons.find((reason) => reason.code !== 'insufficient_cash') ?? null;
-  const primaryBlocker = structuralBlocker
+  const eligibilityBlocker = eligibility.blockedReason
+    ? {
+        code: eligibility.blockedCode ?? 'eligibility_blocked',
+        message: eligibility.blockedReason,
+      }
+    : null;
+  const primaryBlocker = eligibilityBlocker
+    ?? structuralBlocker
     ?? (cashShortfall > 0 ? { code: 'insufficient_cash' as const, message: `You need ${formatCurrency(cashShortfall)} more spendable cash after CPF.` } : null);
   const warnings: string[] = [];
 
@@ -322,6 +338,8 @@ function blockerLabel(primaryBlocker: PurchaseValidationReason, shortfall: numbe
   if (primaryBlocker.code === 'ltv_exceeded') return 'Raise Down Payment';
   if (primaryBlocker.code === 'credit_too_low') return 'Improve Credit';
   if (primaryBlocker.code === 'already_owned') return 'Already Owned';
+  if (primaryBlocker.code === 'mop_restricted') return 'Blocked: MOP';
+  if (primaryBlocker.code === 'eligibility_blocked') return 'Not Eligible Yet';
   if (primaryBlocker.code === 'insufficient_cash') return `Need ${formatCurrency(shortfall)} More`;
   return 'Not Eligible Yet';
 }

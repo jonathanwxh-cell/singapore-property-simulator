@@ -42,6 +42,18 @@ function canUseCpfForProperty(propertyId: string): boolean {
   return Boolean(property && isResidentialCategory(property.type));
 }
 
+function hasResidentialHolding(player: Player): boolean {
+  return player.properties.some((ownedProperty) => {
+    const listing = properties.find((candidate) => candidate.id === ownedProperty.propertyId);
+    return Boolean(listing && isResidentialCategory(listing.type));
+  });
+}
+
+function getInitialOccupancyStatus(player: Player, property: NonNullable<(typeof properties)[number]>): OwnedProperty['occupancyStatus'] {
+  if (!isResidentialCategory(property.type)) return 'vacant';
+  return hasResidentialHolding(player) ? 'vacant' : 'owner-occupied';
+}
+
 export function resolveScenarioOption(option: ScenarioOption, rng: Rng): ScenarioResolution {
   const success = rng.next() <= option.probability;
   if (success) {
@@ -105,7 +117,7 @@ export function buyPropertyPure(
     buyerProfile: player.buyerProfile,
   });
   if (eligibility.blockedReason) {
-    return fail('eligibility_blocked', eligibility.blockedReason);
+    return fail(eligibility.blockedCode ?? 'eligibility_blocked', eligibility.blockedReason);
   }
 
   const cashRequired = roundMoney(validation.totalUpfront - cpfToUse);
@@ -134,7 +146,7 @@ export function buyPropertyPure(
     monthlyRental,
     renovationLevel: 0,
     loanId: loanAmount > 0 ? loanId : undefined,
-    occupancyStatus: property.isHdb ? 'owner-occupied' : 'vacant',
+    occupancyStatus: getInitialOccupancyStatus(player, property),
     tenantQuality: 50,
     vacancyMonths: 0,
     maintenanceCost: deriveMaintenanceCost({
