@@ -110,9 +110,9 @@ export default function Properties() {
               <PropertyImage
                 src={bestNextBuy.property.image}
                 alt={bestNextBuy.property.name}
-                className="h-56 w-full object-cover lg:h-full"
+                className="h-36 w-full object-cover sm:h-56 lg:h-full"
               />
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <span className="inline-flex items-center gap-2 rounded-full border border-success/30 bg-success/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-success">
                     <Sparkles size={13} /> Best next buy for you
@@ -228,7 +228,7 @@ export default function Properties() {
           <button
             type="button"
             onClick={() => setShowAdvancedFilters((value) => !value)}
-            className="inline-flex items-center gap-2 rounded-full border border-glass-border bg-white/[0.04] px-4 py-2 text-xs font-rajdhani uppercase tracking-wider text-text-secondary hover:text-white"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-glass-border bg-white/[0.04] px-4 py-2.5 text-xs font-rajdhani uppercase tracking-wider text-text-secondary hover:text-white"
           >
             <SlidersHorizontal size={14} />
             {showAdvancedFilters ? 'Hide filters' : 'More filters'}

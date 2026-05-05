@@ -55,7 +55,7 @@ export default function GameLayout() {
   const showFloatingAdvance = isMobile
     && shellControlsVisible
     && !routesWithInlineAdvance.includes(location.pathname)
-    && ['/portfolio', '/market', '/bank', '/learn'].includes(location.pathname);
+    && ['/market', '/bank'].includes(location.pathname);
 
   return (
     <div className="bg-deep-space text-white" style={{ height: '100dvh', overflow: 'hidden' }}>

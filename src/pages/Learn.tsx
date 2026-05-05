@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowRight, Banknote, BookOpen, Building2, CheckCircle2, Route, Sparkles, Users } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 import GlossaryTerm from '@/components/GlossaryTerm';
@@ -38,8 +38,10 @@ const commonMistakes = [
 
 export default function Learn() {
   const navigate = useNavigate();
+  const location = useLocation();
   const isGameActive = useGameStore((state) => state.isGameActive);
   const newGame = useGameStore((state) => state.newGame);
+  const returnState = location.state as { returnTo?: string; returnLabel?: string } | null;
 
   const startBeginnerRun = () => {
     newGame(
@@ -65,6 +67,15 @@ export default function Learn() {
                   You do not need to know property law, CPF, or investing jargon before playing. This hub translates the sim into game decisions: why a buy is blocked, why cash disappears, and what to try next.
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  {returnState?.returnTo && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(returnState.returnTo ?? '/newgame')}
+                      className="btn-secondary flex items-center justify-center gap-2"
+                    >
+                      {returnState.returnLabel ?? 'Back'}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={isGameActive ? () => navigate('/dashboard') : startBeginnerRun}

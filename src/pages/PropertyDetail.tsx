@@ -198,6 +198,7 @@ export default function PropertyDetail() {
     mopRemainingMonths: ownedProperty?.mopRemainingMonths ?? 0,
   });
   const leaseOptions = ownedProperty ? getTenantLeaseOptions(ownedProperty, player.turnCount) : [];
+  const leaseDecisionMadeThisTurn = ownedProperty?.tenant?.lastLeaseDecisionTurn === player.turnCount;
   const propertyRepairExposure = ownedProperty?.openMaintenanceIssues?.reduce((sum, issue) => sum + issue.estimatedCost, 0) ?? 0;
   const propertyUnprotectedRisk = Math.max(0, propertyRepairExposure - reservedCash);
   const floorPlanSrc = getFloorPlanSrc(ownedProperty?.floorPlanId);
@@ -209,7 +210,7 @@ export default function PropertyDetail() {
   );
 
   return (
-    <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4 game-screen">
+    <div className="min-h-[calc(100dvh-64px)] bg-deep-space px-4 pb-8 game-screen">
       <div className="max-w-5xl mx-auto">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-text-secondary hover:text-cyan-glow transition-colors mb-4">
           <ArrowLeft size={18} />
@@ -553,6 +554,16 @@ export default function PropertyDetail() {
                         </div>
                       </div>
                     )}
+                    {leaseDecisionMadeThisTurn && (
+                      <div className="mb-4 rounded-xl border border-success/25 bg-success/10 p-3">
+                        <p className="font-rajdhani text-sm font-semibold uppercase tracking-[0.1em] text-success">
+                          Lease decision locked for this month
+                        </p>
+                        <p className="mt-1 text-xs text-text-secondary">
+                          Advance to next month before making another tenant decision for this property.
+                        </p>
+                      </div>
+                    )}
                     <div className="grid md:grid-cols-3 gap-3">
                       {tenantPlans.map((plan) => (
                         <button
@@ -893,7 +904,7 @@ export default function PropertyDetail() {
                   </div>
                 </div>
 
-                <div className="sticky bottom-0 -mx-4 -mb-4 mt-4 hidden rounded-b-card border-t border-divider bg-glass-fill/95 p-4 backdrop-blur-xl lg:block">
+                <div className="mt-4 rounded-card border border-divider bg-glass-fill/95 p-4 backdrop-blur-xl lg:sticky lg:bottom-0 lg:-mx-4 lg:-mb-4 lg:rounded-b-card lg:border-x-0 lg:border-b-0">
                   <button
                     onClick={handleBuy}
                     disabled={!canAfford}
@@ -917,20 +928,6 @@ export default function PropertyDetail() {
           </div>
         </div>
 
-        {!isOwned && (
-          <div className="fixed inset-x-4 bottom-[4.75rem] z-40 rounded-card border border-divider bg-glass-fill/95 p-4 shadow-glass backdrop-blur-xl lg:hidden">
-            <button
-              onClick={handleBuy}
-              disabled={!canAfford}
-              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {dealReadiness.ctaLabel}
-            </button>
-            {visibleMessages.length > 0 && (
-              <p className="mt-2 text-center text-xs text-danger">{visibleMessages[0]}</p>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

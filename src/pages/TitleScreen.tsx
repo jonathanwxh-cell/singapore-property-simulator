@@ -20,6 +20,7 @@ export default function TitleScreen() {
   const [soundOn, setSoundOn] = useState(false);
   const loadGame = useGameStore((state) => state.loadGame);
   const newGame = useGameStore((state) => state.newGame);
+  const hasContinueSave = Boolean(readAutoSave());
 
   useGSAP(() => {
     const tl = gsap.timeline();
@@ -87,8 +88,6 @@ export default function TitleScreen() {
       handleTransition('/dashboard');
       return;
     }
-
-    handleTransition('/saveload');
   };
 
   const handleGuidedStart = () => {
@@ -180,14 +179,25 @@ export default function TitleScreen() {
               onClick={handleGuidedStart}
             />
             <MenuButton
+              label="How to Play"
+              variant="secondary"
+              onClick={() => handleTransition('/how-to-play')}
+            />
+            <MenuButton
+              label="Learn the Rules"
+              variant="secondary"
+              onClick={() => handleTransition('/learn')}
+            />
+            <MenuButton
               label="New Game"
               variant="secondary"
               onClick={() => handleTransition('/newgame')}
             />
             <MenuButton
-              label="Continue"
+              label={hasContinueSave ? 'Continue' : 'No Continue Save'}
               variant="secondary"
               onClick={handleContinue}
+              disabled={!hasContinueSave}
             />
             <MenuButton
               label="Load Game"
@@ -203,16 +213,6 @@ export default function TitleScreen() {
               label="Settings"
               variant="secondary"
               onClick={() => handleTransition('/settings')}
-            />
-            <MenuButton
-              label="How to Play"
-              variant="secondary"
-              onClick={() => handleTransition('/how-to-play')}
-            />
-            <MenuButton
-              label="Learn the Rules"
-              variant="secondary"
-              onClick={() => handleTransition('/learn')}
             />
             <MenuButton
               label="Quit"

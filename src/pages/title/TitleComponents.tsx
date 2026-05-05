@@ -102,12 +102,14 @@ export function MenuButton({
   label,
   variant,
   onClick,
+  disabled = false,
 }: {
   label: string;
   variant: 'primary' | 'secondary' | 'danger';
   onClick: () => void;
+  disabled?: boolean;
 }) {
-  const baseClasses = 'menu-btn w-full h-[52px] flex items-center justify-center rounded-button font-rajdhani font-semibold text-[15px] tracking-[0.5px] uppercase transition-all duration-300 relative overflow-hidden group';
+  const baseClasses = 'menu-btn w-full h-[52px] flex items-center justify-center rounded-button font-rajdhani font-semibold text-[15px] tracking-[0.5px] uppercase transition-all duration-300 relative overflow-hidden group disabled:cursor-not-allowed disabled:opacity-45';
 
   const variantClasses = {
     primary: 'btn-primary',
@@ -116,7 +118,7 @@ export function MenuButton({
   };
 
   return (
-    <button className={`${baseClasses} ${variantClasses[variant]}`} onClick={onClick}>
+    <button className={`${baseClasses} ${variantClasses[variant]}`} onClick={onClick} disabled={disabled}>
       {/* Scanline effect on hover */}
       <span className="absolute inset-0 overflow-hidden pointer-events-none">
         <span className="absolute top-0 left-0 w-0 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:w-full transition-all duration-300" />

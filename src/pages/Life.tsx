@@ -75,7 +75,7 @@ export default function Life() {
             <SceneImage
               src={selectedPrimaryAction.image}
               alt={selectedPrimaryAction.imageAlt}
-              className="h-64 lg:h-full w-full object-cover"
+              className="h-28 w-full object-cover sm:h-64 lg:h-full"
             />
             <div className="p-5 lg:p-6 flex flex-col justify-between gap-5">
               <div>
@@ -87,8 +87,9 @@ export default function Life() {
                   {selectedPrimaryAction.heroHint}
                 </p>
               </div>
-              <div className="space-y-3">
-                <div className="grid sm:grid-cols-3 gap-3">
+              <div className="flex flex-col gap-3">
+                <NextMonthCTA variant="inline" className="order-1 sm:order-2" />
+                <div className="order-2 grid gap-3 sm:order-1 sm:grid-cols-3">
                   <HeroMetric label="Energy" value={`${player.life.energy}/100`} tone="text-cyan-glow" />
                   <HeroMetric label="Stress" value={`${player.life.stress}/100`} tone="text-warning" />
                   <HeroMetric
@@ -97,7 +98,6 @@ export default function Life() {
                     tone={monthlySurplus >= 0 ? 'text-success' : 'text-danger'}
                   />
                 </div>
-                <NextMonthCTA variant="inline" />
               </div>
             </div>
           </div>

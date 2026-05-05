@@ -49,6 +49,7 @@ const tenantStateSchema = z.object({
   contractedRent: z.number(),
   defaultRiskPct: z.number(),
   renewalIntent: z.number(),
+  lastLeaseDecisionTurn: z.number().optional(),
 });
 
 const maintenanceIssueSchema = z.object({

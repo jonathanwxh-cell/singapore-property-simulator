@@ -69,26 +69,26 @@ const HUDTopBar = memo(function HUDTopBar() {
             <>
               <button
                 onClick={() => setIsPaused(!isPaused)}
-                className="flex items-center justify-center w-9 h-9 rounded-hud border border-cyan-glow/30 text-cyan-glow hover:bg-cyan-glow/10 transition-all"
+                className="flex h-11 w-11 items-center justify-center rounded-hud border border-cyan-glow/30 text-cyan-glow transition-all hover:bg-cyan-glow/10"
                 title={isPaused ? 'Resume' : 'Pause'}
               >
-                {isPaused ? <Play size={16} /> : <Pause size={16} />}
+                {isPaused ? <Play size={18} /> : <Pause size={18} />}
               </button>
               <button
                 onClick={() => navigate('/saveload')}
-                className="flex items-center justify-center w-9 h-9 rounded-hud border border-cyan-glow/30 text-cyan-glow hover:bg-cyan-glow/10 transition-all"
+                className="flex h-11 w-11 items-center justify-center rounded-hud border border-cyan-glow/30 text-cyan-glow transition-all hover:bg-cyan-glow/10"
                 title="Save / Load"
               >
-                <Save size={16} />
+                <Save size={18} />
               </button>
             </>
           )}
           <button
             onClick={() => navigate('/settings')}
-            className="flex items-center justify-center w-9 h-9 rounded-hud border border-cyan-glow/30 text-cyan-glow hover:bg-cyan-glow/10 hover:rotate-90 transition-all duration-500"
+            className="flex h-11 w-11 items-center justify-center rounded-hud border border-cyan-glow/30 text-cyan-glow transition-all duration-500 hover:rotate-90 hover:bg-cyan-glow/10"
             title="Settings"
           >
-            <Settings size={16} />
+            <Settings size={18} />
           </button>
         </div>
       </div>

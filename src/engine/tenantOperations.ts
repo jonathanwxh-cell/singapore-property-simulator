@@ -111,6 +111,7 @@ export function getTenantLeaseOptions(
   const property = normalizeOperationProperty(rawProperty);
   const tenant = property.tenant;
   if (!tenant) return [];
+  if (tenant.lastLeaseDecisionTurn === currentTurn) return [];
 
   const monthsRemaining = Math.max(0, tenant.leaseEndTurn - currentTurn);
   const currentRent = tenant.contractedRent;
@@ -183,6 +184,9 @@ export function applyTenantLeaseDecisionPure(
   const tenant = property.tenant;
   if (!listing) return fail('property_not_found', 'Property not found.');
   if (!tenant) return fail('tenant_not_found', 'No active tenant to manage.');
+  if (tenant.lastLeaseDecisionTurn === player.turnCount) {
+    return fail('lease_decision_already_made', 'You already made a lease decision for this property this month. Advance to next month before deciding again.');
+  }
 
   const option = getTenantLeaseOptions(property, player.turnCount).find((candidate) => candidate.id === decisionId);
   if (!option) return fail('lease_option_not_found', 'Lease decision option not found.');
@@ -200,6 +204,7 @@ export function applyTenantLeaseDecisionPure(
       isRented: false,
       occupancyStatus: vacancyStatus,
       vacancyMonths: vacancyStatus === 'vacant' ? (property.vacancyMonths ?? 0) + 1 : 0,
+      rentStrategy: tenant.rentStrategy,
     };
 
     return ok({
@@ -260,6 +265,7 @@ export function applyTenantLeaseDecisionPure(
       defaultRiskPct: roundMoney(clamp(tenant.defaultRiskPct + (decisionId === 'raise-rent' ? 1.5 : decisionId === 'renew' ? -0.3 : -0.1), 0.5, 20)),
       leaseStartTurn: player.turnCount,
       leaseEndTurn: player.turnCount + 12,
+      lastLeaseDecisionTurn: player.turnCount,
     },
     isRented: true,
     rentStrategy: nextStrategy,

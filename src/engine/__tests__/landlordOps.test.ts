@@ -116,6 +116,43 @@ describe('Landlord Ops 2.0', () => {
     expect(result.value.player.operationHistory?.[0].title).toContain('Lease renewed');
   });
 
+  it('blocks repeated lease decisions in the same turn', () => {
+    const player = makePlayer({
+      properties: [{
+        propertyId: 'condo-10',
+        purchasePrice: 1_150_000,
+        purchaseDate: '2028-01',
+        currentValue: 1_180_000,
+        isRented: true,
+        monthlyRental: 3_700,
+        renovationLevel: 0,
+        tenant: {
+          profileId: 'expat-pmet',
+          rentalMode: 'whole-unit',
+          leaseStartTurn: 54,
+          leaseEndTurn: 66,
+          satisfaction: 72,
+          rentStrategy: 'market',
+          askingRent: 3_700,
+          contractedRent: 3_700,
+          defaultRiskPct: 2.5,
+          renewalIntent: 70,
+        },
+      }],
+    });
+
+    const first = applyTenantLeaseDecisionPure(player, 0, 'renew');
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    const second = applyTenantLeaseDecisionPure(first.value.player, 0, 'renew');
+
+    expect(second.ok).toBe(false);
+    if (second.ok) return;
+    expect(second.reason).toBe('lease_decision_already_made');
+    expect(second.message).toContain('next month');
+  });
+
   it('turns an over-pushed rent raise into vacancy when renewal intent is weak', () => {
     const player = makePlayer({
       properties: [{

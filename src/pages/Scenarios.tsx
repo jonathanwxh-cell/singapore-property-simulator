@@ -98,10 +98,10 @@ export default function Scenarios() {
   if (activeScenario && !resolved) {
     const color = categoryColors[activeScenario.category];
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
         <AnimatePresence>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }} className="w-full max-w-lg">
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }} className="my-4 w-full max-w-lg">
             <GlassCard accentColor={color} className="relative">
               <div className="mb-4"><span className="text-[10px] px-2 py-0.5 rounded font-rajdhani uppercase" style={{ backgroundColor: `${color}20`, color }}>{activeScenario.category}</span></div>
               <img
@@ -158,8 +158,8 @@ export default function Scenarios() {
 
   if (result) {
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div className="w-full max-w-lg">
+      <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4">
+        <div className="my-4 w-full max-w-lg">
           <GlassCard accentColor="#00E676" className="text-center py-8">
             <CheckCircle size={48} className="text-success mx-auto mb-4" />
             <h2 className="section-title text-white mb-3">Scenario Resolved</h2>

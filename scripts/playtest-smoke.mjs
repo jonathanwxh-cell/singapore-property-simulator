@@ -112,21 +112,43 @@ function boxesOverlap(a, b) {
     && a.y + a.height > b.y;
 }
 
-async function assertMobileDashboardAdvanceDoesNotCoverVitals(page) {
-  await page.setViewportSize({ width: 390, height: 844 });
+async function getVisibleButtonBoxesWithText(page, text) {
+  return page.locator('button').evaluateAll((buttons, targetText) => (
+    buttons
+      .map((button) => {
+        const rect = button.getBoundingClientRect();
+        return {
+          text: button.innerText,
+          box: {
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height,
+          },
+        };
+      })
+      .filter(({ text, box }) => (
+        text.toUpperCase().includes(String(targetText).toUpperCase())
+        && box.width > 0
+        && box.height > 0
+      ))
+  ), text);
+}
+
+async function assertMobileDashboardAdvanceDoesNotCoverVitals(page, viewport = { width: 390, height: 844 }) {
+  await page.setViewportSize(viewport);
   await delay(150);
 
-  const advanceButtons = page.getByRole('button', { name: /Next Month/i });
-  const advanceCount = await advanceButtons.count();
-  if (advanceCount !== 1) {
-    throw new Error(`Mobile dashboard should expose one Next Month CTA, got ${advanceCount}.`);
+  const advanceButtons = await getVisibleButtonBoxesWithText(page, 'Advance to');
+  if (advanceButtons.length !== 1) {
+    throw new Error(`Mobile dashboard should expose one visible Next Month CTA, got ${advanceButtons.length}.`);
   }
 
   const vitalCards = [
     page.locator('div.rounded-2xl').filter({ hasText: 'Spendable Cash' }).first(),
     page.locator('div.rounded-2xl').filter({ hasText: 'Monthly Surplus' }).first(),
   ];
-  const ctaBox = await advanceButtons.first().boundingBox();
+  const ctaBox = advanceButtons[0].box;
 
   for (const card of vitalCards) {
     const cardText = await card.innerText();
@@ -134,6 +156,121 @@ async function assertMobileDashboardAdvanceDoesNotCoverVitals(page) {
     if (boxesOverlap(ctaBox, cardBox)) {
       throw new Error(`Mobile Next Month CTA overlaps the ${cardText.split('\n')[0]} stat card.`);
     }
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+}
+
+async function assertVisibleAdvanceExists(page, routeLabel) {
+  const advanceButtons = await getVisibleButtonBoxesWithText(page, 'Next Month');
+  if (advanceButtons.length < 1) {
+    throw new Error(`${routeLabel} should expose at least one visible Next Month CTA.`);
+  }
+}
+
+async function assertMobileAdvanceClearsBottomNav(page, routeLabel, viewport = { width: 390, height: 844 }) {
+  await page.setViewportSize(viewport);
+  await delay(150);
+
+  const navBox = await page.locator('nav.fixed.bottom-0').boundingBox();
+  const advanceButtons = await getVisibleButtonBoxesWithText(page, 'Advance to');
+  if (advanceButtons.length !== 1) {
+    throw new Error(`Mobile ${routeLabel} should expose one visible Next Month CTA, got ${advanceButtons.length}.`);
+  }
+
+  if (boxesOverlap(navBox, advanceButtons[0].box)) {
+    throw new Error(`Mobile ${routeLabel} Next Month CTA overlaps the bottom navigation.`);
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+}
+
+async function assertMobileScenarioCanScroll(page) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await delay(150);
+
+  const modalState = await page.locator('div.fixed.inset-0').first().evaluate((modal) => {
+    const content = modal.firstElementChild;
+    const modalStyle = window.getComputedStyle(modal);
+    const contentBox = content?.getBoundingClientRect();
+    return {
+      overflowY: modalStyle.overflowY,
+      contentTop: contentBox?.top ?? 0,
+      contentBottom: contentBox?.bottom ?? 0,
+      viewportHeight: window.innerHeight,
+    };
+  });
+
+  const contentClips = modalState.contentTop < 0 || modalState.contentBottom > modalState.viewportHeight;
+  const canScroll = modalState.overflowY === 'auto' || modalState.overflowY === 'scroll';
+  if (contentClips && !canScroll) {
+    throw new Error('Mobile scenario modal content clips without a scrollable overlay.');
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+}
+
+async function assertMobilePropertiesHeroActionsClearNav(page) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await delay(150);
+
+  const navBox = await page.locator('nav.fixed.bottom-0').boundingBox();
+  const reviewDealBox = await page.getByRole('button', { name: 'Review Deal' }).boundingBox();
+  const starterListBox = await page.getByRole('button', { name: 'Starter List' }).boundingBox();
+  if (boxesOverlap(navBox, reviewDealBox) || boxesOverlap(navBox, starterListBox)) {
+    throw new Error('Mobile Buy page hero actions overlap the bottom navigation.');
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+}
+
+async function assertMobileBuyCtaIsInFlow(page) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await delay(150);
+
+  const hasFixedAncestor = await page.getByRole('button', { name: 'Buy Property' }).evaluate((button) => {
+    let node = button;
+    while (node) {
+      if (window.getComputedStyle(node).position === 'fixed') return true;
+      node = node.parentElement;
+    }
+    return false;
+  });
+
+  if (hasFixedAncestor) {
+    throw new Error('Mobile Buy Property CTA should be in-flow, not a fixed overlay over purchase math.');
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+}
+
+async function assertMobileRouteHasNoVisibleAdvance(page, routeLabel) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await delay(150);
+
+  const advanceButtons = await getVisibleButtonBoxesWithText(page, 'Advance to');
+  if (advanceButtons.length > 0) {
+    throw new Error(`Mobile ${routeLabel} should not show a floating Advance CTA over content.`);
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+}
+
+async function assertNewGameStepResetsMobileScroll(page) {
+  await page.setViewportSize({ width: 393, height: 520 });
+  await delay(150);
+  const main = page.locator('main');
+  await main.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+
+  await page.getByRole('button', { name: /^Next$/ }).click();
+  await expectVisible(page, 'text=Choose Your Life Arc');
+  await delay(150);
+
+  const scrollTop = await main.evaluate((element) => element.scrollTop);
+  if (scrollTop > 2) {
+    throw new Error(`New Game mobile step should reset scroll to top, got ${scrollTop}.`);
   }
 
   await page.setViewportSize({ width: 1440, height: 1100 });
@@ -181,7 +318,7 @@ async function run() {
     await page.getByRole('button', { name: 'Customize Run' }).click();
     await page.getByRole('button', { name: /^Next$/ }).click();
     await expectVisible(page, 'text=Choose Buyer Profile');
-    await page.getByRole('button', { name: /^Next$/ }).click();
+    await assertNewGameStepResetsMobileScroll(page);
     await expectVisible(page, 'text=Choose Your Life Arc');
     await expectVisible(page, 'text=BTO-to-Condo Upgrader');
     await page.getByRole('button', { name: /^Next$/ }).click();
@@ -192,19 +329,28 @@ async function run() {
     await expectVisible(page, 'text=This Month');
     await expectVisible(page, 'text=Market Pulse');
     await expectVisible(page, 'text=Life Arc');
-    await expectVisible(page, 'text=Next Month');
+    await assertVisibleAdvanceExists(page, 'dashboard');
     await expectVisible(page, 'text=Career Review');
     await expectVisible(page, 'text=Eligibility Summary');
     await expectVisible(page, 'text=First-Home Mission Rail');
     await expectVisible(page, 'img[alt="Career Review"]');
-    await expectVisible(page, 'text=Advance to');
     await assertMobileDashboardAdvanceDoesNotCoverVitals(page);
+    await assertMobileAdvanceClearsBottomNav(page, 'dashboard');
+    await assertMobileDashboardAdvanceDoesNotCoverVitals(page, { width: 360, height: 640 });
+    await assertMobileAdvanceClearsBottomNav(page, 'dashboard short Android', { width: 360, height: 640 });
+
+    await page.goto(`${baseUrl}/#/life`, { waitUntil: 'networkidle' });
+    await expectVisible(page, 'text=Plan This Month');
+    await assertMobileAdvanceClearsBottomNav(page, 'life');
+    await assertMobileAdvanceClearsBottomNav(page, 'life short Android', { width: 360, height: 640 });
+    await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
 
     await page.getByRole('button', { name: /Advance to/i }).first().click();
     await expectVisible(page, 'text=Turn 1');
 
     await page.getByRole('button', { name: /Advance to/i }).first().click();
     await expectVisible(page, 'text=First-Home Window Opens');
+    await assertMobileScenarioCanScroll(page);
     await page.getByRole('button', { name: /Claim the grant/i }).click();
     await expectVisible(page, 'text=Scenario Resolved');
     await page.getByRole('button', { name: 'Continue' }).click();
@@ -219,12 +365,16 @@ async function run() {
     await expectVisible(page, 'text=Best next buy for you');
     await expectVisible(page, "text=This Month's Market Signals");
     await expectVisible(page, 'text=First-Timer Friendly');
+    await assertMobilePropertiesHeroActionsClearNav(page);
     await page.getByRole('button', { name: 'Review Deal' }).click();
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');
     await expectVisible(page, 'text=Cash Required');
 
     const buyButton = page.getByRole('button', { name: 'Buy Property' });
     await expectVisible(page, 'text=Northstar Grove 3-Room');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await delay(150);
+    await assertMobileBuyCtaIsInFlow(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await delay(150);
     const nextMonthOnTransactionPage = await page.getByRole('button', { name: /Next Month/i }).count();
@@ -239,6 +389,7 @@ async function run() {
     await expectVisible(page, 'text=Northstar Grove 3-Room');
     await expectVisible(page, 'text=Landlord Ops Command');
     await expectVisible(page, 'img[alt="Landlord operations command dashboard"]');
+    await assertMobileRouteHasNoVisibleAdvance(page, 'portfolio');
 
     await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=First Owner Checklist');
@@ -272,6 +423,10 @@ async function run() {
     await page.getByRole('button', { name: 'Continue' }).click();
     await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Turn 12');
+
+    await page.goto(`${baseUrl}/#/learn`, { waitUntil: 'networkidle' });
+    await expectVisible(page, 'text=Learn Singapore Property Without Prereqs');
+    await assertMobileRouteHasNoVisibleAdvance(page, 'learn');
 
     await browser.close();
     browser = null;
