@@ -75,7 +75,7 @@ async function startDefaultGame(page, baseUrl) {
   await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'New Game' }).click();
   await page.getByPlaceholder('Enter your name...').fill('Scroll QA');
-  await page.getByRole('button', { name: /^Next$/ }).click();
+  await page.getByRole('button', { name: 'Customize Run' }).click();
   await expectVisible(page, 'text=Choose Your Career');
   await page.getByRole('button', { name: /^Next$/ }).click();
   await expectVisible(page, 'text=Choose Buyer Profile');

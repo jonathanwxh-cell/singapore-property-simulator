@@ -285,6 +285,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         life: {
           ...state.player.life,
           selectedPrimaryActionId: actionId,
+          selectedSecondaryActionId: state.player.life.selectedSecondaryActionId === actionId
+            ? null
+            : state.player.life.selectedSecondaryActionId,
         },
       }),
     }));
@@ -296,7 +299,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         ...state.player,
         life: {
           ...state.player.life,
-          selectedSecondaryActionId: actionId,
+          selectedSecondaryActionId: actionId === state.player.life.selectedPrimaryActionId ? null : actionId,
         },
       }),
     }));

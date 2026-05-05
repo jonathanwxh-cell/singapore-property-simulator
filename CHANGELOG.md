@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **One-click beginner start**: title and New Game now offer a recommended Singapore Citizen BTO-upgrader run that lands directly in the Home Command Center.
 - **Learning Layer 1.0**: a dedicated Learn hub, casual-player prerequisite framing, richer Singapore rule glossary entries, and inline glossary chips for ABSD, BSD, CPF OA, MOP, MSR, and TDSR.
 - **Guided Command Center UX**: a tested monthly objective helper, `This Month` dashboard hero, persistent desktop/mobile `Next Month` CTA, grouped Home/Life/Buy/Own/Learn navigation, and progressive-detail panels that keep advanced systems available without overwhelming first-time players.
 - **Run Director life arcs**: route-based new-game choices, dashboard Life Arc milestones, route-aware Decision Coach guidance, scenario weighting, portfolio route ribbons, and game-over replay recaps.
@@ -35,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Landlord Ops 2.0**: lease renewal decisions, rent-push vacancy risk, reserve-gap milestones, richer maintenance events, and new landlord/repair visual cards.
 
 ### Changed
+- New Game now treats the guided beginner run as the primary action, with the full setup wizard framed as customization.
+- The Dashboard Learn tile now opens the Learn hub instead of the market page.
 - The `Learn` navigation item now opens a beginner-friendly education hub instead of sending players to the market page.
 - Dashboard, Buy, Own, and Life pages now lead with one modern-game-style decision surface before exposing detailed finance, market, landlord, and rule systems.
 - Public property listing names are now fully fictional/composite while retaining real Singapore district, town, MRT, and policy context separately.
@@ -56,6 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Portfolio and property-detail surfaces now expose lease pressure, repair exposure, reserve gaps, and tenant-satisfaction tradeoffs as explicit landlord decisions.
 
 ### Fixed
+- Active scenarios can no longer be dismissed without choosing an outcome.
+- Save slots are disabled until a run is active, preventing blank default saves.
+- Life planning no longer allows the same action to be selected as both primary and secondary.
+- Portfolio quick-rent now explains MOP-locked HDBs and opens the property detail room-rental path instead of silently no-oping.
+- Bank TDSR cap display now rounds cleanly to `55%`.
 - First residential purchases now become owner-occupied by default, while MOP-active public-housing homes block second residential buys with clear MOP-specific copy.
 - Game-layout route changes now reset the scroll position so switching tabs/pages starts at the top instead of retaining the previous page's scroll depth.
 - Blocked the legacy whole-flat rental shortcut for HDB flats still inside MOP, while keeping the explicit room-rental tenant strategy available.

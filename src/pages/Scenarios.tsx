@@ -4,7 +4,7 @@ import { useGameStore } from '@/game/useGameStore';
 import { scenarios, categoryColors } from '@/data/scenarios';
 import { difficultySettings } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
-import { Sparkles, CheckCircle, X } from 'lucide-react';
+import { Sparkles, CheckCircle } from 'lucide-react';
 import type { ScenarioOption } from '@/data/scenarios';
 import { STARTER_SCENARIO_TURN } from '@/engine/constants';
 import { assessScenarioOption, type ScenarioOptionAssessment } from '@/engine/decisionCoach';
@@ -100,7 +100,6 @@ export default function Scenarios() {
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }} className="w-full max-w-lg">
             <GlassCard accentColor={color} className="relative">
-              <button onClick={handleDismiss} className="absolute top-4 right-4 text-text-dim hover:text-white transition-colors"><X size={20} /></button>
               <div className="mb-4"><span className="text-[10px] px-2 py-0.5 rounded font-rajdhani uppercase" style={{ backgroundColor: `${color}20`, color }}>{activeScenario.category}</span></div>
               <img
                 src={activeScenario.id === 'career-review' ? '/career-review-key-art.png' : activeScenario.image}
@@ -109,6 +108,7 @@ export default function Scenarios() {
               />
               <h2 className="page-title text-xl text-white mb-2">{activeScenario.title}</h2>
               <p className="text-text-secondary text-sm mb-6 leading-relaxed">{activeScenario.description}</p>
+              <p className="text-warning text-xs mb-3">Choose one option to continue the month.</p>
               <div className="space-y-2">
                 {activeScenario.options.map((option, i) => {
                   const assessment = assessScenarioOption(player, option);

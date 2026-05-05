@@ -39,6 +39,17 @@ export default function NewGame() {
     navigate('/dashboard');
   };
 
+  const handleGuidedStart = () => {
+    newGame(
+      name.trim() || 'Rookie Investor',
+      'graduate',
+      'normal',
+      { residencyStatus: 'sc', householdProfile: 'couple-family', age: 30 },
+      'bto-upgrader',
+    );
+    navigate('/dashboard');
+  };
+
   const applyBuyerProfile = (profile: BuyerProfile) => {
     setBuyerProfile(profile);
     setRunRouteId(recommendRunRoute(profile));
@@ -101,9 +112,11 @@ export default function NewGame() {
                       <p className="text-text-secondary text-xs mt-1 leading-relaxed">
                         You do not need to know Singapore property terms. The game will teach <GlossaryTerm termId="absd" />, <GlossaryTerm termId="cpf-oa" />, and <GlossaryTerm termId="mop" /> as you play.
                       </p>
-                      <button type="button" onClick={() => navigate('/learn')} className="mt-3 text-xs font-mono uppercase tracking-[0.12em] text-warning hover:text-white">
-                        Preview Learn Hub
-                      </button>
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <button type="button" onClick={() => navigate('/learn')} className="btn-secondary text-xs py-2 px-3">
+                          Preview Learn Hub
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </GlassCard>
@@ -111,11 +124,18 @@ export default function NewGame() {
             </div>
             <div className="shrink-0 pb-4">
               <button
+                onClick={handleGuidedStart}
+                className="btn-primary w-full flex items-center justify-center gap-2"
+              >
+                Start Recommended Run
+                <ArrowRight size={16} />
+              </button>
+              <button
                 onClick={() => name.trim() && setStep(1)}
                 disabled={!name.trim()}
-                className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-secondary w-full mt-2 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next
+                Customize Run
                 <ArrowRight size={16} />
               </button>
             </div>

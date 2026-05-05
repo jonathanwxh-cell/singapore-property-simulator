@@ -39,6 +39,18 @@ const commonMistakes = [
 export default function Learn() {
   const navigate = useNavigate();
   const isGameActive = useGameStore((state) => state.isGameActive);
+  const newGame = useGameStore((state) => state.newGame);
+
+  const startBeginnerRun = () => {
+    newGame(
+      'Rookie Investor',
+      'graduate',
+      'normal',
+      { residencyStatus: 'sc', householdProfile: 'couple-family', age: 30 },
+      'bto-upgrader',
+    );
+    navigate('/dashboard');
+  };
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space px-4 pb-10 pt-8">
@@ -52,6 +64,21 @@ export default function Learn() {
                 <p className="max-w-3xl text-sm leading-relaxed text-text-secondary">
                   You do not need to know property law, CPF, or investing jargon before playing. This hub translates the sim into game decisions: why a buy is blocked, why cash disappears, and what to try next.
                 </p>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={isGameActive ? () => navigate('/dashboard') : startBeginnerRun}
+                    className="btn-primary flex items-center justify-center gap-2"
+                  >
+                    {isGameActive ? 'Back to Home Command Center' : 'Start Beginner Run'}
+                    <ArrowRight size={16} />
+                  </button>
+                  {!isGameActive && (
+                    <button type="button" onClick={() => navigate('/newgame')} className="btn-secondary">
+                      Customize Setup
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="rounded-2xl border border-cyan-glow/25 bg-cyan-glow/10 p-4">
                 <Sparkles size={22} className="mb-2 text-cyan-glow" />

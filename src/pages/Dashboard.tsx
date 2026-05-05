@@ -130,7 +130,7 @@ export default function Dashboard() {
           <ActionTile icon={Banknote} title="Earn" detail="Life actions, side gigs, schemes" onClick={() => navigate('/life')} />
           <ActionTile icon={ShoppingBag} title="Buy" detail="Best next listing and filters" onClick={() => navigate('/properties')} />
           <ActionTile icon={PieChart} title="Own" detail="Tenants, repairs, upgrades" onClick={() => navigate('/portfolio')} />
-          <ActionTile icon={BookOpen} title="Learn" detail="Market, bank, rules, saves" onClick={() => navigate('/market')} />
+          <ActionTile icon={BookOpen} title="Learn" detail="Rules, blockers, first-run help" onClick={() => navigate('/learn')} />
         </motion.div>
 
         {player.properties.length > 0 && hasPropertyAttention && (

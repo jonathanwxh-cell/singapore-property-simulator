@@ -171,7 +171,9 @@ export default function Life() {
                 <>
                   <p className="text-text-secondary text-sm mb-4">Energy and stress are healthy enough for one extra push this month.</p>
                   <div className="grid md:grid-cols-2 gap-3">
-                    {lifeActions.map((action) => (
+                    {lifeActions
+                      .filter((action) => action.id !== selectedPrimaryActionId)
+                      .map((action) => (
                       <LifeActionOptionCard
                         key={`secondary-${action.id}`}
                         action={action}

@@ -100,6 +100,20 @@ describe('useGameStore', () => {
     expect(useGameStore.getState().player.life.selectedSecondaryActionId).toBe('recover');
   });
 
+  it('prevents the same life action from being selected twice', () => {
+    useGameStore.getState().setPrimaryLifeAction('take-side-gig');
+    useGameStore.getState().setSecondaryLifeAction('take-side-gig');
+
+    expect(useGameStore.getState().player.life.selectedPrimaryActionId).toBe('take-side-gig');
+    expect(useGameStore.getState().player.life.selectedSecondaryActionId).toBeNull();
+
+    useGameStore.getState().setSecondaryLifeAction('recover');
+    useGameStore.getState().setPrimaryLifeAction('recover');
+
+    expect(useGameStore.getState().player.life.selectedPrimaryActionId).toBe('recover');
+    expect(useGameStore.getState().player.life.selectedSecondaryActionId).toBeNull();
+  });
+
   it('normalizes legacy save data that has no life state', () => {
     const legacyState = makeState({
       player: (() => {

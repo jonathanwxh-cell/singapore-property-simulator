@@ -197,6 +197,7 @@ export default function Portfolio() {
               const monthlyLease = owned.tenant?.contractedRent ?? (owned.isRented ? owned.monthlyRental : 0);
               const leaseMonthsRemaining = owned.tenant ? owned.tenant.leaseEndTurn - player.turnCount : null;
               const repairExposure = (owned.openMaintenanceIssues ?? []).reduce((sum, issue) => sum + issue.estimatedCost, 0);
+              const rentalLockedByMop = !owned.isRented && property.isHdb && (owned.mopRemainingMonths ?? 0) > 0;
 
               return (
                 <GlassCard key={i} className="group">
@@ -242,6 +243,11 @@ export default function Portfolio() {
                           <ShieldAlert size={11} /> Repair exposure: {formatCurrency(repairExposure)}
                         </p>
                       )}
+                      {rentalLockedByMop && (
+                        <p className="text-cyan-glow text-[10px] mt-1">
+                          MOP blocks whole-flat rent. Open details for room-rental options.
+                        </p>
+                      )}
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-mono text-white text-sm">{formatCompactCurrency(owned.currentValue)}</p>
@@ -253,9 +259,16 @@ export default function Portfolio() {
                       </p>
                       <div className="flex gap-1 mt-1 justify-end">
                         <button
-                          onClick={(e) => { e.stopPropagation(); toggleRental(i); }}
-                          title={owned.isRented ? 'Stop renting' : 'Rent out'}
-                          className={`p-1 rounded ${owned.isRented ? 'bg-warning/20 text-warning hover:bg-warning/30' : 'bg-cyan-glow/20 text-cyan-glow hover:bg-cyan-glow/30'} transition-colors`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (rentalLockedByMop) {
+                              navigate(`/property/${property.id}`);
+                              return;
+                            }
+                            toggleRental(i);
+                          }}
+                          title={rentalLockedByMop ? 'MOP locks whole-flat rent. Open details for room rental.' : owned.isRented ? 'Stop renting' : 'Rent out'}
+                          className={`p-1 rounded ${owned.isRented ? 'bg-warning/20 text-warning hover:bg-warning/30' : rentalLockedByMop ? 'bg-cyan-glow/10 text-cyan-glow hover:bg-cyan-glow/20' : 'bg-cyan-glow/20 text-cyan-glow hover:bg-cyan-glow/30'} transition-colors`}
                         >
                           <Home size={12} />
                         </button>

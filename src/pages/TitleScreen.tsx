@@ -19,6 +19,7 @@ export default function TitleScreen() {
   const versionRef = useRef<HTMLDivElement>(null);
   const [soundOn, setSoundOn] = useState(false);
   const loadGame = useGameStore((state) => state.loadGame);
+  const newGame = useGameStore((state) => state.newGame);
 
   useGSAP(() => {
     const tl = gsap.timeline();
@@ -88,6 +89,17 @@ export default function TitleScreen() {
     }
 
     handleTransition('/saveload');
+  };
+
+  const handleGuidedStart = () => {
+    newGame(
+      'Rookie Investor',
+      'graduate',
+      'normal',
+      { residencyStatus: 'sc', householdProfile: 'couple-family', age: 30 },
+      'bto-upgrader',
+    );
+    handleTransition('/dashboard');
   };
 
   return (
@@ -163,8 +175,13 @@ export default function TitleScreen() {
         >
           <div className="space-y-3">
             <MenuButton
-              label="New Game"
+              label="Start Guided Run"
               variant="primary"
+              onClick={handleGuidedStart}
+            />
+            <MenuButton
+              label="New Game"
+              variant="secondary"
               onClick={() => handleTransition('/newgame')}
             />
             <MenuButton

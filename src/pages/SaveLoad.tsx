@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSaveLoad } from '@/hooks/useSaveLoad';
+import { useGameStore } from '@/game/useGameStore';
 import GlassCard from '@/components/GlassCard';
 import { Save, Download, Upload, Trash2, ArrowLeft, Clock, User } from 'lucide-react';
 import type { SaveSlot } from '@/game/types';
@@ -8,6 +9,7 @@ import type { SaveSlot } from '@/game/types';
 export default function SaveLoad() {
   const navigate = useNavigate();
   const { getSaveSlots, saveGame, loadGame, deleteSave, downloadSaveFile, importSave, hasAutoSave } = useSaveLoad();
+  const isGameActive = useGameStore((state) => state.isGameActive);
   const [slots, setSlots] = useState<SaveSlot[]>([]);
   const [importData, setImportData] = useState('');
   const [showImport, setShowImport] = useState(false);
@@ -82,6 +84,18 @@ export default function SaveLoad() {
           </button>
         </div>
 
+        {!isGameActive && (
+          <GlassCard className="mb-6" accentColor="#FFD740">
+            <p className="font-rajdhani font-semibold text-white">Start a run before saving</p>
+            <p className="text-text-secondary text-sm mt-1">
+              Save slots become available after a game is active, so beginners do not accidentally save the blank default profile.
+            </p>
+            <button onClick={() => navigate('/newgame')} className="btn-primary text-sm py-2 px-4 mt-4">
+              Start New Game
+            </button>
+          </GlassCard>
+        )}
+
         {showImport && (
           <GlassCard className="mb-6">
             <h3 className="font-rajdhani font-semibold text-white mb-3">Import Save Data</h3>
@@ -118,7 +132,9 @@ export default function SaveLoad() {
                   </div>
                   <button
                     onClick={() => handleSave(slotId)}
-                    className="btn-primary text-xs py-2 px-4 flex items-center gap-1"
+                    disabled={!isGameActive}
+                    className="btn-primary text-xs py-2 px-4 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={isGameActive ? 'Save current run' : 'Start a run before saving'}
                   >
                     <Save size={12} />
                     Save
