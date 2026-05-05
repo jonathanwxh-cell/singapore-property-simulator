@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/game/useGameStore';
 import { careers } from '@/data/careers';
@@ -22,6 +22,7 @@ const careerIcons: Record<string, React.ElementType> = {
 export default function NewGame() {
   const navigate = useNavigate();
   const newGame = useGameStore(s => s.newGame);
+  const shellRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [careerId, setCareerId] = useState('graduate');
@@ -55,8 +56,16 @@ export default function NewGame() {
     setRunRouteId(recommendRunRoute(profile));
   };
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.querySelector('main')?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    shellRef.current?.querySelectorAll('[data-new-game-scroll]').forEach((element) => {
+      element.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    });
+  }, [step]);
+
   return (
-    <div className="min-h-[calc(100dvh-64px)] bg-deep-space px-4 flex flex-col pt-8">
+    <div ref={shellRef} className="min-h-[calc(100dvh-64px)] bg-deep-space px-4 flex flex-col pt-8">
       <div className="max-w-2xl mx-auto w-full flex flex-col h-full">
         {/* Header */}
         <div className="shrink-0 mb-4">
@@ -113,7 +122,7 @@ export default function NewGame() {
                         You do not need to know Singapore property terms. The game will teach <GlossaryTerm termId="absd" />, <GlossaryTerm termId="cpf-oa" />, and <GlossaryTerm termId="mop" /> as you play.
                       </p>
                       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                        <button type="button" onClick={() => navigate('/learn')} className="btn-secondary text-xs py-2 px-3">
+                        <button type="button" onClick={() => navigate('/learn', { state: { returnTo: '/newgame', returnLabel: 'Back to setup' } })} className="btn-secondary text-xs py-2 px-3">
                           Preview Learn Hub
                         </button>
                       </div>
@@ -146,7 +155,7 @@ export default function NewGame() {
         {step === 1 && (
           <div className="flex flex-col h-full min-h-0">
             <h2 className="section-title text-cyan-glow text-center text-lg mb-3 shrink-0">Choose Your Career</h2>
-            <div className="flex-1 overflow-y-auto min-h-0 mb-4 pr-1 space-y-2">
+            <div data-new-game-scroll className="flex-1 overflow-y-auto min-h-0 mb-4 pr-1 space-y-2">
               {careers.map((career) => {
                 const Icon = careerIcons[career.id] || User;
                 const isSelected = careerId === career.id;
@@ -192,7 +201,7 @@ export default function NewGame() {
         {step === 2 && (
           <div className="flex flex-col h-full min-h-0">
             <h2 className="section-title text-cyan-glow text-center text-lg mb-3 shrink-0">Choose Buyer Profile</h2>
-            <div className="flex-1 overflow-y-auto min-h-0 mb-4 pr-1 space-y-4">
+            <div data-new-game-scroll className="flex-1 overflow-y-auto min-h-0 mb-4 pr-1 space-y-4">
               <GlassCard>
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-10 h-10 rounded-xl bg-cyan-glow/10 border border-cyan-glow/30 flex items-center justify-center shrink-0">
@@ -282,7 +291,7 @@ export default function NewGame() {
         {step === 3 && (
           <div className="flex flex-col h-full min-h-0">
             <h2 className="section-title text-cyan-glow text-center text-lg mb-3 shrink-0">Choose Your Life Arc</h2>
-            <div className="flex-1 overflow-y-auto min-h-0 mb-4 pr-1 space-y-2">
+            <div data-new-game-scroll className="flex-1 overflow-y-auto min-h-0 mb-4 pr-1 space-y-2">
               {runRoutes.map((route) => {
                 const isSelected = runRouteId === route.id;
                 const recommended =
@@ -328,7 +337,7 @@ export default function NewGame() {
         {step === 4 && (
           <div className="flex flex-col h-full min-h-0">
             <h2 className="section-title text-cyan-glow text-center text-lg mb-3 shrink-0">Select Difficulty</h2>
-            <div className="flex-1 overflow-y-auto min-h-0 mb-4 pr-1 space-y-2">
+            <div data-new-game-scroll className="flex-1 overflow-y-auto min-h-0 mb-4 pr-1 space-y-2">
               {(Object.keys(difficultySettings) as Difficulty[]).map((diff) => {
                 const settings = difficultySettings[diff];
                 const isSelected = difficulty === diff;

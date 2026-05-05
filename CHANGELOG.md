@@ -65,6 +65,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Portfolio and property-detail surfaces now expose lease pressure, repair exposure, reserve gaps, and tenant-satisfaction tradeoffs as explicit landlord decisions.
 
 ### Fixed
+- Mobile scenario dialogs now align from the top and scroll inside the overlay, preventing clipped choices on short iPhone and Android screens.
+- Mobile Dashboard and Life advance-month CTAs now stay in the content flow and clear the bottom navigation, including short Android-style viewports.
+- Mobile property purchase pages now keep the `Buy Property` CTA in-flow instead of pinning it over purchase math and deal explanations.
+- The Buy page hero now uses tighter mobile artwork and spacing so `Review Deal` and `Starter List` remain reachable above the bottom nav.
+- Portfolio and Learn no longer show a floating advance-month CTA over bottom content on mobile.
+- New Game wizard steps reset scroll position when moving forward, preventing the next step from opening halfway down the screen.
+- Lease decisions can now only be made once per property per month, closing a repeat-click tenant satisfaction exploit.
+- Title-screen `Continue` is disabled when no autosave exists, and Learn previews opened from setup now include a return path back to setup.
+- Title-screen beginner help is now promoted above secondary menu actions, and HUD/filter controls have larger mobile tap targets.
+- Desktop Dashboard and Life routes no longer duplicate `Next Month` in both the page hero and sidebar.
 - Mobile dashboard now suppresses the duplicate floating `Next Month` CTA when the Command Center hero already provides an inline advance button, keeping Spendable Cash and Monthly Surplus readable on iPhone Safari.
 - Mobile transaction pages no longer show the floating `Next Month` CTA over the buy action.
 - Scenario `Continue` now returns players to the Home Command Center instead of leaving them on the long scenario library page.

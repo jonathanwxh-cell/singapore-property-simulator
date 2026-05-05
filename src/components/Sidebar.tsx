@@ -32,6 +32,7 @@ const Sidebar = memo(function Sidebar() {
   const location = useLocation();
   const { isGameActive } = useGameStore();
   const [collapsed, setCollapsed] = useState(false);
+  const routeHasInlineAdvance = ['/dashboard', '/life'].includes(location.pathname);
 
   if (!isGameActive) return null;
 
@@ -99,7 +100,7 @@ const Sidebar = memo(function Sidebar() {
       {/* Bottom info */}
       {!collapsed && (
         <div className="space-y-3 p-4 border-t border-glass-border">
-          <NextMonthCTA variant="sidebar" />
+          {!routeHasInlineAdvance && <NextMonthCTA variant="sidebar" />}
           <div className="text-[10px] text-text-dim font-mono uppercase tracking-wider">
             PropSim Singapore
           </div>

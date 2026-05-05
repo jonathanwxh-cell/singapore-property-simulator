@@ -47,6 +47,11 @@ export default function CommandCenterHero({ state, onNavigate }: CommandCenterHe
 
             <h2 className="page-title max-w-3xl text-2xl text-white md:text-4xl">{objective.title}</h2>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-text-secondary md:text-base">{objective.detail}</p>
+
+            <div className="mt-5 xl:hidden">
+              <NextMonthCTA variant="inline" />
+            </div>
+
             <p className="mt-3 max-w-3xl text-xs leading-relaxed text-text-dim md:text-sm">
               <Sparkles size={13} className="mr-1 inline text-warning" />
               {objective.why}
@@ -76,9 +81,11 @@ export default function CommandCenterHero({ state, onNavigate }: CommandCenterHe
             </div>
           </div>
 
-          <div className="space-y-3">
-            <VitalMetricStrip metrics={state.vitalMetrics} />
-            <NextMonthCTA variant="inline" />
+          <div className="flex flex-col gap-3">
+            <div className="order-2 sm:order-1">
+              <VitalMetricStrip metrics={state.vitalMetrics} />
+            </div>
+            <NextMonthCTA variant="inline" className="hidden xl:block" />
           </div>
         </div>
       </div>

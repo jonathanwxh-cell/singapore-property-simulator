@@ -161,6 +161,7 @@ export interface TenantState {
   contractedRent: number;
   defaultRiskPct: number;
   renewalIntent: number;
+  lastLeaseDecisionTurn?: number;
 }
 
 export interface MaintenanceIssue {
