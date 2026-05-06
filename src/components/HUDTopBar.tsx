@@ -27,15 +27,18 @@ const HUDTopBar = memo(function HUDTopBar() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 group shrink-0"
+            className="group flex min-h-12 shrink-0 items-center"
+            aria-label="PropSim Singapore dashboard"
           >
-            <img
-              src="/title-logo.png"
-              alt="PropSim Singapore"
-              className="h-8 w-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity hidden sm:block"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-            <span className="font-orbitron text-cyan-glow text-sm font-bold tracking-wider hidden xs:block sm:hidden">PSIM</span>
+            <span className="relative block h-11 w-[104px] overflow-hidden rounded-hud sm:h-12 sm:w-[136px] lg:h-14 lg:w-[156px]">
+              <span className="pointer-events-none absolute inset-0 rounded-hud bg-cyan-glow/5 opacity-0 shadow-cyan-glow transition-opacity group-hover:opacity-100" />
+              <img
+                src="/title-logo.png"
+                alt="PropSim Singapore"
+                className="relative left-0 top-1/2 h-20 max-w-none -translate-y-1/2 object-contain opacity-95 drop-shadow-[0_0_14px_rgba(0,240,255,0.22)] transition-opacity group-hover:opacity-100 sm:h-24 lg:h-28"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </span>
           </button>
           {isGameActive && (
             <div className="glass-pill hidden sm:flex items-center gap-2">
