@@ -75,6 +75,25 @@ async function expectVisible(page, selector, timeout = 15000) {
   await page.waitForSelector(selector, { timeout });
 }
 
+async function openAdvancedDashboardPanels(page) {
+  const advancedPanelsButton = page.getByRole('button', { name: /Open advanced sim panels/i });
+  await advancedPanelsButton.scrollIntoViewIfNeeded();
+  await advancedPanelsButton.click();
+
+  try {
+    await expectVisible(page, 'text=Market Pulse', 5000);
+    return;
+  } catch {
+    await page.evaluate(() => {
+      const button = [...document.querySelectorAll('button')]
+        .find((candidate) => candidate.textContent?.toLowerCase().includes('open advanced sim panels'));
+      button?.click();
+    });
+  }
+
+  await expectVisible(page, 'text=Market Pulse', 20000);
+}
+
 async function resolveScenarioIfPresent(page) {
   const optionButtons = page.locator('div.fixed.inset-0 button.group.w-full.text-left:visible:not([disabled])');
   if (await optionButtons.count()) {
@@ -357,9 +376,11 @@ async function run() {
     await expectVisible(page, 'text=Home Command Center');
     await expectVisible(page, 'text=This Month');
     await expectVisible(page, 'text=Beginner focus mode');
+    await expectVisible(page, 'text=Campaign Chapter');
+    await expectVisible(page, 'text=Current Mission');
+    await expectVisible(page, 'text=Campaign Score');
     await expectVisible(page, 'text=Monthly Intent');
-    await page.getByRole('button', { name: /Open advanced sim panels/i }).click();
-    await expectVisible(page, 'text=Market Pulse');
+    await openAdvancedDashboardPanels(page);
     await expectVisible(page, 'text=Life Arc');
     await assertVisibleAdvanceExists(page, 'dashboard');
     await assertMobileDashboardAdvanceDoesNotCoverVitals(page);

@@ -7,10 +7,12 @@ import ProgressivePanel from '@/components/ProgressivePanel';
 import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
 import RunArcPanel from '@/components/RunArcPanel';
 import SceneImage from '@/components/SceneImage';
+import LifeCampaignPanel from '@/components/LifeCampaignPanel';
 import { properties } from '@/data/properties';
 import { lifeActions, lifeActionsById } from '@/data/lifeActions';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { getCommandCenterState } from '@/engine/commandCenter';
+import { getLifeCampaign } from '@/engine/lifeCampaign';
 import { getNextBestMoves } from '@/engine/decisionCoach';
 import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
 import { deriveEligibilityFlags, EC_MAX_MONTHLY_INCOME } from '@/engine/eligibility';
@@ -89,6 +91,7 @@ export default function Dashboard() {
   const monthlyHouseholdLoad = selectMonthlyHouseholdLoad(player);
   const monthlyNetCashflow = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
   const commandState = getCommandCenterState(player, currentScenario);
+  const lifeCampaign = getLifeCampaign(player, currentScenario);
   const selectedPrimaryAction = lifeActions.find((action) => action.id === (player.life.selectedPrimaryActionId ?? 'focus-at-work'))
     ?? lifeActionsById['focus-at-work'];
   const selectedSecondaryAction = player.life.selectedSecondaryActionId
@@ -166,6 +169,10 @@ export default function Dashboard() {
 
         <motion.div variants={itemVariants} className="mb-6">
           <FirstRunQuestPanel quest={firstRunQuest} onNavigate={navigate} onContinueStep={handleQuestStep} />
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="mb-6">
+          <LifeCampaignPanel campaign={lifeCampaign} onNavigate={navigate} />
         </motion.div>
 
         {lastTurnRecap && (
