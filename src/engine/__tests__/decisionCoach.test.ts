@@ -7,6 +7,7 @@ import {
   assessScenarioOption,
   getLifeActionFeedback,
   getNextBestMoves,
+  selectBestNextBuyForPlayer,
 } from '../decisionCoach';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
@@ -132,6 +133,27 @@ describe('getNextBestMoves', () => {
   });
 });
 
+describe('selectBestNextBuyForPlayer', () => {
+  it('does not recommend public-housing listings to foreigner profiles', () => {
+    const best = selectBestNextBuyForPlayer(makePlayer({
+      salary: 20_000,
+      cash: 600_000,
+      cpfOrdinary: 0,
+      buyerProfile: {
+        residencyStatus: 'foreigner',
+        householdProfile: 'foreigner-investor',
+        age: 40,
+      },
+      runRouteId: 'foreign-investor',
+    }));
+
+    expect(best).not.toBeNull();
+    expect(best?.property.isHdb).toBe(false);
+    expect(best?.property.type).not.toBe('Executive Condo');
+    expect(best?.readiness.primaryBlocker?.message ?? '').not.toContain('Foreigners cannot buy HDB');
+  });
+});
+
 describe('assessDealReadiness', () => {
   it('returns a ready verdict with CPF-adjusted upfront cash when the deal can be bought', () => {
     const property = properties.find((candidate) => candidate.id === 'hdb-bto-0');
@@ -223,6 +245,18 @@ describe('assessScenarioOption', () => {
     expect(assessment.tone).toBe('upside');
     expect(assessment.summary).toContain('CPF OA');
     expect(assessment.facts).toContain('CPF OA +S$40,000');
+  });
+
+  it('keeps a no-cash tycoon player from being soft-locked by the marriage event', () => {
+    const marriage = scenarios.find((scenario) => scenario.id === 'marriage');
+    if (!marriage) throw new Error('Expected marriage scenario fixture.');
+
+    const assessments = marriage.options.map((option) => assessScenarioOption(makePlayer({
+      cash: 0,
+      difficulty: 'tycoon',
+    }), option));
+
+    expect(assessments.some((assessment) => assessment.canChoose)).toBe(true);
   });
 });
 

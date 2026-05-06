@@ -266,7 +266,7 @@ export const scenarios: Scenario[] = [
     requires: ['single-only'],
     options: [
       { label: 'Buy Matrimonial Home', description: 'Purchase a home together using combined income', probability: 0.8, cashImpact: -100000, propertyValueImpact: 15, creditImpact: 10, followUpText: 'Combined income means stronger loan eligibility. Welcome to married life!' },
-      { label: 'Host Wedding First', description: 'Save for a grand wedding celebration', probability: 0.9, cashImpact: -50000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'Beautiful wedding! Combined income going forward means stronger purchasing power.' },
+      { label: 'Register Simply', description: 'Keep the milestone affordable and preserve cash while you build a household plan', probability: 1, cashImpact: 0, propertyValueImpact: 0, creditImpact: 5, salaryDeltaPct: 0.06, followUpText: 'Simple ceremony, stronger household plan. Combined support improves buying power without draining your cash buffer.' },
       { label: 'Invest Before Marriage', description: 'Lock in investments before combining finances', probability: 0.7, cashImpact: -150000, propertyValueImpact: 10, creditImpact: 0, followUpText: 'Smart planning. You now have a stronger foundation as a married couple.' },
     ],
   },

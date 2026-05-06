@@ -12,9 +12,9 @@ export const ruleGlossaryEntries: RuleGlossaryEntry[] = [
     id: 'absd',
     label: 'ABSD',
     summary: 'Additional Buyer\'s Stamp Duty',
-    detail: 'A cooling-measure tax layered on top of BSD. The simulator applies simplified rates based on residency and how many homes you already own.',
-    whyItMatters: 'ABSD is paid with upfront cash, so it can block a purchase even when your salary and loan size look comfortable.',
-    example: 'A PR buying a first private home needs extra cash for ABSD before the deal clears.',
+    detail: 'A cooling-measure tax layered on top of BSD. Simplified rates used here: SC 0% first home / 20% second home, PR 5% first home / 30% second home, foreigner 60% residential.',
+    whyItMatters: 'ABSD is paid with upfront cash, so it can block a purchase even when your salary and loan size look comfortable. PR and foreigner runs should compare private, commercial, and residency paths.',
+    example: 'A PR buying a second residential property needs to plan around the jump from 5% to 30% ABSD.',
   },
   {
     id: 'bsd',
@@ -127,6 +127,14 @@ export const ruleGlossaryEntries: RuleGlossaryEntry[] = [
     detail: 'Commercial property still has buyer stamp duty, but it is not ABSD and does not use the residential ABSD path in this simulator.',
     whyItMatters: 'This avoids teaching players that foreigners pay residential ABSD on commercial offices or shops.',
     example: 'A foreign investor buying an office unit pays the commercial purchase friction, not the 60% residential ABSD model.',
+  },
+  {
+    id: 'self-employed-income',
+    label: 'Self-Employed Income',
+    summary: 'Volatile income plus bank haircut',
+    detail: 'Entrepreneur and property-agent routes now receive variable monthly income, while lenders assess only about 70% of base income for simplified TDSR/MSR checks.',
+    whyItMatters: 'This makes commercial and aggressive paths feel closer to real self-employed borrowing: big upside months help cash, but banks still underwrite conservatively.',
+    example: 'A delivery entrepreneur may earn more in a strong month but still fail TDSR because the bank uses a haircut on assessable income.',
   },
   {
     id: 'cpf-refund',

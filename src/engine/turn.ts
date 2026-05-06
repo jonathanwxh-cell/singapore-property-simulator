@@ -6,6 +6,7 @@ import { rngPick } from './rng';
 import { amortizeOneMonth } from './finance';
 import { resolveAnnualCareerReview, shouldOfferJobSwitch, shouldRunAnnualCareerReview } from './careerProgression';
 import { generateMarketNews } from './marketNews';
+import { resolveMonthlyCareerIncome } from './income';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
 import { advancePortfolioMonth } from './portfolio';
 import { resolveLifeMonth } from './life';
@@ -55,21 +56,36 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     newAge++;
   }
 
+  const career = careers.find(c => c.id === player.careerId) || careers[0];
+  const careerIncome = resolveMonthlyCareerIncome(player, career, rng);
+
   // CPF - real age-based allocation + interest
   const cpfBalances = { oa: player.cpfOrdinary, sa: player.cpfSpecial, ma: player.cpfMedisave };
-  const afterContribution = contributeCpf(cpfBalances, player.salary, player.age);
+  const afterContribution = contributeCpf(cpfBalances, careerIncome.grossIncome, player.age);
   const afterInterest = applyCpfInterest(afterContribution);
 
-  const cpfEmployee = player.salary * (1 - TAKE_HOME_RATIO);
-  const takeHomePay = player.salary - cpfEmployee;
+  const cpfEmployee = careerIncome.grossIncome * (1 - TAKE_HOME_RATIO);
+  const takeHomePay = careerIncome.grossIncome - cpfEmployee;
 
   // Rental income
   const rentalIncome = selectMonthlyRentalIncome(player);
   const portfolioStep = advancePortfolioMonth(player);
 
   // Career and life-state resolution
-  const career = careers.find(c => c.id === player.careerId) || careers[0];
-  const lifeResolution = resolveLifeMonth(player, career, rng);
+  let lifeResolution = resolveLifeMonth(player, career, rng);
+  if (careerIncome.note && lifeResolution.nextLife.lastMonthSummary) {
+    const summary = lifeResolution.nextLife.lastMonthSummary;
+    lifeResolution = {
+      ...lifeResolution,
+      nextLife: {
+        ...lifeResolution.nextLife,
+        lastMonthSummary: {
+          ...summary,
+          notes: [careerIncome.note, ...summary.notes],
+        },
+      },
+    };
+  }
 
   // Loan amortization
   let totalLoanPayment = 0;

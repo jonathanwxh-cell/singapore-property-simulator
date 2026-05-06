@@ -159,6 +159,7 @@ export default function NewGame() {
               {careers.map((career) => {
                 const Icon = careerIcons[career.id] || User;
                 const isSelected = careerId === career.id;
+                const adjustedSalary = Math.round(career.startingSalary * difficultySettings[difficulty].salaryModifier);
                 return (
                   <button
                     key={career.id}
@@ -175,10 +176,11 @@ export default function NewGame() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <h3 className="font-rajdhani font-semibold text-white text-sm">{career.name}</h3>
-                          <span className="text-[10px] font-mono text-cyan-glow">S${career.startingSalary.toLocaleString()}/mo</span>
+                          <span className="text-[10px] font-mono text-cyan-glow">S${adjustedSalary.toLocaleString()}/mo</span>
                         </div>
                         <p className="text-text-secondary text-[11px] mt-0.5 line-clamp-1">{career.description}</p>
                         <div className="flex gap-3 mt-1 text-[10px] font-mono">
+                          <span className="text-text-dim">Base S${career.startingSalary.toLocaleString()}</span>
                           <span style={{ color: career.color }}>Growth: {(career.growthRate * 100).toFixed(0)}%</span>
                           <span className="text-text-dim">Risk: {(career.riskFactor * 100).toFixed(0)}%</span>
                         </div>
@@ -353,6 +355,7 @@ export default function NewGame() {
                     </div>
                     <p className="text-text-secondary text-xs">{settings.description}</p>
                     <div className="flex gap-4 mt-2 text-[10px] font-mono text-text-dim">
+                      <span>Salary: S${getAdjustedCareerSalary(careerId, diff).toLocaleString()}/mo</span>
                       <span>Volatility: {(settings.marketVolatility * 100).toFixed(0)}%</span>
                       <span>Target: S${(settings.targetNetWorth / 1000000).toFixed(0)}M</span>
                     </div>
@@ -444,4 +447,9 @@ function recommendRunRoute(profile: BuyerProfile): RunRouteId {
   if (profile.residencyStatus === 'spr') return 'pr-private-climber';
   if (profile.householdProfile === 'single-35-plus') return 'single-resale';
   return 'bto-upgrader';
+}
+
+function getAdjustedCareerSalary(careerId: string, difficulty: Difficulty): number {
+  const career = careers.find((candidate) => candidate.id === careerId) ?? careers[0];
+  return Math.round(career.startingSalary * difficultySettings[difficulty].salaryModifier);
 }

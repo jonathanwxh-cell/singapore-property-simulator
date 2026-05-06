@@ -7,6 +7,8 @@ import { TAKE_HOME_RATIO } from './constants';
 import { getRunArc } from './runDirector';
 import { getDownPaymentAmount, validatePurchase, type PurchaseValidationReason } from './purchase';
 import { evaluatePropertyEligibility } from './eligibility';
+import { getListingCatalog, type ListingProperty } from './listings';
+import { isIncomeHaircutApplied, selectBankAssessableMonthlyIncome } from './income';
 import {
   selectAvailableCash,
   selectMonthlyNetCashflow,
@@ -65,6 +67,11 @@ export interface LifeActionFeedback {
   title: string;
   detail: string;
   expectedEffects: string[];
+}
+
+export interface BestNextBuy {
+  property: ListingProperty;
+  readiness: DealReadiness;
 }
 
 export function getNextBestMoves({ player, currentScenario }: NextBestMoveInput): CoachMove[] {
@@ -156,14 +163,14 @@ export function getNextBestMoves({ player, currentScenario }: NextBestMoveInput)
   }
 
   if (player.properties.length === 0) {
-    const starter = properties.find((property) => property.id === 'hdb-bto-0') ?? [...properties].sort((a, b) => a.price - b.price)[0];
-    const financingMode = starter.isHdb ? 'hdb-concessionary' : 'bank';
-    const readiness = assessDealReadiness({
+    const bestNextBuy = selectBestNextBuyForPlayer(player);
+    const starter = bestNextBuy?.property ?? properties.find((property) => property.id === 'hdb-bto-0') ?? [...properties].sort((a, b) => a.price - b.price)[0];
+    const readiness = bestNextBuy?.readiness ?? assessDealReadiness({
       player,
       property: starter,
       downPaymentPercent: starter.isHdb ? 10 : 25,
       useCpfOrdinary: true,
-      financingMode,
+      financingMode: starter.isHdb ? 'hdb-concessionary' : 'bank',
     });
 
     moves.push({
@@ -202,6 +209,40 @@ export function getNextBestMoves({ player, currentScenario }: NextBestMoveInput)
   });
 
   return moves.sort((a, b) => b.priority - a.priority).slice(0, 4);
+}
+
+export function selectBestNextBuyForPlayer(player: Player): BestNextBuy | null {
+  const catalog = getListingCatalog();
+  const candidates = catalog.map((property) => ({
+    property,
+    readiness: assessDealReadiness({
+      player,
+      property,
+      downPaymentPercent: property.isHdb ? 10 : 25,
+      useCpfOrdinary: true,
+      financingMode: property.isHdb ? 'hdb-concessionary' : 'bank',
+    }),
+    eligibility: evaluatePropertyEligibility({
+      propertyType: property.type,
+      salary: player.salary,
+      properties: player.properties,
+      firstHomePurchased: player.firstHomePurchased,
+      ownedPrivateHome: player.ownedPrivateHome,
+      buyerProfile: player.buyerProfile,
+    }),
+  }));
+
+  const profileEligible = candidates.filter((candidate) => !candidate.eligibility.blockedReason);
+  const pool = profileEligible.length > 0 ? profileEligible : candidates;
+  const verdictScore = { ready: 0, stretch: 1, blocked: 2 };
+
+  const best = [...pool].sort((a, b) =>
+    verdictScore[a.readiness.verdict] - verdictScore[b.readiness.verdict]
+    || a.readiness.cashRequired - b.readiness.cashRequired
+    || a.property.price - b.property.price
+  )[0];
+
+  return best ? { property: best.property, readiness: best.readiness } : null;
 }
 
 export function assessDealReadiness({
@@ -251,6 +292,7 @@ export function assessDealReadiness({
   if (grantSupport > 0 && cashShortfall > 0) {
     warnings.push(`Potential first-home support could close up to ${formatCurrency(grantSupport)} of the gap.`);
   }
+  const assessableMonthlyIncome = selectBankAssessableMonthlyIncome(player);
 
   const verdict = primaryBlocker
     ? 'blocked'
@@ -274,6 +316,7 @@ export function assessDealReadiness({
       `New mortgage payment: ${formatCurrency(validation.monthlyPayment)}/mo`,
       validation.hdbResaleLevy > 0 ? `Estimated resale levy: ${formatCurrency(validation.hdbResaleLevy)}` : null,
       validation.absd > 0 ? `ABSD rate: ${formatPercent(validation.absdRate * 100)}` : null,
+      isIncomeHaircutApplied(player) ? `Bank-assessed income: ${formatCurrency(assessableMonthlyIncome)}/mo after self-employed haircut` : null,
       validation.mortgageAmount <= 0 ? 'No new mortgage: TDSR/MSR loan checks do not apply.' : null,
       `TDSR after purchase: ${formatPercent(validation.tdsrRatio * 100, 1)}`,
     ].filter((fact): fact is string => Boolean(fact)),

@@ -21,6 +21,7 @@ export default function GameLayout() {
   const navigate = useNavigate();
   const currentScenario = useGameStore(state => state.currentScenario);
   const isGameActive = useGameStore(state => state.isGameActive);
+  const settings = useGameStore(state => state.settings);
   const [isMobile, setIsMobile] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const shellControlsVisible = isGameActive && ![
@@ -58,7 +59,14 @@ export default function GameLayout() {
     && ['/market', '/bank'].includes(location.pathname);
 
   return (
-    <div className="bg-deep-space text-white" style={{ height: '100dvh', overflow: 'hidden' }}>
+    <div
+      className={cn(
+        'bg-deep-space text-white',
+        settings.largeTextMode && 'large-text-mode',
+        settings.highContrastMode && 'high-contrast-mode',
+      )}
+      style={{ height: '100dvh', overflow: 'hidden' }}
+    >
       <HUDTopBar />
       {shellControlsVisible && <Sidebar />}
 

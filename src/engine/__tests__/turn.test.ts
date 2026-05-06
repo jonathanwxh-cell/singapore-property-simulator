@@ -35,7 +35,7 @@ const baseMarket: MarketState = {
 };
 
 const baseSettings: GameSettings = {
-  soundEnabled: true, musicEnabled: false, animationSpeed: 'normal', autoSave: true, difficulty: 'normal',
+  soundEnabled: true, musicEnabled: false, animationSpeed: 'normal', autoSave: true, difficulty: 'normal', compactMode: false, largeTextMode: false, highContrastMode: false,
 };
 
 describe('advanceTurn', () => {
@@ -210,6 +210,20 @@ describe('advanceTurn', () => {
     expect(result.player.life.lastMonthSummary?.primaryActionId).toBe('take-side-gig');
     expect(result.player.life.selectedPrimaryActionId).toBe(null);
     expect(result.player.life.selectedSecondaryActionId).toBe(null);
+  });
+
+  it('adds visible monthly income volatility notes for self-employed careers', () => {
+    const result = advanceTurn({
+      player: makePlayer({
+        careerId: 'entrepreneur',
+        salary: 6_000,
+      }),
+      market: baseMarket,
+      settings: baseSettings,
+      rng: createRng(42),
+    });
+
+    expect(result.player.life.lastMonthSummary?.notes.some((note) => note.includes('Self-employed income'))).toBe(true);
   });
 
   it('grows all three CPF buckets each turn', () => {

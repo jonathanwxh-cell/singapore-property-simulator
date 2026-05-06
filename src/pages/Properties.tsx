@@ -12,7 +12,7 @@ import { formatCompactCurrency } from '@/lib/format';
 import { useGameStore } from '@/game/useGameStore';
 import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
 import EligibilityBadge from '@/components/EligibilityBadge';
-import { assessDealReadiness } from '@/engine/decisionCoach';
+import { assessDealReadiness, selectBestNextBuyForPlayer } from '@/engine/decisionCoach';
 
 type FilterPreset = 'starter' | 'yield' | 'upgrade' | 'advanced';
 
@@ -47,23 +47,7 @@ export default function Properties() {
     buyerProfile: player.buyerProfile,
   };
   const flags = deriveEligibilityFlags(eligibilityInput);
-  const bestNextBuy = catalog
-    .map((property) => ({
-      property,
-      readiness: assessDealReadiness({
-        player,
-        property,
-        downPaymentPercent: property.isHdb ? 10 : 25,
-        useCpfOrdinary: true,
-        financingMode: property.isHdb ? 'hdb-concessionary' : 'bank',
-      }),
-    }))
-    .sort((a, b) => {
-      const verdictScore = { ready: 0, stretch: 1, blocked: 2 };
-      return verdictScore[a.readiness.verdict] - verdictScore[b.readiness.verdict]
-        || a.readiness.cashRequired - b.readiness.cashRequired
-        || a.property.price - b.property.price;
-    })[0];
+  const bestNextBuy = selectBestNextBuyForPlayer(player);
 
   const filtered = catalog.filter(p => {
     const district = districts.find(d => d.id === p.districtId);

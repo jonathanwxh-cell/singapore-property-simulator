@@ -496,6 +496,26 @@ describe('validatePurchase Singapore policy surfaces', () => {
 
     expect(validation.absdRate).toBe(0.2);
   });
+
+  it('uses self-employed bank income haircuts for mortgage servicing checks', () => {
+    const property = properties.find((candidate) => candidate.id === 'condo-10');
+    if (!property) throw new Error('Expected condo fixture.');
+
+    const stableEmployee = validatePurchase(
+      makePlayer({ careerId: 'tech', salary: 6_000, cash: 2_000_000 }),
+      property,
+      property.price * 0.25,
+    );
+    const entrepreneur = validatePurchase(
+      makePlayer({ careerId: 'entrepreneur', salary: 6_000, cash: 2_000_000 }),
+      property,
+      property.price * 0.25,
+    );
+
+    expect(stableEmployee.tdsrAllowed).toBe(true);
+    expect(entrepreneur.tdsrAllowed).toBe(false);
+    expect(entrepreneur.reasons.some((reason) => reason.code === 'tdsr_exceeded')).toBe(true);
+  });
 });
 
 describe('resolveScenarioOption', () => {

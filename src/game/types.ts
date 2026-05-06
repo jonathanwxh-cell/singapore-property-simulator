@@ -324,6 +324,8 @@ export interface GameSettings {
   autoSave: boolean;
   difficulty: Difficulty;
   compactMode: boolean;
+  largeTextMode: boolean;
+  highContrastMode: boolean;
 }
 
 export interface GameState {

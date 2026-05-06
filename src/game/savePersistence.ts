@@ -364,7 +364,7 @@ function isValidSaveSlot(value: unknown): value is SaveSlot {
 }
 
 function isDifficulty(value: unknown): value is Difficulty {
-  return value === 'easy' || value === 'normal' || value === 'hard';
+  return value === 'easy' || value === 'normal' || value === 'hard' || value === 'tycoon';
 }
 
 function parseProfileTransferBundle(rawData: string): ProfileTransferBundle | null {

@@ -57,6 +57,8 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
       autoSave: false,
       difficulty: 'normal',
       compactMode: false,
+      largeTextMode: false,
+      highContrastMode: false,
     },
     isGameActive: true,
     currentScenario: null,
@@ -99,6 +101,16 @@ describe('useGameStore', () => {
     useGameStore.getState().updateSettings({ compactMode: true });
 
     expect(useGameStore.getState().settings.compactMode).toBe(true);
+  });
+
+  it('supports accessibility display modes for senior and bright-room play', () => {
+    expect(useGameStore.getState().settings.largeTextMode).toBe(false);
+    expect(useGameStore.getState().settings.highContrastMode).toBe(false);
+
+    useGameStore.getState().updateSettings({ largeTextMode: true, highContrastMode: true });
+
+    expect(useGameStore.getState().settings.largeTextMode).toBe(true);
+    expect(useGameStore.getState().settings.highContrastMode).toBe(true);
   });
 
   it('stores monthly life actions in player state', () => {
@@ -182,6 +194,9 @@ describe('useGameStore', () => {
           animationSpeed: 'normal',
           autoSave: true,
           difficulty: 'normal',
+          compactMode: false,
+          largeTextMode: false,
+          highContrastMode: false,
         },
       });
 

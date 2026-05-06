@@ -12,6 +12,7 @@ import {
   TDSR_LIMIT,
 } from './constants';
 import { calcMonthlyPayment, calcTDSR } from './finance';
+import { selectBankAssessableMonthlyIncome } from './income';
 import { getLtvCap, checkMsr, maxBorrowable } from './ltv';
 import type { ActionFailReason } from './results';
 import { selectMonthlyExpenses } from './selectors';
@@ -88,11 +89,12 @@ export function validatePurchase(
     ? HDB_CONCESSIONARY_LOAN_INTEREST
     : diff.loanInterest;
   const monthlyPayment = calcMonthlyPayment(mortgageAmount, loanInterestRate, DEFAULT_MORTGAGE_TERM_YEARS);
-  const tdsrRatio = mortgageAmount > 0 ? calcTDSR(selectMonthlyExpenses(player), monthlyPayment, player.salary) : 0;
+  const assessableMonthlyIncome = selectBankAssessableMonthlyIncome(player);
+  const tdsrRatio = mortgageAmount > 0 ? calcTDSR(selectMonthlyExpenses(player), monthlyPayment, assessableMonthlyIncome) : 0;
   const tdsrAllowed = mortgageAmount <= 0 || tdsrRatio <= TDSR_LIMIT;
   const creditAllowed = mortgageAmount <= 0 || player.creditScore >= CREDIT_SCORE_FLOOR;
   const msrCheck = mortgageAmount > 0 && property.isHdb
-    ? checkMsr(player.salary, monthlyPayment, true)
+    ? checkMsr(assessableMonthlyIncome, monthlyPayment, true)
     : { passes: true, maxMonthlyPayment: Infinity };
   const msrAllowed = msrCheck.passes;
   const maxMsrPayment = Number.isFinite(msrCheck.maxMonthlyPayment) ? msrCheck.maxMonthlyPayment : null;

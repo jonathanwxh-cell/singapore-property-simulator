@@ -120,7 +120,8 @@ export default function Dashboard() {
   const handleSelectIntent = (intent: MonthlyIntentOption) => {
     setPrimaryLifeAction(intent.primaryActionId);
     setSecondaryLifeAction(intent.secondaryActionId);
-    navigate(intent.route);
+    advanceMonths(1);
+    navigate('/dashboard');
   };
 
   return (
@@ -396,7 +397,7 @@ function MonthlyIntentPanel({
           <p className="label-text mb-1 text-[10px] text-cyan-glow">Choose your month</p>
           <h3 className="section-title text-white">Monthly Intent</h3>
           <p className="mt-1 text-sm text-text-secondary">
-            Pick a stance before advancing. This keeps the sim from becoming autopilot while still setting life actions for you.
+            Tap once to set the life actions and advance the month. Open Life first only when you want to tweak the plan manually.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -437,6 +438,7 @@ function MonthlyIntentPanel({
               <span className="text-[10px] text-text-dim">Use plan</span>
             </div>
             <p className="font-rajdhani text-lg font-semibold text-white">{intent.label}</p>
+            <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.16em] text-cyan-glow">Use plan + advance</p>
             {!compactMode && (
               <>
                 <p className="mt-2 text-xs leading-relaxed text-text-secondary">{intent.detail}</p>

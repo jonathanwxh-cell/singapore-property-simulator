@@ -12,6 +12,7 @@ import {
   CREDIT_DELTA_LOAN_PAID_OFF,
 } from './constants';
 import { calcMonthlyPayment, calcTDSR } from './finance';
+import { selectBankAssessableMonthlyIncome } from './income';
 import { selectMonthlyExpenses } from './selectors';
 import type { Rng } from './rng';
 import type { ScenarioOption } from '@/data/scenarios';
@@ -269,7 +270,7 @@ export function applyLoanPure(
 
   const monthlyPayment = calcMonthlyPayment(roundedAmount, interestRate, termYears);
   const existingPayments = selectMonthlyExpenses(player);
-  const tdsr = calcTDSR(existingPayments, monthlyPayment, player.salary);
+  const tdsr = calcTDSR(existingPayments, monthlyPayment, selectBankAssessableMonthlyIncome(player));
   if (tdsr > TDSR_LIMIT) {
     return fail('tdsr_exceeded', `TDSR would be ${formatPercent(tdsr * 100, 1)}, exceeds ${formatPercent(TDSR_LIMIT * 100)} cap.`);
   }

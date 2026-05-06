@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/game/useGameStore';
 import { difficultySettings } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
-import { ArrowLeft, Volume2, Zap, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Volume2, Zap, RotateCcw, Type, SunMedium } from 'lucide-react';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -100,6 +100,48 @@ export default function Settings() {
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.compactMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
               </button>
+            </div>
+          </div>
+        </GlassCard>
+
+        {/* Accessibility */}
+        <GlassCard className="mb-4" accentColor="#00E676">
+          <h3 className="section-title text-white mb-4 flex items-center gap-2">
+            <Type size={20} className="text-success" />
+            Accessibility
+          </h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-white text-sm">Large Text Mode</p>
+                <p className="text-text-dim text-xs">Bigger type and touch targets for senior and mobile play</p>
+              </div>
+              <button
+                onClick={() => updateSettings({ largeTextMode: !settings.largeTextMode })}
+                className={`w-12 h-6 rounded-full transition-all ${settings.largeTextMode ? 'bg-success' : 'bg-white/10'}`}
+              >
+                <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.largeTextMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
+              </button>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-white text-sm">Light High-Contrast Mode</p>
+                <p className="text-text-dim text-xs">Brighter surface for older eyes and outdoor phone use</p>
+              </div>
+              <button
+                onClick={() => updateSettings({ highContrastMode: !settings.highContrastMode })}
+                className={`w-12 h-6 rounded-full transition-all ${settings.highContrastMode ? 'bg-success' : 'bg-white/10'}`}
+              >
+                <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.highContrastMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
+              </button>
+            </div>
+            <div className="rounded-xl border border-success/20 bg-success/10 p-3">
+              <div className="flex items-start gap-2">
+                <SunMedium size={16} className="mt-0.5 text-success" />
+                <p className="text-xs leading-relaxed text-text-secondary">
+                  These modes retain the same game systems while reducing the cockpit feeling reported by older and mobile-first playtesters.
+                </p>
+              </div>
             </div>
           </div>
         </GlassCard>

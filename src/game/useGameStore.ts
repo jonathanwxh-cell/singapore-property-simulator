@@ -178,6 +178,8 @@ function createInitialSettings(difficulty: Difficulty) {
     autoSave: true,
     difficulty,
     compactMode: false,
+    largeTextMode: false,
+    highContrastMode: false,
   };
 }
 
@@ -186,6 +188,8 @@ function withHydratedSettings(settings: GameState['settings']): GameState['setti
     ...createInitialSettings(settings.difficulty),
     ...settings,
     compactMode: settings.compactMode ?? false,
+    largeTextMode: settings.largeTextMode ?? false,
+    highContrastMode: settings.highContrastMode ?? false,
   };
 }
 

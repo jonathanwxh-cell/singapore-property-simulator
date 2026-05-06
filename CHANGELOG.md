@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Mega playtest response pass**: accessibility display modes, foreigner-safe deal recommendations, self-employed income volatility, and bank income-haircut explainers based on the 15-persona report.
 - **Finance realism priority pass**: HDB concessionary starter-stage financing, CPF OA grant credits, MOP countdown with quiet-month blitzing, compact mode, explicit worst-case listing readouts, and HDB resale-levy explainers.
 - **Local profiles and phone transfer saves**: Save / Load now supports multiple player profiles, profile-scoped autosaves and slots, whole-profile export/import files, and copyable transfer bundles for moving runs across iPhone, Android, and desktop browsers.
 - **UX rescue pass**: Monthly Intent cards on the Home Command Center let players pick a cash, deal-hunting, recovery, or landlord-ops stance before advancing the month.
@@ -42,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Landlord Ops 2.0**: lease renewal decisions, rent-push vacancy risk, reserve-gap milestones, richer maintenance events, and new landlord/repair visual cards.
 
 ### Changed
+- Monthly Intent is now a true one-tap action: choosing an intent sets the plan and advances the month immediately.
+- New Game career cards now show the difficulty-adjusted starting salary so Tycoon and Hard runs no longer look like the career salary changed mysteriously after start.
+- ABSD glossary guidance now surfaces the simplified SC/PR/foreigner rate ladder, including PR second-home and foreigner residential friction.
+- Entrepreneur and property-agent careers now have variable monthly income, while mortgage checks use a simplified 70% bank-assessable income haircut.
 - Housing grant scenarios now credit CPF OA instead of spendable cash, and scenario previews distinguish CPF OA support from cash windfalls.
 - Purchase math now exposes explicit ABSD rates, HDB resale-levy estimates, financing mode, and loan interest so property cards teach the blocker instead of hiding it in totals.
 - Single-under-35 HDB blockers now name practical alternate routes: private property, family nucleus, or waiting for the 35+ single-buyer resale path.
@@ -70,6 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Portfolio and property-detail surfaces now expose lease pressure, repair exposure, reserve gaps, and tenant-satisfaction tradeoffs as explicit landlord decisions.
 
 ### Fixed
+- Foreigner profiles are no longer steered toward HDB/EC listings by the best-next-buy recommendation engine when private or commercial paths are more appropriate.
+- The marriage scenario now includes a no-cash safe option so low-cash Tycoon players cannot be soft-locked by three unaffordable choices.
 - The Buy page hero action buttons now stay above the mobile bottom navigation after the finance-realism additions.
 - Mobile scenario dialogs now align from the top and scroll inside the overlay, preventing clipped choices on short iPhone and Android screens.
 - Mobile Dashboard and Life advance-month CTAs now stay in the content flow and clear the bottom navigation, including short Android-style viewports.

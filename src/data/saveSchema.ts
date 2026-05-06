@@ -233,6 +233,8 @@ export const saveSchema = z.object({
     autoSave: z.boolean(),
     difficulty: z.enum(['easy', 'normal', 'hard', 'tycoon']),
     compactMode: z.boolean().optional(),
+    largeTextMode: z.boolean().optional(),
+    highContrastMode: z.boolean().optional(),
   }),
   isGameActive: z.boolean(),
   currentScenario: z.string().nullable(),
