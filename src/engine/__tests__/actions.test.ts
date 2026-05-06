@@ -95,6 +95,8 @@ describe('buyPropertyPure', () => {
     expect(result.value.player.properties[0].financingMode).toBe('hdb-concessionary');
     expect(result.value.player.loans[0].principal).toBe(198_750);
     expect(result.value.player.loans[0].interestRate).toBe(2.6);
+    expect(result.value.player.loans[0].monthlyPayment).toBe(902);
+    expect(result.value.player.loans[0].termYears).toBe(25);
     expect(result.value.player.loans[0].financingMode).toBe('hdb-concessionary');
   });
 

@@ -112,6 +112,36 @@ describe('eligibility', () => {
     expect(family.blockedReason).toBeNull();
   });
 
+  it('surfaces newer household-profile routes without pretending every profile has HDB access', () => {
+    const singleParent = evaluatePropertyEligibility({
+      propertyType: 'HDB Resale',
+      salary: 5_500,
+      properties: [],
+      firstHomePurchased: false,
+      ownedPrivateHome: false,
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'single-parent',
+        age: 35,
+      },
+    });
+    const domesticPartners = evaluatePropertyEligibility({
+      propertyType: 'HDB Resale',
+      salary: 8_500,
+      properties: [],
+      firstHomePurchased: false,
+      ownedPrivateHome: false,
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'domestic-partners',
+        age: 30,
+      },
+    });
+
+    expect(singleParent.blockedReason).toBeNull();
+    expect(domesticPartners.blockedReason).toContain('Domestic-partner runs');
+  });
+
   it('blocks another residential purchase while a public-housing MOP is active', () => {
     const status = evaluatePropertyEligibility({
       propertyType: 'Private Condo',

@@ -360,6 +360,30 @@ describe('useGameStore', () => {
     expect(useGameStore.getState().player.runRouteId).toBe('heartland-landlord');
   });
 
+  it('starts newer household profiles with distinct life burdens', () => {
+    useGameStore.getState().newGame('Parent Run', 'graduate', 'normal', {
+      residencyStatus: 'sc',
+      householdProfile: 'single-parent',
+      age: 35,
+    });
+    const parent = useGameStore.getState().player;
+
+    expect(parent.children).toBe(1);
+    expect(parent.maritalStatus).toBe('divorced');
+    expect(parent.life.householdLoad).toBeGreaterThan(1_000);
+
+    useGameStore.getState().newGame('Multi Gen', 'graduate', 'normal', {
+      residencyStatus: 'sc',
+      householdProfile: 'multi-gen-family',
+      age: 40,
+    });
+    const multiGen = useGameStore.getState().player;
+
+    expect(multiGen.children).toBe(2);
+    expect(multiGen.runRouteId).toBe('heartland-landlord');
+    expect(multiGen.life.householdLoad).toBeGreaterThan(parent.life.householdLoad);
+  });
+
   it('infers a route when loading an older save without route state', () => {
     const baseState = makeState({
       player: makePlayer({

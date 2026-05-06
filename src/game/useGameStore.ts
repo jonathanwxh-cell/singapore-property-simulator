@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement, BuyerProfile, MortgageFinancingMode, RunRouteId } from './types';
+import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement, BuyerProfile, MortgageFinancingMode, RunRouteId, MaritalStatus } from './types';
 import { createInitialLifeState, difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE, normalizeBuyerProfile } from './types';
 import { careers } from '@/data/careers';
 import { properties } from '@/data/properties';
@@ -38,6 +38,32 @@ function createInitialCareerProgressionProfile() {
     lastSalaryDelta: 0,
     lastBonus: 0,
   } as const;
+}
+
+function createInitialLifeStateForBuyerProfile(profile: BuyerProfile) {
+  const base = createInitialLifeState();
+  if (profile.householdProfile === 'single-parent') {
+    return { ...base, householdLoad: 1_850, householdSupport: 45, stress: 28 };
+  }
+  if (profile.householdProfile === 'multi-gen-family') {
+    return { ...base, householdLoad: 2_650, householdSupport: 55, stress: 32 };
+  }
+  if (profile.householdProfile === 'domestic-partners') {
+    return { ...base, householdLoad: 1_250, livingArrangement: 'renting-room' as const };
+  }
+  return base;
+}
+
+function getInitialChildrenForBuyerProfile(profile: BuyerProfile): number {
+  if (profile.householdProfile === 'single-parent') return 1;
+  if (profile.householdProfile === 'multi-gen-family') return 2;
+  return 0;
+}
+
+function getInitialMaritalStatusForBuyerProfile(profile: BuyerProfile): MaritalStatus {
+  if (profile.householdProfile === 'couple-family' || profile.householdProfile === 'multi-gen-family') return 'married';
+  if (profile.householdProfile === 'single-parent') return 'divorced';
+  return 'single';
 }
 
 function withCareerDefaults(player: Player): Player {
@@ -124,8 +150,8 @@ function createInitialPlayer(
     creditScore: 650,
     properties: [],
     loans: [],
-    maritalStatus: 'single',
-    children: 0,
+    maritalStatus: getInitialMaritalStatusForBuyerProfile(buyerProfile),
+    children: getInitialChildrenForBuyerProfile(buyerProfile),
     year: 2024,
     month: 1,
     turnCount: 0,
@@ -135,7 +161,7 @@ function createInitialPlayer(
     totalRentalIncome: 0,
     totalPropertySalesProfit: 0,
     bankruptcyStrikes: 0,
-    life: createInitialLifeState(),
+    life: createInitialLifeStateForBuyerProfile(buyerProfile),
     careerGrowthModifier: 1,
     careerRiskModifier: 1,
     careerVolatilityModifier: 0,

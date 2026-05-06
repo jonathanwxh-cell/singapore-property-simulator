@@ -18,7 +18,15 @@ const runRouteSchema = z.enum([
 ]);
 const buyerProfileSchema = z.object({
   residencyStatus: z.enum(['sc', 'spr', 'foreigner']),
-  householdProfile: z.enum(['couple-family', 'single-35-plus', 'single-under-35', 'foreigner-investor']),
+  householdProfile: z.enum([
+    'couple-family',
+    'single-parent',
+    'multi-gen-family',
+    'domestic-partners',
+    'single-35-plus',
+    'single-under-35',
+    'foreigner-investor',
+  ]),
   age: z.number(),
 });
 

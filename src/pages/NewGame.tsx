@@ -421,6 +421,24 @@ const householdOptions: Array<{
     defaultAge: 30,
   },
   {
+    value: 'single-parent',
+    label: 'Single Parent',
+    hint: 'Shelter-first family route with higher household load, childcare pressure, and HDB-family style learning.',
+    defaultAge: 35,
+  },
+  {
+    value: 'multi-gen-family',
+    label: 'Multi-Gen Family',
+    hint: 'Sandwich-generation route with elder/child support, bigger space needs, and stronger reserve pressure.',
+    defaultAge: 40,
+  },
+  {
+    value: 'domestic-partners',
+    label: 'Domestic Partners',
+    hint: 'Private-first route for couples who may not fit simplified HDB family-nucleus assumptions.',
+    defaultAge: 30,
+  },
+  {
     value: 'single-35-plus',
     label: 'Single 35+',
     hint: 'A tighter but realistic solo-buyer path where HDB access starts after age 35.',
@@ -470,13 +488,18 @@ const residencyOptions: Array<{
 function getAgeOptions(householdProfile: HouseholdProfile): number[] {
   if (householdProfile === 'single-under-35') return [27, 30, 34];
   if (householdProfile === 'single-35-plus') return [35, 40, 45, 55, 58, 65];
+  if (householdProfile === 'single-parent') return [30, 35, 40, 45, 55];
+  if (householdProfile === 'multi-gen-family') return [35, 40, 45, 55, 58, 65];
   return [27, 30, 35, 40, 45, 55, 58, 65];
 }
 
 function recommendRunRoute(profile: BuyerProfile): RunRouteId {
   if (profile.residencyStatus === 'foreigner' || profile.householdProfile === 'foreigner-investor') return 'foreign-investor';
+  if (profile.householdProfile === 'domestic-partners') return profile.residencyStatus === 'spr' ? 'pr-private-climber' : 'fire-homeowner';
   if (profile.residencyStatus === 'spr') return 'pr-private-climber';
   if (profile.age >= 55) return 'senior-rightsizer';
+  if (profile.householdProfile === 'single-parent') return 'bto-upgrader';
+  if (profile.householdProfile === 'multi-gen-family') return 'heartland-landlord';
   if (profile.householdProfile === 'single-35-plus') return 'single-resale';
   return 'bto-upgrader';
 }

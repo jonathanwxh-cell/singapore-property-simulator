@@ -19,6 +19,7 @@ import {
   getWorstCaseReadout,
   type DealComparisonResult,
 } from '@/engine/dealComparison';
+import { HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT } from '@/engine/constants';
 
 type FilterPreset = 'starter' | 'yield' | 'upgrade' | 'advanced';
 
@@ -339,7 +340,7 @@ export default function Properties() {
             const readiness = assessDealReadiness({
               player,
               property,
-              downPaymentPercent: property.isHdb ? 10 : 25,
+              downPaymentPercent: property.isHdb ? HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT : 25,
               useCpfOrdinary: true,
               financingMode: property.isHdb ? 'hdb-concessionary' : 'bank',
             });

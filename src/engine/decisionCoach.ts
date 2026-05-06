@@ -313,7 +313,7 @@ export function assessDealReadiness({
     facts: [
       `Cash needed after CPF: ${formatCurrency(cashRequired)}`,
       `CPF OA applied: ${formatCurrency(cpfApplied)}`,
-      `New mortgage payment: ${formatCurrency(validation.monthlyPayment)}/mo`,
+      `New mortgage payment: ${formatCurrency(validation.monthlyPayment)}/mo over ${validation.loanTermYears} years`,
       validation.hdbResaleLevy > 0 ? `Estimated resale levy: ${formatCurrency(validation.hdbResaleLevy)}` : null,
       validation.absd > 0 ? `ABSD rate: ${formatPercent(validation.absdRate * 100)}` : null,
       isIncomeHaircutApplied(player) ? `Bank-assessed income: ${formatCurrency(assessableMonthlyIncome)}/mo after self-employed haircut` : null,

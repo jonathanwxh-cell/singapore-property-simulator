@@ -97,6 +97,9 @@ function formatResidency(status: ReturnType<typeof normalizeBuyerProfile>['resid
 
 function formatHousehold(profile: ReturnType<typeof normalizeBuyerProfile>['householdProfile']): string {
   if (profile === 'couple-family') return 'Couple / family nucleus';
+  if (profile === 'single-parent') return 'Single parent family';
+  if (profile === 'multi-gen-family') return 'Multi-gen family';
+  if (profile === 'domestic-partners') return 'Domestic partners';
   if (profile === 'single-35-plus') return 'Single 35+';
   if (profile === 'single-under-35') return 'Single under 35';
   return 'Foreign investor';

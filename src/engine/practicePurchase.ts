@@ -79,6 +79,9 @@ export function buildPracticePurchasePlan({
     ...(property.isHdb && player.buyerProfile?.householdProfile === 'single-under-35'
       ? ['Single under 35 path should treat HDB as locked and build an alternate plan first.']
       : []),
+    ...(property.isHdb && player.buyerProfile?.householdProfile === 'domestic-partners'
+      ? ['Domestic-partner route does not assume HDB family-nucleus eligibility; compare private or later eligible-household paths.']
+      : []),
   ];
 
   return {
@@ -108,6 +111,7 @@ export function buildBtoReadinessPlan(player: Player, property: Property): BtoRe
 
   const hfeReady = player.buyerProfile?.residencyStatus === 'sc'
     && player.buyerProfile.householdProfile !== 'single-under-35'
+    && player.buyerProfile.householdProfile !== 'domestic-partners'
     && player.buyerProfile.householdProfile !== 'foreigner-investor';
   const constructionMonths = Math.max(9, ((property.yearBuilt - player.year) * 12) + (12 - player.month));
   const estimatedMonthsToKeys = Math.max(9, 6 + constructionMonths);

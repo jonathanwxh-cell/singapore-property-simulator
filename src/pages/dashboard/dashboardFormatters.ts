@@ -32,11 +32,17 @@ export function formatBuyerProfile(profile?: BuyerProfile): string {
       : 'Foreigner';
   const household = profile.householdProfile === 'couple-family'
     ? 'Couple / family'
-    : profile.householdProfile === 'single-35-plus'
-      ? 'Single 35+'
-      : profile.householdProfile === 'single-under-35'
-        ? 'Single under 35'
-        : 'Foreign investor';
+    : profile.householdProfile === 'single-parent'
+      ? 'Single parent'
+      : profile.householdProfile === 'multi-gen-family'
+        ? 'Multi-gen family'
+        : profile.householdProfile === 'domestic-partners'
+          ? 'Domestic partners'
+          : profile.householdProfile === 'single-35-plus'
+            ? 'Single 35+'
+            : profile.householdProfile === 'single-under-35'
+              ? 'Single under 35'
+              : 'Foreign investor';
 
   return `${residency} | ${household} | Age ${profile.age}`;
 }

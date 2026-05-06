@@ -5,6 +5,7 @@ import { formatCurrency, formatPercent, roundMoney } from '@/lib/format';
 import {
   CREDIT_SCORE_FLOOR,
   DEFAULT_MORTGAGE_TERM_YEARS,
+  HDB_FLAT_MORTGAGE_TERM_YEARS,
   HDB_CONCESSIONARY_LOAN_INTEREST,
   HDB_CONCESSIONARY_LTV,
   HDB_RESALE_LEVY_ESTIMATE,
@@ -35,6 +36,7 @@ export interface PurchaseValidation {
   mortgageAmount: number;
   monthlyPayment: number;
   loanInterestRate: number;
+  loanTermYears: number;
   financingMode: MortgageFinancingMode;
   maxLoan: number;
   ltvCap: number;
@@ -87,7 +89,8 @@ export function validatePurchase(
   const loanInterestRate = financingMode === 'hdb-concessionary'
     ? HDB_CONCESSIONARY_LOAN_INTEREST
     : diff.loanInterest;
-  const monthlyPayment = calcMonthlyPayment(mortgageAmount, loanInterestRate, DEFAULT_MORTGAGE_TERM_YEARS);
+  const loanTermYears = getMortgageTermYears(property);
+  const monthlyPayment = calcMonthlyPayment(mortgageAmount, loanInterestRate, loanTermYears);
   const assessableMonthlyIncome = selectBankAssessableMonthlyIncome(player);
   const tdsrRatio = mortgageAmount > 0 ? calcTDSR(selectMonthlyExpenses(player), monthlyPayment, assessableMonthlyIncome) : 0;
   const tdsrAllowed = mortgageAmount <= 0 || tdsrRatio <= TDSR_LIMIT;
@@ -154,7 +157,7 @@ export function validatePurchase(
   if (!msrAllowed) {
     reasons.push({
       code: 'msr_exceeded',
-      message: `MSR would exceed 30% for HDB/EC purchase. Max monthly payment: ${formatCurrency(msrCheck.maxMonthlyPayment)}. Reduce loan amount or extend term.`,
+      message: `MSR would exceed 30% for HDB/EC purchase. Max monthly payment: ${formatCurrency(msrCheck.maxMonthlyPayment)}. Reduce the loan amount or increase upfront payment.`,
     });
   }
 
@@ -171,6 +174,7 @@ export function validatePurchase(
     mortgageAmount,
     monthlyPayment,
     loanInterestRate,
+    loanTermYears,
     financingMode,
     maxLoan,
     ltvCap,
@@ -183,6 +187,13 @@ export function validatePurchase(
     isOwned,
     activeHousingLoans,
   };
+}
+
+export function getMortgageTermYears(property: Property): number {
+  // HDB-flat affordability uses a 25-year servicing period in the simplified model.
+  // Bank-financed HDB flats can have longer packages only with extra LTV/age caveats,
+  // which the game does not yet model, so we keep this conservative for education.
+  return property.isHdb ? HDB_FLAT_MORTGAGE_TERM_YEARS : DEFAULT_MORTGAGE_TERM_YEARS;
 }
 
 export function calculateHdbResaleLevy(player: Player, property: Property): number {

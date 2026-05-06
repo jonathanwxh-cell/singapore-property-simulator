@@ -3,7 +3,14 @@ export type MaritalStatus = 'single' | 'married' | 'divorced';
 export type OccupancyStatus = 'owner-occupied' | 'vacant' | 'tenanted' | 'renovating' | 'listed';
 export type LivingArrangement = 'with-parents' | 'renting-room' | 'renting-flat';
 export type BuyerResidencyStatus = 'sc' | 'spr' | 'foreigner';
-export type HouseholdProfile = 'couple-family' | 'single-35-plus' | 'single-under-35' | 'foreigner-investor';
+export type HouseholdProfile =
+  | 'couple-family'
+  | 'single-parent'
+  | 'multi-gen-family'
+  | 'domestic-partners'
+  | 'single-35-plus'
+  | 'single-under-35'
+  | 'foreigner-investor';
 export type RunRouteId =
   | 'bto-upgrader'
   | 'single-resale'

@@ -166,6 +166,10 @@ function getBuyerProfileBlocker(propertyType: string, buyerProfile: BuyerProfile
     return 'Single buyers under 35 cannot use the solo HDB path yet. Alternatives: buy private, form an eligible family nucleus, or wait until 35 for the single-buyer resale route in this simplified model.';
   }
 
+  if (isHdb && buyerProfile.householdProfile === 'domestic-partners') {
+    return 'Domestic-partner runs use private, commercial, or later eligible-household routes in this simplified model; HDB family-nucleus rules are not assumed automatically.';
+  }
+
   if (isSubsidized && buyerProfile.householdProfile === 'foreigner-investor') {
     return 'Investor-style foreigner profiles are routed toward private and commercial property paths.';
   }

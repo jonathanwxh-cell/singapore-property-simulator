@@ -5,7 +5,6 @@ import type { ActionResult } from './results';
 import { fail, ok } from './results';
 import {
   CREDIT_SCORE_FLOOR,
-  DEFAULT_MORTGAGE_TERM_YEARS,
   TDSR_LIMIT,
   CREDIT_DELTA_LOAN_TAKEN,
   CREDIT_DELTA_LOAN_PAYMENT,
@@ -189,7 +188,7 @@ export function buyPropertyPure(
         remainingBalance: loanAmount,
         interestRate: validation.loanInterestRate,
         monthlyPayment: validation.monthlyPayment,
-        termYears: DEFAULT_MORTGAGE_TERM_YEARS,
+        termYears: validation.loanTermYears,
         startDate: `${player.year}-${String(player.month).padStart(2, '0')}`,
         propertyId: property.id,
         isPaid: false,

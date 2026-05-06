@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { properties } from '@/data/properties';
 import { createInitialLifeState, type Player } from '@/game/types';
 import {
+  DEFAULT_MORTGAGE_TERM_YEARS,
   HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT,
   HDB_CONCESSIONARY_LTV,
+  HDB_FLAT_MORTGAGE_TERM_YEARS,
   HDB_RESALE_LEVY_ESTIMATE,
 } from '../constants';
 import { validatePurchase } from '../purchase';
@@ -58,6 +60,40 @@ describe('purchase realism fixes', () => {
     const tenPercentDown = validatePurchase(makePlayer(), bto!, bto!.price * 0.1, 'hdb-concessionary');
     expect(tenPercentDown.maxLoan).toBe(Math.round(bto!.price * 0.75));
     expect(tenPercentDown.reasons.some((reason) => reason.code === 'ltv_exceeded')).toBe(true);
+  });
+
+  it('services HDB flat mortgages over 25 years instead of the generic private-property term', () => {
+    const bto = properties.find((property) => property.id === 'hdb-bto-0');
+    const condo = properties.find((property) => property.id === 'condo-10');
+    expect(bto).toBeDefined();
+    expect(condo).toBeDefined();
+
+    const hdbValidation = validatePurchase(makePlayer(), bto!, bto!.price * 0.25, 'hdb-concessionary');
+    const privateValidation = validatePurchase(makePlayer({ cash: 3_000_000 }), condo!, condo!.price * 0.25);
+
+    expect(HDB_FLAT_MORTGAGE_TERM_YEARS).toBe(25);
+    expect(hdbValidation.loanTermYears).toBe(HDB_FLAT_MORTGAGE_TERM_YEARS);
+    expect(hdbValidation.monthlyPayment).toBe(902);
+    expect(privateValidation.loanTermYears).toBe(DEFAULT_MORTGAGE_TERM_YEARS);
+  });
+
+  it('lets true all-cash purchases bypass loan servicing and credit checks', () => {
+    const bto = properties.find((property) => property.id === 'hdb-bto-0');
+    expect(bto).toBeDefined();
+
+    const validation = validatePurchase(
+      makePlayer({ salary: 1_000, creditScore: 320, cash: 1_000_000 }),
+      bto!,
+      bto!.price,
+      'hdb-concessionary',
+    );
+
+    expect(validation.canBuy).toBe(true);
+    expect(validation.mortgageAmount).toBe(0);
+    expect(validation.monthlyPayment).toBe(0);
+    expect(validation.tdsrAllowed).toBe(true);
+    expect(validation.msrAllowed).toBe(true);
+    expect(validation.creditAllowed).toBe(true);
   });
 
   it('does not count pure commercial holdings as residential ABSD property count', () => {

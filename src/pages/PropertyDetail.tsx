@@ -828,7 +828,7 @@ export default function PropertyDetail() {
                           }`}
                         >
                           <span className="block font-rajdhani text-sm font-semibold">HDB loan</span>
-                          <span className="block text-[11px]">25% down / 75% LTV, 2.6% fixed</span>
+                          <span className="block text-[11px]">25% down / 75% LTV, 2.6% fixed, 25y</span>
                         </button>
                         <button
                           type="button"
@@ -844,11 +844,14 @@ export default function PropertyDetail() {
                           }`}
                         >
                           <span className="block font-rajdhani text-sm font-semibold">Bank loan</span>
-                          <span className="block text-[11px]">Market rate, stricter LTV cash</span>
+                          <span className="block text-[11px]">Market rate, HDB flats serviced at 25y</span>
                         </button>
                       </div>
                       <p className="mt-2 text-[11px] leading-relaxed text-text-dim">
                         Simplified game model: HDB concessionary financing makes the starter path playable, while MSR/TDSR still check monthly safety.
+                      </p>
+                      <p className="mt-2 text-[11px] leading-relaxed text-text-dim">
+                        Also learn the <GlossaryTerm termId="hps-fire-insurance">HPS / fire insurance</GlossaryTerm> checkpoint before treating the flat as fully planned.
                       </p>
                     </div>
                   )}
@@ -872,6 +875,28 @@ export default function PropertyDetail() {
                       <span>{minDownPaymentPercent}%</span>
                       <span>100%</span>
                     </div>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDownPaymentPercent(minDownPaymentPercent);
+                          setActionError(null);
+                        }}
+                        className="rounded-lg border border-glass-border bg-black/20 px-3 py-2 text-[11px] font-rajdhani font-semibold uppercase tracking-[0.12em] text-text-secondary transition-colors hover:border-cyan-glow/40 hover:text-cyan-glow"
+                      >
+                        Min Cash
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDownPaymentPercent(100);
+                          setActionError(null);
+                        }}
+                        className="rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-[11px] font-rajdhani font-semibold uppercase tracking-[0.12em] text-success transition-colors hover:border-success/60"
+                      >
+                        All Cash
+                      </button>
+                    </div>
                   </div>
 
                   <div className="border-t border-divider pt-3">
@@ -890,6 +915,10 @@ export default function PropertyDetail() {
                           <span className="font-mono text-[11px] text-text-secondary">
                             {validation.financingMode === 'hdb-concessionary' ? 'HDB 2.6% fixed' : `${formatPercent(validation.loanInterestRate, 1)} bank`}
                           </span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-text-secondary text-sm">Loan Term</span>
+                          <span className="font-mono text-[11px] text-text-secondary">{validation.loanTermYears} years</span>
                         </div>
                       </>
                     )}

@@ -51,8 +51,10 @@ export function inferRunRouteId(player: Player): RunRouteId {
   if (profile?.residencyStatus === 'foreigner' || profile?.householdProfile === 'foreigner-investor') {
     return 'foreign-investor';
   }
+  if (profile?.householdProfile === 'domestic-partners') return 'fire-homeowner';
   if (profile?.residencyStatus === 'spr') return 'pr-private-climber';
   if ((profile?.age ?? player.age) >= 55 || player.age >= 55) return 'senior-rightsizer';
+  if (profile?.householdProfile === 'multi-gen-family') return 'heartland-landlord';
   if (profile?.householdProfile === 'single-35-plus') return 'single-resale';
 
   return 'bto-upgrader';
