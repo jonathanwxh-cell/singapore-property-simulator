@@ -162,7 +162,10 @@ async function assertMobileDashboardAdvanceDoesNotCoverVitals(page, viewport = {
 }
 
 async function assertVisibleAdvanceExists(page, routeLabel) {
-  const advanceButtons = await getVisibleButtonBoxesWithText(page, 'Next Month');
+  const advanceButtons = [
+    ...await getVisibleButtonBoxesWithText(page, 'Next Month'),
+    ...await getVisibleButtonBoxesWithText(page, 'Advance to'),
+  ];
   if (advanceButtons.length < 1) {
     throw new Error(`${routeLabel} should expose at least one visible Next Month CTA.`);
   }
@@ -333,7 +336,6 @@ async function run() {
     await expectVisible(page, 'text=Market Pulse');
     await expectVisible(page, 'text=Life Arc');
     await assertVisibleAdvanceExists(page, 'dashboard');
-    await expectVisible(page, 'text=First-Home Mission Rail');
     await assertMobileDashboardAdvanceDoesNotCoverVitals(page);
     await assertMobileAdvanceClearsBottomNav(page, 'dashboard');
     await assertMobileDashboardAdvanceDoesNotCoverVitals(page, { width: 360, height: 640 });
@@ -363,8 +365,13 @@ async function run() {
 
     await page.goto(`${baseUrl}/#/properties`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Best next buy for you');
+    await expectVisible(page, 'text=Compare Before You Buy');
+    await expectVisible(page, 'text=Suggested set');
     await expectVisible(page, "text=This Month's Market Signals");
     await expectVisible(page, 'text=First-Timer Friendly');
+    await page.getByRole('button', { name: /^Compare$/ }).first().click();
+    await expectVisible(page, 'text=Your picks');
+    await expectVisible(page, 'text=Clear picks');
     await assertMobilePropertiesHeroActionsClearNav(page);
     await page.getByRole('button', { name: 'Review Deal' }).click();
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Practice deal comparison**: Buy page now includes a "Compare Before You Buy" panel, route-aware suggested shortlist, and listing-card compare toggles so players can rehearse cash, duties, surplus, yield, worst case, and next fixes before committing.
 - **First 10 Minutes + Fun Loop 2.0**: research-backed onboarding spec, Dashboard last-month recap, beginner advanced-panel gate, mechanics-reference formulas, and explicit next-fix guidance for blocked purchases.
 - **Mega playtest response pass**: accessibility display modes, foreigner-safe deal recommendations, self-employed income volatility, and bank income-haircut explainers based on the 15-persona report.
 - **Finance realism priority pass**: HDB concessionary starter-stage financing, CPF OA grant credits, MOP countdown with quiet-month blitzing, compact mode, explicit worst-case listing readouts, and HDB resale-levy explainers.

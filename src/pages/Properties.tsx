@@ -4,15 +4,21 @@ import { districts } from '@/data/districts';
 import { listingChannelInfo } from '@/data/listingChannels';
 import GlassCard from '@/components/GlassCard';
 import ProgressivePanel from '@/components/ProgressivePanel';
-import { Search, MapPin, Bed, Bath, Maximize, Sparkles, SlidersHorizontal } from 'lucide-react';
+import { Search, MapPin, Bed, Bath, Maximize, Sparkles, SlidersHorizontal, Scale, X } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
 import { useNavigate } from 'react-router-dom';
 import { buildListingSummary, getDynamicListingSignals, getListingCatalog } from '@/engine/listings';
-import { formatCompactCurrency } from '@/lib/format';
+import { formatCompactCurrency, formatCurrency } from '@/lib/format';
 import { useGameStore } from '@/game/useGameStore';
 import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
 import EligibilityBadge from '@/components/EligibilityBadge';
 import { assessDealReadiness, selectBestNextBuyForPlayer } from '@/engine/decisionCoach';
+import {
+  buildDealComparisons,
+  getDealComparisonShortlist,
+  getWorstCaseReadout,
+  type DealComparisonResult,
+} from '@/engine/dealComparison';
 
 type FilterPreset = 'starter' | 'yield' | 'upgrade' | 'advanced';
 
@@ -33,6 +39,7 @@ export default function Properties() {
   const [preset, setPreset] = useState<FilterPreset>('starter');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showAllListings, setShowAllListings] = useState(false);
+  const [comparisonIds, setComparisonIds] = useState<string[]>([]);
 
   const catalog = getListingCatalog();
   const summary = buildListingSummary();
@@ -48,6 +55,12 @@ export default function Properties() {
   };
   const flags = deriveEligibilityFlags(eligibilityInput);
   const bestNextBuy = selectBestNextBuyForPlayer(player);
+  const suggestedComparisonIds = getDealComparisonShortlist(player, bestNextBuy ? [bestNextBuy.property.id] : []);
+  const comparison = buildDealComparisons({
+    player,
+    propertyIds: comparisonIds.length > 0 ? comparisonIds : suggestedComparisonIds,
+  });
+  const comparisonMode = comparisonIds.length > 0 ? 'selected' : 'suggested';
 
   const filtered = catalog.filter(p => {
     const district = districts.find(d => d.id === p.districtId);
@@ -76,6 +89,15 @@ export default function Properties() {
     } else {
       setShowAdvancedFilters(true);
     }
+  };
+  const handleToggleCompare = (propertyId: string) => {
+    setComparisonIds((ids) => {
+      if (ids.includes(propertyId)) return ids.filter((id) => id !== propertyId);
+      return [...ids, propertyId].slice(0, 3);
+    });
+  };
+  const handleRemoveCompare = (propertyId: string) => {
+    setComparisonIds((ids) => ids.filter((id) => id !== propertyId));
   };
   const visibleListings = showAllListings ? filtered : filtered.slice(0, 12);
 
@@ -142,6 +164,14 @@ export default function Properties() {
             </div>
           </GlassCard>
         )}
+
+        <DealComparePanel
+          comparison={comparison}
+          mode={comparisonMode}
+          onOpenProperty={(propertyId) => navigate(`/property/${propertyId}`)}
+          onRemove={handleRemoveCompare}
+          onClear={() => setComparisonIds([])}
+        />
 
         <GlassCard accentColor="#FFD740" className="mb-6">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -303,6 +333,8 @@ export default function Properties() {
             });
             const signal = dynamicSignals.find((entry) => entry.propertyId === property.id);
             const worstCase = getWorstCaseReadout(property);
+            const selectedForCompare = comparisonIds.includes(property.id);
+            const compareDisabled = comparisonIds.length >= 3 && !selectedForCompare;
             return (
               <GlassCard
                 key={property.id}
@@ -333,6 +365,24 @@ export default function Properties() {
                   <div className="absolute bottom-2 left-2 text-[10px] font-mono text-white bg-black/50 px-2 py-0.5 rounded">
                     PSF: S${property.psf.toLocaleString()}
                   </div>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (!compareDisabled) handleToggleCompare(property.id);
+                    }}
+                    disabled={compareDisabled}
+                    className={`absolute bottom-2 right-2 inline-flex min-h-9 items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-rajdhani font-semibold uppercase tracking-wider transition-colors ${
+                      selectedForCompare
+                        ? 'border-success/50 bg-success/25 text-success'
+                        : compareDisabled
+                          ? 'cursor-not-allowed border-white/10 bg-black/50 text-text-dim'
+                          : 'border-cyan-glow/40 bg-black/60 text-cyan-glow hover:bg-cyan-glow/20'
+                    }`}
+                  >
+                    <Scale size={12} />
+                    {selectedForCompare ? 'Compared' : 'Compare'}
+                  </button>
                 </div>
 
                 <h3 className="font-rajdhani font-semibold text-white text-base mb-1 truncate">{property.name}</h3>
@@ -425,6 +475,124 @@ export default function Properties() {
   );
 }
 
+function DealComparePanel({
+  comparison,
+  mode,
+  onOpenProperty,
+  onRemove,
+  onClear,
+}: {
+  comparison: DealComparisonResult;
+  mode: 'selected' | 'suggested';
+  onOpenProperty: (propertyId: string) => void;
+  onRemove: (propertyId: string) => void;
+  onClear: () => void;
+}) {
+  return (
+    <GlassCard accentColor="#7C4DFF" className="mb-6">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="label-text mb-1 text-[10px] text-purple-glow">Practice mode</p>
+          <h2 className="section-title text-white">Compare Before You Buy</h2>
+          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-text-secondary">
+            {comparison.summary.headline} {comparison.summary.detail}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full border border-purple-glow/25 bg-purple-glow/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-purple-glow">
+            {mode === 'selected' ? 'Your picks' : 'Suggested set'}
+          </span>
+          {mode === 'selected' && (
+            <button type="button" onClick={onClear} className="btn-secondary min-h-10 px-3 py-2 text-xs">
+              Clear picks
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-3">
+        {comparison.items.map((item) => (
+          <div
+            key={item.id}
+            className={`rounded-2xl border p-4 ${
+              comparison.summary.bestId === item.id
+                ? 'border-success/40 bg-success/10'
+                : 'border-glass-border bg-white/[0.03]'
+            }`}
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="font-rajdhani text-lg font-semibold text-white">{item.name}</p>
+                <p className="text-[11px] text-text-dim">{item.type} | {item.routeFitLabel}</p>
+              </div>
+              {mode === 'selected' && (
+                <button
+                  type="button"
+                  onClick={() => onRemove(item.id)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-text-secondary hover:text-white"
+                  aria-label={`Remove ${item.name} from comparison`}
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <CompareMetric label="Cash after CPF" value={formatCompactCurrency(item.cashRequired)} tone={item.verdict === 'blocked' ? 'bad' : 'good'} />
+              <CompareMetric label="Duties / levy" value={formatCompactCurrency(item.upfrontDuties)} tone="neutral" />
+              <CompareMetric label="Monthly surplus" value={formatCurrency(item.monthlySurplusAfterPurchase)} tone={item.monthlySurplusAfterPurchase >= 0 ? 'good' : 'bad'} />
+              <CompareMetric label="Yield" value={`${item.rentalYieldPct}%`} tone={item.rentalYieldPct >= 4 ? 'good' : 'neutral'} />
+            </div>
+            <div className={`mt-3 rounded-xl border p-3 ${
+              item.verdict === 'ready'
+                ? 'border-success/25 bg-success/10'
+                : item.verdict === 'stretch'
+                  ? 'border-warning/25 bg-warning/10'
+                  : 'border-danger/25 bg-danger/10'
+            }`}>
+              <p className="label-text mb-1 text-[9px] text-text-dim">Practice read</p>
+              <p className="text-xs leading-relaxed text-text-secondary">{item.nextFix}</p>
+            </div>
+            <div className="mt-3 rounded-xl border border-warning/20 bg-warning/10 p-3">
+              <p className="label-text mb-1 text-[9px] text-warning">Worst case</p>
+              <p className="text-xs leading-relaxed text-text-secondary">{item.worstCase}</p>
+            </div>
+            <button type="button" onClick={() => onOpenProperty(item.id)} className="btn-secondary mt-3 w-full py-3 text-xs">
+              Open deal page
+            </button>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-xs leading-relaxed text-text-dim">
+        Use Compare on listing cards to swap the suggested set. Comparing does not reserve cash, advance time, or buy anything.
+      </p>
+    </GlassCard>
+  );
+}
+
+function CompareMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'good' | 'bad' | 'neutral';
+}) {
+  return (
+    <div className="rounded-xl border border-glass-border bg-black/20 p-3">
+      <p className="label-text text-[9px] text-text-dim">{label}</p>
+      <p className={`mt-1 font-mono text-sm ${
+        tone === 'good'
+          ? 'text-success'
+          : tone === 'bad'
+            ? 'text-danger'
+            : 'text-white'
+      }`}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
 function HeroFact({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-glass-border bg-black/20 p-3">
@@ -442,17 +610,4 @@ function MarketFact({ label, value, detail }: { label: string; value: string; de
       <p className="text-text-secondary text-xs mt-1">{detail}</p>
     </div>
   );
-}
-
-function getWorstCaseReadout(property: ReturnType<typeof getListingCatalog>[number]): string {
-  if (property.isHdb) {
-    return 'MOP locks exits and whole-unit rental; budget for room-rental setup, repairs, and a slower upgrade path.';
-  }
-  if (property.type.startsWith('Commercial')) {
-    return 'Vacancy and fit-out costs can wipe out yield; keep reserves before chasing headline rent.';
-  }
-  if (property.type.startsWith('Landed')) {
-    return 'Large repairs plus rate shocks can overwhelm cashflow if you stretch the loan.';
-  }
-  return 'Rate hikes, ABSD, and vacancy can turn a thin-buffer condo into negative monthly cashflow.';
 }
