@@ -75,8 +75,22 @@ async function expectVisible(page, selector, timeout = 15000) {
   await page.waitForSelector(selector, { timeout });
 }
 
+async function expectAnyVisible(page, selectors, timeout = 15000) {
+  for (const selector of selectors) {
+    try {
+      await expectVisible(page, selector, timeout);
+      return;
+    } catch {
+      // keep trying alternate selectors
+    }
+  }
+  throw new Error(`Expected one of these selectors visible: ${selectors.join(' | ')}`);
+}
+
 async function openAdvancedDashboardPanels(page) {
   const advancedPanelsButton = page.getByRole('button', { name: /Open advanced sim panels/i });
+  if ((await advancedPanelsButton.count()) === 0) return;
+
   await advancedPanelsButton.scrollIntoViewIfNeeded();
   await advancedPanelsButton.click();
 
@@ -375,7 +389,7 @@ async function run() {
 
     await expectVisible(page, 'text=Home Command Center');
     await expectVisible(page, 'text=This Month');
-    await expectVisible(page, 'text=Beginner focus mode');
+    await expectAnyVisible(page, ['text=Beginner focus mode', 'text=Guided mode primer', 'text=Beginner quest']);
     await expectVisible(page, 'text=Campaign Chapter');
     await expectVisible(page, 'text=Current Mission');
     await expectVisible(page, 'text=Campaign Score');

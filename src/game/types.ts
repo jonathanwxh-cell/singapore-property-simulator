@@ -332,6 +332,7 @@ export interface GameSettings {
   animationSpeed: 'slow' | 'normal' | 'fast';
   autoSave: boolean;
   difficulty: Difficulty;
+  guidedMode: boolean;
   compactMode: boolean;
   largeTextMode: boolean;
   highContrastMode: boolean;

@@ -58,6 +58,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
       animationSpeed: 'normal',
       autoSave: true,
       difficulty: 'normal',
+      guidedMode: false,
       compactMode: false,
       largeTextMode: false,
       highContrastMode: false,

@@ -53,6 +53,9 @@ describe('run director', () => {
   it('infers sensible default routes for common Singapore profiles', () => {
     expect(inferRunRouteId(makePlayer())).toBe('bto-upgrader');
     expect(inferRunRouteId(makePlayer({
+      buyerProfile: { residencyStatus: 'sc', householdProfile: 'single-under-35', age: 28 },
+    }))).toBe('pr-private-climber');
+    expect(inferRunRouteId(makePlayer({
       buyerProfile: { residencyStatus: 'sc', householdProfile: 'single-35-plus', age: 35 },
     }))).toBe('single-resale');
     expect(inferRunRouteId(makePlayer({

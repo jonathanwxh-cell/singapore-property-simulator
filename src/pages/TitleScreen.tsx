@@ -97,6 +97,7 @@ export default function TitleScreen() {
       'normal',
       { residencyStatus: 'sc', householdProfile: 'couple-family', age: 30 },
       'bto-upgrader',
+      { guidedMode: true },
     );
     handleTransition('/dashboard');
   };

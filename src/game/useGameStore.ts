@@ -210,6 +210,7 @@ function createInitialSettings(difficulty: Difficulty) {
     animationSpeed: 'normal' as const,
     autoSave: true,
     difficulty,
+    guidedMode: true,
     compactMode: false,
     largeTextMode: false,
     highContrastMode: false,
@@ -221,6 +222,7 @@ function withHydratedSettings(settings: GameState['settings']): GameState['setti
     ...createInitialSettings(settings.difficulty),
     ...settings,
     compactMode: settings.compactMode ?? false,
+    guidedMode: settings.guidedMode ?? true,
     largeTextMode: settings.largeTextMode ?? false,
     highContrastMode: settings.highContrastMode ?? false,
   };
@@ -247,7 +249,14 @@ function pickGameState(state: GameState): GameState {
 }
 
 interface GameStore extends GameState {
-  newGame: (name: string, careerId: string, difficulty: Difficulty, buyerProfile?: Partial<BuyerProfile>, runRouteId?: RunRouteId) => void;
+  newGame: (
+    name: string,
+    careerId: string,
+    difficulty: Difficulty,
+    buyerProfile?: Partial<BuyerProfile>,
+    runRouteId?: RunRouteId,
+    options?: { guidedMode?: boolean },
+  ) => void;
   loadGame: (state: GameState) => void;
   nextTurn: () => void;
   advanceMonths: (months: number) => void;
@@ -281,13 +290,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   rngSeed: 0,
   rngState: 0,
 
-  newGame: (name, careerId, difficulty, buyerProfile, runRouteId) => {
+  newGame: (name, careerId, difficulty, buyerProfile, runRouteId, options) => {
+    const guidedMode = options?.guidedMode ?? true;
     const seed = newSeed();
     rng = createRng(seed);
     set({
       player: createInitialPlayer(name, careerId, difficulty, buyerProfile, runRouteId),
       market: createInitialMarket(),
-      settings: createInitialSettings(difficulty),
+      settings: {
+        ...createInitialSettings(difficulty),
+        guidedMode,
+      },
       isGameActive: true,
       currentScenario: null,
       rngSeed: seed,

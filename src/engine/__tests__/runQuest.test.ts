@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { properties, getPropertyCategory } from '@/data/properties';
 import { createInitialLifeState, type Player } from '@/game/types';
 import { getFirstRunQuest } from '../runQuest';
 
@@ -61,6 +62,21 @@ describe('getFirstRunQuest', () => {
     expect(quest.progressPct).toBeGreaterThan(0);
     expect(quest.activeStep?.id).toBe('compare-starter-home');
     expect(quest.beginnerHint).toContain('one next action');
+  });
+
+  it('uses a profile-aware practice listing for single-under-35 starts', () => {
+    const starter = properties.find((property) => getPropertyCategory(property.type) === 'private-residential');
+    expect(starter).toBeDefined();
+
+    const quest = getFirstRunQuest(makePlayer({
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'single-under-35',
+        age: 28,
+      },
+    }), null);
+
+    expect(quest.steps.find((step) => step.id === 'practice-purchase')?.route).toBe(`/property/${starter?.id}`);
   });
 
   it('celebrates ownership operations once the player has a tenant online', () => {

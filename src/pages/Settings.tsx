@@ -91,6 +91,18 @@ export default function Settings() {
             </div>
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-white text-sm">Guided Onboarding</p>
+                <p className="text-text-dim text-xs">Keep beginner-first flow, glossary primer, and gate on early dashboards.</p>
+              </div>
+              <button
+                onClick={() => updateSettings({ guidedMode: !settings.guidedMode })}
+                className={`w-12 h-6 rounded-full transition-all ${settings.guidedMode ? 'bg-cyan-glow' : 'bg-white/10'}`}
+              >
+                <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.guidedMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
                 <p className="text-white text-sm">Compact Mode</p>
                 <p className="text-text-dim text-xs">Hide helper text for faster repeat runs</p>
               </div>

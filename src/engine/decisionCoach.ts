@@ -9,6 +9,7 @@ import { getDownPaymentAmount, validatePurchase, type PurchaseValidationReason }
 import { evaluatePropertyEligibility } from './eligibility';
 import { getListingCatalog, type ListingProperty } from './listings';
 import { isIncomeHaircutApplied, selectBankAssessableMonthlyIncome } from './income';
+import { resolveStarterPropertyForProfile } from './firstHomeStarter';
 import {
   selectAvailableCash,
   selectMonthlyNetCashflow,
@@ -164,7 +165,9 @@ export function getNextBestMoves({ player, currentScenario }: NextBestMoveInput)
 
   if (player.properties.length === 0) {
     const bestNextBuy = selectBestNextBuyForPlayer(player);
-    const starter = bestNextBuy?.property ?? properties.find((property) => property.id === 'hdb-bto-0') ?? [...properties].sort((a, b) => a.price - b.price)[0];
+    const starter = bestNextBuy?.property
+      ?? resolveStarterPropertyForProfile(player.buyerProfile)
+      ?? [...properties].sort((a, b) => a.price - b.price)[0];
     const readiness = bestNextBuy?.readiness ?? assessDealReadiness({
       player,
       property: starter,

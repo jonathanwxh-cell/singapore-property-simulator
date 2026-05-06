@@ -37,6 +37,12 @@ export interface PropertyEligibilityStatus {
   salaryCeilingExceeded: boolean;
   blockedCode: ActionFailReason | null;
   blockedReason: string | null;
+  blockedAdvice: string[];
+}
+
+interface ProfileBlocker {
+  message: string;
+  advice: string[];
 }
 
 export function deriveEligibilityFlags(input: EligibilityInput): EligibilityFlags {
@@ -73,16 +79,17 @@ export function evaluatePropertyEligibility(input: PropertyEligibilityInput): Pr
   const salaryCeiling = getSalaryCeilingForProperty(input.propertyType);
   const salaryCeilingExceeded = salaryCeiling !== null && input.salary > salaryCeiling;
   const ecBlockedByPrivateOwnership = input.propertyType === 'Executive Condo' && input.ownedPrivateHome;
-  const profileBlockedReason = getBuyerProfileBlocker(input.propertyType, buyerProfile);
+  const profileBlocked = getBuyerProfileBlocker(input.propertyType, buyerProfile);
   const ownershipBlocker = getCurrentOwnershipBlocker(input);
-  const blockedReason = profileBlockedReason
-    ?? ownershipBlocker?.message
+  const blockedReason = profileBlocked
+    ? profileBlocked.message
+    : ownershipBlocker?.message
     ?? (salaryCeilingExceeded
       ? `Monthly salary exceeds the S$${salaryCeiling?.toLocaleString()} ceiling for this property type.`
       : ecBlockedByPrivateOwnership
         ? 'This executive condo is no longer available after private-home ownership in this run.'
         : null);
-  const blockedCode: ActionFailReason | null = profileBlockedReason
+  const blockedCode: ActionFailReason | null = profileBlocked
     ? 'eligibility_blocked'
     : ownershipBlocker?.code
       ?? (salaryCeilingExceeded || ecBlockedByPrivateOwnership ? 'eligibility_blocked' : null);
@@ -95,6 +102,7 @@ export function evaluatePropertyEligibility(input: PropertyEligibilityInput): Pr
     salaryCeilingExceeded,
     blockedCode,
     blockedReason,
+    blockedAdvice: profileBlocked?.advice ?? [],
   };
 }
 
@@ -148,30 +156,61 @@ function getCurrentOwnershipBlocker(input: PropertyEligibilityInput): { code: Ac
   return null;
 }
 
-function getBuyerProfileBlocker(propertyType: string, buyerProfile: BuyerProfile): string | null {
+function getBuyerProfileBlocker(propertyType: string, buyerProfile: BuyerProfile): ProfileBlocker | null {
   const category = getPropertyCategory(propertyType);
   const isHdb = category === 'hdb';
   // BTO and EC are the two subsidised paths; HDB Resale is not.
   const isSubsidized = propertyType === 'HDB BTO' || category === 'ec';
 
   if (buyerProfile.residencyStatus === 'foreigner' && (isHdb || propertyType === 'Executive Condo')) {
-    return 'Foreigners cannot buy HDB flats or executive condos in this simplified Singapore profile model.';
+    return {
+      message: 'Foreigners cannot buy HDB flats or executive condos in this simplified Singapore profile model.',
+      advice: [
+        'Choose a private starter or investor path and delay public-housing ideas.',
+        'Use route auto-detection "Foreign Investor" for ABSD-aware guidance.',
+      ],
+    };
   }
 
   if (buyerProfile.residencyStatus === 'spr' && propertyType === 'HDB BTO') {
-    return 'SPR households cannot buy new HDB BTO flats in this simplified model; use resale or private paths.';
+    return {
+      message: 'SPR households cannot buy new HDB BTO flats in this simplified model; use resale or private paths.',
+      advice: [
+        'Try HDB resale, private resale, or private-first private-climber routes first.',
+        'Private paths build savings for a stronger future upgrade path.',
+      ],
+    };
   }
 
   if (isHdb && buyerProfile.householdProfile === 'single-under-35') {
-    return 'Single buyers under 35 cannot use the solo HDB path yet. Alternatives: buy private, form an eligible family nucleus, or wait until 35 for the single-buyer resale route in this simplified model.';
+    return {
+      message: 'Single buyers under 35 cannot use the solo HDB path yet. Alternatives: buy private, form an eligible family nucleus, or wait until 35 for the single-buyer resale route in this simplified model.',
+      advice: [
+        'Start with a private starter and focus on repair/readiness habits.',
+        'Switch to private-climber route for a realistic single-under-35 entry.',
+        'A cleaner option unlocks at 35 in single-resale mode.',
+      ],
+    };
   }
 
   if (isHdb && buyerProfile.householdProfile === 'domestic-partners') {
-    return 'Domestic-partner runs use private, commercial, or later eligible-household routes in this simplified model; HDB family-nucleus rules are not assumed automatically.';
+    return {
+      message: 'Domestic-partner runs use private, commercial, or later eligible-household routes in this simplified model; HDB family-nucleus rules are not assumed automatically.',
+      advice: [
+        'Use the FIRE/Homeowner or private-first routes, which model mixed-household choices more directly.',
+        'Use private/commercial listings before returning to public housing routes.',
+      ],
+    };
   }
 
   if (isSubsidized && buyerProfile.householdProfile === 'foreigner-investor') {
-    return 'Investor-style foreigner profiles are routed toward private and commercial property paths.';
+    return {
+      message: 'Investor-style foreigner profiles are routed toward private and commercial property paths.',
+      advice: [
+        'Focus on private/commercial options with liquidity-first checks.',
+        'Keep ABSD costs and vacancy risk in your early action plan.',
+      ],
+    };
   }
 
   return null;

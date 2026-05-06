@@ -1,5 +1,6 @@
 import type { Player } from '@/game/types';
 import { selectAvailableCash, selectMonthlyNetCashflow } from './selectors';
+import { resolveStarterPropertyRoute } from './firstHomeStarter';
 import { TAKE_HOME_RATIO } from './constants';
 
 export type FirstRunQuestStepId =
@@ -60,7 +61,7 @@ export function getFirstRunQuest(player: Player, currentScenario: string | null)
       id: 'practice-purchase',
       label: 'Practice a deal',
       detail: 'Open the starter home and simulate the buy before committing.',
-      route: '/property/hdb-bto-0',
+      route: resolveStarterPropertyRoute(player.buyerProfile),
       completed: hasPracticed,
       rewardLabel: '+ readiness',
     },

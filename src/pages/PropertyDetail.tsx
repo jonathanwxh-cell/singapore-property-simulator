@@ -450,6 +450,16 @@ export default function PropertyDetail() {
                       : 'You currently meet the simplified eligibility rules for this listing.'}
                   </p>
                 )}
+                {!isOwned && eligibility.blockedAdvice.length > 0 && (
+                  <div className="rounded-lg border border-danger/20 bg-danger/10 px-3 py-2">
+                    <p className="label-text text-[10px] text-danger">Why it is blocked</p>
+                    <div className="mt-2 space-y-1">
+                      {eligibility.blockedAdvice.map((advice) => (
+                        <p key={advice} className="text-text-secondary text-xs leading-relaxed">• {advice}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </GlassCard>
 

@@ -242,6 +242,7 @@ export const saveSchema = z.object({
     animationSpeed: z.enum(['slow', 'normal', 'fast']),
     autoSave: z.boolean(),
     difficulty: z.enum(['easy', 'normal', 'hard', 'tycoon']),
+    guidedMode: z.boolean().optional(),
     compactMode: z.boolean().optional(),
     largeTextMode: z.boolean().optional(),
     highContrastMode: z.boolean().optional(),

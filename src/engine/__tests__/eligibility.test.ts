@@ -78,6 +78,8 @@ describe('eligibility', () => {
 
     expect(status.firstTimerFriendly).toBe(false);
     expect(status.blockedReason).toContain('Foreigners cannot buy HDB');
+    expect(status.blockedAdvice.length).toBeGreaterThan(0);
+    expect(status.blockedAdvice[0]).toContain('private');
   });
 
   it('blocks single citizens under 35 from the solo HDB path but allows family nuclei', () => {
@@ -109,6 +111,7 @@ describe('eligibility', () => {
     expect(under35.blockedReason).toContain('Single buyers under 35');
     expect(under35.blockedReason).toContain('private');
     expect(under35.blockedReason).toContain('wait until 35');
+    expect(under35.blockedAdvice).toEqual(expect.arrayContaining(['Start with a private starter and focus on repair/readiness habits.']));
     expect(family.blockedReason).toBeNull();
   });
 

@@ -78,6 +78,7 @@ export default function Learn() {
       'normal',
       { residencyStatus: 'sc', householdProfile: 'couple-family', age: 30 },
       'bto-upgrader',
+      { guidedMode: true },
     );
     navigate('/dashboard');
   };

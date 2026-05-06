@@ -56,6 +56,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
       animationSpeed: 'normal',
       autoSave: false,
       difficulty: 'normal',
+      guidedMode: false,
       compactMode: false,
       largeTextMode: false,
       highContrastMode: false,
@@ -194,6 +195,7 @@ describe('useGameStore', () => {
           animationSpeed: 'normal',
           autoSave: true,
           difficulty: 'normal',
+          guidedMode: false,
           compactMode: false,
           largeTextMode: false,
           highContrastMode: false,
@@ -348,6 +350,16 @@ describe('useGameStore', () => {
     expect(player.firstHomePurchased).toBe(false);
     expect(player.careerProgressionProfile.reviewCount).toBe(0);
     expect(player.nextJobSwitchTurn).toBe(24);
+  });
+
+  it('stores guided-mode preference when creating a game', () => {
+    useGameStore.getState().newGame('Guide On', 'graduate', 'normal');
+
+    expect(useGameStore.getState().settings.guidedMode).toBe(true);
+
+    useGameStore.getState().newGame('Guide Off', 'graduate', 'normal', undefined, undefined, { guidedMode: false });
+
+    expect(useGameStore.getState().settings.guidedMode).toBe(false);
   });
 
   it('stores the selected run route when starting a new game', () => {

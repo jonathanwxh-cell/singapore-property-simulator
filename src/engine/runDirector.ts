@@ -19,6 +19,7 @@ import {
   selectMonthlyRentalIncome,
   selectNetWorth,
 } from './selectors';
+import { resolveStarterRouteForProfile } from './firstHomeStarter';
 
 const phaseLabels: Record<RunRoutePhase, string> = {
   foundation: 'Foundation',
@@ -48,6 +49,7 @@ export function inferRunRouteId(player: Player): RunRouteId {
   if (player.properties.some((property) => property.isRented || property.tenant)) return 'heartland-landlord';
 
   const profile = player.buyerProfile;
+  if (profile?.householdProfile === 'single-under-35') return 'pr-private-climber';
   if (profile?.residencyStatus === 'foreigner' || profile?.householdProfile === 'foreigner-investor') {
     return 'foreign-investor';
   }
@@ -57,7 +59,7 @@ export function inferRunRouteId(player: Player): RunRouteId {
   if (profile?.householdProfile === 'multi-gen-family') return 'heartland-landlord';
   if (profile?.householdProfile === 'single-35-plus') return 'single-resale';
 
-  return 'bto-upgrader';
+  return resolveStarterRouteForProfile(profile);
 }
 
 export function getRouteForPlayer(player: Player): RunRoute {

@@ -1,6 +1,7 @@
 import { properties, isResidentialCategory } from '@/data/properties';
 import type { Player } from '@/game/types';
 import { normalizeBuyerProfile } from '@/game/types';
+import { resolveStarterPropertyForProfile } from './firstHomeStarter';
 import { selectAvailableCash } from './selectors';
 import { assessDealReadiness } from './decisionCoach';
 
@@ -14,7 +15,7 @@ export interface FirstHomeMission {
 }
 
 export function getFirstHomeMissions(player: Player): FirstHomeMission[] {
-  const starter = properties.find((property) => property.id === 'hdb-bto-0') ?? properties[0];
+  const starter = resolveStarterPropertyForProfile(player.buyerProfile) ?? properties[0];
   const readiness = assessDealReadiness({
     player,
     property: starter,

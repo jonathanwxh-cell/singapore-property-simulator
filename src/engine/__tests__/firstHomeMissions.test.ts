@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { properties, getPropertyCategory } from '@/data/properties';
 import { createInitialLifeState, type Player } from '@/game/types';
 import { getFirstHomeMissions } from '../firstHomeMissions';
 
@@ -55,6 +56,26 @@ describe('getFirstHomeMissions', () => {
     });
     expect(missions.some((mission) => mission.id === 'buy-first-home' && !mission.completed)).toBe(true);
     expect(missions.find((mission) => mission.id === 'review-starter-home')?.route).toBe('/properties');
+  });
+
+  it('starts profile-driven users on private-first missions for single-under-35', () => {
+    const privateStarter = properties.find((property) => getPropertyCategory(property.type) === 'private-residential');
+    expect(privateStarter).toBeDefined();
+
+    const missions = getFirstHomeMissions(makePlayer({
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'single-under-35',
+        age: 28,
+      },
+      cash: 500_000,
+      cpfOrdinary: 150_000,
+    }));
+
+    const reviewMission = missions.find((mission) => mission.id === 'review-starter-home');
+    const buyMission = missions.find((mission) => mission.id === 'buy-first-home');
+    expect(reviewMission?.detail).toBeTruthy();
+    expect(buyMission?.route).toBe('/properties');
   });
 
   it('marks post-purchase room-rental and reserve missions as complete', () => {

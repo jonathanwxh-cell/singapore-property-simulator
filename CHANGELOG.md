@@ -81,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Early-game pacing now makes first purchases more reachable through starter homes and a first-home scenario.
 - Smoke coverage now checks career review art and eligibility summary surfaces on top of the earlier pacing flow.
 - Portfolio and property-detail surfaces now expose lease pressure, repair exposure, reserve gaps, and tenant-satisfaction tradeoffs as explicit landlord decisions.
+- New guided onboarding pathways now route new profiles through profile-appropriate starter routes and starter listings, while dashboard primer and settings now include "guided mode" controls to reduce first-run overwhelm for casual players.
 
 ### Fixed
 - HDB concessionary financing now uses the current 75% LTV / 25% down-payment model throughout purchase validation, decision coaching, glossary copy, and tests.

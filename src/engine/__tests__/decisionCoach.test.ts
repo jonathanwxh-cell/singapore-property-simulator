@@ -153,6 +153,24 @@ describe('selectBestNextBuyForPlayer', () => {
     expect(best?.property.type).not.toBe('Executive Condo');
     expect(best?.readiness.primaryBlocker?.message ?? '').not.toContain('Foreigners cannot buy HDB');
   });
+
+  it('recommends a private starter for single-under-35 profiles', () => {
+    const best = selectBestNextBuyForPlayer(makePlayer({
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'single-under-35',
+        age: 28,
+      },
+      salary: 7_200,
+      cash: 500_000,
+      cpfOrdinary: 150_000,
+    }));
+
+    expect(best).not.toBeNull();
+    expect(best?.property.id).not.toContain('hdb');
+    expect(best?.property.isHdb).toBe(false);
+    expect(best?.readiness.verdict).not.toBe('blocked');
+  });
 });
 
 describe('assessDealReadiness', () => {

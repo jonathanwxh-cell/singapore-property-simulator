@@ -35,7 +35,15 @@ const baseMarket: MarketState = {
 };
 
 const baseSettings: GameSettings = {
-  soundEnabled: true, musicEnabled: false, animationSpeed: 'normal', autoSave: true, difficulty: 'normal', compactMode: false, largeTextMode: false, highContrastMode: false,
+  soundEnabled: true,
+  musicEnabled: false,
+  animationSpeed: 'normal',
+  autoSave: true,
+  difficulty: 'normal',
+  guidedMode: false,
+  compactMode: false,
+  largeTextMode: false,
+  highContrastMode: false,
 };
 
 describe('advanceTurn', () => {

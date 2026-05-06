@@ -4,6 +4,7 @@ import { useGameStore } from '@/game/useGameStore';
 import { careers } from '@/data/careers';
 import { runRoutes } from '@/data/runRoutes';
 import { difficultySettings } from '@/game/types';
+import { resolveStarterRouteForProfile } from '@/engine/firstHomeStarter';
 import type { BuyerProfile, BuyerResidencyStatus, Difficulty, HouseholdProfile, RunRouteId } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
 import GlossaryTerm from '@/components/GlossaryTerm';
@@ -27,7 +28,11 @@ export default function NewGame() {
   const [name, setName] = useState('');
   const [careerId, setCareerId] = useState('graduate');
   const [difficulty, setDifficulty] = useState<Difficulty>('normal');
-  const [runRouteId, setRunRouteId] = useState<RunRouteId>('bto-upgrader');
+  const [runRouteId, setRunRouteId] = useState<RunRouteId>(resolveStarterRouteForProfile({
+    residencyStatus: 'sc',
+    householdProfile: 'couple-family',
+    age: 30,
+  }));
   const [buyerProfile, setBuyerProfile] = useState<BuyerProfile>({
     residencyStatus: 'sc',
     householdProfile: 'couple-family',
@@ -36,7 +41,7 @@ export default function NewGame() {
 
   const handleStart = () => {
     if (!name.trim()) return;
-    newGame(name.trim(), careerId, difficulty, buyerProfile, runRouteId);
+    newGame(name.trim(), careerId, difficulty, buyerProfile, runRouteId, { guidedMode: false });
     navigate('/dashboard');
   };
 
@@ -47,6 +52,7 @@ export default function NewGame() {
       'normal',
       { residencyStatus: 'sc', householdProfile: 'couple-family', age: 30 },
       'bto-upgrader',
+      { guidedMode: true },
     );
     navigate('/dashboard');
   };
@@ -58,6 +64,7 @@ export default function NewGame() {
       'normal',
       { residencyStatus: 'sc', householdProfile: 'single-35-plus', age: 58 },
       'senior-rightsizer',
+      { guidedMode: true },
     );
     navigate('/dashboard');
   };
@@ -494,14 +501,7 @@ function getAgeOptions(householdProfile: HouseholdProfile): number[] {
 }
 
 function recommendRunRoute(profile: BuyerProfile): RunRouteId {
-  if (profile.residencyStatus === 'foreigner' || profile.householdProfile === 'foreigner-investor') return 'foreign-investor';
-  if (profile.householdProfile === 'domestic-partners') return profile.residencyStatus === 'spr' ? 'pr-private-climber' : 'fire-homeowner';
-  if (profile.residencyStatus === 'spr') return 'pr-private-climber';
-  if (profile.age >= 55) return 'senior-rightsizer';
-  if (profile.householdProfile === 'single-parent') return 'bto-upgrader';
-  if (profile.householdProfile === 'multi-gen-family') return 'heartland-landlord';
-  if (profile.householdProfile === 'single-35-plus') return 'single-resale';
-  return 'bto-upgrader';
+  return resolveStarterRouteForProfile(profile);
 }
 
 function getAdjustedCareerSalary(careerId: string, difficulty: Difficulty): number {
