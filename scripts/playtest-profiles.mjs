@@ -105,8 +105,8 @@ async function startProfile(page, baseUrl, {
   await expectVisible(page, 'text=Select Difficulty');
   await page.getByRole('button', { name: /Start Game/i }).click();
   await expectVisible(page, 'text=Home Command Center');
-  await expectVisible(page, 'text=Life Arc');
-  await expectVisible(page, 'text=First-Home Mission Rail');
+  await expectVisible(page, 'text=Beginner focus mode');
+  await expectVisible(page, 'text=Monthly Intent');
 }
 
 function getResidencyRateText(residencyLabel) {
@@ -138,7 +138,7 @@ async function run() {
       householdLabel: 'Couple / Family',
       residencyLabel: 'Singapore Citizen',
     });
-    await expectVisible(page, 'text=Buyer profile:');
+    await expectVisible(page, 'text=Beginner focus mode');
     await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=First-Timer Friendly');
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');

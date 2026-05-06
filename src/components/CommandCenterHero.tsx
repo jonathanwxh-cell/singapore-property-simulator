@@ -79,6 +79,11 @@ export default function CommandCenterHero({ state, onNavigate }: CommandCenterHe
                 </button>
               ))}
             </div>
+            <p className="mt-3 text-[11px] leading-relaxed text-text-dim">
+              {state.advance.tone === 'blocked'
+                ? 'This action does not advance time. Resolve the blocker first, then use Next Month.'
+                : 'Opening a page does not advance time. Use Next Month only after your plan feels ready.'}
+            </p>
           </div>
 
           <div className="flex flex-col gap-3">

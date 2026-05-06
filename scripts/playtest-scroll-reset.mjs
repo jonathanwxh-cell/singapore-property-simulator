@@ -85,8 +85,8 @@ async function startDefaultGame(page, baseUrl) {
   await expectVisible(page, 'text=Select Difficulty');
   await page.getByRole('button', { name: /Start Game/i }).click();
   await expectVisible(page, 'text=Home Command Center');
-  await expectVisible(page, 'text=Life Arc');
-  await expectVisible(page, 'text=First-Home Mission Rail');
+  await expectVisible(page, 'text=Beginner focus mode');
+  await expectVisible(page, 'text=Monthly Intent');
 }
 
 async function run() {

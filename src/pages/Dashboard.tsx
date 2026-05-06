@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import CommandCenterHero from '@/components/CommandCenterHero';
@@ -15,6 +15,7 @@ import { getNextBestMoves } from '@/engine/decisionCoach';
 import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
 import { deriveEligibilityFlags, EC_MAX_MONTHLY_INCOME } from '@/engine/eligibility';
 import { getFirstHomeMissions } from '@/engine/firstHomeMissions';
+import { getLastTurnRecap, type TurnRecap } from '@/engine/turnRecap';
 import {
   selectAvailableCash,
   selectMonthlyExpenses,
@@ -70,6 +71,7 @@ export default function Dashboard() {
     updateSettings,
   } = useGameStore();
   const navigate = useNavigate();
+  const [showAdvancedPanels, setShowAdvancedPanels] = useState(false);
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   const netWorth = selectNetWorth(player);
@@ -103,6 +105,9 @@ export default function Dashboard() {
   const nextBestMoves = getNextBestMoves({ player, currentScenario });
   const monthlyIntents = getMonthlyIntentOptions(player);
   const firstHomeMissions = getFirstHomeMissions(player);
+  const lastTurnRecap = getLastTurnRecap({ player, market, currentScenario });
+  const beginnerDashboardFocus = player.turnCount <= 6 && player.properties.length === 0 && !settings.compactMode;
+  const hideAdvancedPanels = beginnerDashboardFocus && !showAdvancedPanels;
   const hasPropertyAttention = openIssues.length > 0 || activeRenovations.length > 0 || Boolean(weakTenant);
   const mopHolding = player.properties
     .map((holding) => ({
@@ -123,6 +128,11 @@ export default function Dashboard() {
     advanceMonths(1);
     navigate('/dashboard');
   };
+  const handleOpenIntent = (intent: MonthlyIntentOption) => {
+    setPrimaryLifeAction(intent.primaryActionId);
+    setSecondaryLifeAction(intent.secondaryActionId);
+    navigate(intent.route);
+  };
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
@@ -137,6 +147,12 @@ export default function Dashboard() {
         <motion.div variants={itemVariants}>
           <CommandCenterHero state={commandState} onNavigate={navigate} />
         </motion.div>
+
+        {lastTurnRecap && (
+          <motion.div variants={itemVariants} className="mb-6">
+            <LastMonthRecapPanel recap={lastTurnRecap} />
+          </motion.div>
+        )}
 
         <motion.div variants={itemVariants} className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
@@ -163,6 +179,7 @@ export default function Dashboard() {
             intents={monthlyIntents}
             compactMode={settings.compactMode}
             onSelect={handleSelectIntent}
+            onOpen={handleOpenIntent}
             onToggleCompact={() => updateSettings({ compactMode: !settings.compactMode })}
           />
         </motion.div>
@@ -192,22 +209,31 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        <div className="mb-6 grid gap-4 xl:grid-cols-[1.3fr,0.9fr]">
-          <motion.div variants={itemVariants}>
-            <CareerReviewPanel
-              latestCareerReview={latestCareerReview}
-              nextJobSwitchIn={nextJobSwitchIn}
+        {hideAdvancedPanels ? (
+          <motion.div variants={itemVariants} className="mb-6">
+            <BeginnerAdvancedGate
+              onShow={() => setShowAdvancedPanels(true)}
+              onLearn={() => navigate('/learn')}
             />
           </motion.div>
-          <motion.div variants={itemVariants}>
-            <EligibilitySummaryPanel
-              eligibilityFlags={eligibilityFlags}
-              player={player}
-            />
-          </motion.div>
-        </div>
+        ) : (
+          <>
+            <div className="mb-6 grid gap-4 xl:grid-cols-[1.3fr,0.9fr]">
+              <motion.div variants={itemVariants}>
+                <CareerReviewPanel
+                  latestCareerReview={latestCareerReview}
+                  nextJobSwitchIn={nextJobSwitchIn}
+                />
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <EligibilitySummaryPanel
+                  eligibilityFlags={eligibilityFlags}
+                  player={player}
+                />
+              </motion.div>
+            </div>
 
-        <div className="space-y-4">
+            <div className="space-y-4">
           <motion.div variants={itemVariants}>
             <ProgressivePanel
               title="Decision Coach"
@@ -373,9 +399,86 @@ export default function Dashboard() {
               </div>
             </ProgressivePanel>
           </motion.div>
-        </div>
+            </div>
+          </>
+        )}
       </motion.div>
     </div>
+  );
+}
+
+function LastMonthRecapPanel({ recap }: { recap: TurnRecap }) {
+  const accentColor = recap.tone === 'good' ? '#00E676' : recap.tone === 'warn' ? '#FFD740' : '#00F0FF';
+
+  return (
+    <GlassCard accentColor={accentColor}>
+      <div aria-live="polite" className="grid gap-4 lg:grid-cols-[0.95fr,1.4fr]">
+        <div>
+          <p className="label-text mb-1 text-[10px] text-cyan-glow">What changed</p>
+          <h3 className="section-title text-white">{recap.title}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-text-secondary">{recap.summary}</p>
+          <p className="mt-3 rounded-xl border border-cyan-glow/20 bg-cyan-glow/10 p-3 text-xs leading-relaxed text-cyan-glow">
+            {recap.nextHint}
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {recap.facts.map((fact) => (
+            <div key={fact.label} className="rounded-xl border border-glass-border bg-white/[0.03] p-3">
+              <p className="label-text text-[9px] text-text-dim">{fact.label}</p>
+              <p className={`mt-1 font-mono text-lg ${
+                fact.tone === 'good'
+                  ? 'text-success'
+                  : fact.tone === 'warn'
+                    ? 'text-warning'
+                    : 'text-white'
+              }`}>
+                {fact.value}
+              </p>
+              <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-text-dim">{fact.detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      {recap.notes.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-divider pt-4">
+          {recap.notes.map((note) => (
+            <span key={note} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] text-text-secondary">
+              {note}
+            </span>
+          ))}
+        </div>
+      )}
+    </GlassCard>
+  );
+}
+
+function BeginnerAdvancedGate({
+  onShow,
+  onLearn,
+}: {
+  onShow: () => void;
+  onLearn: () => void;
+}) {
+  return (
+    <GlassCard accentColor="#7C4DFF">
+      <div className="grid gap-4 md:grid-cols-[1fr,auto] md:items-center">
+        <div>
+          <p className="label-text mb-1 text-[10px] text-text-dim">Beginner focus mode</p>
+          <h3 className="section-title text-white">Advanced sim panels are tucked away for the first few turns</h3>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">
+            Start with the command objective, monthly intent, and Buy/Life tabs. Career review, eligibility, cashflow detail, route analytics, glossary, and mini portfolio are still one tap away.
+          </p>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2 md:min-w-[20rem] md:grid-cols-1">
+          <button type="button" onClick={onShow} className="btn-secondary min-h-11 px-4 py-3 text-sm">
+            Open advanced sim panels
+          </button>
+          <button type="button" onClick={onLearn} className="rounded-lg border border-cyan-glow/30 bg-cyan-glow/10 px-4 py-3 font-rajdhani text-sm font-semibold uppercase tracking-wider text-cyan-glow transition-colors hover:bg-cyan-glow/20">
+            Learn the rules first
+          </button>
+        </div>
+      </div>
+    </GlassCard>
   );
 }
 
@@ -383,11 +486,13 @@ function MonthlyIntentPanel({
   intents,
   compactMode,
   onSelect,
+  onOpen,
   onToggleCompact,
 }: {
   intents: MonthlyIntentOption[];
   compactMode: boolean;
   onSelect: (intent: MonthlyIntentOption) => void;
+  onOpen: (intent: MonthlyIntentOption) => void;
   onToggleCompact: () => void;
 }) {
   return (
@@ -397,7 +502,7 @@ function MonthlyIntentPanel({
           <p className="label-text mb-1 text-[10px] text-cyan-glow">Choose your month</p>
           <h3 className="section-title text-white">Monthly Intent</h3>
           <p className="mt-1 text-sm text-text-secondary">
-            Tap once to set the life actions and advance the month. Open Life first only when you want to tweak the plan manually.
+            Pick a plan, then either advance immediately or open the relevant page first. Time moves only when you choose "Use plan + advance".
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -419,10 +524,8 @@ function MonthlyIntentPanel({
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {intents.map((intent) => (
-          <button
+          <div
             key={intent.id}
-            type="button"
-            onClick={() => onSelect(intent)}
             className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5 ${
               intent.recommended
                 ? 'border-success/40 bg-success/10'
@@ -435,10 +538,10 @@ function MonthlyIntentPanel({
               <span className={`text-[10px] font-mono uppercase tracking-[0.18em] ${intent.recommended ? 'text-success' : 'text-text-dim'}`}>
                 {intent.recommended ? 'Recommended' : intent.tone}
               </span>
-              <span className="text-[10px] text-text-dim">Use plan</span>
+              <span className="text-[10px] text-text-dim">No surprise advance</span>
             </div>
             <p className="font-rajdhani text-lg font-semibold text-white">{intent.label}</p>
-            <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.16em] text-cyan-glow">Use plan + advance</p>
+            <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.16em] text-cyan-glow">Choose how to use this month</p>
             {!compactMode && (
               <>
                 <p className="mt-2 text-xs leading-relaxed text-text-secondary">{intent.detail}</p>
@@ -454,7 +557,23 @@ function MonthlyIntentPanel({
                 </div>
               </>
             )}
-          </button>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => onSelect(intent)}
+                className={intent.recommended ? 'btn-primary min-h-11 px-3 py-2 text-xs' : 'btn-secondary min-h-11 px-3 py-2 text-xs'}
+              >
+                Use plan + advance
+              </button>
+              <button
+                type="button"
+                onClick={() => onOpen(intent)}
+                className="min-h-11 rounded-lg border border-cyan-glow/30 bg-cyan-glow/10 px-3 py-2 font-rajdhani text-xs font-semibold uppercase tracking-wider text-cyan-glow transition-colors hover:bg-cyan-glow/20"
+              >
+                Open first
+              </button>
+            </div>
+          </div>
         ))}
       </div>
     </GlassCard>

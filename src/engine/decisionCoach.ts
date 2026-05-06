@@ -391,6 +391,39 @@ export function getLifeActionFeedback(player: Player, actionId: LifeActionId): L
   };
 }
 
+export function getDealNextFix(readiness: DealReadiness): string {
+  const blocker = readiness.primaryBlocker;
+
+  if (!blocker) {
+    return readiness.verdict === 'stretch'
+      ? 'Playable, but set a reserve or choose a safer monthly plan before committing.'
+      : 'Ready. Review the monthly surplus and worst-case notes, then buy if it fits your route.';
+  }
+
+  switch (blocker.code) {
+    case 'insufficient_cash':
+      return 'Build spendable cash first: use Build Cash Buffer, side gigs, schemes, or compare cheaper starter homes.';
+    case 'tdsr_exceeded':
+      return 'Improve bank-assessed income, reduce other debt, or pick a lower mortgage so TDSR falls back under the cap.';
+    case 'msr_exceeded':
+      return 'For HDB/EC, raise income or reduce the loan size; MSR is about the monthly mortgage, not just cash on hand.';
+    case 'ltv_exceeded':
+      return 'Raise the down payment, pick a cheaper unit, or use the HDB loan path when the listing and profile allow it.';
+    case 'credit_too_low':
+      return 'Stabilize cashflow and avoid missed payments; a stronger credit score unlocks safer borrowing.';
+    case 'financing_not_allowed':
+      return 'Switch financing mode or clear the active housing loan that blocks this simplified loan path.';
+    case 'mop_restricted':
+      return 'Wait out MOP or use MOP-safe actions like room rental and cash-building while the flat stays owner-occupied.';
+    case 'eligibility_blocked':
+      return 'This is a profile-rule blocker. Check the Learn hub or choose a route that fits your residency, age, and household.';
+    case 'already_owned':
+      return 'You already own this listing. Manage tenants, repairs, upgrades, or sale timing from the portfolio.';
+    default:
+      return 'Open Learn for the rule explanation, then adjust cash, income, debt, or buyer profile before trying again.';
+  }
+}
+
 function buildDealHeadline(
   verdict: DealReadiness['verdict'],
   property: Property,

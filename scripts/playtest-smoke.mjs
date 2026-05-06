@@ -327,13 +327,13 @@ async function run() {
 
     await expectVisible(page, 'text=Home Command Center');
     await expectVisible(page, 'text=This Month');
+    await expectVisible(page, 'text=Beginner focus mode');
+    await expectVisible(page, 'text=Monthly Intent');
+    await page.getByRole('button', { name: /Open advanced sim panels/i }).click();
     await expectVisible(page, 'text=Market Pulse');
     await expectVisible(page, 'text=Life Arc');
     await assertVisibleAdvanceExists(page, 'dashboard');
-    await expectVisible(page, 'text=Career Review');
-    await expectVisible(page, 'text=Eligibility Summary');
     await expectVisible(page, 'text=First-Home Mission Rail');
-    await expectVisible(page, 'img[alt="Career Review"]');
     await assertMobileDashboardAdvanceDoesNotCoverVitals(page);
     await assertMobileAdvanceClearsBottomNav(page, 'dashboard');
     await assertMobileDashboardAdvanceDoesNotCoverVitals(page, { width: 360, height: 640 });

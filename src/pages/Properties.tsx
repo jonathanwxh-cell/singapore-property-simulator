@@ -217,6 +217,14 @@ export default function Properties() {
               </button>
             ))}
           </div>
+          {preset === 'starter' && !settings.compactMode && (
+            <div className="rounded-2xl border border-cyan-glow/20 bg-cyan-glow/10 p-3">
+              <p className="label-text mb-1 text-[9px] text-cyan-glow">Why these listings?</p>
+              <p className="text-xs leading-relaxed text-text-secondary">
+                Starter-safe mode narrows the catalogue to HDB and EC rungs first, so new players learn CPF, grants, MSR, MOP, and first-home cash checks before advanced investor stock.
+              </p>
+            </div>
+          )}
           <div className="relative flex-1 min-w-[200px]">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
             <input

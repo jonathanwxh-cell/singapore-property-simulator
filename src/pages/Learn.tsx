@@ -36,6 +36,29 @@ const commonMistakes = [
   'Skipping reserves before renovations, vacancies, or maintenance events.',
 ];
 
+const mechanicsReference = [
+  {
+    label: 'Buying power',
+    formula: 'Cash required = down payment + BSD + ABSD + resale levy - CPF OA applied',
+    note: 'Grants are modelled as CPF OA support, not instant cash.',
+  },
+  {
+    label: 'Debt safety',
+    formula: 'TDSR = all monthly debt / bank-assessed monthly income',
+    note: 'Self-employed routes use a simplified income haircut before loan checks.',
+  },
+  {
+    label: 'HDB/EC guardrail',
+    formula: 'MSR = HDB or EC mortgage payment / monthly income',
+    note: 'The simplified cap teaches why a cheap-looking flat can still fail monthly safety.',
+  },
+  {
+    label: 'Ownership loop',
+    formula: 'Monthly surplus = take-home pay + rent - loans - upkeep - household load',
+    note: 'Repairs, vacancy, renovation, and reserve choices are the landlord game after buying.',
+  },
+];
+
 export default function Learn() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -165,6 +188,27 @@ export default function Learn() {
         </div>
 
         <RuleGlossaryPanel title="Tap These Terms Anywhere You See Them" compact />
+
+        <GlassCard accentColor="#7C4DFF" className="mt-6">
+          <div className="mb-4">
+            <p className="label-text mb-1 text-[10px] text-text-dim">Mechanics reference</p>
+            <h2 className="section-title text-white">How the Simulator Thinks</h2>
+            <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+              These are simplified formulas for learning. They are realistic enough to teach tradeoffs, but not personal financial advice.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {mechanicsReference.map((item) => (
+              <div key={item.label} className="rounded-xl border border-glass-border bg-white/[0.03] p-4">
+                <p className="font-rajdhani text-sm font-semibold uppercase tracking-[0.12em] text-white">{item.label}</p>
+                <p className="mt-2 rounded-lg border border-cyan-glow/20 bg-cyan-glow/10 p-2 font-mono text-[11px] leading-relaxed text-cyan-glow">
+                  {item.formula}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-text-secondary">{item.note}</p>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button

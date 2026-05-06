@@ -5,6 +5,7 @@ import { createInitialLifeState, type Player } from '@/game/types';
 import {
   assessDealReadiness,
   assessScenarioOption,
+  getDealNextFix,
   getLifeActionFeedback,
   getNextBestMoves,
   selectBestNextBuyForPlayer,
@@ -218,6 +219,37 @@ describe('assessDealReadiness', () => {
     expect(readiness.primaryBlocker?.code).toBe('mop_restricted');
     expect(readiness.headline).toContain('MOP');
     expect(readiness.ctaLabel).toBe('Blocked: MOP');
+  });
+});
+
+describe('getDealNextFix', () => {
+  it('turns a cash blocker into a concrete next step', () => {
+    const property = properties.find((candidate) => candidate.id === 'hdb-bto-0');
+    if (!property) throw new Error('Expected starter property fixture.');
+
+    const readiness = assessDealReadiness({
+      player: makePlayer({ cash: 1_000, cpfOrdinary: 0 }),
+      property,
+      downPaymentPercent: 25,
+      useCpfOrdinary: false,
+    });
+
+    expect(getDealNextFix(readiness)).toContain('Build spendable cash');
+  });
+
+  it('keeps stretch deals playable but warns about reserve planning', () => {
+    const property = properties.find((candidate) => candidate.id === 'hdb-bto-0');
+    if (!property) throw new Error('Expected starter property fixture.');
+
+    const readiness = assessDealReadiness({
+      player: makePlayer({ cash: 160_000, cpfOrdinary: 40_000, life: createInitialLifeState({ householdLoad: 3_700 }) }),
+      property,
+      downPaymentPercent: 25,
+      useCpfOrdinary: true,
+    });
+
+    expect(['ready', 'stretch']).toContain(readiness.verdict);
+    expect(getDealNextFix(readiness)).toMatch(/Ready|reserve/);
   });
 });
 

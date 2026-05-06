@@ -16,7 +16,7 @@ import { HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT, TAKE_HOME_RATIO } from '@/engine
 import { getLtvCap } from '@/engine/ltv';
 import EligibilityBadge from '@/components/EligibilityBadge';
 import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
-import { assessDealReadiness } from '@/engine/decisionCoach';
+import { assessDealReadiness, getDealNextFix } from '@/engine/decisionCoach';
 import { getRenovationTemplatesForType } from '@/data/renovations';
 import { repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
 import { getTenantLeaseOptions } from '@/engine/propertyOperations';
@@ -83,6 +83,7 @@ export default function PropertyDetail() {
     useCpfOrdinary,
     financingMode: effectiveFinancingMode,
   });
+  const dealNextFix = getDealNextFix(dealReadiness);
   const cpfEligible = !property.type.startsWith('Commercial');
   const cpfApplied = dealReadiness.cpfApplied;
   const cashRequired = dealReadiness.cashRequired;
@@ -940,6 +941,10 @@ export default function PropertyDetail() {
                       {dealReadiness.warnings.map((warning) => (
                         <p key={warning} className="text-warning text-[11px] mt-2 leading-relaxed">{warning}</p>
                       ))}
+                      <div className="mt-3 rounded-lg border border-cyan-glow/20 bg-cyan-glow/10 p-3">
+                        <p className="text-[9px] font-mono uppercase tracking-[0.16em] text-cyan-glow">Next best fix</p>
+                        <p className="mt-1 text-xs leading-relaxed text-text-secondary">{dealNextFix}</p>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-text-secondary text-sm">Monthly Surplus</span>

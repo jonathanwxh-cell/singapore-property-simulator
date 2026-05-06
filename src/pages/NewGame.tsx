@@ -121,6 +121,12 @@ export default function NewGame() {
                       <p className="text-text-secondary text-xs mt-1 leading-relaxed">
                         You do not need to know Singapore property terms. The game will teach <GlossaryTerm termId="absd" />, <GlossaryTerm termId="cpf-oa" />, and <GlossaryTerm termId="mop" /> as you play.
                       </p>
+                      <div className="mt-3 rounded-xl border border-warning/25 bg-warning/10 p-3">
+                        <p className="label-text mb-1 text-[9px] text-warning">Recommended setup preview</p>
+                        <p className="text-xs leading-relaxed text-text-secondary">
+                          Singapore Citizen couple/family, graduate career, Normal difficulty, BTO upgrader route. This gives the cleanest first-home tutorial before advanced investor paths.
+                        </p>
+                      </div>
                       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                         <button type="button" onClick={() => navigate('/learn', { state: { returnTo: '/newgame', returnLabel: 'Back to setup' } })} className="btn-secondary text-xs py-2 px-3">
                           Preview Learn Hub

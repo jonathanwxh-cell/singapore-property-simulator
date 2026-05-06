@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **First 10 Minutes + Fun Loop 2.0**: research-backed onboarding spec, Dashboard last-month recap, beginner advanced-panel gate, mechanics-reference formulas, and explicit next-fix guidance for blocked purchases.
 - **Mega playtest response pass**: accessibility display modes, foreigner-safe deal recommendations, self-employed income volatility, and bank income-haircut explainers based on the 15-persona report.
 - **Finance realism priority pass**: HDB concessionary starter-stage financing, CPF OA grant credits, MOP countdown with quiet-month blitzing, compact mode, explicit worst-case listing readouts, and HDB resale-levy explainers.
 - **Local profiles and phone transfer saves**: Save / Load now supports multiple player profiles, profile-scoped autosaves and slots, whole-profile export/import files, and copyable transfer bundles for moving runs across iPhone, Android, and desktop browsers.
@@ -43,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Landlord Ops 2.0**: lease renewal decisions, rent-push vacancy risk, reserve-gap milestones, richer maintenance events, and new landlord/repair visual cards.
 
 ### Changed
-- Monthly Intent is now a true one-tap action: choosing an intent sets the plan and advances the month immediately.
+- Monthly Intent now separates "Use plan + advance" from "Open first" so beginners can inspect Life/Buy/Own before time moves.
 - New Game career cards now show the difficulty-adjusted starting salary so Tycoon and Hard runs no longer look like the career salary changed mysteriously after start.
 - ABSD glossary guidance now surfaces the simplified SC/PR/foreigner rate ladder, including PR second-home and foreigner residential friction.
 - Entrepreneur and property-agent careers now have variable monthly income, while mortgage checks use a simplified 70% bank-assessable income haircut.
