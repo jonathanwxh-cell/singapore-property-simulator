@@ -15,6 +15,7 @@ import {
   readAutoSave,
   serializeGameState,
   setActiveProfileId,
+  writeAutoSave,
   writeSaveSlots,
 } from '@/game/savePersistence';
 
@@ -96,6 +97,7 @@ export function useSaveLoad() {
       if (!state) return false;
 
       useGameStore.getState().loadGame(state);
+      writeAutoSave(state);
       return true;
     } catch {
       return false;

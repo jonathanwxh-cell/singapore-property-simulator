@@ -144,9 +144,9 @@ export default function Properties() {
               <PropertyImage
                 src={bestNextBuy.property.image}
                 alt={bestNextBuy.property.name}
-                className="h-36 w-full object-cover sm:h-56 lg:h-full"
+                className="order-2 h-24 w-full object-cover sm:h-44 lg:order-none lg:h-full"
               />
-              <div className="p-4 sm:p-5">
+              <div className="order-1 p-4 sm:p-5 lg:order-none">
                 <div className="flex flex-wrap items-center gap-2 mb-3">
                   <span className="inline-flex items-center gap-2 rounded-full border border-success/30 bg-success/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-success">
                     <Sparkles size={13} /> Best next buy for you

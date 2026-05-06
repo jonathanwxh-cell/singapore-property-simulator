@@ -6,7 +6,7 @@ import GlassCard from '@/components/GlassCard';
 import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, Home, DollarSign, CheckCircle } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
 import GlossaryTerm from '@/components/GlossaryTerm';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
 import { listingRarityInfo } from '@/data/listingChannels';
 import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
@@ -51,6 +51,7 @@ export default function PropertyDetail() {
   const [showSellConfirm, setShowSellConfirm] = useState(false);
   const [useCpfOrdinary, setUseCpfOrdinary] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
+  const purchasePanelRef = useRef<HTMLDivElement>(null);
 
   const property = getListingCatalog().find(p => p.id === id);
   const district = property ? districts.find(d => d.id === property.districtId) : null;
@@ -205,6 +206,9 @@ export default function PropertyDetail() {
     });
     setActionError(result.ok ? null : result.message);
   };
+  const handleReviewPurchase = () => {
+    purchasePanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const gain = ownedProperty ? ownedProperty.currentValue - ownedProperty.purchasePrice : 0;
   const gainPercent = ownedProperty ? (gain / ownedProperty.purchasePrice) * 100 : 0;
@@ -234,7 +238,24 @@ export default function PropertyDetail() {
           <span className="font-rajdhani text-sm uppercase">Back</span>
         </button>
 
-        <div className="relative h-64 md:h-80 rounded-xl overflow-hidden mb-6">
+        {!isOwned && (
+          <div className="md:hidden">
+            <QuickPurchasePanel
+              propertyName={property.name}
+              readiness={dealReadiness.verdict}
+              summary={practicePlan.summary}
+              projectedMonthlySurplus={practicePlan.projectedMonthlySurplusAfterPurchase}
+              cashRequired={cashRequired}
+              canAfford={canAfford}
+              onReview={handleReviewPurchase}
+              onBuy={handleBuy}
+              compact
+              className="mb-4"
+            />
+          </div>
+        )}
+
+        <div className="relative mb-4 h-52 overflow-hidden rounded-xl md:mb-6 md:h-80">
           <PropertyImage src={property.image} alt={property.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
           <div className="absolute bottom-4 left-4 right-4">
@@ -275,6 +296,21 @@ export default function PropertyDetail() {
             </p>
           </div>
         </div>
+
+        {!isOwned && (
+          <div className="hidden md:block">
+            <QuickPurchasePanel
+              propertyName={property.name}
+              readiness={dealReadiness.verdict}
+              summary={practicePlan.summary}
+              projectedMonthlySurplus={practicePlan.projectedMonthlySurplusAfterPurchase}
+              cashRequired={cashRequired}
+              canAfford={canAfford}
+              onReview={handleReviewPurchase}
+              onBuy={handleBuy}
+            />
+          </div>
+        )}
 
         {isOwned && ownedProperty && (
           <GlassCard accentColor="#00E676" className="mb-6">
@@ -760,6 +796,7 @@ export default function PropertyDetail() {
                 )}
               </GlassCard>
             ) : (
+              <div ref={purchasePanelRef} className="scroll-mt-24">
               <GlassCard accentColor="#00E676" className="lg:sticky lg:top-4 lg:max-h-[34rem] lg:overflow-y-auto">
                 <h3 className="section-title text-white mb-4">Purchase</h3>
 
@@ -791,7 +828,7 @@ export default function PropertyDetail() {
                           }`}
                         >
                           <span className="block font-rajdhani text-sm font-semibold">HDB loan</span>
-                          <span className="block text-[11px]">10% starter down, 2.6% fixed</span>
+                          <span className="block text-[11px]">25% down / 75% LTV, 2.6% fixed</span>
                         </button>
                         <button
                           type="button"
@@ -1013,12 +1050,73 @@ export default function PropertyDetail() {
                   )}
                 </div>
               </GlassCard>
+              </div>
             )}
           </div>
         </div>
 
       </div>
     </div>
+  );
+}
+
+function QuickPurchasePanel({
+  propertyName,
+  readiness,
+  summary,
+  projectedMonthlySurplus,
+  cashRequired,
+  canAfford,
+  onReview,
+  onBuy,
+  compact = false,
+  className = 'mb-6',
+}: {
+  propertyName: string;
+  readiness: 'ready' | 'stretch' | 'blocked';
+  summary: string;
+  projectedMonthlySurplus: number;
+  cashRequired: number;
+  canAfford: boolean;
+  onReview: () => void;
+  onBuy: () => void;
+  compact?: boolean;
+  className?: string;
+}) {
+  return (
+    <GlassCard
+      accentColor={readiness === 'ready' ? '#00E676' : readiness === 'stretch' ? '#FFD740' : '#FF1744'}
+      className={className}
+    >
+      <div className="grid gap-4 lg:grid-cols-[1fr,auto] lg:items-center">
+        <div>
+          <p className="label-text mb-1 text-[10px] text-cyan-glow">Purchase snapshot</p>
+          <h2 className="section-title text-white">
+            {compact ? `Can you buy ${propertyName}?` : `Review ${propertyName} before the long scroll`}
+          </h2>
+          {!compact && (
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">{summary}</p>
+          )}
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:max-w-md">
+            <PracticeMetric label="Cash required" value={formatCurrency(cashRequired)} tone={readiness === 'blocked' ? 'bad' : 'neutral'} />
+            <PracticeMetric label="After-debt surplus" value={formatCurrency(projectedMonthlySurplus)} tone={projectedMonthlySurplus >= 0 ? 'good' : 'bad'} />
+          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[22rem] lg:grid-cols-1">
+          <button type="button" onClick={onReview} className="btn-secondary min-h-11 px-4 py-3 text-sm">
+            Practice / review purchase
+          </button>
+          <button
+            type="button"
+            onClick={onBuy}
+            disabled={!canAfford}
+            className="btn-primary min-h-11 px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {canAfford ? 'Buy Property' : readiness === 'blocked' ? 'Fix blocker first' : 'Build cash first'}
+          </button>
+        </div>
+      </div>
+    </GlassCard>
   );
 }
 
@@ -1107,7 +1205,9 @@ function SeniorRightsizingPanel({
       <p className="text-xs leading-relaxed text-text-secondary">{plan.headline}</p>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <PracticeMetric label="FRS ref." value={formatCurrency(plan.cpfRetirementReference)} tone="neutral" />
+        <PracticeMetric label="Est. RA" value={formatCurrency(plan.estimatedRetirementAccount)} tone={plan.cpfGapToReference === 0 ? 'good' : 'neutral'} />
         <PracticeMetric label="CPF gap" value={formatCurrency(plan.cpfGapToReference)} tone={plan.cpfGapToReference === 0 ? 'good' : 'bad'} />
+        <PracticeMetric label="CPF above RA" value={formatCurrency(plan.withdrawableCpfEstimate)} tone="neutral" />
       </div>
       <div className="mt-3 space-y-2">
         {plan.options.map((option) => (

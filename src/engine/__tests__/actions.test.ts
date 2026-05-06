@@ -86,14 +86,14 @@ describe('buyPropertyPure', () => {
     expect(result.value.player.properties[0].propertyTax).toBeGreaterThan(0);
   });
 
-  it('supports an HDB concessionary loan path with 10% down and 2.6% interest', () => {
-    const player = makePlayer({ cash: 80_000, salary: 5_500 });
-    const result = buyPropertyPure(player, 'hdb-bto-0', 26_500, 0, 'hdb-concessionary');
+  it('supports an HDB concessionary loan path with 25% down and 2.6% interest', () => {
+    const player = makePlayer({ cash: 100_000, salary: 5_500 });
+    const result = buyPropertyPure(player, 'hdb-bto-0', 66_250, 0, 'hdb-concessionary');
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.player.properties[0].financingMode).toBe('hdb-concessionary');
-    expect(result.value.player.loans[0].principal).toBe(238_500);
+    expect(result.value.player.loans[0].principal).toBe(198_750);
     expect(result.value.player.loans[0].interestRate).toBe(2.6);
     expect(result.value.player.loans[0].financingMode).toBe('hdb-concessionary');
   });
@@ -463,14 +463,14 @@ describe('validatePurchase Singapore policy surfaces', () => {
     if (!property) throw new Error('Expected HDB BTO fixture.');
 
     const validation = validatePurchase(
-      makePlayer({ firstHomePurchased: true, cash: 200_000, salary: 6_500 }),
+      makePlayer({ firstHomePurchased: true, usedSubsidizedHousing: true, cash: 200_000, salary: 6_500 }),
       property,
-      38_000,
+      95_000,
       'hdb-concessionary',
     );
 
     expect(validation.hdbResaleLevy).toBe(40_000);
-    expect(validation.totalUpfront).toBe(84_000);
+    expect(validation.totalUpfront).toBe(141_000);
   });
 
   it('exposes the ABSD rate so second-property cards can show the explicit 20% charge', () => {

@@ -1,5 +1,4 @@
-import type { Property } from '@/data/properties';
-import { getPropertyCategory } from '@/data/properties';
+import { getPropertyCategory, properties, type Property } from '@/data/properties';
 import { normalizeBuyerProfile, type MortgageFinancingMode, type Player } from '@/game/types';
 import { difficultySettings } from '@/game/types';
 import { formatCurrency, formatPercent, roundMoney } from '@/lib/format';
@@ -60,17 +59,17 @@ export function validatePurchase(
   financingMode: MortgageFinancingMode = 'bank',
 ): PurchaseValidation {
   const roundedDownPayment = roundMoney(downPayment);
-  const propertyCount = player.properties.length;
+  const residentialPropertyCount = countResidentialHoldings(player);
   const isOwned = player.properties.some((ownedProperty) => ownedProperty.propertyId === property.id);
   const buyerProfile = normalizeBuyerProfile(player.buyerProfile);
   const propertyCategory = getPropertyCategory(property.type);
   const bsd = roundMoney(calculateBSDForCategory(property.price, propertyCategory));
   const absd = propertyCategory === 'commercial'
     ? 0
-    : roundMoney(calculateABSDForProfile(property.price, propertyCount, buyerProfile.residencyStatus));
+    : roundMoney(calculateABSDForProfile(property.price, residentialPropertyCount, buyerProfile.residencyStatus));
   const absdRate = propertyCategory === 'commercial'
     ? 0
-    : calculateABSDRateForProfile(propertyCount, buyerProfile.residencyStatus);
+    : calculateABSDRateForProfile(residentialPropertyCount, buyerProfile.residencyStatus);
   const hdbResaleLevy = calculateHdbResaleLevy(player, property);
   const totalUpfront = roundMoney(roundedDownPayment + bsd + absd + hdbResaleLevy);
   const shortfall = Math.max(0, roundMoney(totalUpfront - player.cash));
@@ -188,6 +187,27 @@ export function validatePurchase(
 
 export function calculateHdbResaleLevy(player: Player, property: Property): number {
   if (property.type !== 'HDB BTO') return 0;
-  if (!player.firstHomePurchased) return 0;
+  if (!hasSubsidizedHousingHistory(player)) return 0;
   return HDB_RESALE_LEVY_ESTIMATE;
 }
+
+function countResidentialHoldings(player: Player): number {
+  return player.properties.filter((owned) => {
+    const property = propertiesById.get(owned.propertyId);
+    return Boolean(property && getPropertyCategory(property.type) !== 'commercial');
+  }).length;
+}
+
+function hasSubsidizedHousingHistory(player: Player): boolean {
+  if (player.usedSubsidizedHousing) return true;
+  return player.properties.some((owned) => {
+    const property = propertiesById.get(owned.propertyId);
+    return Boolean(property && isSubsidizedHousingType(property.type));
+  });
+}
+
+function isSubsidizedHousingType(propertyType: string): boolean {
+  return propertyType === 'HDB BTO' || propertyType === 'Executive Condo';
+}
+
+const propertiesById = new Map(properties.map((property) => [property.id, property]));

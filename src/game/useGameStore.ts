@@ -60,8 +60,14 @@ function withNetWorth(player: Player): Player {
 }
 
 function withPortfolioDefaults(player: Player): Player {
+  const ownsSubsidizedHousing = player.properties.some((owned) => {
+    const property = properties.find((candidate) => candidate.id === owned.propertyId);
+    return property?.type === 'HDB BTO' || property?.type === 'Executive Condo';
+  });
+
   return {
     ...player,
+    usedSubsidizedHousing: player.usedSubsidizedHousing ?? ownsSubsidizedHousing,
     reserve: player.reserve ?? createDefaultReserve(),
     operationHistory: player.operationHistory ?? [],
     properties: player.properties.map(normalizeOwnedProperty),
@@ -137,6 +143,7 @@ function createInitialPlayer(
     nextJobSwitchTurn: 24,
     firstHomePurchased: false,
     ownedPrivateHome: false,
+    usedSubsidizedHousing: false,
     careerProgressionProfile: createInitialCareerProgressionProfile(),
     careerReviewHistory: [],
     buyerProfile,

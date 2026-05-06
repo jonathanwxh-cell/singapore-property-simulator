@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import CommandCenterHero from '@/components/CommandCenterHero';
@@ -76,6 +76,8 @@ export default function Dashboard() {
   } = useGameStore();
   const navigate = useNavigate();
   const [showAdvancedPanels, setShowAdvancedPanels] = useState(false);
+  const [highlightMonthlyIntent, setHighlightMonthlyIntent] = useState(false);
+  const monthlyIntentRef = useRef<HTMLDivElement>(null);
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   const netWorth = selectNetWorth(player);
@@ -138,6 +140,15 @@ export default function Dashboard() {
     setSecondaryLifeAction(intent.secondaryActionId);
     navigate(intent.route);
   };
+  const handleQuestStep = (step: FirstRunQuest['steps'][number]) => {
+    if (step.id === 'choose-monthly-intent') {
+      monthlyIntentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightMonthlyIntent(true);
+      window.setTimeout(() => setHighlightMonthlyIntent(false), 1800);
+      return;
+    }
+    navigate(step.route);
+  };
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
@@ -154,7 +165,7 @@ export default function Dashboard() {
         </motion.div>
 
         <motion.div variants={itemVariants} className="mb-6">
-          <FirstRunQuestPanel quest={firstRunQuest} onNavigate={navigate} />
+          <FirstRunQuestPanel quest={firstRunQuest} onNavigate={navigate} onContinueStep={handleQuestStep} />
         </motion.div>
 
         {lastTurnRecap && (
@@ -183,10 +194,11 @@ export default function Dashboard() {
           <ActionTile icon={BookOpen} title="Learn" detail="Rules, blockers, first-run help" onClick={() => navigate('/learn')} />
         </motion.div>
 
-        <motion.div variants={itemVariants} className="mb-6">
+        <motion.div ref={monthlyIntentRef} variants={itemVariants} className="mb-6 scroll-mt-24">
           <MonthlyIntentPanel
             intents={monthlyIntents}
             compactMode={settings.compactMode}
+            highlighted={highlightMonthlyIntent}
             onSelect={handleSelectIntent}
             onOpen={handleOpenIntent}
             onToggleCompact={() => updateSettings({ compactMode: !settings.compactMode })}
@@ -419,9 +431,11 @@ export default function Dashboard() {
 function FirstRunQuestPanel({
   quest,
   onNavigate,
+  onContinueStep,
 }: {
   quest: FirstRunQuest;
   onNavigate: (route: string) => void;
+  onContinueStep: (step: FirstRunQuest['steps'][number]) => void;
 }) {
   return (
     <GlassCard accentColor="#00E676">
@@ -491,7 +505,7 @@ function FirstRunQuestPanel({
       </div>
 
       {quest.activeStep && (
-        <button type="button" onClick={() => onNavigate(quest.activeStep!.route)} className="btn-primary mt-4 w-full py-3 text-sm">
+        <button type="button" onClick={() => onContinueStep(quest.activeStep!)} className="btn-primary mt-4 w-full py-3 text-sm">
           Continue: {quest.activeStep.label}
         </button>
       )}
@@ -577,18 +591,20 @@ function BeginnerAdvancedGate({
 function MonthlyIntentPanel({
   intents,
   compactMode,
+  highlighted,
   onSelect,
   onOpen,
   onToggleCompact,
 }: {
   intents: MonthlyIntentOption[];
   compactMode: boolean;
+  highlighted: boolean;
   onSelect: (intent: MonthlyIntentOption) => void;
   onOpen: (intent: MonthlyIntentOption) => void;
   onToggleCompact: () => void;
 }) {
   return (
-    <GlassCard accentColor="#00F0FF">
+    <GlassCard accentColor="#00F0FF" className={highlighted ? 'ring-2 ring-cyan-glow/70 shadow-[0_0_36px_rgba(0,240,255,0.22)]' : undefined}>
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="label-text mb-1 text-[10px] text-cyan-glow">Choose your month</p>

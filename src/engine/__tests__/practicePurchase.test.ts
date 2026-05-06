@@ -104,6 +104,7 @@ describe('practice purchase planning', () => {
     expect(plan).not.toBeNull();
     expect(plan?.headline).toContain('55+');
     expect(plan?.cpfRetirementReference).toBe(220_400);
+    expect(plan?.estimatedRetirementAccount).toBe(180_000);
     expect(plan?.options.some((option) => option.label.includes('right-size'))).toBe(true);
     expect(plan?.warnings.join(' ')).toContain('Retirement Account');
   });

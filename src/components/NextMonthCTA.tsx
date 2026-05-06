@@ -45,6 +45,7 @@ export default function NextMonthCTA({
       type="button"
       onClick={handleClick}
       disabled={commandState.advance.disabled}
+      aria-label={`${commandState.advance.label}: ${detail}`}
       className={cn(
         'group relative overflow-hidden rounded-2xl border text-left transition-all disabled:cursor-not-allowed disabled:opacity-50',
         isBlocked

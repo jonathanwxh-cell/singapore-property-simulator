@@ -92,9 +92,9 @@ export const ruleGlossaryEntries: RuleGlossaryEntry[] = [
     id: 'hdb-loan',
     label: 'HDB Loan',
     summary: 'Concessionary financing',
-    detail: 'A simplified HDB concessionary path in the game: lower starter down payment and a 2.6% fixed-rate mortgage for eligible HDB listings.',
+    detail: 'A simplified HDB concessionary path in the game: 25% starter down payment after the 75% LTV cap and a 2.6% fixed-rate mortgage for eligible HDB listings.',
     whyItMatters: 'It makes the first-home route feel different from private bank financing while still keeping MSR and TDSR safety checks in play.',
-    example: 'A starter BTO may work with 10% down under the HDB loan toggle, but fail if you switch back to bank financing.',
+    example: 'A starter BTO may work with CPF OA covering much of the 25% down payment, but still fail if cash, MSR, or HFE-style readiness is weak.',
   },
   {
     id: 'hdb-resale-levy',

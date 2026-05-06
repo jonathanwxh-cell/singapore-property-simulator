@@ -48,8 +48,8 @@ export default function CommandCenterHero({ state, onNavigate }: CommandCenterHe
             <h2 className="page-title max-w-3xl text-2xl text-white md:text-4xl">{objective.title}</h2>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-text-secondary md:text-base">{objective.detail}</p>
 
-            <div className="mt-5 xl:hidden">
-              <NextMonthCTA variant="inline" />
+            <div className="mt-3 xl:hidden">
+              <NextMonthCTA variant="inline" className="py-2.5" showDetail={false} />
             </div>
 
             <p className="mt-3 max-w-3xl text-xs leading-relaxed text-text-dim md:text-sm">

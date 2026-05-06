@@ -169,6 +169,7 @@ const playerSchema = z.object({
   nextJobSwitchTurn: z.number().optional(),
   firstHomePurchased: z.boolean().optional(),
   ownedPrivateHome: z.boolean().optional(),
+  usedSubsidizedHousing: z.boolean().optional(),
   careerProgressionProfile: z.object({
     reviewCount: z.number(),
     lastOutcome: z.enum(['promotion', 'bonus', 'steady', 'setback']).nullable(),

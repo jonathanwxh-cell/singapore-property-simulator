@@ -206,6 +206,7 @@ export function buyPropertyPure(
       loans: newLoan ? [...player.loans, newLoan] : player.loans,
       firstHomePurchased: isResidentialPropertyType(property.type) ? true : player.firstHomePurchased,
       ownedPrivateHome: isPrivateResidentialPropertyType(property.type) ? true : player.ownedPrivateHome,
+      usedSubsidizedHousing: player.usedSubsidizedHousing || property.type === 'HDB BTO' || property.type === 'Executive Condo',
     },
   });
 }

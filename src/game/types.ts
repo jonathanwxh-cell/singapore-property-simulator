@@ -296,6 +296,7 @@ export interface Player {
   nextJobSwitchTurn: number;
   firstHomePurchased: boolean;
   ownedPrivateHome: boolean;
+  usedSubsidizedHousing?: boolean;
   careerProgressionProfile: CareerProgressionProfile;
   careerReviewHistory: CareerReviewHistoryEntry[];
   buyerProfile?: BuyerProfile;

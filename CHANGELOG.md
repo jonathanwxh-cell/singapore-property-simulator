@@ -83,6 +83,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Portfolio and property-detail surfaces now expose lease pressure, repair exposure, reserve gaps, and tenant-satisfaction tradeoffs as explicit landlord decisions.
 
 ### Fixed
+- HDB concessionary financing now uses the current 75% LTV / 25% down-payment model throughout purchase validation, decision coaching, glossary copy, and tests.
+- Residential ABSD now counts residential holdings only, so commercial shops/offices do not accidentally make the next residential purchase look like a second home.
+- HDB resale-levy estimates now require subsidised-housing history instead of any generic first-home history.
+- CPF 55 rightsizing copy now separates estimated Retirement Account set-aside from withdrawable CPF above that set-aside.
+- Manual Load now promotes the loaded checkpoint into the active autosave, so refreshing after loading a slot does not jump back to newer progress.
+- Mobile property-detail pages now show a compact purchase snapshot before the tall image hero, keeping the first Buy action visible on narrow iPhone-style screens.
+- Mobile bottom navigation now compresses safely at 320px widths after the More menu addition.
+- The first-run quest CTA now scrolls directly to Monthly Intent instead of feeling like a dead-end dashboard action.
 - Foreigner profiles are no longer steered toward HDB/EC listings by the best-next-buy recommendation engine when private or commercial paths are more appropriate.
 - The marriage scenario now includes a no-cash safe option so low-cash Tycoon players cannot be soft-locked by three unaffordable choices.
 - The Buy page hero action buttons now stay above the mobile bottom navigation after the finance-realism additions.

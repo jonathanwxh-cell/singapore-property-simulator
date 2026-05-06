@@ -168,7 +168,7 @@ export default function GameLayout() {
             </motion.div>
           )}
         </AnimatePresence>
-        <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center justify-around gap-1 px-2 lg:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center justify-around gap-0.5 px-1 lg:hidden">
           {mobileNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -180,12 +180,12 @@ export default function GameLayout() {
                   navigate(item.path);
                 }}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 min-w-[3.75rem] h-14 shrink-0 transition-colors',
+                  'flex flex-col items-center justify-center gap-0.5 h-14 min-w-0 flex-1 transition-colors',
                   isActive ? 'text-cyan-glow' : 'text-text-dim'
                 )}
               >
                 <Icon size={18} />
-                <span className="text-[9px] font-rajdhani uppercase tracking-wide">{item.label}</span>
+                <span className="text-[8px] font-rajdhani uppercase tracking-wide xs:text-[9px]">{item.label}</span>
               </button>
             );
           })}
@@ -193,12 +193,12 @@ export default function GameLayout() {
             type="button"
             onClick={() => setShowMoreMenu((value) => !value)}
             className={cn(
-              'flex flex-col items-center justify-center gap-0.5 min-w-[3.75rem] h-14 shrink-0 transition-colors',
+              'flex flex-col items-center justify-center gap-0.5 h-14 min-w-0 flex-1 transition-colors',
               showMoreMenu || mobileMoreItems.some((item) => item.path === location.pathname) ? 'text-cyan-glow' : 'text-text-dim'
             )}
           >
             <MoreHorizontal size={18} />
-            <span className="text-[9px] font-rajdhani uppercase tracking-wide">More</span>
+            <span className="text-[8px] font-rajdhani uppercase tracking-wide xs:text-[9px]">More</span>
           </button>
         </nav>
         </>

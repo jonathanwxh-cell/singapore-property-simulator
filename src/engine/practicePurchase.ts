@@ -42,7 +42,9 @@ export interface SeniorRightsizingOption {
 export interface SeniorRightsizingPlan {
   headline: string;
   cpfRetirementReference: number;
+  estimatedRetirementAccount: number;
   cpfGapToReference: number;
+  withdrawableCpfEstimate: number;
   monthlyRunwayAfterHousing: number;
   options: SeniorRightsizingOption[];
   warnings: string[];
@@ -171,8 +173,8 @@ export function buildSeniorRightsizingPlan(player: Player): SeniorRightsizingPla
   const isSeniorRoute = player.runRouteId === 'senior-rightsizer' || profileAge >= 55 || player.age >= 55;
   if (!isSeniorRoute) return null;
 
-  const cpfRetirementPool = player.cpfOrdinary + player.cpfSpecial;
-  const cpfGapToReference = Math.max(0, CPF_2026_FULL_RETIREMENT_SUM - cpfRetirementPool);
+  const cpfTransfer = estimateRetirementAccountTransfer(player.cpfOrdinary, player.cpfSpecial);
+  const cpfGapToReference = Math.max(0, CPF_2026_FULL_RETIREMENT_SUM - cpfTransfer.estimatedRetirementAccount);
   const monthlyRunwayAfterHousing = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
   const monthlyExpenses = selectMonthlyExpenses(player);
   const reserveMonths = monthlyExpenses > 0
@@ -182,7 +184,9 @@ export function buildSeniorRightsizingPlan(player: Player): SeniorRightsizingPla
   return {
     headline: '55+ rightsizing route: protect retirement income before chasing leverage.',
     cpfRetirementReference: CPF_2026_FULL_RETIREMENT_SUM,
+    estimatedRetirementAccount: cpfTransfer.estimatedRetirementAccount,
     cpfGapToReference,
+    withdrawableCpfEstimate: cpfTransfer.withdrawableCpfEstimate,
     monthlyRunwayAfterHousing,
     options: [
       {
@@ -203,12 +207,28 @@ export function buildSeniorRightsizingPlan(player: Player): SeniorRightsizingPla
     ],
     warnings: [
       ...(cpfGapToReference > 0
-        ? [`CPF pool is ${formatCurrency(cpfGapToReference)} below the 2026 Full Retirement Sum reference; housing refunds may need to support the Retirement Account first.`]
-        : ['CPF pool is above the 2026 Full Retirement Sum reference, but housing cashflow still needs a runway.']),
+        ? [`Estimated Retirement Account set-aside is ${formatCurrency(cpfGapToReference)} below the 2026 Full Retirement Sum reference; housing refunds may need to restore the Retirement Account first.`]
+        : [`Estimated Retirement Account reaches the 2026 Full Retirement Sum reference, with about ${formatCurrency(cpfTransfer.withdrawableCpfEstimate)} CPF above the set-aside before housing cashflow checks.`]),
       ...(monthlyRunwayAfterHousing < 0
         ? ['Monthly cashflow is negative, so rightsizing should reduce debt rather than add leverage.']
         : []),
       'After 55, CPF housing decisions interact with Retirement Account needs; treat this route as stability-first.',
     ],
+  };
+}
+
+function estimateRetirementAccountTransfer(cpfOrdinary: number, cpfSpecial: number): {
+  estimatedRetirementAccount: number;
+  withdrawableCpfEstimate: number;
+} {
+  const specialToRa = Math.min(cpfSpecial, CPF_2026_FULL_RETIREMENT_SUM);
+  const ordinaryToRa = Math.min(cpfOrdinary, CPF_2026_FULL_RETIREMENT_SUM - specialToRa);
+  const estimatedRetirementAccount = Math.round(specialToRa + ordinaryToRa);
+  const totalCpf = cpfOrdinary + cpfSpecial;
+  const withdrawableCpfEstimate = Math.max(0, Math.round(totalCpf - estimatedRetirementAccount));
+
+  return {
+    estimatedRetirementAccount,
+    withdrawableCpfEstimate,
   };
 }

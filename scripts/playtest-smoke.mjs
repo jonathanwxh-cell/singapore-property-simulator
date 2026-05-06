@@ -117,8 +117,10 @@ async function getVisibleButtonBoxesWithText(page, text) {
     buttons
       .map((button) => {
         const rect = button.getBoundingClientRect();
+        const label = button.getAttribute('aria-label') ?? '';
         return {
           text: button.innerText,
+          label,
           box: {
             x: rect.x,
             y: rect.y,
@@ -127,8 +129,8 @@ async function getVisibleButtonBoxesWithText(page, text) {
           },
         };
       })
-      .filter(({ text, box }) => (
-        text.toUpperCase().includes(String(targetText).toUpperCase())
+      .filter(({ text, label, box }) => (
+        `${text} ${label}`.toUpperCase().includes(String(targetText).toUpperCase())
         && box.width > 0
         && box.height > 0
       ))
@@ -231,16 +233,21 @@ async function assertMobileBuyCtaIsInFlow(page) {
   await page.setViewportSize({ width: 390, height: 844 });
   await delay(150);
 
-  const hasFixedAncestor = await page.getByRole('button', { name: 'Buy Property' }).evaluate((button) => {
-    let node = button;
-    while (node) {
-      if (window.getComputedStyle(node).position === 'fixed') return true;
-      node = node.parentElement;
-    }
-    return false;
+  const fixedButtonCount = await page.getByRole('button', { name: 'Buy Property' }).evaluateAll((buttons) => {
+    return buttons.filter((button) => {
+      const rect = button.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return false;
+
+      let node = button;
+      while (node) {
+        if (window.getComputedStyle(node).position === 'fixed') return true;
+        node = node.parentElement;
+      }
+      return false;
+    }).length;
   });
 
-  if (hasFixedAncestor) {
+  if (fixedButtonCount > 0) {
     throw new Error('Mobile Buy Property CTA should be in-flow, not a fixed overlay over purchase math.');
   }
 
@@ -257,6 +264,25 @@ async function assertMobileRouteHasNoVisibleAdvance(page, routeLabel) {
   }
 
   await page.setViewportSize({ width: 1440, height: 1100 });
+}
+
+async function assertManualLoadPromotesAutosave(page) {
+  await page.goto(`${page.url().split('/#/')[0]}/#/saveload`, { waitUntil: 'networkidle' });
+  await expectVisible(page, 'text=Save / Load Game');
+  page.once('dialog', (dialog) => dialog.accept('QA Checkpoint'));
+  await page.getByRole('button', { name: /^Save$/ }).first().click();
+  await expectVisible(page, 'text=QA Checkpoint');
+
+  await page.goto(`${page.url().split('/#/')[0]}/#/dashboard`, { waitUntil: 'networkidle' });
+  await clickAdvance(page);
+  await resolveScenarioIfPresent(page);
+
+  await page.goto(`${page.url().split('/#/')[0]}/#/saveload`, { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: /^Load$/ }).first().click();
+  await expectVisible(page, 'text=Turn 12');
+
+  await page.reload({ waitUntil: 'networkidle' });
+  await expectVisible(page, 'text=Turn 12');
 }
 
 async function assertNewGameStepResetsMobileScroll(page) {
@@ -375,10 +401,10 @@ async function run() {
     await assertMobilePropertiesHeroActionsClearNav(page);
     await page.getByRole('button', { name: 'Review Deal' }).click();
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');
-    await expectVisible(page, 'text=Cash Required');
+    await page.locator('span').filter({ hasText: 'Cash Required' }).last().waitFor({ state: 'visible', timeout: 15000 });
 
-    const buyButton = page.getByRole('button', { name: 'Buy Property' });
-    await expectVisible(page, 'text=Northstar Grove 3-Room');
+    const buyButton = page.getByRole('button', { name: 'Buy Property' }).first();
+    await page.locator('h1').filter({ hasText: 'Northstar Grove 3-Room' }).waitFor({ state: 'attached', timeout: 15000 });
     await page.setViewportSize({ width: 390, height: 844 });
     await delay(150);
     await assertMobileBuyCtaIsInFlow(page);
@@ -430,6 +456,7 @@ async function run() {
     await page.getByRole('button', { name: 'Continue' }).click();
     await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Turn 12');
+    await assertManualLoadPromotesAutosave(page);
 
     await page.goto(`${baseUrl}/#/learn`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=Learn Singapore Property Without Prereqs');

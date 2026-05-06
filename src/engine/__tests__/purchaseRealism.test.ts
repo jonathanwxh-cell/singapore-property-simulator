@@ -1,0 +1,103 @@
+import { describe, expect, it } from 'vitest';
+import { properties } from '@/data/properties';
+import { createInitialLifeState, type Player } from '@/game/types';
+import {
+  HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT,
+  HDB_CONCESSIONARY_LTV,
+  HDB_RESALE_LEVY_ESTIMATE,
+} from '../constants';
+import { validatePurchase } from '../purchase';
+
+function makePlayer(overrides: Partial<Player> = {}): Player {
+  return {
+    name: 'Tester',
+    age: 30,
+    careerId: 'graduate',
+    salary: 9_000,
+    cash: 500_000,
+    cpfOrdinary: 150_000,
+    cpfSpecial: 40_000,
+    cpfMedisave: 20_000,
+    creditScore: 760,
+    properties: [],
+    loans: [],
+    maritalStatus: 'single',
+    children: 0,
+    year: 2026,
+    month: 5,
+    turnCount: 0,
+    totalNetWorth: 0,
+    achievements: [],
+    difficulty: 'normal',
+    totalRentalIncome: 0,
+    totalPropertySalesProfit: 0,
+    bankruptcyStrikes: 0,
+    life: createInitialLifeState(),
+    careerGrowthModifier: 1,
+    careerRiskModifier: 1,
+    careerVolatilityModifier: 0,
+    lastCareerReviewTurn: 0,
+    nextJobSwitchTurn: 24,
+    firstHomePurchased: false,
+    ownedPrivateHome: false,
+    careerProgressionProfile: { reviewCount: 0, lastOutcome: null, lastSalaryDelta: 0, lastBonus: 0 },
+    careerReviewHistory: [],
+    buyerProfile: { residencyStatus: 'sc', householdProfile: 'couple-family', age: 30 },
+    runRouteId: 'bto-upgrader',
+    ...overrides,
+  };
+}
+
+describe('purchase realism fixes', () => {
+  it('uses the current 75% HDB concessionary LTV instead of a 90% starter loan', () => {
+    const bto = properties.find((property) => property.id === 'hdb-bto-0');
+    expect(bto).toBeDefined();
+    expect(HDB_CONCESSIONARY_LTV).toBe(0.75);
+    expect(HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT).toBe(25);
+
+    const tenPercentDown = validatePurchase(makePlayer(), bto!, bto!.price * 0.1, 'hdb-concessionary');
+    expect(tenPercentDown.maxLoan).toBe(Math.round(bto!.price * 0.75));
+    expect(tenPercentDown.reasons.some((reason) => reason.code === 'ltv_exceeded')).toBe(true);
+  });
+
+  it('does not count pure commercial holdings as residential ABSD property count', () => {
+    const condo = properties.find((property) => property.id === 'condo-4');
+    const commercial = properties.find((property) => property.type === 'Commercial Shop' || property.type === 'Commercial Office');
+    expect(condo).toBeDefined();
+    expect(commercial).toBeDefined();
+
+    const result = validatePurchase(makePlayer({
+      properties: [{
+        propertyId: commercial!.id,
+        purchasePrice: commercial!.price,
+        purchaseDate: 'Jan 2026',
+        currentValue: commercial!.price,
+        isRented: true,
+        monthlyRental: 8_000,
+        renovationLevel: 0,
+      }],
+    }), condo!, condo!.price * 0.25);
+
+    expect(result.absdRate).toBe(0);
+    expect(result.absd).toBe(0);
+  });
+
+  it('charges resale levy only after subsidised-housing history, not any previous first home', () => {
+    const bto = properties.find((property) => property.id === 'hdb-bto-0');
+    expect(bto).toBeDefined();
+
+    const privateFirstHome = validatePurchase(makePlayer({
+      firstHomePurchased: true,
+      ownedPrivateHome: true,
+      usedSubsidizedHousing: false,
+    }), bto!, bto!.price * 0.25, 'hdb-concessionary');
+
+    const subsidizedSecondTimer = validatePurchase(makePlayer({
+      firstHomePurchased: true,
+      usedSubsidizedHousing: true,
+    }), bto!, bto!.price * 0.25, 'hdb-concessionary');
+
+    expect(privateFirstHome.hdbResaleLevy).toBe(0);
+    expect(subsidizedSecondTimer.hdbResaleLevy).toBe(HDB_RESALE_LEVY_ESTIMATE);
+  });
+});

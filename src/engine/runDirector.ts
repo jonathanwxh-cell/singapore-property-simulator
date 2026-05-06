@@ -153,7 +153,7 @@ function getMilestoneProgress(player: Player, template: RouteMilestoneTemplate):
     case 'cash-buffer':
       return ratioProgress(availableCash, 60_000);
     case 'buy-first-home':
-      return hasHome ? 100 : ratioProgress(availableCash + player.cpfOrdinary, 120_000);
+      return hasHome ? 100 : Math.min(95, ratioProgress(availableCash + player.cpfOrdinary, 120_000));
     case 'survive-mop':
       return hasHome && monthlyNetCashflow > 0 ? 100 : hasHome ? 60 : 0;
     case 'upgrade-ready':

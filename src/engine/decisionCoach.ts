@@ -3,7 +3,7 @@ import { properties, isResidentialCategory, type Property } from '@/data/propert
 import { scenarios, type ScenarioOption } from '@/data/scenarios';
 import type { LifeActionId, Player } from '@/game/types';
 import { formatCurrency, formatPercent } from '@/lib/format';
-import { TAKE_HOME_RATIO } from './constants';
+import { HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT, TAKE_HOME_RATIO } from './constants';
 import { getRunArc } from './runDirector';
 import { getDownPaymentAmount, validatePurchase, type PurchaseValidationReason } from './purchase';
 import { evaluatePropertyEligibility } from './eligibility';
@@ -168,7 +168,7 @@ export function getNextBestMoves({ player, currentScenario }: NextBestMoveInput)
     const readiness = bestNextBuy?.readiness ?? assessDealReadiness({
       player,
       property: starter,
-      downPaymentPercent: starter.isHdb ? 10 : 25,
+      downPaymentPercent: starter.isHdb ? HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT : 25,
       useCpfOrdinary: true,
       financingMode: starter.isHdb ? 'hdb-concessionary' : 'bank',
     });
@@ -218,7 +218,7 @@ export function selectBestNextBuyForPlayer(player: Player): BestNextBuy | null {
     readiness: assessDealReadiness({
       player,
       property,
-      downPaymentPercent: property.isHdb ? 10 : 25,
+      downPaymentPercent: property.isHdb ? HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT : 25,
       useCpfOrdinary: true,
       financingMode: property.isHdb ? 'hdb-concessionary' : 'bank',
     }),
