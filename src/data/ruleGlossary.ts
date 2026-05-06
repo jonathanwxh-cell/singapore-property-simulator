@@ -144,6 +144,30 @@ export const ruleGlossaryEntries: RuleGlossaryEntry[] = [
     whyItMatters: 'Sale proceeds are not the same as instant free cash, especially when CPF and loans were used heavily.',
     example: 'Selling after using CPF OA may leave less spendable cash than the headline capital gain suggests.',
   },
+  {
+    id: 'cpf-55',
+    label: 'CPF 55',
+    summary: 'Retirement Account checkpoint',
+    detail: 'At 55, CPF planning shifts toward the Retirement Account. The game uses the 2026 Full Retirement Sum reference as a learning benchmark, not a personal advice calculator.',
+    whyItMatters: 'Later-life property moves should preserve retirement income and housing payment runway instead of treating all CPF balances as spare buying power.',
+    example: 'A 58-year-old rightsizer should compare the home purchase against CPF retirement needs before taking on a larger mortgage.',
+  },
+  {
+    id: 'lease-buyback',
+    label: 'Lease Buyback',
+    summary: 'Monetising part of an HDB lease',
+    detail: 'A real-world HDB retirement monetisation path where eligible seniors can sell part of the remaining flat lease back to HDB. The simulator uses it as a concept hook.',
+    whyItMatters: 'It teaches that housing wealth can support retirement cashflow, but only through rules, eligibility, and tradeoffs.',
+    example: 'A senior who wants to stay put may consider monetising lease value instead of selling and moving.',
+  },
+  {
+    id: 'silver-housing-bonus',
+    label: 'Silver Housing Bonus',
+    summary: 'Right-sizing support concept',
+    detail: 'A retirement support idea tied to right-sizing into a smaller flat and using housing proceeds to improve retirement adequacy. The game keeps it simplified.',
+    whyItMatters: 'It makes the 55+ route about stability and monthly income, not just asset price appreciation.',
+    example: 'A household selling a larger flat may evaluate whether right-sizing improves cashflow and retirement runway.',
+  },
 ];
 
 const glossaryById = new Map(ruleGlossaryEntries.map((entry) => [entry.id, entry]));

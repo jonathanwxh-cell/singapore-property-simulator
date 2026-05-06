@@ -17,6 +17,14 @@ import { getLtvCap } from '@/engine/ltv';
 import EligibilityBadge from '@/components/EligibilityBadge';
 import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
 import { assessDealReadiness, getDealNextFix } from '@/engine/decisionCoach';
+import {
+  buildBtoReadinessPlan,
+  buildPracticePurchasePlan,
+  buildSeniorRightsizingPlan,
+  type BtoReadinessPlan,
+  type PracticePurchasePlan,
+  type SeniorRightsizingPlan,
+} from '@/engine/practicePurchase';
 import { getRenovationTemplatesForType } from '@/data/renovations';
 import { repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
 import { getTenantLeaseOptions } from '@/engine/propertyOperations';
@@ -92,6 +100,9 @@ export default function PropertyDetail() {
   const reservedCash = selectReservedCash(player);
   const grantSupport = property.isHdb ? selectPotentialHousingGrant(player) : 0;
   const affordability = selectAffordabilityReport(player, cashRequired, monthlySurplus, grantSupport);
+  const practicePlan = buildPracticePurchasePlan({ player, property, readiness: dealReadiness });
+  const btoReadinessPlan = buildBtoReadinessPlan(player, property);
+  const seniorRightsizingPlan = buildSeniorRightsizingPlan(player);
   const extraReasons = validation.reasons.filter((reason) => reason.code !== 'insufficient_cash');
   const eligibilityFlags = deriveEligibilityFlags({
     salary: player.salary,
@@ -971,6 +982,14 @@ export default function PropertyDetail() {
                         Best accelerators: Side Gig, Property Hustle, and Claim / Plan Schemes.
                       </p>
                     </div>
+                    <PracticePurchasePanel plan={practicePlan} />
+                    {btoReadinessPlan && <BtoReadinessPanel plan={btoReadinessPlan} />}
+                    {seniorRightsizingPlan && (
+                      <SeniorRightsizingPanel
+                        plan={seniorRightsizingPlan}
+                        onNavigate={(route) => navigate(route)}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -1003,3 +1022,134 @@ export default function PropertyDetail() {
   );
 }
 
+function PracticePurchasePanel({ plan }: { plan: PracticePurchasePlan }) {
+  return (
+    <div className={`rounded-lg border px-3 py-3 ${
+      plan.riskLevel === 'safe'
+        ? 'border-success/25 bg-success/10'
+        : plan.riskLevel === 'stretch'
+          ? 'border-warning/25 bg-warning/10'
+          : 'border-danger/25 bg-danger/10'
+    }`}>
+      <p className="text-white text-sm font-semibold mb-1">{plan.title}</p>
+      <p className="text-xs leading-relaxed text-text-secondary">{plan.summary}</p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <PracticeMetric label="Cash after buy" value={formatCurrency(plan.projectedCashAfterUpfront)} tone={plan.projectedCashAfterUpfront >= 0 ? 'good' : 'bad'} />
+        <PracticeMetric label="Avail. after reserve" value={formatCurrency(plan.projectedAvailableCashAfterReserve)} tone={plan.projectedAvailableCashAfterReserve >= 0 ? 'good' : 'bad'} />
+        <PracticeMetric label="Monthly after debt" value={formatCurrency(plan.projectedMonthlySurplusAfterPurchase)} tone={plan.projectedMonthlySurplusAfterPurchase >= 0 ? 'good' : 'bad'} />
+        <PracticeMetric label="CPF used" value={formatCurrency(plan.cpfApplied)} tone="neutral" />
+      </div>
+      <div className="mt-3 space-y-1">
+        {plan.nextSteps.map((step) => (
+          <p key={step} className="text-[11px] leading-relaxed text-text-dim">{step}</p>
+        ))}
+      </div>
+      {plan.warnings.length > 0 && (
+        <div className="mt-3 space-y-1">
+          {plan.warnings.map((warning) => (
+            <p key={warning} className="text-[11px] leading-relaxed text-warning">{warning}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BtoReadinessPanel({ plan }: { plan: BtoReadinessPlan }) {
+  return (
+    <div className="rounded-lg border border-cyan-glow/20 bg-cyan-glow/10 px-3 py-3">
+      <p className="text-white text-sm font-semibold mb-1">BTO / HFE timeline</p>
+      <p className="text-xs leading-relaxed text-text-secondary">{plan.headline}</p>
+      <p className="mt-2 text-[11px] font-mono uppercase tracking-[0.14em] text-cyan-glow">
+        Est. keys in {plan.estimatedMonthsToKeys} month(s)
+      </p>
+      <div className="mt-3 space-y-2">
+        {plan.stages.map((stage) => (
+          <div key={stage.label} className="rounded-lg border border-white/10 bg-black/20 p-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold text-white">{stage.label}</p>
+              <span className={`text-[9px] font-mono uppercase ${
+                stage.status === 'blocked'
+                  ? 'text-danger'
+                  : stage.status === 'ready'
+                    ? 'text-success'
+                    : stage.status === 'next'
+                      ? 'text-cyan-glow'
+                      : 'text-text-dim'
+              }`}>
+                {stage.status}
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{stage.detail}</p>
+          </div>
+        ))}
+      </div>
+      {plan.warnings.map((warning) => (
+        <p key={warning} className="mt-2 text-[11px] leading-relaxed text-warning">{warning}</p>
+      ))}
+      {plan.notes.map((note) => (
+        <p key={note} className="mt-2 text-[11px] leading-relaxed text-text-dim">{note}</p>
+      ))}
+    </div>
+  );
+}
+
+function SeniorRightsizingPanel({
+  plan,
+  onNavigate,
+}: {
+  plan: SeniorRightsizingPlan;
+  onNavigate: (route: string) => void;
+}) {
+  return (
+    <div className="rounded-lg border border-warning/25 bg-warning/10 px-3 py-3">
+      <p className="text-white text-sm font-semibold mb-1">55+ rightsizing read</p>
+      <p className="text-xs leading-relaxed text-text-secondary">{plan.headline}</p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <PracticeMetric label="FRS ref." value={formatCurrency(plan.cpfRetirementReference)} tone="neutral" />
+        <PracticeMetric label="CPF gap" value={formatCurrency(plan.cpfGapToReference)} tone={plan.cpfGapToReference === 0 ? 'good' : 'bad'} />
+      </div>
+      <div className="mt-3 space-y-2">
+        {plan.options.map((option) => (
+          <button
+            key={option.label}
+            type="button"
+            onClick={() => onNavigate(option.route)}
+            className="w-full rounded-lg border border-white/10 bg-black/20 p-2 text-left transition-colors hover:border-warning/40 hover:bg-warning/10"
+          >
+            <p className="text-xs font-semibold text-white">{option.label}</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{option.detail}</p>
+          </button>
+        ))}
+      </div>
+      {plan.warnings.map((warning) => (
+        <p key={warning} className="mt-2 text-[11px] leading-relaxed text-warning">{warning}</p>
+      ))}
+    </div>
+  );
+}
+
+function PracticeMetric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: 'good' | 'bad' | 'neutral';
+}) {
+  return (
+    <div className="rounded-lg border border-glass-border bg-black/20 p-2">
+      <p className="label-text text-[8px] text-text-dim">{label}</p>
+      <p className={`mt-1 font-mono text-[11px] ${
+        tone === 'good'
+          ? 'text-success'
+          : tone === 'bad'
+            ? 'text-danger'
+            : 'text-white'
+      }`}>
+        {value}
+      </p>
+    </div>
+  );
+}

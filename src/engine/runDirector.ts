@@ -34,9 +34,12 @@ const replayOrder: RunRouteId[] = [
   'heartland-landlord',
   'pr-private-climber',
   'fire-homeowner',
+  'senior-rightsizer',
   'commercial-operator',
   'foreign-investor',
 ];
+
+const CPF_FULL_RETIREMENT_SUM_2026 = 220_400;
 
 export function inferRunRouteId(player: Player): RunRouteId {
   if (player.runRouteId && isRunRouteId(player.runRouteId)) return player.runRouteId;
@@ -49,6 +52,7 @@ export function inferRunRouteId(player: Player): RunRouteId {
     return 'foreign-investor';
   }
   if (profile?.residencyStatus === 'spr') return 'pr-private-climber';
+  if ((profile?.age ?? player.age) >= 55 || player.age >= 55) return 'senior-rightsizer';
   if (profile?.householdProfile === 'single-35-plus') return 'single-resale';
 
   return 'bto-upgrader';
@@ -202,6 +206,14 @@ function getMilestoneProgress(player: Player, template: RouteMilestoneTemplate):
       return player.loans.some((loan) => loan.type === 'mortgage' && loan.remainingBalance < loan.principal * 0.75) ? 100 : hasHome ? 45 : 0;
     case 'low-stress-legacy':
       return netWorth >= difficultySettings[player.difficulty].targetNetWorth * 0.5 && player.life.stress <= 45 ? 100 : Math.max(0, 100 - player.life.stress);
+    case 'cpf-55-check':
+      return ratioProgress(player.cpfOrdinary + player.cpfSpecial, CPF_FULL_RETIREMENT_SUM_2026);
+    case 'rightsize-cash-runway':
+      return ratioProgress(availableCash + reserve, monthlyExpenses * 12);
+    case 'lower-debt-home':
+      return hasHome && debtServiceRatio <= 0.25 ? 100 : hasHome ? 65 : ratioProgress(availableCash + player.cpfOrdinary, 140_000);
+    case 'legacy-income-floor':
+      return monthlyNetCashflow >= 1_500 && player.life.stress <= 45 ? 100 : ratioProgress(monthlyNetCashflow, 1_500);
     default:
       return 0;
   }
@@ -239,6 +251,7 @@ function getWhyItMatters(routeId: RunRouteId, phase: RunRoutePhase): string {
   if (routeId === 'heartland-landlord') return 'Yield only feels good when tenants stay happy and repairs do not ambush your cash.';
   if (routeId === 'commercial-operator') return 'Commercial upside is powerful, but vacancy and fit-out risk punish sloppy operators.';
   if (routeId === 'fire-homeowner') return 'Lower fragility keeps the run alive even when salary, rates, or repairs wobble.';
+  if (routeId === 'senior-rightsizer') return 'Later-life property choices should preserve CPF, repair runway, and retirement cashflow before leverage.';
   if (routeId === 'foreign-investor') return 'High ABSD makes liquidity and tenant execution more important than headline price moves.';
   return 'This phase is where affordability turns into ownership discipline and upgrade timing.';
 }

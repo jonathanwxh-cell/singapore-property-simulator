@@ -23,7 +23,7 @@ const beginnerSteps = [
   },
   {
     title: 'Replay through different life arcs',
-    body: 'A BTO upgrader, PR private climber, single buyer, and foreign investor all teach different Singapore tradeoffs.',
+    body: 'A BTO upgrader, PR private climber, single buyer, foreign investor, and 55+ rightsizer all teach different Singapore tradeoffs.',
     icon: Route,
   },
 ];
@@ -56,6 +56,11 @@ const mechanicsReference = [
     label: 'Ownership loop',
     formula: 'Monthly surplus = take-home pay + rent - loans - upkeep - household load',
     note: 'Repairs, vacancy, renovation, and reserve choices are the landlord game after buying.',
+  },
+  {
+    label: '55+ stability',
+    formula: 'Retirement runway = cashflow + CPF context - housing debt and repair risk',
+    note: 'Senior routes focus on CPF 55, right-sizing, lease monetisation concepts, and lower fragility.',
   },
 ];
 

@@ -6,7 +6,7 @@ import GlassCard from '@/components/GlassCard';
 import ProgressivePanel from '@/components/ProgressivePanel';
 import { Search, MapPin, Bed, Bath, Maximize, Sparkles, SlidersHorizontal, Scale, X } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { buildListingSummary, getDynamicListingSignals, getListingCatalog } from '@/engine/listings';
 import { formatCompactCurrency, formatCurrency } from '@/lib/format';
 import { useGameStore } from '@/game/useGameStore';
@@ -31,7 +31,10 @@ const filterPresets: Array<{ id: FilterPreset; label: string; detail: string }> 
 
 export default function Properties() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { player, settings, updateSettings } = useGameStore();
+  const districtParam = Number(searchParams.get('district'));
+  const districtFromQuery = districts.find((district) => district.id === districtParam);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
@@ -61,6 +64,8 @@ export default function Properties() {
     propertyIds: comparisonIds.length > 0 ? comparisonIds : suggestedComparisonIds,
   });
   const comparisonMode = comparisonIds.length > 0 ? 'selected' : 'suggested';
+  const activePreset = districtFromQuery ? 'advanced' : preset;
+  const showAdvancedFilterControls = showAdvancedFilters || Boolean(districtFromQuery);
 
   const filtered = catalog.filter(p => {
     const district = districts.find(d => d.id === p.districtId);
@@ -71,11 +76,12 @@ export default function Properties() {
     const matchesType = typeFilter === 'all' || p.type === typeFilter;
     const matchesRegion = regionFilter === 'all' || district?.region === regionFilter;
     const matchesChannel = channelFilter === 'all' || p.listingChannel === channelFilter;
-    const matchesPreset = preset === 'advanced'
-      || (preset === 'starter' && (p.isHdb || p.type === 'Executive Condo'))
-      || (preset === 'yield' && (p.rentalYield >= 4.2 || p.strategyTag.toLowerCase().includes('yield')))
-      || (preset === 'upgrade' && ['Executive Condo', 'Private Condo', 'Landed Terrace', 'Landed Semi-D', 'Landed Bungalow'].includes(p.type));
-    return matchesSearch && matchesType && matchesRegion && matchesChannel && matchesPreset;
+    const matchesPreset = activePreset === 'advanced'
+      || (activePreset === 'starter' && (p.isHdb || p.type === 'Executive Condo'))
+      || (activePreset === 'yield' && (p.rentalYield >= 4.2 || p.strategyTag.toLowerCase().includes('yield')))
+      || (activePreset === 'upgrade' && ['Executive Condo', 'Private Condo', 'Landed Terrace', 'Landed Semi-D', 'Landed Bungalow'].includes(p.type));
+    const matchesDistrictQuery = !districtFromQuery || p.districtId === districtFromQuery.id;
+    return matchesSearch && matchesType && matchesRegion && matchesChannel && matchesPreset && matchesDistrictQuery;
   });
 
   const handlePresetChange = (nextPreset: FilterPreset) => {
@@ -99,7 +105,8 @@ export default function Properties() {
   const handleRemoveCompare = (propertyId: string) => {
     setComparisonIds((ids) => ids.filter((id) => id !== propertyId));
   };
-  const visibleListings = showAllListings ? filtered : filtered.slice(0, 12);
+  const showAllVisibleListings = showAllListings || Boolean(districtFromQuery);
+  const visibleListings = showAllVisibleListings ? filtered : filtered.slice(0, 12);
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
@@ -110,6 +117,11 @@ export default function Properties() {
             {!settings.compactMode && (
               <p className="text-text-secondary mt-1 font-rajdhani">
                 Start with the recommended deal, then open filters only when you want to browse like an expert.
+              </p>
+            )}
+            {districtFromQuery && (
+              <p className="mt-2 inline-flex rounded-full border border-cyan-glow/25 bg-cyan-glow/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-cyan-glow">
+                Viewing D{districtFromQuery.id} {districtFromQuery.name}
               </p>
             )}
           </div>
@@ -237,17 +249,17 @@ export default function Properties() {
                 type="button"
                 onClick={() => handlePresetChange(option.id)}
                 className={`rounded-2xl border p-3 text-left transition-colors ${
-                  preset === option.id
+                  activePreset === option.id
                     ? 'border-cyan-glow/50 bg-cyan-glow/10'
                     : 'border-glass-border bg-white/[0.03] hover:border-white/20'
                 }`}
               >
-                <p className={`font-rajdhani font-semibold ${preset === option.id ? 'text-cyan-glow' : 'text-white'}`}>{option.label}</p>
+                <p className={`font-rajdhani font-semibold ${activePreset === option.id ? 'text-cyan-glow' : 'text-white'}`}>{option.label}</p>
                 <p className="text-text-secondary text-xs mt-1">{option.detail}</p>
               </button>
             ))}
           </div>
-          {preset === 'starter' && !settings.compactMode && (
+          {activePreset === 'starter' && !settings.compactMode && (
             <div className="rounded-2xl border border-cyan-glow/20 bg-cyan-glow/10 p-3">
               <p className="label-text mb-1 text-[9px] text-cyan-glow">Why these listings?</p>
               <p className="text-xs leading-relaxed text-text-secondary">
@@ -273,7 +285,7 @@ export default function Properties() {
             <SlidersHorizontal size={14} />
             {showAdvancedFilters ? 'Hide filters' : 'More filters'}
           </button>
-          {showAdvancedFilters && (
+          {showAdvancedFilterControls && (
             <div className="flex flex-wrap gap-3 rounded-2xl border border-glass-border bg-black/20 p-3">
               <select
                 value={typeFilter}
@@ -313,7 +325,7 @@ export default function Properties() {
         <p className="text-text-secondary text-sm mb-4">
           {filtered.length} properties found
           <span className="text-text-dim"> | {new Set(filtered.map((property) => property.districtId)).size} districts in view</span>
-          {!showAllListings && filtered.length > visibleListings.length && (
+          {!showAllVisibleListings && filtered.length > visibleListings.length && (
             <span className="text-text-dim"> | showing the first {visibleListings.length} to keep browsing readable</span>
           )}
         </p>
@@ -463,7 +475,7 @@ export default function Properties() {
             );
           })}
         </div>
-        {filtered.length > visibleListings.length && (
+        {!showAllVisibleListings && filtered.length > visibleListings.length && (
           <div className="mt-6 flex justify-center">
             <button onClick={() => setShowAllListings(true)} className="btn-secondary px-5 py-3 text-sm">
               Show All {filtered.length} Listings

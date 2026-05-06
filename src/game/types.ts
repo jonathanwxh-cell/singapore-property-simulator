@@ -11,7 +11,8 @@ export type RunRouteId =
   | 'foreign-investor'
   | 'heartland-landlord'
   | 'commercial-operator'
-  | 'fire-homeowner';
+  | 'fire-homeowner'
+  | 'senior-rightsizer';
 export type RunRoutePhase = 'foundation' | 'acquisition' | 'ownership' | 'expansion' | 'legacy';
 export type RouteMilestoneStatus = 'locked' | 'active' | 'completed';
 export type RouteMilestoneImpact = 'cash' | 'eligibility' | 'risk' | 'yield' | 'debt' | 'lifestyle';

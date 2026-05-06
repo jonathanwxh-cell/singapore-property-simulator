@@ -69,6 +69,7 @@ export function getDealComparisonShortlist(player: Player, seedIds: string[] = [
     'heartland-landlord': ['hdb-resale-0', 'hdb-bto-0', 'condo-4'],
     'commercial-operator': ['commercial-3', 'commercial-5', 'condo-4'],
     'fire-homeowner': ['hdb-bto-0', 'hdb-resale-0', 'condo-4'],
+    'senior-rightsizer': ['hdb-resale-0', 'hdb-bto-0', 'condo-4'],
   };
   const readyStarter = properties.find((property) => property.id === 'hdb-bto-0');
   const ids = [
@@ -174,6 +175,8 @@ function getRouteFitScore(property: Property, routeId: RunRouteId, verdict: Deal
         return property.type.startsWith('Commercial') ? 45 : 10;
       case 'fire-homeowner':
         return property.price <= 700_000 || property.isHdb ? 40 : 10;
+      case 'senior-rightsizer':
+        return property.isHdb && property.price <= 600_000 ? 45 : property.isHdb ? 30 : 5;
       default:
         return 20;
     }

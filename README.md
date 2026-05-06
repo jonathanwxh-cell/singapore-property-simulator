@@ -20,6 +20,8 @@ The current build includes a Decision Coach layer across the dashboard, property
 
 The dashboard also includes a first-home mission rail and a plain-English rule glossary so players can understand CPF OA, ABSD, MOP, room rental, MSR, TDSR, and reserves without leaving the game flow. A dedicated Learn hub and inline glossary chips make the sim approachable for casual tycoon players with no prior Singapore property knowledge.
 
+The latest guidance pass adds a "First 3 Moves" quest rail, celebratory reward beats, a practice-purchase simulation on property detail pages, BTO/HFE timeline cards, mobile More navigation, and a 55+ Rightsizer route for CPF-after-55 and retirement-runway playthroughs.
+
 1. **Earn** — Monthly salary (career-dependent) flows in after CPF deductions
 2. **Buy** — Browse 120+ fictional live listings across 9 property types, 28 districts, and 6 listing channels
 3. **Finance** — Take mortgages, manage LTV caps and TDSR/MSR limits
@@ -45,7 +47,7 @@ This is not account-based cloud sync yet. It is a cloud-drive-friendly transfer 
 
 Run Director turns each playthrough into a clearer Singapore property story. Routes guide what the Decision Coach prioritizes, how milestones are framed, which scenario themes get extra weight, and what the endgame recap recommends for the next replay. Routes are advisory rather than restrictive: the simulator still lets players make any purchase or operating move that passes the underlying eligibility and affordability rules.
 
-Beginner-friendly routes include `BTO-to-Condo Upgrader` and `Single 35 Resale Buyer`. More advanced routes include `PR Private-Market Climber`, `Foreign Investor`, `Heartland Landlord`, `Commercial Operator`, and `FIRE / Debt-Free Homeowner`.
+Beginner-friendly routes include `BTO-to-Condo Upgrader`, `Single 35 Resale Buyer`, and `55+ Rightsizer`. More advanced routes include `PR Private-Market Climber`, `Foreign Investor`, `Heartland Landlord`, `Commercial Operator`, and `FIRE / Debt-Free Homeowner`.
 
 ### Win / Lose
 
@@ -109,6 +111,7 @@ Property, development, tenant, and listing names are fictional/composite. The si
 - Portfolio summaries surface portfolio styles such as `Heartland Landlord` and `Commercial Cashflow Operator`.
 - Contextual scenarios now key off what you actually own, whether it is rented, whether you are holding aging leasehold stock, and which life arc is guiding the run.
 - Guided-playability surfaces now translate complex mechanics into plain-English next moves, blocker labels, and expected effects so new players can keep momentum.
+- Property detail pages now support practice purchase readouts that show cash after CPF, available cash after reserves, projected monthly surplus, BTO/HFE milestones, and 55+ rightsizing warnings before a real buy mutates the save.
 
 ---
 

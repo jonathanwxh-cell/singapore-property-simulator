@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Guidance and longevity route pass**: Dashboard now has a "First 3 Moves" quest rail with reward beats, property detail pages include a non-mutating Practice Purchase simulation, BTO listings show an HFE-to-key-collection timeline, and New Game includes a 55+ Rightsizer route.
+- **Senior Singapore realism layer**: added CPF 55, lease-buyback, and Silver Housing Bonus glossary concepts, plus CPF Full Retirement Sum reference checks inside the senior rightsizing readout.
+- **Market district drilldown**: Market heatmap cells and opportunity cards now navigate directly into district-filtered Buy listings.
+- **Mobile More menu**: mobile navigation now exposes Market, Bank, Save, Scenarios, Leaderboard, and Settings without crowding the primary Home/Life/Buy/Own/Learn bar.
 - **Practice deal comparison**: Buy page now includes a "Compare Before You Buy" panel, route-aware suggested shortlist, and listing-card compare toggles so players can rehearse cash, duties, surplus, yield, worst case, and next fixes before committing.
 - **First 10 Minutes + Fun Loop 2.0**: research-backed onboarding spec, Dashboard last-month recap, beginner advanced-panel gate, mechanics-reference formulas, and explicit next-fix guidance for blocked purchases.
 - **Mega playtest response pass**: accessibility display modes, foreigner-safe deal recommendations, self-employed income volatility, and bank income-haircut explainers based on the 15-persona report.
@@ -45,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Landlord Ops 2.0**: lease renewal decisions, rent-push vacancy risk, reserve-gap milestones, richer maintenance events, and new landlord/repair visual cards.
 
 ### Changed
+- Replaced the misleading top-bar pause toggle with a Learn/Guide button, because the game is turn-based and time only moves when the player advances the month.
+- The Learn hub now frames 55+ rightsizing as a replayable route alongside first-home, PR, foreign-investor, landlord, commercial, and FIRE paths.
 - Monthly Intent now separates "Use plan + advance" from "Open first" so beginners can inspect Life/Buy/Own before time moves.
 - New Game career cards now show the difficulty-adjusted starting salary so Tycoon and Hard runs no longer look like the career salary changed mysteriously after start.
 - ABSD glossary guidance now surfaces the simplified SC/PR/foreigner rate ladder, including PR second-home and foreigner residential friction.

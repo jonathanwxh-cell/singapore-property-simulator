@@ -141,6 +141,26 @@ export const runRoutes: RunRoute[] = [
       { id: 'low-stress-legacy', label: 'End wealthy without burning out', detail: 'Finish with strong net worth, manageable stress, and low bankruptcy risk.', route: '/life', actionLabel: 'Review Life Balance', impact: 'lifestyle', phase: 'legacy' },
     ],
   },
+  {
+    id: 'senior-rightsizer',
+    label: '55+ Rightsizer',
+    shortLabel: 'Rightsizer',
+    tagline: 'Turn housing equity into stability without letting CPF, repairs, or debt surprise you.',
+    description: 'A later-life Singapore route about right-sizing, CPF retirement adequacy, lease monetisation, and repair runway.',
+    difficultyHint: 'Strategic, stability-first',
+    beginnerFriendly: true,
+    accentColor: '#FFCA28',
+    recommendedBuyerProfiles: ['single-35-plus', 'couple-family'],
+    recommendedResidency: ['sc'],
+    primaryLessons: ['CPF after 55', 'Right-sizing tradeoffs', 'Retirement cashflow'],
+    scenarioTags: ['cpf', 'retirement', 'policy', 'reserve'],
+    milestoneTemplates: [
+      { id: 'cpf-55-check', label: 'Understand CPF 55 checkpoint', detail: 'Know how OA/SA can interact with Retirement Account needs before buying again.', route: '/learn', actionLabel: 'Learn CPF 55', impact: 'eligibility', phase: 'foundation' },
+      { id: 'rightsize-cash-runway', label: 'Keep 12 months of runway', detail: 'Protect repairs, healthcare, and moving costs before committing to the next home.', route: '/portfolio', actionLabel: 'Set Reserve', impact: 'risk', phase: 'foundation' },
+      { id: 'lower-debt-home', label: 'Choose a lower-debt home', detail: 'Right-size into a payment that preserves monthly income and retirement optionality.', route: '/properties', actionLabel: 'Compare Homes', impact: 'debt', phase: 'acquisition' },
+      { id: 'legacy-income-floor', label: 'Build a retirement income floor', detail: 'Finish with positive monthly runway, low stress, and fewer surprise repair shocks.', route: '/dashboard', actionLabel: 'Review Runway', impact: 'cash', phase: 'legacy' },
+    ],
+  },
 ];
 
 export const runRoutesById: Record<RunRouteId, RunRoute> = Object.fromEntries(

@@ -51,6 +51,17 @@ export default function NewGame() {
     navigate('/dashboard');
   };
 
+  const handleSeniorStart = () => {
+    newGame(
+      name.trim() || 'Silver Strategist',
+      'civil',
+      'normal',
+      { residencyStatus: 'sc', householdProfile: 'single-35-plus', age: 58 },
+      'senior-rightsizer',
+    );
+    navigate('/dashboard');
+  };
+
   const applyBuyerProfile = (profile: BuyerProfile) => {
     setBuyerProfile(profile);
     setRunRouteId(recommendRunRoute(profile));
@@ -130,6 +141,9 @@ export default function NewGame() {
                       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                         <button type="button" onClick={() => navigate('/learn', { state: { returnTo: '/newgame', returnLabel: 'Back to setup' } })} className="btn-secondary text-xs py-2 px-3">
                           Preview Learn Hub
+                        </button>
+                        <button type="button" onClick={handleSeniorStart} className="btn-secondary text-xs py-2 px-3">
+                          Start 55+ Rightsizer
                         </button>
                       </div>
                     </div>
@@ -276,7 +290,7 @@ export default function NewGame() {
                 <label className="label-text text-text-dim text-xs block mb-2">Starting Age</label>
                 <select
                   value={buyerProfile.age}
-                  onChange={(event) => setBuyerProfile((profile) => ({ ...profile, age: Number(event.target.value) }))}
+                  onChange={(event) => applyBuyerProfile({ ...buyerProfile, age: Number(event.target.value) })}
                   className="w-full bg-void-navy border border-glass-border rounded-input px-4 py-3 text-white font-mono focus:border-cyan-glow focus:outline-none transition-colors"
                 >
                   {getAgeOptions(buyerProfile.householdProfile).map((age) => (
@@ -304,11 +318,22 @@ export default function NewGame() {
                 const isSelected = runRouteId === route.id;
                 const recommended =
                   route.recommendedBuyerProfiles.includes(buyerProfile.householdProfile)
-                  && route.recommendedResidency.includes(buyerProfile.residencyStatus);
+                  && route.recommendedResidency.includes(buyerProfile.residencyStatus)
+                  && (route.id !== 'senior-rightsizer' || buyerProfile.age >= 55);
                 return (
                   <button
                     key={route.id}
-                    onClick={() => setRunRouteId(route.id)}
+                    onClick={() => {
+                      setRunRouteId(route.id);
+                      if (route.id === 'senior-rightsizer') {
+                        setBuyerProfile((profile) => ({
+                          ...profile,
+                          residencyStatus: 'sc',
+                          householdProfile: profile.householdProfile === 'foreigner-investor' ? 'single-35-plus' : profile.householdProfile,
+                          age: Math.max(profile.age, 58),
+                        }));
+                      }
+                    }}
                     className={`glass-card p-3 text-left transition-all w-full ${isSelected ? 'border-cyan-glow/50 bg-cyan-glow/5' : 'hover:bg-white/5'}`}
                   >
                     <div className="flex items-start gap-3">
@@ -444,13 +469,14 @@ const residencyOptions: Array<{
 
 function getAgeOptions(householdProfile: HouseholdProfile): number[] {
   if (householdProfile === 'single-under-35') return [27, 30, 34];
-  if (householdProfile === 'single-35-plus') return [35, 40, 45];
-  return [27, 30, 35, 40, 45];
+  if (householdProfile === 'single-35-plus') return [35, 40, 45, 55, 58, 65];
+  return [27, 30, 35, 40, 45, 55, 58, 65];
 }
 
 function recommendRunRoute(profile: BuyerProfile): RunRouteId {
   if (profile.residencyStatus === 'foreigner' || profile.householdProfile === 'foreigner-investor') return 'foreign-investor';
   if (profile.residencyStatus === 'spr') return 'pr-private-climber';
+  if (profile.age >= 55) return 'senior-rightsizer';
   if (profile.householdProfile === 'single-35-plus') return 'single-resale';
   return 'bto-upgrader';
 }

@@ -1,4 +1,5 @@
 import { useGameStore } from '@/game/useGameStore';
+import { useNavigate } from 'react-router-dom';
 import { districts, heatmapColors } from '@/data/districts';
 import { eras } from '@/data/eras';
 import GlassCard from '@/components/GlassCard';
@@ -9,6 +10,7 @@ import { buildDistrictOpportunityCards, buildListingSummary, getMarketMovers } f
 
 export default function Market() {
   const { market } = useGameStore();
+  const navigate = useNavigate();
   const summary = buildListingSummary();
   const movers = getMarketMovers();
   const opportunityCards = buildDistrictOpportunityCards()
@@ -100,10 +102,17 @@ export default function Market() {
               const color = heatmapColors[d.heatmapTier];
               const avgPrice = Math.round((d.avgPSFRange[0] + d.avgPSFRange[1]) / 2);
               return (
-                <div key={d.id} className="rounded-lg p-2 text-center cursor-pointer hover:scale-105 transition-transform" style={{ backgroundColor: `${color}20`, border: `1px solid ${color}50` }} title={`D${d.id} ${d.name}: ${formatCurrency(avgPrice)} PSF`}>
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => navigate(`/properties?district=${d.id}`)}
+                  className="rounded-lg p-2 text-center cursor-pointer hover:scale-105 transition-transform"
+                  style={{ backgroundColor: `${color}20`, border: `1px solid ${color}50` }}
+                  title={`D${d.id} ${d.name}: ${formatCurrency(avgPrice)} PSF`}
+                >
                   <p className="font-mono text-[10px]" style={{ color }}>D{d.id}</p>
                   <p className="font-mono text-[10px] text-white">{formatCurrency(avgPrice)}</p>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -134,7 +143,12 @@ export default function Market() {
           </div>
           <div className="grid md:grid-cols-2 gap-3">
             {opportunityCards.map((card) => (
-              <div key={card.districtId} className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <button
+                key={card.districtId}
+                type="button"
+                onClick={() => navigate(`/properties?district=${card.districtId}`)}
+                className="rounded-lg border border-white/10 bg-white/5 p-3 text-left transition-colors hover:border-cyan-glow/35 hover:bg-cyan-glow/10"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-rajdhani text-white text-sm">D{card.districtId} {card.districtName}</p>
@@ -148,7 +162,7 @@ export default function Market() {
                 <p className="text-text-secondary text-xs mt-3">
                   Average ticket: {formatCompactCurrency(card.averagePrice)}
                 </p>
-              </div>
+              </button>
             ))}
           </div>
         </GlassCard>

@@ -1,13 +1,12 @@
 import { useGameStore } from '@/game/useGameStore';
-import { Settings, Pause, Play, Save } from 'lucide-react';
+import { BookOpen, Settings, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState, memo } from 'react';
+import { memo } from 'react';
 import { selectAvailableCash, selectNetWorth, selectReservedCash } from '@/engine/selectors';
 
 const HUDTopBar = memo(function HUDTopBar() {
   const navigate = useNavigate();
   const { player, isGameActive } = useGameStore();
-  const [isPaused, setIsPaused] = useState(false);
 
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -68,11 +67,11 @@ const HUDTopBar = memo(function HUDTopBar() {
           {isGameActive && (
             <>
               <button
-                onClick={() => setIsPaused(!isPaused)}
+                onClick={() => navigate('/learn')}
                 className="flex h-11 w-11 items-center justify-center rounded-hud border border-cyan-glow/30 text-cyan-glow transition-all hover:bg-cyan-glow/10"
-                title={isPaused ? 'Resume' : 'Pause'}
+                title="Open guide. This is turn-based, so time only moves when you advance."
               >
-                {isPaused ? <Play size={18} /> : <Pause size={18} />}
+                <BookOpen size={18} />
               </button>
               <button
                 onClick={() => navigate('/saveload')}

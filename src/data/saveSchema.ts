@@ -14,6 +14,7 @@ const runRouteSchema = z.enum([
   'heartland-landlord',
   'commercial-operator',
   'fire-homeowner',
+  'senior-rightsizer',
 ]);
 const buyerProfileSchema = z.object({
   residencyStatus: z.enum(['sc', 'spr', 'foreigner']),
