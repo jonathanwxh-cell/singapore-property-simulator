@@ -302,7 +302,7 @@ export function applyTenantMonthlyEvent(
   if (!tenant) return { property };
 
   const cadence = getTenantEventCadence(property);
-  const profileSeed = tenant.profileId === 'student-tenants' ? 1 : tenant.profileId === 'sme-commercial' ? 2 : 0;
+  const profileSeed = getTenantProfileSeed(tenant.profileId);
   if ((nextTurn + propertyIndex + profileSeed) % cadence !== 0) {
     return { property };
   }
@@ -380,6 +380,18 @@ function getTenantEventCadence(property: OwnedProperty): number {
   if (tenant.rentStrategy === 'aggressive') return 5;
   if (tenant.profileId === 'sme-commercial') return 5;
   return 6;
+}
+
+function getTenantProfileSeed(profileId: TenantProfileId): number {
+  switch (profileId) {
+    case 'student-tenants':
+      return 1;
+    case 'sme-commercial':
+      return 2;
+    case 'local-family':
+    case 'expat-pmet':
+      return 0;
+  }
 }
 
 function buildTenantEventResult({

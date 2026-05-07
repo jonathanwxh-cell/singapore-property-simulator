@@ -12,6 +12,7 @@ export const HDB_CONCESSIONARY_LOAN_INTEREST = 2.6;
 export const HDB_CONCESSIONARY_LTV = 0.75;
 export const HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT = 25;
 export const HDB_RESALE_LEVY_ESTIMATE = 40_000;
+export const HDB_MOP_MONTHS = 60;
 
 // Market dynamics
 // Property values track the broader price index but at this fraction of its move

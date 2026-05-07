@@ -10,6 +10,7 @@ import {
   CREDIT_DELTA_LOAN_PAYMENT,
   CREDIT_DELTA_LOAN_PAID_OFF,
   MIN_LOAN_AMOUNT,
+  HDB_MOP_MONTHS,
 } from './constants';
 import { calcMonthlyPayment, calcTDSR } from './finance';
 import { selectBankAssessableMonthlyIncome } from './income';
@@ -175,7 +176,7 @@ export function buyPropertyPure(
     }),
     listingChannel: property.listingChannel,
     conditionScore: 72,
-    mopRemainingMonths: property.isHdb ? 60 : 0,
+    mopRemainingMonths: property.isHdb ? HDB_MOP_MONTHS : 0,
     completedRenovations: [],
     openMaintenanceIssues: [],
     rentStrategy: 'market',
@@ -231,7 +232,7 @@ export function sellPropertyPure(player: Player, propertyIndex: number): ActionR
 
   const saleValue = Math.round(property.currentValue);
   const profit = saleValue - property.purchasePrice;
-  const currentTurn = deriveTurnFromCalendar(player.year, player.month);
+  const currentTurn = player.turnCount;
   const propertyCategory = listing ? (isResidentialCategory(listing.type) ? 'private-residential' : 'commercial') : 'commercial';
   const acquisition = parsePurchaseDate(property.purchaseDate);
   const ssd = listing && acquisition
@@ -453,6 +454,3 @@ function parsePurchaseDate(raw: string): { year: number; month: number } | null 
   };
 }
 
-function deriveTurnFromCalendar(year: number, month: number): number {
-  return Math.max(0, (year - 2024) * 12 + (month - 1));
-}

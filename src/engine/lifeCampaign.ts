@@ -1,6 +1,6 @@
 import { scenarios } from '@/data/scenarios';
 import { difficultySettings, normalizeBuyerProfile, type Player, type RunRoutePhase } from '@/game/types';
-import { TAKE_HOME_RATIO } from './constants';
+import { HDB_MOP_MONTHS, TAKE_HOME_RATIO } from './constants';
 import { getNextBestMoves, type CoachUrgency } from './decisionCoach';
 import { getFirstRunQuest } from './runQuest';
 import { getRunArc } from './runDirector';
@@ -154,7 +154,7 @@ function getActiveMission(
       route: '/portfolio',
       actionLabel: 'Operate Home',
       tone: 'neutral',
-      progressPct: Math.max(10, 100 - Math.round(((mopHome.mopRemainingMonths ?? 0) / 60) * 100)),
+      progressPct: Math.max(10, 100 - Math.round(((mopHome.mopRemainingMonths ?? 0) / HDB_MOP_MONTHS) * 100)),
     };
   }
 
@@ -219,7 +219,7 @@ function getChapterProgress(player: Player, chapterId: RunRoutePhase, arcProgres
   if (chapterId === 'acquisition') return player.properties.length > 0 ? 100 : Math.max(questProgress, Math.min(95, arcProgress));
   if (chapterId === 'ownership') {
     const mopHome = player.properties.find((property) => (property.mopRemainingMonths ?? 0) > 0);
-    if (mopHome) return Math.max(10, 100 - Math.round(((mopHome.mopRemainingMonths ?? 0) / 60) * 100));
+    if (mopHome) return Math.max(10, 100 - Math.round(((mopHome.mopRemainingMonths ?? 0) / HDB_MOP_MONTHS) * 100));
   }
   return arcProgress;
 }

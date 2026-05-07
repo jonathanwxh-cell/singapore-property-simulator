@@ -1,6 +1,6 @@
 import { properties, getPropertyCategory, isResidentialCategory, type Property } from '@/data/properties';
 import type { OwnedProperty, Player } from '@/game/types';
-import { TAKE_HOME_RATIO } from './constants';
+import { HDB_MOP_MONTHS, TAKE_HOME_RATIO } from './constants';
 import {
   selectAvailableCash,
   selectMonthlyNetCashflow,
@@ -58,7 +58,9 @@ export function getNextHomePlan(player: Player): NextHomePlan {
       ? Math.ceil(shortfall / monthlySavingsRate)
       : null;
   const mopMonthsRemaining = phase === 'active-mop' ? ownedContext?.holding.mopRemainingMonths ?? 0 : 0;
-  const mopProgressPct = mopMonthsRemaining > 0 ? Math.min(100, Math.round(((60 - mopMonthsRemaining) / 60) * 100)) : 100;
+  const mopProgressPct = mopMonthsRemaining > 0
+    ? Math.min(100, Math.round(((HDB_MOP_MONTHS - mopMonthsRemaining) / HDB_MOP_MONTHS) * 100))
+    : 100;
   const bottleneck = getNextHomeBottleneck({
     player,
     phase,

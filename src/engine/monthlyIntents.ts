@@ -134,7 +134,7 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
       ...rankedMopOptions,
     ].slice(0, 3);
 
-    if (!activeMopOptions.some((option) => option.recommended)) {
+    if (activeMopOptions.length > 0 && !activeMopOptions.some((option) => option.recommended)) {
       activeMopOptions[0] = { ...activeMopOptions[0], recommended: true };
     }
 
@@ -206,7 +206,7 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
   const deduped = options.filter((option, index, list) => {
     return list.findIndex((candidate) => candidate.id === option.id) === index;
   });
-  if (!deduped.some((option) => option.recommended)) {
+  if (deduped.length > 0 && !deduped.some((option) => option.recommended)) {
     deduped[0] = { ...deduped[0], recommended: true };
   }
 

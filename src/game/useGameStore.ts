@@ -527,11 +527,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   applyMonthlyIntent: (intent) => {
-    set((state) => {
+    const state = get();
+    if (state.currentScenario || !state.isGameActive) return;
+    set((current) => {
       const preparedPlayer = withMonthlyIntentSelection({
-        ...state.player,
+        ...current.player,
         life: {
-          ...state.player.life,
+          ...current.player.life,
           selectedPrimaryActionId: intent.primaryActionId,
           selectedSecondaryActionId: intent.secondaryActionId,
         },
