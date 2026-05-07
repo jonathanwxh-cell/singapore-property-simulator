@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { SAVE_VERSION } from '@/engine/constants';
 
 const renovationCategorySchema = z.enum(['kitchen', 'bathroom', 'flooring', 'smart-home', 'layout', 'commercial-fitout', 'maintenance-overhaul']);
+const renovationContractorTierSchema = z.enum(['budget', 'standard', 'premium']);
 const rentStrategySchema = z.enum(['conservative', 'market', 'aggressive']);
 const rentalModeSchema = z.enum(['room-rental', 'whole-unit', 'corporate-lease', 'student-shared', 'commercial-lease']);
 const tenantProfileSchema = z.enum(['local-family', 'expat-pmet', 'student-tenants', 'sme-commercial']);
@@ -35,6 +36,7 @@ const renovationProjectSchema = z.object({
   templateId: z.string(),
   propertyId: z.string(),
   category: renovationCategorySchema,
+  contractorTier: renovationContractorTierSchema.optional(),
   label: z.string(),
   cost: z.number().finite().nonnegative(),
   durationMonths: z.number().int().nonnegative(),
@@ -44,6 +46,8 @@ const renovationProjectSchema = z.object({
   satisfactionUplift: z.number().finite(),
   riskPct: z.number().finite().min(0).max(100),
   conditionDelta: z.number().finite(),
+  projectedPaybackMonths: z.number().int().nonnegative().nullable().optional(),
+  projectedCompletionTurn: z.number().int().nonnegative().optional(),
   status: z.enum(['planned', 'active', 'completed', 'overrun', 'cancelled']),
   startedTurn: z.number().int().nonnegative(),
 });
@@ -60,6 +64,7 @@ const tenantStateSchema = z.object({
   defaultRiskPct: z.number().min(0).max(100),
   renewalIntent: z.number().min(0).max(100),
   lastLeaseDecisionTurn: z.number().int().nonnegative().optional(),
+  lastMonthlyEventTurn: z.number().int().nonnegative().optional(),
 });
 
 const maintenanceIssueSchema = z.object({

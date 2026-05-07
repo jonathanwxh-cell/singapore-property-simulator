@@ -11,12 +11,13 @@
 //   - reserveOperations.ts      (reserve plan + default)
 //   - operationsShared.ts       (internal helpers — `clamp`, `getListing`, etc.)
 
-import { getRenovationTemplate } from '@/data/renovations';
+import { getRenovationQuote, getRenovationTemplate } from '@/data/renovations';
 import { rentStrategies } from '@/data/tenantProfiles';
 import type {
   OwnedProperty,
   Player,
   PropertyOperationLogEntry,
+  RenovationContractorTier,
 } from '@/game/types';
 import type { ActionResult } from './results';
 import { fail, ok } from './results';
@@ -29,6 +30,7 @@ import {
   withOperationLog,
 } from './operationsShared';
 import { createMaintenanceIssue } from './maintenanceOperations';
+import { applyTenantMonthlyEvent } from './tenantOperations';
 
 // Re-exports — keeps the existing `import { ... } from './propertyOperations'`
 // surface intact for `useGameStore`, `portfolio.ts`, `Portfolio.tsx`,
@@ -38,6 +40,7 @@ export { deriveFloorPlanId, normalizeOperationProperty } from './operationsShare
 export { createDefaultReserve, setReservePlanPure } from './reserveOperations';
 export type { ReservePlanInput } from './reserveOperations';
 export {
+  applyTenantMonthlyEvent,
   setTenantStrategyPure,
   getTenantLeaseOptions,
   applyTenantLeaseDecisionPure,
@@ -55,6 +58,9 @@ export interface LandlordOpsMilestone {
 
 export interface LandlordOpsSummary {
   occupancyRate: number;
+  healthScore: number;
+  healthLabel: string;
+  nextPriority: string;
   averageTenantSatisfaction: number | null;
   openIssueCount: number;
   urgentIssueCount: number;
@@ -72,6 +78,7 @@ export function startRenovationPure(
   player: Player,
   propertyIndex: number,
   templateId: string,
+  contractorTier: RenovationContractorTier = 'standard',
 ): ActionResult<{ player: Player }> {
   if (propertyIndex < 0 || propertyIndex >= player.properties.length) {
     return fail('invalid_index', 'Invalid property index.');
@@ -92,7 +99,8 @@ export function startRenovationPure(
   if ((property.completedRenovations ?? []).includes(template.category)) {
     return fail('renovation_completed', 'This renovation category is already completed.');
   }
-  if (player.cash < template.cost) {
+  const quote = getRenovationQuote(template, contractorTier, property.monthlyRental);
+  if (player.cash < quote.cost) {
     return fail('insufficient_cash', 'Not enough cash for this renovation.');
   }
 
@@ -101,15 +109,18 @@ export function startRenovationPure(
     templateId: template.id,
     propertyId: property.propertyId,
     category: template.category,
+    contractorTier,
     label: template.label,
-    cost: template.cost,
-    durationMonths: template.durationMonths,
-    remainingMonths: template.durationMonths,
-    rentUpliftPct: template.rentUpliftPct,
-    resaleUpliftPct: template.resaleUpliftPct,
-    satisfactionUplift: template.satisfactionUplift,
-    riskPct: template.riskPct,
-    conditionDelta: template.conditionDelta,
+    cost: quote.cost,
+    durationMonths: quote.durationMonths,
+    remainingMonths: quote.durationMonths,
+    rentUpliftPct: quote.rentUpliftPct,
+    resaleUpliftPct: quote.resaleUpliftPct,
+    satisfactionUplift: quote.satisfactionUplift,
+    riskPct: quote.riskPct,
+    conditionDelta: quote.conditionDelta,
+    projectedPaybackMonths: quote.projectedPaybackMonths,
+    projectedCompletionTurn: player.turnCount + quote.durationMonths,
     status: 'active' as const,
     startedTurn: player.turnCount,
   };
@@ -125,13 +136,13 @@ export function startRenovationPure(
 
   const updatedPlayer = withOperationLog({
     ...player,
-    cash: roundMoney(player.cash - template.cost),
+    cash: roundMoney(player.cash - quote.cost),
     properties: updatedProperties,
   }, {
     propertyId: property.propertyId,
     title: `${template.label} started`,
-    detail: `${template.durationMonths} month renovation begun. Tenants paused: ${template.disruptive ? 'yes' : 'no'}.`,
-    tone: template.disruptive ? 'warn' : 'good',
+    detail: `${quote.durationMonths} month ${quote.contractor.label.toLowerCase()} job begun at S$${quote.cost.toLocaleString()}. Tenants paused: ${template.disruptive ? 'yes' : 'no'}.`,
+    tone: template.disruptive || contractorTier === 'budget' ? 'warn' : 'good',
   });
 
   return ok({ player: updatedPlayer });
@@ -156,6 +167,17 @@ export function getLandlordOpsSummary(player: Player): LandlordOpsSummary {
     ? null
     : Math.round(tenantScores.reduce((sum, score) => sum + score, 0) / tenantScores.length);
   const unprotectedRisk = Math.max(0, estimatedOpenRepairCost - reserveProtected);
+  const healthScore = propertyCount === 0
+    ? 0
+    : getLandlordHealthScore({
+        occupancyRate: Math.round((occupiedCount / propertyCount) * 100),
+        averageTenantSatisfaction,
+        openIssueCount: openIssues.length,
+        urgentIssueCount: openIssues.filter((issue) => issue.severity === 'urgent').length,
+        unprotectedRisk,
+        expiringLeaseCount,
+        activeRenovations: player.properties.filter((property) => property.activeRenovation).length,
+      });
 
   const milestones: LandlordOpsMilestone[] = [
     {
@@ -194,6 +216,9 @@ export function getLandlordOpsSummary(player: Player): LandlordOpsSummary {
 
   return {
     occupancyRate: propertyCount === 0 ? 0 : Math.round((occupiedCount / propertyCount) * 100),
+    healthScore,
+    healthLabel: getLandlordHealthLabel(healthScore),
+    nextPriority: getLandlordNextPriority({ openIssueCount: openIssues.length, expiringLeaseCount, unprotectedRisk, averageTenantSatisfaction }),
     averageTenantSatisfaction,
     openIssueCount: openIssues.length,
     urgentIssueCount: openIssues.filter((issue) => issue.severity === 'urgent').length,
@@ -322,6 +347,11 @@ export function advancePropertyOperationsMonth(player: Player): {
     }
 
     property = advanceTenant(property);
+    const tenantEvent = applyTenantMonthlyEvent(property, nextTurn, propertyIndex);
+    property = tenantEvent.property;
+    if (tenantEvent.logEntry) {
+      operationHistory.unshift(tenantEvent.logEntry);
+    }
 
     if (shouldOpenMaintenanceIssue(property, nextTurn, propertyIndex)) {
       const issue = createMaintenanceIssue(property, nextTurn, propertyIndex);
@@ -354,4 +384,61 @@ export function advancePropertyOperationsMonth(player: Player): {
     updatedProperties,
     operationHistory: operationHistory.slice(0, OPERATION_HISTORY_LIMIT),
   };
+}
+
+function getLandlordHealthScore({
+  occupancyRate,
+  averageTenantSatisfaction,
+  openIssueCount,
+  urgentIssueCount,
+  unprotectedRisk,
+  expiringLeaseCount,
+  activeRenovations,
+}: {
+  occupancyRate: number;
+  averageTenantSatisfaction: number | null;
+  openIssueCount: number;
+  urgentIssueCount: number;
+  unprotectedRisk: number;
+  expiringLeaseCount: number;
+  activeRenovations: number;
+}): number {
+  const base = 45;
+  const occupancyContribution = occupancyRate * 0.22;
+  const satisfactionContribution = (averageTenantSatisfaction ?? 58) * 0.24;
+  const issuePenalty = openIssueCount * 7 + urgentIssueCount * 6;
+  const reservePenalty = unprotectedRisk > 0 ? Math.min(24, 8 + unprotectedRisk / 1500) : 0;
+  const leasePenalty = expiringLeaseCount * 4;
+  const renovationPenalty = activeRenovations * 2;
+
+  return clamp(
+    Math.round(base + occupancyContribution + satisfactionContribution - issuePenalty - reservePenalty - leasePenalty - renovationPenalty),
+    0,
+    100,
+  );
+}
+
+function getLandlordHealthLabel(score: number): string {
+  if (score >= 85) return 'Trusted Operator';
+  if (score >= 70) return 'Steady Landlord';
+  if (score >= 55) return 'Learning Operator';
+  return 'Fragile Ops';
+}
+
+function getLandlordNextPriority({
+  openIssueCount,
+  expiringLeaseCount,
+  unprotectedRisk,
+  averageTenantSatisfaction,
+}: {
+  openIssueCount: number;
+  expiringLeaseCount: number;
+  unprotectedRisk: number;
+  averageTenantSatisfaction: number | null;
+}): string {
+  if (openIssueCount > 0) return 'Fix repairs before they snowball into vacancy or value drag.';
+  if (unprotectedRisk > 0) return 'Top up reserve so the next repair does not eat spendable cash.';
+  if (expiringLeaseCount > 0) return 'Renew or reprice leases before occupancy turns noisy.';
+  if (averageTenantSatisfaction !== null && averageTenantSatisfaction < 60) return 'Tenant satisfaction is soft. Favor stability over rent pushes.';
+  return 'Operations are stable. Improve condition or study the next acquisition.';
 }

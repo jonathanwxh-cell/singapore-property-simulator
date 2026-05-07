@@ -3,6 +3,7 @@ import { isCommercialCategory } from '@/data/properties';
 import type {
   OwnedProperty,
   Player,
+  PropertyOperationLogEntry,
   RentalMode,
   RentStrategy,
   TenantLeaseDecisionId,
@@ -28,6 +29,11 @@ export interface TenantLeaseOption {
   satisfactionDelta: number;
   vacancyRiskDelta: number;
   tone: 'good' | 'warn' | 'bad' | 'neutral';
+}
+
+export interface TenantMonthlyEventResult {
+  property: OwnedProperty;
+  logEntry?: PropertyOperationLogEntry;
 }
 
 export function setTenantStrategyPure(
@@ -284,4 +290,142 @@ export function applyTenantLeaseDecisionPure(
       tone: option.tone,
     }),
   });
+}
+
+export function applyTenantMonthlyEvent(
+  rawProperty: OwnedProperty,
+  nextTurn: number,
+  propertyIndex: number,
+): TenantMonthlyEventResult {
+  const property = normalizeOperationProperty(rawProperty);
+  const tenant = property.tenant;
+  if (!tenant) return { property };
+
+  const cadence = getTenantEventCadence(property);
+  const profileSeed = tenant.profileId === 'student-tenants' ? 1 : tenant.profileId === 'sme-commercial' ? 2 : 0;
+  if ((nextTurn + propertyIndex + profileSeed) % cadence !== 0) {
+    return { property };
+  }
+
+  const monthsToLeaseEnd = Math.max(0, tenant.leaseEndTurn - nextTurn);
+
+  if (tenant.satisfaction >= 80 && monthsToLeaseEnd > 3) {
+    return buildTenantEventResult({
+      property,
+      nextTurn,
+      title: 'Tenant sent a referral',
+      detail: 'A happy tenant is talking well about the unit. Renewal confidence and reputation both improve quietly.',
+      tone: 'good',
+      satisfactionDelta: 4,
+      renewalDelta: 8,
+      defaultRiskDelta: -0.4,
+    });
+  }
+
+  if (monthsToLeaseEnd <= 2 && tenant.renewalIntent >= 68) {
+    return buildTenantEventResult({
+      property,
+      nextTurn,
+      title: 'Tenant asked about early renewal',
+      detail: 'The household wants certainty before the lease window gets noisy. This is a good sign for occupancy stability.',
+      tone: 'good',
+      satisfactionDelta: 2,
+      renewalDelta: 10,
+      defaultRiskDelta: -0.2,
+    });
+  }
+
+  if ((property.conditionScore ?? 70) < 65) {
+    return buildTenantEventResult({
+      property,
+      nextTurn,
+      title: 'Tenant flagged wear and tear',
+      detail: 'The home still works, but condition is starting to show. A refresh now is cheaper than a vacancy later.',
+      tone: 'warn',
+      satisfactionDelta: -5,
+      renewalDelta: -6,
+      defaultRiskDelta: 0.8,
+    });
+  }
+
+  if (tenant.profileId === 'student-tenants' || tenant.rentStrategy === 'aggressive') {
+    return buildTenantEventResult({
+      property,
+      nextTurn,
+      title: 'Neighbour complaint surfaced',
+      detail: 'The tenancy is becoming noisier. Push rent too hard from here and vacancy risk rises fast.',
+      tone: 'warn',
+      satisfactionDelta: -6,
+      renewalDelta: -8,
+      defaultRiskDelta: 1.1,
+    });
+  }
+
+  return buildTenantEventResult({
+    property,
+    nextTurn,
+    title: 'Quiet tenant month',
+    detail: 'No drama this month. Stable communication and a clean home keep the lease healthy in the background.',
+    tone: 'neutral',
+    satisfactionDelta: 2,
+    renewalDelta: 3,
+    defaultRiskDelta: -0.1,
+  });
+}
+
+function getTenantEventCadence(property: OwnedProperty): number {
+  const tenant = property.tenant;
+  if (!tenant) return 99;
+  if (tenant.profileId === 'student-tenants') return 4;
+  if (tenant.rentStrategy === 'aggressive') return 5;
+  if (tenant.profileId === 'sme-commercial') return 5;
+  return 6;
+}
+
+function buildTenantEventResult({
+  property,
+  nextTurn,
+  title,
+  detail,
+  tone,
+  satisfactionDelta,
+  renewalDelta,
+  defaultRiskDelta,
+}: {
+  property: OwnedProperty;
+  nextTurn: number;
+  title: string;
+  detail: string;
+  tone: PropertyOperationLogEntry['tone'];
+  satisfactionDelta: number;
+  renewalDelta: number;
+  defaultRiskDelta: number;
+}): TenantMonthlyEventResult {
+  const tenant = property.tenant;
+  if (!tenant) return { property };
+
+  return {
+    property: {
+      ...property,
+      tenant: {
+        ...tenant,
+        satisfaction: clamp(tenant.satisfaction + satisfactionDelta, 0, 100),
+        renewalIntent: clamp(tenant.renewalIntent + renewalDelta, 0, 100),
+        defaultRiskPct: roundRiskPct(clamp(tenant.defaultRiskPct + defaultRiskDelta, 0.5, 25)),
+        lastMonthlyEventTurn: nextTurn,
+      },
+    },
+    logEntry: {
+      id: `op_${nextTurn}_${property.propertyId}_tenant_event`,
+      turn: nextTurn,
+      propertyId: property.propertyId,
+      title,
+      detail,
+      tone,
+    },
+  };
+}
+
+function roundRiskPct(value: number): number {
+  return Math.round(value * 10) / 10;
 }

@@ -10,7 +10,7 @@ import { listingRarityInfo } from '@/data/listingChannels';
 import { getListingCatalog } from '@/engine/listings';
 import type { RepairChoiceId } from '@/data/maintenanceEvents';
 import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
-import type { MortgageFinancingMode, RentalMode, RentStrategy, TenantLeaseDecisionId, TenantProfileId } from '@/game/types';
+import type { MortgageFinancingMode, RentalMode, RenovationContractorTier, RentStrategy, TenantLeaseDecisionId, TenantProfileId } from '@/game/types';
 import { HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT } from '@/engine/constants';
 import {
   QuickPurchasePanel, FirstOwnerChecklist, EligibilitySection,
@@ -30,6 +30,7 @@ export default function PropertyDetail() {
   const { player, buyProperty, sellProperty, toggleRental, startRenovation, setTenantStrategy, applyTenantLeaseDecision, resolveMaintenanceIssue, setReservePlan } = useGameStore();
   const [downPaymentPercent, setDownPaymentPercent] = useState(HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT);
   const [financingMode, setFinancingMode] = useState<MortgageFinancingMode>('hdb-concessionary');
+  const [renovationContractorTier, setRenovationContractorTier] = useState<RenovationContractorTier>('standard');
   const [showSellConfirm, setShowSellConfirm] = useState(false);
   const [useCpfOrdinary, setUseCpfOrdinary] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -96,7 +97,7 @@ export default function PropertyDetail() {
 
   const handleStartRenovation = (templateId: string) => {
     if (!isOwned) return;
-    const result = startRenovation(ownedIndex, templateId);
+    const result = startRenovation(ownedIndex, templateId, renovationContractorTier);
     setActionError(result.ok ? null : result.message);
   };
 
@@ -188,8 +189,10 @@ export default function PropertyDetail() {
                 reservedCash={reservedCash} availableCash={availableCash}
                 propertyRepairExposure={propertyRepairExposure} propertyUnprotectedRisk={propertyUnprotectedRisk}
                 floorPlanSrc={floorPlanSrc} renovationOptions={renovationOptions}
+                renovationContractorTier={renovationContractorTier}
                 tenantPlans={tenantPlans} leaseOptions={leaseOptions}
                 leaseDecisionMadeThisTurn={leaseDecisionMadeThisTurn} actionError={actionError}
+                onSelectRenovationContractor={setRenovationContractorTier}
                 onStartRenovation={handleStartRenovation} onTenantPlan={handleTenantPlan}
                 onLeaseDecision={handleLeaseDecision} onRepair={handleRepair} onReserveTopUp={handleReserveTopUp}
               />

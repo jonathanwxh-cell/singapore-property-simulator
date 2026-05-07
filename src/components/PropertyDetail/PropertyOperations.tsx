@@ -3,8 +3,8 @@ import { OperationMetric, LeaseOptionButton } from '@/pages/property/PropertyDet
 import { formatCurrency } from '@/lib/format';
 import { formatRentalMode } from '@/pages/property/propertyDetailFormatters';
 import { repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
-import type { RenovationTemplate } from '@/data/renovations';
-import type { OwnedProperty, Player, RentalMode, TenantProfileId, RentStrategy, TenantLeaseDecisionId } from '@/game/types';
+import { getRenovationQuote, renovationContractors, type RenovationTemplate } from '@/data/renovations';
+import type { OwnedProperty, Player, RentalMode, RenovationContractorTier, TenantProfileId, RentStrategy, TenantLeaseDecisionId } from '@/game/types';
 import type { TenantLeaseOption } from '@/engine/propertyOperations';
 import type { ListingProperty } from '@/engine/listings';
 
@@ -26,10 +26,12 @@ export default function PropertyOperations({
   propertyUnprotectedRisk,
   floorPlanSrc,
   renovationOptions,
+  renovationContractorTier,
   tenantPlans,
   leaseOptions,
   leaseDecisionMadeThisTurn,
   actionError,
+  onSelectRenovationContractor,
   onStartRenovation,
   onTenantPlan,
   onLeaseDecision,
@@ -45,10 +47,12 @@ export default function PropertyOperations({
   propertyUnprotectedRisk: number;
   floorPlanSrc: string;
   renovationOptions: RenovationTemplate[];
+  renovationContractorTier: RenovationContractorTier;
   tenantPlans: TenantPlan[];
   leaseOptions: TenantLeaseOption[];
   leaseDecisionMadeThisTurn: boolean;
   actionError: string | null;
+  onSelectRenovationContractor: (tier: RenovationContractorTier) => void;
   onStartRenovation: (templateId: string) => void;
   onTenantPlan: (mode: RentalMode, profileId: TenantProfileId, strategy: RentStrategy) => void;
   onLeaseDecision: (decisionId: TenantLeaseDecisionId) => void;
@@ -112,38 +116,79 @@ export default function PropertyOperations({
             <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
               <p className="text-warning font-semibold text-sm">{ownedProperty.activeRenovation.label} in progress</p>
               <p className="text-text-secondary text-xs mt-1">
-                {ownedProperty.activeRenovation.remainingMonths} month(s) left. Rental disruption and value uplift resolve when complete.
+                {ownedProperty.activeRenovation.remainingMonths} month(s) left with the {renovationContractors[ownedProperty.activeRenovation.contractorTier ?? 'standard'].label.toLowerCase()}.
+                {ownedProperty.activeRenovation.projectedPaybackMonths
+                  ? ` Approximate payback: ${ownedProperty.activeRenovation.projectedPaybackMonths} month(s).`
+                  : ' Rental disruption and value uplift resolve when complete.'}
               </p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 gap-3">
-              {renovationOptions.slice(0, 4).map((template) => {
-                const completed = ownedProperty.completedRenovations?.includes(template.category);
-                const unaffordable = player.cash < template.cost;
-                return (
-                  <button
-                    key={template.id}
-                    onClick={() => onStartRenovation(template.id)}
-                    disabled={completed || unaffordable}
-                    className="text-left rounded-xl border border-glass-border bg-white/[0.03] p-4 hover:border-cyan-glow/50 disabled:opacity-45 disabled:hover:border-glass-border transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-white font-semibold text-sm">{template.label}</p>
-                        <p className="text-text-secondary text-xs mt-1 line-clamp-2">{template.description}</p>
+            <div>
+              <div className="rounded-xl border border-glass-border bg-white/[0.03] p-3 mb-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="label-text text-text-dim text-[10px] mb-1">Contractor Route</p>
+                    <p className="text-text-secondary text-xs max-w-2xl">
+                      Pick one renovation crew style, then compare every project through that lens. This makes ROI clearer without hiding the tradeoff.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.values(renovationContractors).map((contractor) => {
+                      const selected = renovationContractorTier === contractor.id;
+                      return (
+                        <button
+                          key={contractor.id}
+                          type="button"
+                          onClick={() => onSelectRenovationContractor(contractor.id)}
+                          className={`rounded-full border px-3 py-1.5 text-[11px] font-rajdhani font-semibold uppercase tracking-[0.12em] transition-colors ${
+                            selected
+                              ? 'border-cyan-glow/60 bg-cyan-glow/15 text-cyan-glow'
+                              : 'border-glass-border bg-black/20 text-text-secondary hover:border-cyan-glow/40'
+                          }`}
+                        >
+                          {contractor.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <p className="text-text-dim text-[11px] mt-2">{renovationContractors[renovationContractorTier].summary}</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-3">
+                {renovationOptions.slice(0, 4).map((template) => {
+                  const completed = ownedProperty.completedRenovations?.includes(template.category);
+                  const quote = getRenovationQuote(template, renovationContractorTier, ownedProperty.monthlyRental);
+                  const unaffordable = player.cash < quote.cost;
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => onStartRenovation(template.id)}
+                      disabled={completed || unaffordable}
+                      className="text-left rounded-xl border border-glass-border bg-white/[0.03] p-4 hover:border-cyan-glow/50 disabled:opacity-45 disabled:hover:border-glass-border transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-white font-semibold text-sm">{template.label}</p>
+                          <p className="text-text-secondary text-xs mt-1 line-clamp-2">{template.description}</p>
+                        </div>
+                        <span className="text-[10px] font-mono text-cyan-glow uppercase">{template.strategy}</span>
                       </div>
-                      <span className="text-[10px] font-mono text-cyan-glow uppercase">{template.strategy}</span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 mt-3">
-                      <OperationMetric label="Cost" value={`S$${(template.cost / 1000).toFixed(0)}K`} />
-                      <OperationMetric label="Rent" value={`+${template.rentUpliftPct}%`} />
-                      <OperationMetric label="Value" value={`+${template.resaleUpliftPct}%`} />
-                    </div>
-                    {completed && <p className="text-success text-[11px] mt-2">Completed</p>}
-                    {unaffordable && !completed && <p className="text-danger text-[11px] mt-2">Need more cash</p>}
-                  </button>
-                );
-              })}
+                      <div className="grid grid-cols-4 gap-2 mt-3">
+                        <OperationMetric label="Cost" value={`S$${(quote.cost / 1000).toFixed(0)}K`} />
+                        <OperationMetric label="Rent" value={`+${quote.rentUpliftPct}%`} />
+                        <OperationMetric label="Value" value={`+${quote.resaleUpliftPct}%`} />
+                        <OperationMetric label="ETA" value={`${quote.durationMonths} mo`} />
+                      </div>
+                      <p className="text-text-dim text-[11px] mt-2">
+                        {renovationContractors[renovationContractorTier].label} | Risk {quote.riskPct}% | Payback {quote.projectedPaybackMonths ?? 'n/a'} mo
+                      </p>
+                      {completed && <p className="text-success text-[11px] mt-2">Completed</p>}
+                      {unaffordable && !completed && <p className="text-danger text-[11px] mt-2">Need more cash</p>}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </section>
@@ -161,6 +206,11 @@ export default function PropertyOperations({
               <p className="text-text-dim text-[11px] mt-1">
                 Lease ends in {Math.max(0, ownedProperty.tenant.leaseEndTurn - player.turnCount)} month(s). Decide whether to preserve occupancy, push rent, or reset to market.
               </p>
+              {ownedProperty.tenant.lastMonthlyEventTurn === player.turnCount && (
+                <p className="text-cyan-glow text-[11px] mt-1">
+                  A tenant event resolved this month. Check the dashboard or portfolio health note to see whether it was an upside or a warning.
+                </p>
+              )}
             </div>
           )}
           {leaseOptions.length > 0 && (

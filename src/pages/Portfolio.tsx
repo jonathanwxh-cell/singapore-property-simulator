@@ -65,10 +65,17 @@ export default function Portfolio() {
                       : 'Holdings are stable'}
               </h2>
               <p className="text-text-secondary text-sm mt-2 max-w-3xl">{portfolioAction}</p>
+              {player.properties.length > 0 && (
+                <p className="text-text-dim text-xs mt-2 max-w-3xl">
+                  {landlordOps.nextPriority}
+                </p>
+              )}
             </div>
             <div className="rounded-2xl border border-glass-border bg-black/20 p-4">
-              <p className="label-text text-text-dim text-[10px]">Main Risk</p>
-              <p className={`font-mono text-lg mt-1 ${portfolioRisk === 'No urgent ops risk' ? 'text-success' : 'text-warning'}`}>{portfolioRisk}</p>
+              <p className="label-text text-text-dim text-[10px]">Landlord Health</p>
+              <p className="font-mono text-lg mt-1 text-cyan-glow">{landlordOps.healthScore}/100</p>
+              <p className="text-text-secondary text-xs mt-1">{landlordOps.healthLabel}</p>
+              <p className={`font-mono text-sm mt-3 ${portfolioRisk === 'No urgent ops risk' ? 'text-success' : 'text-warning'}`}>{portfolioRisk}</p>
               <button
                 onClick={() => player.properties[0] ? navigate(`/property/${player.properties[0].propertyId}`) : navigate('/properties')}
                 className="btn-secondary w-full text-xs py-2 mt-4"
@@ -136,6 +143,8 @@ export default function Portfolio() {
                   <div className="text-right">
                     <p className="font-mono text-cyan-glow text-xl">{landlordOps.occupancyRate}%</p>
                     <p className="text-text-dim text-[10px]">occupancy</p>
+                    <p className="font-mono text-white text-sm mt-2">{landlordOps.healthScore}/100</p>
+                    <p className="text-text-dim text-[10px]">health</p>
                   </div>
                 </div>
                 <div className="grid sm:grid-cols-2 xl:grid-cols-6 gap-3">

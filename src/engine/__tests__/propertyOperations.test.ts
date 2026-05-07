@@ -83,6 +83,32 @@ describe('property operations', () => {
     expect(completed.conditionScore).toBeGreaterThan(62);
   });
 
+  it('lets premium contractors trade more cash for faster renovation completion', () => {
+    const player = makePlayer({
+      cash: 100_000,
+      properties: [{
+        propertyId: 'hdb-bto-1',
+        purchasePrice: 380_000,
+        purchaseDate: '2024-01',
+        currentValue: 400_000,
+        isRented: false,
+        monthlyRental: 1_700,
+        renovationLevel: 0,
+        conditionScore: 62,
+      }],
+    });
+
+    const result = startRenovationPure(player, 0, 'kitchen-refresh', 'premium');
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const active = result.value.player.properties[0].activeRenovation;
+    expect(result.value.player.cash).toBeLessThan(82_000);
+    expect(active?.contractorTier).toBe('premium');
+    expect(active?.durationMonths).toBe(1);
+    expect(active?.projectedPaybackMonths).not.toBeNull();
+  });
+
   it('returns HDB homes under MOP to owner-occupied after disruptive renovations complete', () => {
     const player = makePlayer({
       properties: [{

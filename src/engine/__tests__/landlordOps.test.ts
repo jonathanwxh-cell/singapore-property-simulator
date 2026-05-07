@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialLifeState, type MaintenanceIssue, type Player } from '@/game/types';
 import {
+  applyTenantMonthlyEvent,
   applyTenantLeaseDecisionPure,
   advancePropertyOperationsMonth,
   getLandlordOpsSummary,
@@ -264,8 +265,43 @@ describe('Landlord Ops 2.0', () => {
     expect(summary.unprotectedRisk).toBe(2_500);
     expect(summary.expiringLeaseCount).toBe(1);
     expect(summary.averageTenantSatisfaction).toBe(54);
+    expect(summary.healthScore).toBeLessThan(55);
+    expect(summary.healthLabel).toBe('Fragile Ops');
+    expect(summary.nextPriority).toContain('Fix repairs');
     expect(summary.milestones.map((milestone) => milestone.id)).toContain('first-tenant');
     expect(summary.milestones.map((milestone) => milestone.id)).toContain('reserve-gap');
+  });
+
+  it('creates deterministic upside tenant events during stable months', () => {
+    const property = {
+      propertyId: 'condo-10',
+      purchasePrice: 1_150_000,
+      purchaseDate: '2028-01',
+      currentValue: 1_180_000,
+      isRented: true,
+      monthlyRental: 3_700,
+      renovationLevel: 0,
+      conditionScore: 84,
+      tenant: {
+        profileId: 'expat-pmet',
+        rentalMode: 'whole-unit',
+        leaseStartTurn: 54,
+        leaseEndTurn: 78,
+        satisfaction: 82,
+        rentStrategy: 'market',
+        askingRent: 3_700,
+        contractedRent: 3_700,
+        defaultRiskPct: 2.5,
+        renewalIntent: 72,
+      },
+    };
+
+    const result = applyTenantMonthlyEvent(property, 66, 0);
+
+    expect(result.property.tenant?.satisfaction).toBeGreaterThan(82);
+    expect(result.property.tenant?.renewalIntent).toBeGreaterThan(72);
+    expect(result.logEntry?.title).toContain('referral');
+    expect(result.logEntry?.tone).toBe('good');
   });
 
   it('keeps HDB room rental MOP-safe as owner-occupied after a month advances', () => {

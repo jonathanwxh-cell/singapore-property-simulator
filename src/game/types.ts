@@ -31,6 +31,7 @@ export type RenovationCategory =
   | 'layout'
   | 'commercial-fitout'
   | 'maintenance-overhaul';
+export type RenovationContractorTier = 'budget' | 'standard' | 'premium';
 export type RenovationStatus = 'planned' | 'active' | 'completed' | 'overrun' | 'cancelled';
 export type RentStrategy = 'conservative' | 'market' | 'aggressive';
 export type RentalMode = 'room-rental' | 'whole-unit' | 'corporate-lease' | 'student-shared' | 'commercial-lease';
@@ -146,6 +147,7 @@ export interface RenovationProject {
   templateId: string;
   propertyId: string;
   category: RenovationCategory;
+  contractorTier?: RenovationContractorTier;
   label: string;
   cost: number;
   durationMonths: number;
@@ -155,6 +157,8 @@ export interface RenovationProject {
   satisfactionUplift: number;
   riskPct: number;
   conditionDelta: number;
+  projectedPaybackMonths?: number | null;
+  projectedCompletionTurn?: number;
   status: RenovationStatus;
   startedTurn: number;
 }
@@ -171,6 +175,7 @@ export interface TenantState {
   defaultRiskPct: number;
   renewalIntent: number;
   lastLeaseDecisionTurn?: number;
+  lastMonthlyEventTurn?: number;
 }
 
 export interface MaintenanceIssue {

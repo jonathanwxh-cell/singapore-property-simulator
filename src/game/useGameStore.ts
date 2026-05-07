@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement, BuyerProfile, MortgageFinancingMode, RunRouteId, MaritalStatus } from './types';
+import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement, BuyerProfile, MortgageFinancingMode, RenovationContractorTier, RunRouteId, MaritalStatus } from './types';
 import { createInitialLifeState, difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE, normalizeBuyerProfile } from './types';
 import { careers } from '@/data/careers';
 import { properties } from '@/data/properties';
@@ -289,7 +289,7 @@ interface GameStore extends GameState {
   applyLoan: (amount: number, interestRate: number, termYears: number, type: 'mortgage' | 'renovation' | 'personal', propertyId?: string) => ActionResult;
   payLoan: (loanId: string, amount: number) => ActionResult;
   renovateProperty: (propertyIndex: number, cost: number) => ActionResult;
-  startRenovation: (propertyIndex: number, templateId: string) => ActionResult;
+  startRenovation: (propertyIndex: number, templateId: string, contractorTier?: RenovationContractorTier) => ActionResult;
   setTenantStrategy: (propertyIndex: number, input: TenantStrategyInput) => ActionResult;
   applyTenantLeaseDecision: (propertyIndex: number, decisionId: TenantLeaseDecisionId) => ActionResult;
   resolveMaintenanceIssue: (propertyIndex: number, issueId: string, choiceId: RepairChoiceId) => ActionResult;
@@ -465,8 +465,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return result.ok ? { ok: true as const, value: undefined } : result;
   },
 
-  startRenovation: (propertyIndex, templateId) => {
-    const result = startRenovationPure(get().player, propertyIndex, templateId);
+  startRenovation: (propertyIndex, templateId, contractorTier = 'standard') => {
+    const result = startRenovationPure(get().player, propertyIndex, templateId, contractorTier);
     if (result.ok) {
       set({ player: finalizePlayer(result.value.player) });
       const state = get();

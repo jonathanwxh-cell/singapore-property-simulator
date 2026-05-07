@@ -41,6 +41,13 @@ export function normalizeOperationProperty(property: OwnedProperty): OwnedProper
     openMaintenanceIssues: property.openMaintenanceIssues ?? [],
     rentStrategy: property.rentStrategy ?? property.tenant?.rentStrategy ?? 'market',
     floorPlanId: property.floorPlanId ?? deriveFloorPlanId(property),
+    activeRenovation: property.activeRenovation
+      ? {
+          ...property.activeRenovation,
+          contractorTier: property.activeRenovation.contractorTier ?? 'standard',
+          projectedPaybackMonths: property.activeRenovation.projectedPaybackMonths ?? null,
+        }
+      : undefined,
   };
 }
 
