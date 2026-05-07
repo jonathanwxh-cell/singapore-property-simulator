@@ -39,6 +39,9 @@ export const CPF_SA_INTEREST = 0.04;
 export const CPF_MA_INTEREST = 0.04;
 export const CPF_EXTRA_INTEREST_THRESHOLD = 60000;
 export const CPF_EXTRA_INTEREST_RATE = 0.01;
+// Of the $60k extra-interest threshold, at most $20k can come from OA.
+// The OA portion accrues to OA; the remainder accrues to SA.
+export const CPF_EXTRA_INTEREST_OA_CAP = 20000;
 
 // BSD tiers (current residential property marginal tiers)
 export const BSD_TIERS = [

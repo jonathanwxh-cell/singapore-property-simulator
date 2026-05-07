@@ -84,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New guided onboarding pathways now route new profiles through profile-appropriate starter routes and starter listings, while dashboard primer and settings now include "guided mode" controls to reduce first-run overwhelm for casual players.
 
 ### Fixed
+- CPF extra +1% interest now splits between OA and SA per MOM rules: the OA portion is capped at the first $20k of OA balance and accrues to OA; the remainder of the $60k threshold accrues to SA. Previously the entire extra interest was credited to OA only.
 - HDB concessionary financing now uses the current 75% LTV / 25% down-payment model throughout purchase validation, decision coaching, glossary copy, and tests.
 - Residential ABSD now counts residential holdings only, so commercial shops/offices do not accidentally make the next residential purchase look like a second home.
 - HDB resale-levy estimates now require subsidised-housing history instead of any generic first-home history.
