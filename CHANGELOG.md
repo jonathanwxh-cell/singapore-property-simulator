@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Improved
+
+## [0.5.0] - 2026-05-07
+
+### Added
 - **Guidance and longevity route pass**: Dashboard now has a "First 3 Moves" quest rail with reward beats, property detail pages include a non-mutating Practice Purchase simulation, BTO listings show an HFE-to-key-collection timeline, and New Game includes a 55+ Rightsizer route.
 - **Senior Singapore realism layer**: added CPF 55, lease-buyback, and Silver Housing Bonus glossary concepts, plus CPF Full Retirement Sum reference checks inside the senior rightsizing readout.
 - **Market district drilldown**: Market heatmap cells and opportunity cards now navigate directly into district-filtered Buy listings.
@@ -184,7 +194,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Singapore Property Simulator - first playable build with property catalog, basic mortgage handling, and turn loop.
 
-[Unreleased]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/jonathanwxh-cell/singapore-property-simulator/releases/tag/v0.3.1

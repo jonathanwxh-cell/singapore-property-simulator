@@ -1,0 +1,16 @@
+# Force LF line endings everywhere so Windows checkouts don't introduce CRLF.
+* text=auto eol=lf
+
+# Treat lockfiles and generated assets as generated so GitHub collapses them
+# in PR diffs and excludes them from language stats.
+package-lock.json linguist-generated=true
+*.svg            linguist-detectable=false
+
+# Binary assets — never line-end munged.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
