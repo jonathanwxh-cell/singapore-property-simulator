@@ -3,11 +3,10 @@ import { propertyTypeInfo } from '@/data/properties';
 import { districts } from '@/data/districts';
 import { useGameStore } from '@/game/useGameStore';
 import GlassCard from '@/components/GlassCard';
-import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, Home, DollarSign, CheckCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, CheckCircle } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
-import GlossaryTerm from '@/components/GlossaryTerm';
 import { useRef, useState } from 'react';
-import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
+import { formatCurrency, formatPercent } from '@/lib/format';
 import { listingRarityInfo } from '@/data/listingChannels';
 import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
 import { getListingCatalog } from '@/engine/listings';
@@ -21,26 +20,74 @@ import {
   buildBtoReadinessPlan,
   buildPracticePurchasePlan,
   buildSeniorRightsizingPlan,
-  type BtoReadinessPlan,
-  type PracticePurchasePlan,
-  type SeniorRightsizingPlan,
 } from '@/engine/practicePurchase';
 import { getRenovationTemplatesForType } from '@/data/renovations';
-import { repairChoices, type RepairChoiceId } from '@/data/maintenanceEvents';
+import type { RepairChoiceId } from '@/data/maintenanceEvents';
 import { getTenantLeaseOptions } from '@/engine/propertyOperations';
 import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
 import type { MortgageFinancingMode, RentalMode, RentStrategy, TenantLeaseDecisionId, TenantProfileId } from '@/game/types';
-import {
-  DetailItem,
-  LeaseOptionButton,
-  OperationMetric,
-} from './property/PropertyDetailComponents';
-import {
-  formatOwnershipStatus,
-  formatRentalMode,
-  getFloorPlanSrc,
-  getTenantPlans,
-} from './property/propertyDetailFormatters';
+import { DetailItem } from './property/PropertyDetailComponents';
+import { getFloorPlanSrc, getTenantPlans } from './property/propertyDetailFormatters';
+
+import PropertyOperations from '@/components/PropertyDetail/PropertyOperations';
+import PropertySummary from '@/components/PropertyDetail/PropertySummary';
+import PurchasePanel from '@/components/PropertyDetail/PurchasePanel';
+
+function PracticeMetric({ label, value, tone }: { label: string; value: string; tone: 'good' | 'bad' | 'neutral' }) {
+  return (
+    <div className="rounded-lg border border-glass-border bg-black/20 p-2">
+      <p className="label-text text-[8px] text-text-dim">{label}</p>
+      <p className={`mt-1 font-mono text-[11px] ${tone === 'good' ? 'text-success' : tone === 'bad' ? 'text-danger' : 'text-white'}`}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function QuickPurchasePanel({
+  propertyName, readiness, summary, projectedMonthlySurplus, cashRequired,
+  canAfford, onReview, onBuy, compact = false, className = 'mb-6',
+}: {
+  propertyName: string; readiness: 'ready' | 'stretch' | 'blocked'; summary: string;
+  projectedMonthlySurplus: number; cashRequired: number; canAfford: boolean;
+  onReview: () => void; onBuy: () => void; compact?: boolean; className?: string;
+}) {
+  return (
+    <GlassCard
+      accentColor={readiness === 'ready' ? '#00E676' : readiness === 'stretch' ? '#FFD740' : '#FF1744'}
+      className={className}
+    >
+      <div className="grid gap-4 lg:grid-cols-[1fr,auto] lg:items-center">
+        <div>
+          <p className="label-text mb-1 text-[10px] text-cyan-glow">Purchase snapshot</p>
+          <h2 className="section-title text-white">
+            {compact ? `Can you buy ${propertyName}?` : `Review ${propertyName} before the long scroll`}
+          </h2>
+          {!compact && (
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">{summary}</p>
+          )}
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:max-w-md">
+            <PracticeMetric label="Cash required" value={formatCurrency(cashRequired)} tone={readiness === 'blocked' ? 'bad' : 'neutral'} />
+            <PracticeMetric label="After-debt surplus" value={formatCurrency(projectedMonthlySurplus)} tone={projectedMonthlySurplus >= 0 ? 'good' : 'bad'} />
+          </div>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[22rem] lg:grid-cols-1">
+          <button type="button" onClick={onReview} className="btn-secondary min-h-11 px-4 py-3 text-sm">
+            Practice / review purchase
+          </button>
+          <button
+            type="button"
+            onClick={onBuy}
+            disabled={!canAfford}
+            className="btn-primary min-h-11 px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {canAfford ? 'Buy Property' : readiness === 'blocked' ? 'Fix blocker first' : 'Build cash first'}
+          </button>
+        </div>
+      </div>
+    </GlassCard>
+  );
+}
 
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
@@ -492,604 +539,82 @@ export default function PropertyDetail() {
             </GlassCard>
 
             {isOwned && ownedProperty && (
-              <GlassCard accentColor="#00F0FF">
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div>
-                    <p className="label-text text-text-dim text-[10px] mb-1">Owner Mode</p>
-                    <h3 className="section-title text-white">Property Operations</h3>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-mono text-white">{ownedProperty.conditionScore ?? 70}/100</p>
-                    <p className="text-text-dim text-[10px]">condition</p>
-                  </div>
-                </div>
-
-                <div className="grid lg:grid-cols-[1fr,240px] gap-4 mb-5">
-                  <div className="rounded-xl border border-glass-border bg-white/[0.03] p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm">Floor Plan</h4>
-                      <span className="text-text-dim text-[10px] font-mono">{ownedProperty.floorPlanId ?? 'floorplan'}</span>
-                    </div>
-                    <img src={floorPlanSrc} alt={`${property.name} floor plan`} className="w-full rounded-lg border border-divider bg-void-navy/80" />
-                    <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-                      <OperationMetric label="Tenant" value={ownedProperty.tenant ? `${ownedProperty.tenant.satisfaction}/100` : 'None'} />
-                      <OperationMetric label="MOP" value={`${ownedProperty.mopRemainingMonths ?? 0} mo`} />
-                      <OperationMetric label="Issues" value={String(ownedProperty.openMaintenanceIssues?.length ?? 0)} />
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-glass-border bg-white/[0.03] p-4">
-                    <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm mb-3">Reserve</h4>
-                    <p className="font-mono text-2xl text-cyan-glow">{formatCurrency(reservedCash)}</p>
-                    <p className="text-text-secondary text-xs mt-2">
-                      Target: {player.reserve?.targetMonths ?? 3} month(s) of ownership surprises. Available cash after reserve: {formatCurrency(availableCash)}.
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 mt-3">
-                      <OperationMetric label="Open Exposure" value={formatCurrency(propertyRepairExposure)} />
-                      <OperationMetric label="Unprotected" value={formatCurrency(propertyUnprotectedRisk)} />
-                    </div>
-                    {player.reserve?.lastCoveredCost ? (
-                      <p className="text-success text-[11px] mt-3">Last repair covered: S${player.reserve.lastCoveredCost.toLocaleString()}</p>
-                    ) : propertyUnprotectedRisk > 0 ? (
-                      <p className="text-warning text-[11px] mt-3">Current open issues exceed reserve. A repair will still hit available cash.</p>
-                    ) : (
-                      <p className="text-text-dim text-[11px] mt-3">This is earmarked inside your cash balance, so the HUD now separates available cash from reserve.</p>
-                    )}
-                    <button onClick={handleReserveTopUp} className="btn-secondary text-xs py-2 w-full mt-4">
-                      Earmark S$5K Reserve
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-5">
-                  <section>
-                    <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm mb-3">Upgrade Plans</h4>
-                    {ownedProperty.activeRenovation ? (
-                      <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
-                        <p className="text-warning font-semibold text-sm">{ownedProperty.activeRenovation.label} in progress</p>
-                        <p className="text-text-secondary text-xs mt-1">
-                          {ownedProperty.activeRenovation.remainingMonths} month(s) left. Rental disruption and value uplift resolve when complete.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="grid md:grid-cols-2 gap-3">
-                        {renovationOptions.slice(0, 4).map((template) => {
-                          const completed = ownedProperty.completedRenovations?.includes(template.category);
-                          const unaffordable = player.cash < template.cost;
-                          return (
-                            <button
-                              key={template.id}
-                              onClick={() => handleStartRenovation(template.id)}
-                              disabled={completed || unaffordable}
-                              className="text-left rounded-xl border border-glass-border bg-white/[0.03] p-4 hover:border-cyan-glow/50 disabled:opacity-45 disabled:hover:border-glass-border transition-colors"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <p className="text-white font-semibold text-sm">{template.label}</p>
-                                  <p className="text-text-secondary text-xs mt-1 line-clamp-2">{template.description}</p>
-                                </div>
-                                <span className="text-[10px] font-mono text-cyan-glow uppercase">{template.strategy}</span>
-                              </div>
-                              <div className="grid grid-cols-3 gap-2 mt-3">
-                                <OperationMetric label="Cost" value={`S$${(template.cost / 1000).toFixed(0)}K`} />
-                                <OperationMetric label="Rent" value={`+${template.rentUpliftPct}%`} />
-                                <OperationMetric label="Value" value={`+${template.resaleUpliftPct}%`} />
-                              </div>
-                              {completed && <p className="text-success text-[11px] mt-2">Completed</p>}
-                              {unaffordable && !completed && <p className="text-danger text-[11px] mt-2">Need more cash</p>}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </section>
-
-                  <section>
-                    <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm mb-3">Tenant Strategy</h4>
-                    {ownedProperty.tenant && (
-                      <div className="rounded-lg border border-success/30 bg-success/10 p-3 mb-3">
-                        <p className="text-success font-semibold text-sm">
-                          Active {formatRentalMode(ownedProperty.tenant.rentalMode)}: S${ownedProperty.tenant.contractedRent.toLocaleString()}/mo
-                        </p>
-                        <p className="text-text-secondary text-xs mt-1">
-                          Satisfaction {ownedProperty.tenant.satisfaction}/100 | Renewal intent {ownedProperty.tenant.renewalIntent}/100 | Strategy {ownedProperty.tenant.rentStrategy}
-                        </p>
-                        <p className="text-text-dim text-[11px] mt-1">
-                          Lease ends in {Math.max(0, ownedProperty.tenant.leaseEndTurn - player.turnCount)} month(s). Decide whether to preserve occupancy, push rent, or reset to market.
-                        </p>
-                      </div>
-                    )}
-                    {leaseOptions.length > 0 && (
-                      <div className="mb-4 rounded-xl border border-cyan-glow/20 bg-cyan-glow/5 p-3">
-                        <div className="flex items-start justify-between gap-3 mb-3">
-                          <div>
-                            <p className="label-text text-text-dim text-[10px] mb-1">Renewal Mini-Game</p>
-                            <h5 className="font-rajdhani text-white font-semibold uppercase tracking-[0.1em] text-sm">Lease Decision Board</h5>
-                          </div>
-                          <span className="rounded-full border border-cyan-glow/30 px-2 py-1 text-[10px] font-mono text-cyan-glow">
-                            Tenant Ops 2.0
-                          </span>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-2">
-                          {leaseOptions.map((option) => (
-                            <LeaseOptionButton key={option.id} option={option} onSelect={handleLeaseDecision} />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {leaseDecisionMadeThisTurn && (
-                      <div className="mb-4 rounded-xl border border-success/25 bg-success/10 p-3">
-                        <p className="font-rajdhani text-sm font-semibold uppercase tracking-[0.1em] text-success">
-                          Lease decision locked for this month
-                        </p>
-                        <p className="mt-1 text-xs text-text-secondary">
-                          Advance to next month before making another tenant decision for this property.
-                        </p>
-                      </div>
-                    )}
-                    <div className="grid md:grid-cols-3 gap-3">
-                      {tenantPlans.map((plan) => (
-                        <button
-                          key={plan.label}
-                          onClick={() => handleTenantPlan(plan.mode, plan.profileId, plan.strategy)}
-                          className="text-left rounded-xl border border-glass-border bg-white/[0.03] p-4 hover:border-success/50 transition-colors"
-                        >
-                          <p className="text-white font-semibold text-sm">{plan.label}</p>
-                          <p className="text-text-secondary text-xs mt-1">{plan.description}</p>
-                          <p className="text-[10px] font-mono text-cyan-glow mt-3 uppercase">{plan.strategy} | {plan.mode}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </section>
-
-                  <section>
-                    <h4 className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm mb-3">Repairs</h4>
-                    {(ownedProperty.openMaintenanceIssues?.length ?? 0) === 0 ? (
-                      <div className="rounded-lg border border-glass-border bg-white/[0.03] p-3">
-                        <p className="text-text-secondary text-sm">No open maintenance issues. Keep the reserve ready; Singapore homes are patient until they are suddenly not patient.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="grid md:grid-cols-[180px,1fr] gap-3 rounded-xl border border-danger/30 bg-danger/10 p-3">
-                          <img src="/maintenance-alert-card.svg" alt="Maintenance alert illustration" className="w-full rounded-lg border border-divider bg-void-navy/70" />
-                          <div>
-                            <p className="font-rajdhani text-danger font-semibold uppercase tracking-[0.12em] text-sm">Maintenance Queue</p>
-                            <p className="text-text-secondary text-xs mt-1 leading-relaxed">
-                              Singapore homes rarely fail on schedule: air-con servicing, waterproofing, appliance replacement, and MCST levies can all bite cashflow. Choose cheap fixes for short-term relief or preventive work to protect satisfaction.
-                            </p>
-                            <p className="text-text-dim text-[11px] mt-2">Open exposure: {formatCurrency(propertyRepairExposure)} | Reserve gap: {formatCurrency(propertyUnprotectedRisk)}</p>
-                          </div>
-                        </div>
-                        {ownedProperty.openMaintenanceIssues?.map((issue) => (
-                          <div key={issue.id} className="rounded-xl border border-danger/30 bg-danger/10 p-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-white font-semibold text-sm">{issue.label ?? `${issue.category.replace('-', ' ')} issue`}</p>
-                                <p className="text-text-secondary text-xs mt-1">
-                                  {issue.severity} | Est. S${issue.estimatedCost.toLocaleString()} | Tenant impact {issue.satisfactionImpact}
-                                </p>
-                                {issue.riskTag && (
-                                  <p className="text-warning text-[11px] mt-1">{issue.riskTag}</p>
-                                )}
-                              </div>
-                              <span className="text-danger text-[10px] font-mono uppercase">{issue.status}</span>
-                            </div>
-                            <div className="grid sm:grid-cols-3 gap-2 mt-3">
-                              {(Object.keys(repairChoices) as RepairChoiceId[]).map((choiceId) => (
-                                <button
-                                  key={choiceId}
-                                  onClick={() => handleRepair(issue.id, choiceId)}
-                                  className="btn-secondary text-xs py-2"
-                                >
-                                  {repairChoices[choiceId].label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </section>
-                </div>
-
-                {actionError && (
-                  <p className="text-danger text-xs text-center mt-4">{actionError}</p>
-                )}
-              </GlassCard>
+              <PropertyOperations
+                ownedProperty={ownedProperty}
+                property={property}
+                player={player}
+                reservedCash={reservedCash}
+                availableCash={availableCash}
+                propertyRepairExposure={propertyRepairExposure}
+                propertyUnprotectedRisk={propertyUnprotectedRisk}
+                floorPlanSrc={floorPlanSrc}
+                renovationOptions={renovationOptions}
+                tenantPlans={tenantPlans}
+                leaseOptions={leaseOptions}
+                leaseDecisionMadeThisTurn={leaseDecisionMadeThisTurn}
+                actionError={actionError}
+                onStartRenovation={handleStartRenovation}
+                onTenantPlan={handleTenantPlan}
+                onLeaseDecision={handleLeaseDecision}
+                onRepair={handleRepair}
+                onReserveTopUp={handleReserveTopUp}
+              />
             )}
           </div>
 
           <div>
             {isOwned && ownedProperty ? (
-              <GlassCard accentColor="#00E676" className="lg:sticky lg:top-4 lg:max-h-[36rem] lg:overflow-y-auto">
-                <h3 className="section-title text-white mb-4">Manage Property</h3>
-
-                <div className="space-y-3 mb-5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-secondary text-sm">Current Value</span>
-                    <span className="font-mono text-white text-lg">{formatCompactCurrency(ownedProperty.currentValue)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-secondary text-sm">Purchase Price</span>
-                    <span className="font-mono text-text-dim">{formatCompactCurrency(ownedProperty.purchasePrice)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-secondary text-sm">Gain/Loss</span>
-                    <span className={`font-mono ${gain >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {gain >= 0 ? '+' : ''}{formatCompactCurrency(gain)} ({gain >= 0 ? '+' : ''}{formatPercent(gainPercent, 1)})
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-secondary text-sm">Est. Monthly Rent</span>
-                    <span className="font-mono text-cyan-glow">{formatCurrency(ownedProperty.monthlyRental)}</span>
-                  </div>
-                  {associatedLoan && !associatedLoan.isPaid && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-text-secondary text-sm">Loan Balance</span>
-                      <span className="font-mono text-warning">{formatCurrency(associatedLoan.remainingBalance)}</span>
-                    </div>
-                  )}
-
-                  <div className="border-t border-divider pt-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-text-secondary text-sm">Status</span>
-                      <span className={`font-mono text-xs ${ownedProperty.isRented ? 'text-cyan-glow' : 'text-text-dim'}`}>
-                        {formatOwnershipStatus(ownedProperty)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-text-secondary text-sm">Condition</span>
-                      <span className="font-mono text-white">{ownedProperty.conditionScore ?? 70}/100</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-text-secondary text-sm"><GlossaryTerm termId="mop">MOP</GlossaryTerm> Remaining</span>
-                      <span className="font-mono text-white">{ownedProperty.mopRemainingMonths ?? 0} mo</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  {quickRentalBlockedByMop && !ownedProperty.tenant && (
-                    <button
-                      type="button"
-                      onClick={() => handleTenantPlan('room-rental', 'local-family', 'market')}
-                      className="w-full rounded-lg border border-success/40 bg-success/20 py-3 text-sm font-semibold uppercase tracking-wider text-success transition-all hover:bg-success/30"
-                    >
-                      Start MOP-Safe Room Rental
-                    </button>
-                  )}
-                  <button
-                    onClick={handleToggleRental}
-                    disabled={quickRentalBlockedByMop}
-                    className={`w-full py-3 rounded-lg font-rajdhani font-semibold text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 ${
-                      quickRentalBlockedByMop
-                        ? 'bg-white/5 text-text-dim border border-glass-border cursor-not-allowed'
-                        : ownedProperty.isRented
-                        ? 'bg-warning/20 text-warning border border-warning/40 hover:bg-warning/30'
-                        : 'bg-cyan-glow/20 text-cyan-glow border border-cyan-glow/40 hover:bg-cyan-glow/30'
-                    }`}
-                  >
-                    <Home size={16} />
-                    {quickRentalBlockedByMop ? 'Whole-Flat Rental Locked' : ownedProperty.tenant?.rentalMode === 'room-rental' ? 'End Room Lease' : ownedProperty.isRented ? 'Stop Renting' : 'Rent Out'}
-                  </button>
-                  {quickRentalBlockedByMop && (
-                    <p className="text-text-dim text-xs text-center">
-                      MOP still requires owner occupation. Use a room-rental tenant strategy above instead of the whole-flat shortcut.
-                    </p>
-                  )}
-
-                  {!showSellConfirm ? (
-                    <button
-                      onClick={() => setShowSellConfirm(true)}
-                      className="w-full py-3 rounded-lg font-rajdhani font-semibold text-sm tracking-wider uppercase bg-danger/20 text-danger border border-danger/40 hover:bg-danger/30 transition-all flex items-center justify-center gap-2"
-                    >
-                      <DollarSign size={16} />
-                      Sell Property
-                    </button>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-warning text-xs text-center">
-                        Sell for {formatCurrency(ownedProperty.currentValue)}?
-                        {associatedLoan && !associatedLoan.isPaid && (
-                          <span className="block text-text-dim mt-1">Loan will be paid off automatically.</span>
-                        )}
-                      </p>
-                      <div className="flex gap-2">
-                        <button onClick={() => setShowSellConfirm(false)} className="flex-1 btn-secondary text-xs py-2">Cancel</button>
-                        <button onClick={handleSell} className="flex-1 btn-danger text-xs py-2">Confirm Sell</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {actionError && (
-                  <p className="text-danger text-xs text-center mt-3">{actionError}</p>
-                )}
-              </GlassCard>
+              <PropertySummary
+                ownedProperty={ownedProperty}
+                property={property}
+                player={player}
+                associatedLoan={associatedLoan}
+                gain={gain}
+                gainPercent={gainPercent}
+                quickRentalBlockedByMop={quickRentalBlockedByMop}
+                actionError={actionError}
+                showSellConfirm={showSellConfirm}
+                onShowSellConfirm={setShowSellConfirm}
+                onToggleRental={handleToggleRental}
+                onTenantPlan={handleTenantPlan}
+                onSell={handleSell}
+              />
             ) : (
-              <div ref={purchasePanelRef} className="scroll-mt-24">
-              <GlassCard accentColor="#00E676" className="lg:sticky lg:top-4 lg:max-h-[34rem] lg:overflow-y-auto">
-                <h3 className="section-title text-white mb-4">Purchase</h3>
-
-                <div className="space-y-4 mb-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-secondary text-sm">Price</span>
-                    <span className="font-mono text-white text-lg">{formatCompactCurrency(property.price)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-text-secondary text-sm">PSF</span>
-                    <span className="font-mono text-white">{formatCurrency(property.psf)}</span>
-                  </div>
-
-                  {property.isHdb && (
-                    <div className="rounded-xl border border-glass-border bg-white/[0.03] p-3">
-                      <p className="label-text mb-2 text-[10px] text-text-dim">Financing</p>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFinancingMode('hdb-concessionary');
-                            setDownPaymentPercent(HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT);
-                            setActionError(null);
-                          }}
-                          className={`rounded-lg border px-3 py-2 text-left transition-colors ${
-                            effectiveFinancingMode === 'hdb-concessionary'
-                              ? 'border-success/40 bg-success/10 text-white'
-                              : 'border-glass-border bg-black/20 text-text-secondary hover:border-success/30'
-                          }`}
-                        >
-                          <span className="block font-rajdhani text-sm font-semibold">HDB loan</span>
-                          <span className="block text-[11px]">25% down / 75% LTV, 2.6% fixed, 25y</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFinancingMode('bank');
-                            setDownPaymentPercent(Math.max(downPaymentPercent, Math.round((1 - getLtvCap(activeHousingLoans)) * 100)));
-                            setActionError(null);
-                          }}
-                          className={`rounded-lg border px-3 py-2 text-left transition-colors ${
-                            effectiveFinancingMode === 'bank'
-                              ? 'border-cyan-glow/40 bg-cyan-glow/10 text-white'
-                              : 'border-glass-border bg-black/20 text-text-secondary hover:border-cyan-glow/30'
-                          }`}
-                        >
-                          <span className="block font-rajdhani text-sm font-semibold">Bank loan</span>
-                          <span className="block text-[11px]">Market rate, HDB flats serviced at 25y</span>
-                        </button>
-                      </div>
-                      <p className="mt-2 text-[11px] leading-relaxed text-text-dim">
-                        Simplified game model: HDB concessionary financing makes the starter path playable, while MSR/TDSR still check monthly safety.
-                      </p>
-                      <p className="mt-2 text-[11px] leading-relaxed text-text-dim">
-                        Also learn the <GlossaryTerm termId="hps-fire-insurance">HPS / fire insurance</GlossaryTerm> checkpoint before treating the flat as fully planned.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="slider-block">
-                    <label className="label-text text-text-dim text-xs block mb-2">
-                      Down Payment: {effectiveDownPaymentPercent}%
-                    </label>
-                    <input
-                      type="range"
-                      min={minDownPaymentPercent}
-                      max={100}
-                      value={effectiveDownPaymentPercent}
-                      onChange={(e) => {
-                        setDownPaymentPercent(Number(e.target.value));
-                        setActionError(null);
-                      }}
-                      className="game-slider w-full accent-cyan-glow"
-                    />
-                    <div className="flex justify-between text-[10px] font-mono text-text-dim mt-1">
-                      <span>{minDownPaymentPercent}%</span>
-                      <span>100%</span>
-                    </div>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDownPaymentPercent(minDownPaymentPercent);
-                          setActionError(null);
-                        }}
-                        className="rounded-lg border border-glass-border bg-black/20 px-3 py-2 text-[11px] font-rajdhani font-semibold uppercase tracking-[0.12em] text-text-secondary transition-colors hover:border-cyan-glow/40 hover:text-cyan-glow"
-                      >
-                        Min Cash
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDownPaymentPercent(100);
-                          setActionError(null);
-                        }}
-                        className="rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-[11px] font-rajdhani font-semibold uppercase tracking-[0.12em] text-success transition-colors hover:border-success/60"
-                      >
-                        All Cash
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-divider pt-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-text-secondary text-sm">Down Payment</span>
-                      <span className="font-mono text-cyan-glow">{formatCurrency(validation.downPayment)}</span>
-                    </div>
-                    {validation.mortgageAmount > 0 && (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <span className="text-text-secondary text-sm">Loan Amount</span>
-                          <span className="font-mono text-warning">{formatCurrency(validation.mortgageAmount)}</span>
-                        </div>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-text-secondary text-sm">Loan Type</span>
-                          <span className="font-mono text-[11px] text-text-secondary">
-                            {validation.financingMode === 'hdb-concessionary' ? 'HDB 2.6% fixed' : `${formatPercent(validation.loanInterestRate, 1)} bank`}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-text-secondary text-sm">Loan Term</span>
-                          <span className="font-mono text-[11px] text-text-secondary">{validation.loanTermYears} years</span>
-                        </div>
-                      </>
-                    )}
-                    {validation.mortgageAmount <= 0 && (
-                      <p className="mt-1 text-[11px] text-text-dim">All-cash deal: no mortgage, so TDSR/MSR loan checks do not apply.</p>
-                    )}
-                  </div>
-
-                  {cpfEligible && player.cpfOrdinary > 0 && (
-                    <div className="border-t border-divider pt-3">
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={useCpfOrdinary}
-                          onChange={(e) => setUseCpfOrdinary(e.target.checked)}
-                          className="mt-1 accent-cyan-glow"
-                        />
-                        <div>
-                          <p className="text-white text-sm font-semibold">Use CPF OA toward eligible upfront costs</p>
-                          <p className="text-text-secondary text-xs mt-1">
-                            Available OA: S${player.cpfOrdinary.toLocaleString()} | Applied now: S${cpfApplied.toLocaleString()}
-                          </p>
-                        </div>
-                      </label>
-                    </div>
-                  )}
-
-                  <div className="border-t border-divider pt-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-text-secondary text-sm"><GlossaryTerm termId="bsd">BSD</GlossaryTerm> Stamp Duty</span>
-                      <span className="font-mono text-text-dim">{formatCurrency(validation.bsd)}</span>
-                    </div>
-                    {validation.absd > 0 && (
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-text-secondary text-sm"><GlossaryTerm termId="absd">ABSD</GlossaryTerm> {formatPercent(validation.absdRate * 100)} ({player.properties.length > 0 ? '2nd+' : 'Additional'})</span>
-                        <span className="font-mono text-danger">{formatCurrency(validation.absd)}</span>
-                      </div>
-                    )}
-                    {validation.hdbResaleLevy > 0 && (
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-text-secondary text-sm"><GlossaryTerm termId="hdb-resale-levy">HDB Resale Levy</GlossaryTerm></span>
-                        <span className="font-mono text-warning">{formatCurrency(validation.hdbResaleLevy)}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-white text-sm font-semibold">Total Upfront</span>
-                      <span className="font-mono text-warning">{formatCurrency(validation.totalUpfront)}</span>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-divider pt-3">
-                    {cpfApplied > 0 && (
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-text-secondary text-sm"><GlossaryTerm termId="cpf-oa">CPF OA</GlossaryTerm> Applied</span>
-                        <span className="font-mono text-success">-S${cpfApplied.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-white text-sm font-semibold">Cash Required</span>
-                      <span className="font-mono text-white">{formatCurrency(cashRequired)}</span>
-                    </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-text-secondary text-sm">Your Cash</span>
-                      <span className="font-mono text-white">{formatCurrency(player.cash)}</span>
-                    </div>
-                    {reservedCash > 0 && (
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-text-secondary text-sm">Available After Reserve</span>
-                        <span className="font-mono text-cyan-glow">{formatCurrency(availableCash)}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="border-t border-divider pt-3 space-y-2">
-                    <div className={`rounded-lg border px-3 py-3 ${
-                      dealReadiness.verdict === 'ready'
-                        ? 'border-success/30 bg-success/10'
-                        : dealReadiness.verdict === 'stretch'
-                          ? 'border-warning/30 bg-warning/10'
-                          : 'border-danger/30 bg-danger/10'
-                    }`}>
-                      <p className={`text-sm font-semibold ${
-                        dealReadiness.verdict === 'ready'
-                          ? 'text-success'
-                          : dealReadiness.verdict === 'stretch'
-                            ? 'text-warning'
-                            : 'text-danger'
-                      }`}>
-                        {dealReadiness.verdict === 'ready' ? 'Deal ready' : dealReadiness.verdict === 'stretch' ? 'Deal is tight' : 'Deal blocked'}
-                      </p>
-                      <p className="text-text-secondary text-xs mt-1 leading-relaxed">{dealReadiness.headline}</p>
-                      <div className="grid gap-1 mt-3">
-                        {dealReadiness.facts.slice(0, 3).map((fact) => (
-                          <p key={fact} className="text-text-dim text-[11px]">{fact}</p>
-                        ))}
-                      </div>
-                      {dealReadiness.warnings.map((warning) => (
-                        <p key={warning} className="text-warning text-[11px] mt-2 leading-relaxed">{warning}</p>
-                      ))}
-                      <div className="mt-3 rounded-lg border border-cyan-glow/20 bg-cyan-glow/10 p-3">
-                        <p className="text-[9px] font-mono uppercase tracking-[0.16em] text-cyan-glow">Next best fix</p>
-                        <p className="mt-1 text-xs leading-relaxed text-text-secondary">{dealNextFix}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-text-secondary text-sm">Monthly Surplus</span>
-                      <span className={`font-mono ${monthlySurplus >= 0 ? 'text-success' : 'text-danger'}`}>
-                        {monthlySurplus >= 0 ? '+' : ''}{formatCurrency(monthlySurplus)}
-                      </span>
-                    </div>
-                    {grantSupport > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-text-secondary text-sm">Potential First-Home Support</span>
-                        <span className="font-mono text-cyan-glow">{formatCurrency(grantSupport)}</span>
-                      </div>
-                    )}
-                    <div className="rounded-lg border border-glass-border bg-white/5 px-3 py-3">
-                      <p className="text-white text-sm font-semibold mb-1">Affordability outlook</p>
-                      <p className="text-text-secondary text-xs leading-relaxed">
-                        {affordability.monthsAtCurrentPace === null
-                          ? 'Current monthly surplus is too tight to project a clean purchase timeline.'
-                          : affordability.monthsAtCurrentPace === 0
-                            ? 'You already have enough to cover the cash requirement after CPF OA.'
-                            : `At your current pace, this cash requirement is about ${affordability.monthsAtCurrentPace} months away.`}
-                      </p>
-                      <p className="text-text-dim text-[11px] mt-2">
-                        Best accelerators: Side Gig, Property Hustle, and Claim / Plan Schemes.
-                      </p>
-                    </div>
-                    <PracticePurchasePanel plan={practicePlan} />
-                    {btoReadinessPlan && <BtoReadinessPanel plan={btoReadinessPlan} />}
-                    {seniorRightsizingPlan && (
-                      <SeniorRightsizingPanel
-                        plan={seniorRightsizingPlan}
-                        onNavigate={(route) => navigate(route)}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-card border border-divider bg-glass-fill/95 p-4 backdrop-blur-xl lg:sticky lg:bottom-0 lg:-mx-4 lg:-mb-4 lg:rounded-b-card lg:border-x-0 lg:border-b-0">
-                  <button
-                    onClick={handleBuy}
-                    disabled={!canAfford}
-                    className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {dealReadiness.ctaLabel}
-                  </button>
-
-                  {visibleMessages.length > 0 && (
-                    <div className="mt-3 space-y-1">
-                      {visibleMessages.map((message) => (
-                        <p key={message} className="text-danger text-xs text-center">
-                          {message}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </GlassCard>
-              </div>
+              <PurchasePanel
+                property={property}
+                player={player}
+                effectiveFinancingMode={effectiveFinancingMode}
+                effectiveDownPaymentPercent={effectiveDownPaymentPercent}
+                minDownPaymentPercent={minDownPaymentPercent}
+                downPaymentPercent={downPaymentPercent}
+                activeHousingLoans={activeHousingLoans}
+                useCpfOrdinary={useCpfOrdinary}
+                cpfEligible={cpfEligible}
+                cpfApplied={cpfApplied}
+                cashRequired={cashRequired}
+                monthlySurplus={monthlySurplus}
+                availableCash={availableCash}
+                reservedCash={reservedCash}
+                grantSupport={grantSupport}
+                affordability={affordability}
+                validation={validation}
+                dealReadiness={dealReadiness}
+                dealNextFix={dealNextFix}
+                practicePlan={practicePlan}
+                btoReadinessPlan={btoReadinessPlan}
+                seniorRightsizingPlan={seniorRightsizingPlan}
+                eligibilityBlocked={eligibilityBlocked}
+                cashShortfall={cashShortfall}
+                canAfford={canAfford}
+                visibleMessages={visibleMessages}
+                purchasePanelRef={purchasePanelRef}
+                onBuy={handleBuy}
+                onSetFinancingMode={setFinancingMode}
+                onSetDownPaymentPercent={setDownPaymentPercent}
+                onSetUseCpfOrdinary={setUseCpfOrdinary}
+                onSetActionError={setActionError}
+                onNavigate={navigate}
+              />
             )}
           </div>
         </div>
@@ -1099,196 +624,3 @@ export default function PropertyDetail() {
   );
 }
 
-function QuickPurchasePanel({
-  propertyName,
-  readiness,
-  summary,
-  projectedMonthlySurplus,
-  cashRequired,
-  canAfford,
-  onReview,
-  onBuy,
-  compact = false,
-  className = 'mb-6',
-}: {
-  propertyName: string;
-  readiness: 'ready' | 'stretch' | 'blocked';
-  summary: string;
-  projectedMonthlySurplus: number;
-  cashRequired: number;
-  canAfford: boolean;
-  onReview: () => void;
-  onBuy: () => void;
-  compact?: boolean;
-  className?: string;
-}) {
-  return (
-    <GlassCard
-      accentColor={readiness === 'ready' ? '#00E676' : readiness === 'stretch' ? '#FFD740' : '#FF1744'}
-      className={className}
-    >
-      <div className="grid gap-4 lg:grid-cols-[1fr,auto] lg:items-center">
-        <div>
-          <p className="label-text mb-1 text-[10px] text-cyan-glow">Purchase snapshot</p>
-          <h2 className="section-title text-white">
-            {compact ? `Can you buy ${propertyName}?` : `Review ${propertyName} before the long scroll`}
-          </h2>
-          {!compact && (
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">{summary}</p>
-          )}
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:max-w-md">
-            <PracticeMetric label="Cash required" value={formatCurrency(cashRequired)} tone={readiness === 'blocked' ? 'bad' : 'neutral'} />
-            <PracticeMetric label="After-debt surplus" value={formatCurrency(projectedMonthlySurplus)} tone={projectedMonthlySurplus >= 0 ? 'good' : 'bad'} />
-          </div>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:min-w-[22rem] lg:grid-cols-1">
-          <button type="button" onClick={onReview} className="btn-secondary min-h-11 px-4 py-3 text-sm">
-            Practice / review purchase
-          </button>
-          <button
-            type="button"
-            onClick={onBuy}
-            disabled={!canAfford}
-            className="btn-primary min-h-11 px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {canAfford ? 'Buy Property' : readiness === 'blocked' ? 'Fix blocker first' : 'Build cash first'}
-          </button>
-        </div>
-      </div>
-    </GlassCard>
-  );
-}
-
-function PracticePurchasePanel({ plan }: { plan: PracticePurchasePlan }) {
-  return (
-    <div className={`rounded-lg border px-3 py-3 ${
-      plan.riskLevel === 'safe'
-        ? 'border-success/25 bg-success/10'
-        : plan.riskLevel === 'stretch'
-          ? 'border-warning/25 bg-warning/10'
-          : 'border-danger/25 bg-danger/10'
-    }`}>
-      <p className="text-white text-sm font-semibold mb-1">{plan.title}</p>
-      <p className="text-xs leading-relaxed text-text-secondary">{plan.summary}</p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <PracticeMetric label="Cash after buy" value={formatCurrency(plan.projectedCashAfterUpfront)} tone={plan.projectedCashAfterUpfront >= 0 ? 'good' : 'bad'} />
-        <PracticeMetric label="Avail. after reserve" value={formatCurrency(plan.projectedAvailableCashAfterReserve)} tone={plan.projectedAvailableCashAfterReserve >= 0 ? 'good' : 'bad'} />
-        <PracticeMetric label="Monthly after debt" value={formatCurrency(plan.projectedMonthlySurplusAfterPurchase)} tone={plan.projectedMonthlySurplusAfterPurchase >= 0 ? 'good' : 'bad'} />
-        <PracticeMetric label="CPF used" value={formatCurrency(plan.cpfApplied)} tone="neutral" />
-      </div>
-      <div className="mt-3 space-y-1">
-        {plan.nextSteps.map((step) => (
-          <p key={step} className="text-[11px] leading-relaxed text-text-dim">{step}</p>
-        ))}
-      </div>
-      {plan.warnings.length > 0 && (
-        <div className="mt-3 space-y-1">
-          {plan.warnings.map((warning) => (
-            <p key={warning} className="text-[11px] leading-relaxed text-warning">{warning}</p>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function BtoReadinessPanel({ plan }: { plan: BtoReadinessPlan }) {
-  return (
-    <div className="rounded-lg border border-cyan-glow/20 bg-cyan-glow/10 px-3 py-3">
-      <p className="text-white text-sm font-semibold mb-1">BTO / HFE timeline</p>
-      <p className="text-xs leading-relaxed text-text-secondary">{plan.headline}</p>
-      <p className="mt-2 text-[11px] font-mono uppercase tracking-[0.14em] text-cyan-glow">
-        Est. keys in {plan.estimatedMonthsToKeys} month(s)
-      </p>
-      <div className="mt-3 space-y-2">
-        {plan.stages.map((stage) => (
-          <div key={stage.label} className="rounded-lg border border-white/10 bg-black/20 p-2">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold text-white">{stage.label}</p>
-              <span className={`text-[9px] font-mono uppercase ${
-                stage.status === 'blocked'
-                  ? 'text-danger'
-                  : stage.status === 'ready'
-                    ? 'text-success'
-                    : stage.status === 'next'
-                      ? 'text-cyan-glow'
-                      : 'text-text-dim'
-              }`}>
-                {stage.status}
-              </span>
-            </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{stage.detail}</p>
-          </div>
-        ))}
-      </div>
-      {plan.warnings.map((warning) => (
-        <p key={warning} className="mt-2 text-[11px] leading-relaxed text-warning">{warning}</p>
-      ))}
-      {plan.notes.map((note) => (
-        <p key={note} className="mt-2 text-[11px] leading-relaxed text-text-dim">{note}</p>
-      ))}
-    </div>
-  );
-}
-
-function SeniorRightsizingPanel({
-  plan,
-  onNavigate,
-}: {
-  plan: SeniorRightsizingPlan;
-  onNavigate: (route: string) => void;
-}) {
-  return (
-    <div className="rounded-lg border border-warning/25 bg-warning/10 px-3 py-3">
-      <p className="text-white text-sm font-semibold mb-1">55+ rightsizing read</p>
-      <p className="text-xs leading-relaxed text-text-secondary">{plan.headline}</p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <PracticeMetric label="FRS ref." value={formatCurrency(plan.cpfRetirementReference)} tone="neutral" />
-        <PracticeMetric label="Est. RA" value={formatCurrency(plan.estimatedRetirementAccount)} tone={plan.cpfGapToReference === 0 ? 'good' : 'neutral'} />
-        <PracticeMetric label="CPF gap" value={formatCurrency(plan.cpfGapToReference)} tone={plan.cpfGapToReference === 0 ? 'good' : 'bad'} />
-        <PracticeMetric label="CPF above RA" value={formatCurrency(plan.withdrawableCpfEstimate)} tone="neutral" />
-      </div>
-      <div className="mt-3 space-y-2">
-        {plan.options.map((option) => (
-          <button
-            key={option.label}
-            type="button"
-            onClick={() => onNavigate(option.route)}
-            className="w-full rounded-lg border border-white/10 bg-black/20 p-2 text-left transition-colors hover:border-warning/40 hover:bg-warning/10"
-          >
-            <p className="text-xs font-semibold text-white">{option.label}</p>
-            <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{option.detail}</p>
-          </button>
-        ))}
-      </div>
-      {plan.warnings.map((warning) => (
-        <p key={warning} className="mt-2 text-[11px] leading-relaxed text-warning">{warning}</p>
-      ))}
-    </div>
-  );
-}
-
-function PracticeMetric({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: 'good' | 'bad' | 'neutral';
-}) {
-  return (
-    <div className="rounded-lg border border-glass-border bg-black/20 p-2">
-      <p className="label-text text-[8px] text-text-dim">{label}</p>
-      <p className={`mt-1 font-mono text-[11px] ${
-        tone === 'good'
-          ? 'text-success'
-          : tone === 'bad'
-            ? 'text-danger'
-            : 'text-white'
-      }`}>
-        {value}
-      </p>
-    </div>
-  );
-}
