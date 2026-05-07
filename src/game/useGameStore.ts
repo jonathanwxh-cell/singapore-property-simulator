@@ -561,18 +561,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   resolveScenario: (option) => {
-    const { currentScenario: scenarioId, rngSeed, rngState } = get();
-    const scenario = scenarioId ? scenarios.find(s => s.id === scenarioId) : null;
-    const canonicalOption = scenario?.options.find(o => o.label === option.label) ?? null;
-    if (!canonicalOption) {
-      return {
-        cashDelta: 0, cpfOrdinaryDelta: 0, creditDelta: 0, propertyValueImpactPct: 0,
-        salaryDeltaPct: 0, careerGrowthModifierDelta: 0, careerRiskModifierDelta: 0,
-        careerVolatilityModifierDelta: 0, followUpText: '', success: false,
-      };
-    }
+    const { rngSeed, rngState } = get();
     const rng = restoreRng(rngSeed, rngState);
-    const resolution = resolveScenarioOption(canonicalOption, rng);
+    const resolution = resolveScenarioOption(option, rng);
     set(state => ({
       player: finalizePlayer({
         ...state.player,
