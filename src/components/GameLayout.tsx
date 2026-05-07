@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import HUDTopBar from './HUDTopBar';
+import MobileMoreSheet from './MobileMoreSheet';
 import Sidebar from './Sidebar';
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -10,15 +11,11 @@ import {
   TrendingUp,
   PieChart,
   MoreHorizontal,
-  Landmark,
-  Save,
-  Settings,
-  Trophy,
-  Newspaper,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGameStore } from '@/game/useGameStore';
 import NextMonthCTA from './NextMonthCTA';
+import { isMobileMorePath } from './mobileMoreNavigation';
 
 const mobileNavItems = [
   { label: 'Home', path: '/dashboard', icon: LayoutDashboard },
@@ -26,15 +23,6 @@ const mobileNavItems = [
   { label: 'Buy', path: '/properties', icon: Building2 },
   { label: 'Own', path: '/portfolio', icon: PieChart },
   { label: 'Learn', path: '/learn', icon: TrendingUp },
-];
-
-const mobileMoreItems = [
-  { label: 'Market', path: '/market', icon: Newspaper, detail: 'District map' },
-  { label: 'Bank', path: '/bank', icon: Landmark, detail: 'Loans' },
-  { label: 'Save', path: '/saveload', icon: Save, detail: 'Profiles' },
-  { label: 'Scenarios', path: '/scenarios', icon: TrendingUp, detail: 'Choices' },
-  { label: 'Leaderboard', path: '/leaderboard', icon: Trophy, detail: 'Replay score' },
-  { label: 'Settings', path: '/settings', icon: Settings, detail: 'Comfort' },
 ];
 
 export default function GameLayout() {
@@ -79,6 +67,10 @@ export default function GameLayout() {
     && shellControlsVisible
     && !routesWithInlineAdvance.includes(location.pathname)
     && ['/market', '/bank'].includes(location.pathname);
+  const navigateFromMobileMore = (path: string) => {
+    setShowMoreMenu(false);
+    window.setTimeout(() => navigate(path), 0);
+  };
 
   return (
     <div
@@ -120,57 +112,17 @@ export default function GameLayout() {
       {isMobile && shellControlsVisible && (
         <>
         {showFloatingAdvance && <NextMonthCTA variant="floating" />}
-        <AnimatePresence>
-          {showMoreMenu && (
-            <motion.div
-              key="mobile-more-menu"
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 18 }}
-              transition={{ duration: 0.18 }}
-              className="fixed left-3 right-3 z-50 rounded-3xl border border-glass-border bg-void-navy/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl lg:hidden"
-              style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom) + 0.5rem)' }}
-            >
-              <div className="mb-2 flex items-center justify-between px-1">
-                <p className="label-text text-[10px] text-cyan-glow">More game tabs</p>
-                <button
-                  type="button"
-                  onClick={() => setShowMoreMenu(false)}
-                  className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.14em] text-text-secondary"
-                >
-                  Close
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {mobileMoreItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <button
-                      key={item.path}
-                      type="button"
-                      onClick={() => {
-                        setShowMoreMenu(false);
-                        navigate(item.path);
-                      }}
-                      className={`rounded-2xl border p-3 text-left transition-colors ${
-                        isActive
-                          ? 'border-cyan-glow/45 bg-cyan-glow/10 text-cyan-glow'
-                          : 'border-white/10 bg-white/[0.04] text-text-secondary hover:border-cyan-glow/30 hover:text-white'
-                      }`}
-                    >
-                      <Icon size={17} className="mb-2" />
-                      <span className="block font-rajdhani text-sm font-semibold uppercase tracking-[0.1em]">{item.label}</span>
-                      <span className="mt-0.5 block text-[10px] text-text-dim">{item.detail}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <MobileMoreSheet
+          open={showMoreMenu}
+          pathname={location.pathname}
+          onClose={() => setShowMoreMenu(false)}
+          onNavigate={navigateFromMobileMore}
+        />
         <nav
-          className="fixed bottom-0 left-0 right-0 z-50 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center justify-around gap-0.5 px-1 lg:hidden"
+          className={cn(
+            'fixed bottom-0 left-0 right-0 z-50 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center justify-around gap-0.5 px-1 lg:hidden',
+            showMoreMenu && 'pointer-events-none',
+          )}
           style={{ height: 'calc(4rem + env(safe-area-inset-bottom))', paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           {mobileNavItems.map((item) => {
@@ -196,9 +148,11 @@ export default function GameLayout() {
           <button
             type="button"
             onClick={() => setShowMoreMenu((value) => !value)}
+            aria-expanded={showMoreMenu}
+            aria-controls="mobile-more-sheet"
             className={cn(
               'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 min-w-0 transition-colors',
-              showMoreMenu || mobileMoreItems.some((item) => item.path === location.pathname) ? 'text-cyan-glow' : 'text-text-dim'
+              showMoreMenu || isMobileMorePath(location.pathname) ? 'text-cyan-glow' : 'text-text-dim'
             )}
           >
             <MoreHorizontal size={18} />
