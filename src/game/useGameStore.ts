@@ -22,8 +22,11 @@ import {
   type TenantStrategyInput,
 } from '@/engine/propertyOperations';
 import type { RepairChoiceId } from '@/data/maintenanceEvents';
+import { scenarios } from '@/data/scenarios';
 import type { ScenarioOption } from '@/data/scenarios';
 import type { ScenarioResolution } from '@/engine/actions';
+import { achievements } from '@/data/achievements';
+import { PROPERTY_VALUE_FLOOR } from '@/engine/constants';
 import type { TenantLeaseDecisionId } from './types';
 import type { ActionResult } from '@/engine/results';
 import { writeAutoSave } from './savePersistence';
@@ -96,7 +99,10 @@ function withPortfolioDefaults(player: Player): Player {
     usedSubsidizedHousing: player.usedSubsidizedHousing ?? ownsSubsidizedHousing,
     reserve: player.reserve ?? createDefaultReserve(),
     operationHistory: player.operationHistory ?? [],
-    properties: player.properties.map(normalizeOwnedProperty),
+    properties: player.properties.map((owned) => ({
+      ...normalizeOwnedProperty(owned),
+      currentValue: Math.max(PROPERTY_VALUE_FLOOR, owned.currentValue),
+    })),
   };
 }
 
@@ -313,12 +319,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   loadGame: (state) => {
     rng = createRng(state.rngSeed);
     rng.setState(state.rngState);
+    const validScenario = state.currentScenario !== null && scenarios.some(s => s.id === state.currentScenario)
+      ? state.currentScenario
+      : null;
     set({
       ...state,
       market: withHydratedMarket(state.market),
       player: finalizePlayer(state.player),
       settings: withHydratedSettings(state.settings),
       isGameActive: true,
+      currentScenario: validScenario,
     });
   },
 
@@ -340,7 +350,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   advanceMonths: (months) => {
-    const turnsToAdvance = Math.max(0, Math.floor(months));
+    const turnsToAdvance = Math.max(0, Math.min(12, Math.floor(months)));
     for (let i = 0; i < turnsToAdvance; i += 1) {
       const state = get();
       if (state.currentScenario || !state.isGameActive) return;
@@ -521,6 +531,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   unlockAchievement: (achievementId) => {
+    if (!achievements.some(a => a.id === achievementId)) return;
     const { player } = get();
     if (player.achievements.includes(achievementId)) return;
     set({ player: finalizePlayer({ ...player, achievements: [...player.achievements, achievementId] }) });
@@ -529,19 +540,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setCurrentScenario: (scenarioId) => {
+    if (scenarioId !== null && !scenarios.some(s => s.id === scenarioId)) return;
     set({ currentScenario: scenarioId });
     const state = get();
     if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   resolveScenario: (option) => {
-    const resolution = resolveScenarioOption(option, rng);
+    const { currentScenario: scenarioId } = get();
+    const scenario = scenarioId ? scenarios.find(s => s.id === scenarioId) : null;
+    const canonicalOption = scenario?.options.find(o => o.label === option.label) ?? null;
+    if (!canonicalOption) {
+      return {
+        cashDelta: 0, cpfOrdinaryDelta: 0, creditDelta: 0, propertyValueImpactPct: 0,
+        salaryDeltaPct: 0, careerGrowthModifierDelta: 0, careerRiskModifierDelta: 0,
+        careerVolatilityModifierDelta: 0, followUpText: '', success: false,
+      };
+    }
+    const resolution = resolveScenarioOption(canonicalOption, rng);
     set(state => ({
       player: finalizePlayer({
         ...state.player,
         cash: state.player.cash + resolution.cashDelta,
         cpfOrdinary: state.player.cpfOrdinary + resolution.cpfOrdinaryDelta,
-        salary: Math.max(1000, Math.round(state.player.salary * (1 + resolution.salaryDeltaPct))),
+        salary: Math.max(1000, Math.min(500_000, Math.round(state.player.salary * (1 + resolution.salaryDeltaPct)))),
         creditScore: Math.max(MIN_CREDIT_SCORE, Math.min(MAX_CREDIT_SCORE, state.player.creditScore + resolution.creditDelta)),
         careerGrowthModifier: round2(Math.max(0.5, state.player.careerGrowthModifier + resolution.careerGrowthModifierDelta)),
         careerRiskModifier: round2(Math.max(0.5, state.player.careerRiskModifier + resolution.careerRiskModifierDelta)),
@@ -550,7 +572,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           ? state.player.properties
           : state.player.properties.map(p => ({
               ...p,
-              currentValue: Math.round(p.currentValue * (1 + resolution.propertyValueImpactPct / 100)),
+              currentValue: Math.max(PROPERTY_VALUE_FLOOR, Math.round(p.currentValue * (1 + resolution.propertyValueImpactPct / 100))),
             })),
       }),
       rngState: rng.getState(),

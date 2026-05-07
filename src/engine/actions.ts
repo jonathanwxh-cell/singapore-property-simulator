@@ -97,7 +97,8 @@ export function buyPropertyPure(
 
   const validation = validatePurchase(player, property, downPayment, financingMode);
   const cpfEligible = canUseCpfForProperty(propertyId);
-  const allowedCpfUse = cpfEligible ? Math.floor(Math.min(validation.totalUpfront, player.cpfOrdinary)) : 0;
+  // CPF OA may only cover the down payment component, not stamp duties or levy
+  const allowedCpfUse = cpfEligible ? Math.floor(Math.min(validation.downPayment, player.cpfOrdinary)) : 0;
   const cpfToUse = Math.max(0, Math.floor(cpfOrdinaryUsed));
 
   if (!cpfEligible && cpfToUse > 0) {
@@ -302,7 +303,7 @@ export function payLoanPure(player: Player, loanId: string, amount: number): Act
   const loan = player.loans.find(l => l.id === loanId);
   if (!loan) return fail('loan_not_found', 'Loan not found.');
   if (loan.isPaid) return fail('loan_already_paid', 'Loan is already paid off.');
-  if (amount <= 0) return fail('invalid_amount', 'Payment must be positive.');
+  if (!Number.isFinite(amount) || amount <= 0) return fail('invalid_amount', 'Payment must be positive.');
 
   const actualPayment = roundMoney(Math.min(amount, loan.remainingBalance));
   if (player.cash < actualPayment) {
