@@ -28,7 +28,8 @@ export function getCpfAllocation(age: number): { oa: number; sa: number; ma: num
       return { oa: bracket.oaRate, sa: bracket.saRate, ma: bracket.maRate };
     }
   }
-  return { oa: 0.05, sa: 0.025, ma: 0.075 };
+  // Unreachable: the last bracket has maxAge: Infinity.
+  throw new Error(`getCpfAllocation: no bracket matched age ${age}`);
 }
 
 export function contributeCpf(balances: CpfBalances, monthlySalary: number, age: number): CpfBalances {
