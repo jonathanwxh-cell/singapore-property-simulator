@@ -13,8 +13,8 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     ignore:
-      # @types/node should track the runtime, which is pinned to Node 20 in
-      # .nvmrc and CI. Re-enable when we move the runtime to Node 22+ LTS.
+      # @types/node major tracks the Node LTS runtime. We're on Node 22; unpin
+      # when we deliberately move to Node 24 LTS.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
       # Hold eslint at v9 until typescript-eslint v9 ships with eslint 10
