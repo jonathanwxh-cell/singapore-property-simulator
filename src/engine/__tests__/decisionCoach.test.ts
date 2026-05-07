@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { properties } from '@/data/properties';
 import { scenarios } from '@/data/scenarios';
 import { createInitialLifeState, type Player } from '@/game/types';
+import { validatePurchase } from '../purchase';
 import {
   assessDealReadiness,
   assessScenarioOption,
@@ -177,18 +178,38 @@ describe('assessDealReadiness', () => {
   it('returns a ready verdict with CPF-adjusted upfront cash when the deal can be bought', () => {
     const property = properties.find((candidate) => candidate.id === 'hdb-bto-0');
     if (!property) throw new Error('Expected starter property fixture.');
+    const player = makePlayer({ cash: 120_000, cpfOrdinary: 40_000 });
 
     const readiness = assessDealReadiness({
-      player: makePlayer({ cash: 120_000, cpfOrdinary: 40_000 }),
+      player,
       property,
       downPaymentPercent: 25,
       useCpfOrdinary: true,
     });
+    const validation = validatePurchase(player, property, property.price * 0.25);
 
     expect(readiness.verdict).toBe('ready');
     expect(readiness.ctaLabel).toBe('Buy Property');
     expect(readiness.cashRequired).toBeLessThan(readiness.totalUpfront);
+    expect(readiness.cpfApplied).toBe(Math.min(player.cpfOrdinary, validation.downPayment));
     expect(readiness.primaryBlocker).toBe(null);
+  });
+
+  it('caps CPF readiness support at the down payment instead of covering duties', () => {
+    const property = properties.find((candidate) => candidate.id === 'hdb-bto-0');
+    if (!property) throw new Error('Expected starter property fixture.');
+    const player = makePlayer({ cash: 120_000, cpfOrdinary: 150_000 });
+
+    const readiness = assessDealReadiness({
+      player,
+      property,
+      downPaymentPercent: 25,
+      useCpfOrdinary: true,
+    });
+    const validation = validatePurchase(player, property, property.price * 0.25);
+
+    expect(readiness.cpfApplied).toBe(validation.downPayment);
+    expect(readiness.cashRequired).toBe(readiness.totalUpfront - validation.downPayment);
   });
 
   it('names TDSR as the blocker instead of a vague insufficient-funds label', () => {

@@ -82,5 +82,6 @@ describe('getMonthlyIntentOptions', () => {
       route: '/property/hdb-bto-0',
       recommended: true,
     });
+    expect(options.some((option) => option.id === 'mop-income-runway')).toBe(true);
   });
 });

@@ -14,6 +14,7 @@ import { getCommandCenterState } from '@/engine/commandCenter';
 import { getLifeCampaign } from '@/engine/lifeCampaign';
 import { getNextBestMoves } from '@/engine/decisionCoach';
 import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
+import { getNextHomePlan } from '@/engine/nextHomePlan';
 import { deriveEligibilityFlags } from '@/engine/eligibility';
 import { getFirstHomeMissions } from '@/engine/firstHomeMissions';
 import { getLastTurnRecap } from '@/engine/turnRecap';
@@ -45,7 +46,7 @@ import EligibilitySummaryPanel from './dashboard/panels/EligibilitySummaryPanel'
 import FirstRunQuestPanel from './dashboard/panels/FirstRunQuestPanel';
 import LastMonthRecapPanel from './dashboard/panels/LastMonthRecapPanel';
 import MonthlyIntentPanel from './dashboard/panels/MonthlyIntentPanel';
-import MopCountdownPanel from './dashboard/panels/MopCountdownPanel';
+import NextHomeGatewayPanel from './dashboard/panels/NextHomeGatewayPanel';
 import PropertyOperationsPanel from './dashboard/panels/PropertyOperationsPanel';
 import {
   Banknote,
@@ -109,20 +110,15 @@ export default function Dashboard() {
   const weakTenant = player.properties.find((property) => property.tenant && property.tenant.satisfaction < 55);
   const latestOperation = player.operationHistory?.[0] ?? null;
   const nextBestMoves = useMemo(() => getNextBestMoves({ player, currentScenario }), [player, currentScenario]);
+  const nextHomePlan = useMemo(() => getNextHomePlan(player), [player]);
   const monthlyIntents = useMemo(() => getMonthlyIntentOptions(player), [player]);
+  const recommendedMonthlyIntent = monthlyIntents.find((intent) => intent.recommended) ?? monthlyIntents[0] ?? null;
   const firstHomeMissions = useMemo(() => getFirstHomeMissions(player), [player]);
   const lastTurnRecap = useMemo(() => getLastTurnRecap({ player, market, currentScenario }), [player, market, currentScenario]);
   const firstRunQuest = useMemo(() => getFirstRunQuest(player, currentScenario), [player, currentScenario]);
   const beginnerDashboardFocus = settings.guidedMode && player.turnCount <= 6 && player.properties.length === 0 && !settings.compactMode;
   const hideAdvancedPanels = beginnerDashboardFocus && !showAdvancedPanels;
   const hasPropertyAttention = openIssues.length > 0 || activeRenovations.length > 0 || Boolean(weakTenant);
-  const mopHolding = player.properties
-    .map((holding) => ({
-      holding,
-      listing: properties.find((property) => property.id === holding.propertyId),
-    }))
-    .find(({ listing, holding }) => Boolean(listing?.isHdb && (holding.mopRemainingMonths ?? 0) > 0));
-
   useEffect(() => {
     if (!isGameActive) navigate('/gameover');
   }, [isGameActive, navigate]);
@@ -207,6 +203,18 @@ export default function Dashboard() {
           <ActionTile icon={BookOpen} title="Learn" detail="Rules, blockers, first-run help" onClick={() => navigate('/learn')} />
         </motion.div>
 
+        {player.properties.length > 0 && (
+          <motion.div variants={itemVariants} className="mb-6">
+            <NextHomeGatewayPanel
+              plan={nextHomePlan}
+              recommendedIntent={recommendedMonthlyIntent}
+              onUseIntent={handleSelectIntent}
+              onOpenTarget={() => navigate(nextHomePlan.targetRoute)}
+              onBlitz={() => advanceMonths(3)}
+            />
+          </motion.div>
+        )}
+
         <motion.div ref={monthlyIntentRef} variants={itemVariants} className="mb-6 scroll-mt-24">
           <MonthlyIntentPanel
             intents={monthlyIntents}
@@ -217,18 +225,6 @@ export default function Dashboard() {
             onToggleCompact={() => updateSettings({ compactMode: !settings.compactMode })}
           />
         </motion.div>
-
-        {mopHolding && (
-          <motion.div variants={itemVariants} className="mb-6">
-            <MopCountdownPanel
-              propertyName={mopHolding.listing?.name ?? 'HDB flat'}
-              monthsRemaining={mopHolding.holding.mopRemainingMonths ?? 0}
-              onOpenProperty={() => navigate(`/property/${mopHolding.holding.propertyId}`)}
-              onPlanLife={() => navigate('/life')}
-              onBlitz={() => advanceMonths(3)}
-            />
-          </motion.div>
-        )}
 
         {player.properties.length > 0 && hasPropertyAttention && (
           <motion.div variants={itemVariants} className="mb-6">
@@ -440,4 +436,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

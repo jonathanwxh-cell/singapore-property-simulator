@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Active MOP / Next Home v1**: owner runs now get a Dashboard gateway for Property #2 planning, a readiness tracker with bottleneck callouts, and MOP-specific monthly intents for home projects, income runway, market study, and room-rental setup.
 
 ### Changed
+- Monthly Intent recommendations now pivot into an active-MOP planning loop once a player owns an HDB inside MOP, instead of staying on the generic cash/deal/career trio.
 
 ### Fixed
+- Purchase-readiness CPF previews now match the real buy action by capping CPF OA usage at the eligible down-payment amount instead of incorrectly offsetting stamp duties or levy.
 
 ### Improved
 

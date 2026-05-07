@@ -1,12 +1,16 @@
 import type { LifeActionId, Player } from '@/game/types';
 import { properties } from '@/data/properties';
+import { getNextHomePlan, type NextHomeFocusId } from './nextHomePlan';
 
 export type MonthlyIntentId =
   | 'landlord-ops'
   | 'recover'
   | 'build-cash'
   | 'hunt-deal'
-  | 'career-push';
+  | 'career-push'
+  | 'mop-home-project'
+  | 'mop-income-runway'
+  | 'mop-market-intel';
 
 export interface MonthlyIntentOption {
   id: MonthlyIntentId;
@@ -22,6 +26,7 @@ export interface MonthlyIntentOption {
 }
 
 export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
+  const nextHomePlan = getNextHomePlan(player);
   const ownedHdbNeedingRoomPlan = player.properties.find((ownedProperty) => {
     const listing = properties.find((property) => property.id === ownedProperty.propertyId);
     return Boolean(listing?.isHdb && !ownedProperty.tenant && (ownedProperty.mopRemainingMonths ?? 0) > 0);
@@ -43,6 +48,85 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
       recommended: true,
       tone: 'warn',
     });
+  }
+
+  if (nextHomePlan.phase === 'active-mop') {
+    const mopOptions: MonthlyIntentOption[] = [];
+
+    if (ownedHdbNeedingRoomPlan) {
+      mopOptions.push({
+        id: 'landlord-ops',
+        label: 'Activate Room Rental',
+        detail: 'Use the MOP-safe landlord loop so the flat starts teaching tenant tradeoffs instead of sitting idle.',
+        upside: 'Rental income and tenant XP',
+        risk: 'Satisfaction can drift',
+        primaryActionId: 'property-hustle',
+        secondaryActionId: needsRecovery ? null : 'recover',
+        route: `/property/${ownedHdbNeedingRoomPlan.propertyId}`,
+        recommended: nextHomePlan.recommendedFocusId === 'tenant' && !needsRecovery,
+        tone: 'good',
+      });
+    }
+
+    mopOptions.push(
+      createMopIntent({
+        id: 'mop-home-project',
+        focusId: 'home-project',
+        label: 'Improve Current Home',
+        detail: 'Use the month for renovation, condition, or sale-readiness work that improves rent/value before MOP exit.',
+        upside: 'Higher exit value',
+        risk: 'Cash tied up',
+        primaryActionId: 'property-hustle',
+        secondaryActionId: needsRecovery ? null : 'plan-schemes',
+        route: nextHomePlan.propertyName ? `/property/${ownedHdbNeedingRoomPlan?.propertyId ?? player.properties[0]?.propertyId}` : '/portfolio',
+        recommendedFocusId: nextHomePlan.recommendedFocusId,
+        needsRecovery,
+        tone: 'good',
+      }),
+      createMopIntent({
+        id: 'mop-income-runway',
+        focusId: 'income',
+        label: 'Grow Next-Home Cash',
+        detail: 'Push side income and scheme planning so the down-payment runway improves while MOP counts down.',
+        upside: 'Faster Property #2 readiness',
+        risk: 'Energy pressure',
+        primaryActionId: 'take-side-gig',
+        secondaryActionId: needsRecovery ? null : 'focus-at-work',
+        route: '/life',
+        recommendedFocusId: nextHomePlan.recommendedFocusId,
+        needsRecovery,
+        tone: 'neutral',
+      }),
+      createMopIntent({
+        id: 'mop-market-intel',
+        focusId: 'market',
+        label: 'Study Exit Market',
+        detail: 'Compare districts and timing signals so the MOP exit feels planned instead of sudden.',
+        upside: 'Better timing confidence',
+        risk: 'Less cash this month',
+        primaryActionId: 'property-hustle',
+        secondaryActionId: needsRecovery ? null : 'upskill',
+        route: '/market',
+        recommendedFocusId: nextHomePlan.recommendedFocusId,
+        needsRecovery,
+        tone: 'good',
+      }),
+    );
+
+    const rankedMopOptions = [
+      ...mopOptions.filter((option) => option.recommended),
+      ...mopOptions.filter((option) => !option.recommended),
+    ];
+    const activeMopOptions = [
+      ...options,
+      ...rankedMopOptions,
+    ].slice(0, 3);
+
+    if (!activeMopOptions.some((option) => option.recommended)) {
+      activeMopOptions[0] = { ...activeMopOptions[0], recommended: true };
+    }
+
+    return activeMopOptions;
   }
 
   if (ownedHdbNeedingRoomPlan) {
@@ -110,4 +194,45 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
     ...deduped.filter((option) => option.recommended),
     ...deduped.filter((option) => !option.recommended),
   ].slice(0, 3);
+}
+
+function createMopIntent({
+  id,
+  focusId,
+  label,
+  detail,
+  upside,
+  risk,
+  primaryActionId,
+  secondaryActionId,
+  route,
+  recommendedFocusId,
+  needsRecovery,
+  tone,
+}: {
+  id: Extract<MonthlyIntentId, 'mop-home-project' | 'mop-income-runway' | 'mop-market-intel'>;
+  focusId: NextHomeFocusId;
+  label: string;
+  detail: string;
+  upside: string;
+  risk: string;
+  primaryActionId: LifeActionId;
+  secondaryActionId: LifeActionId | null;
+  route: string;
+  recommendedFocusId: NextHomeFocusId;
+  needsRecovery: boolean;
+  tone: MonthlyIntentOption['tone'];
+}): MonthlyIntentOption {
+  return {
+    id,
+    label,
+    detail,
+    upside,
+    risk,
+    primaryActionId,
+    secondaryActionId,
+    route,
+    recommended: recommendedFocusId === focusId && !needsRecovery,
+    tone,
+  };
 }

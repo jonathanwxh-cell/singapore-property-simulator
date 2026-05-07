@@ -259,7 +259,9 @@ export function assessDealReadiness({
   const validation = validatePurchase(player, property, downPayment, financingMode);
   const cpfEligible = isResidentialCategory(property.type);
   const cpfApplied = cpfEligible && useCpfOrdinary
-    ? Math.floor(Math.min(player.cpfOrdinary, validation.totalUpfront))
+    // Keep readiness math aligned with the actual purchase action: CPF OA only
+    // offsets the down payment in this simplified model, not duties or levy.
+    ? Math.floor(Math.min(player.cpfOrdinary, validation.downPayment))
     : 0;
   const cashRequired = Math.max(0, validation.totalUpfront - cpfApplied);
   const cashShortfall = Math.max(0, cashRequired - player.cash);
