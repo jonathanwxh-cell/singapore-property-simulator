@@ -33,7 +33,8 @@ function countCommercial(player: Player): number {
 }
 
 export function evaluateAchievements(player: Player): string[] {
-  const unlocked = new Set(player.achievements);
+  const knownIds = new Set(achievements.map(a => a.id));
+  const unlocked = new Set(player.achievements.filter(id => knownIds.has(id)));
   const netWorth = selectNetWorth(player);
   const activeLoans = player.loans.filter(l => !l.isPaid);
 

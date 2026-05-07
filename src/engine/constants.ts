@@ -5,6 +5,7 @@ export const CPF_TOTAL_CONTRIB_RATIO = 0.37;
 // Underwriting
 export const TDSR_LIMIT = 0.55;
 export const CREDIT_SCORE_FLOOR = 400;
+export const MIN_LOAN_AMOUNT = 1_000;
 export const DEFAULT_MORTGAGE_TERM_YEARS = 30;
 export const HDB_FLAT_MORTGAGE_TERM_YEARS = 25;
 export const HDB_CONCESSIONARY_LOAN_INTEREST = 2.6;

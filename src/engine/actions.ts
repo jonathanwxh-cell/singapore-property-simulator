@@ -9,6 +9,7 @@ import {
   CREDIT_DELTA_LOAN_TAKEN,
   CREDIT_DELTA_LOAN_PAYMENT,
   CREDIT_DELTA_LOAN_PAID_OFF,
+  MIN_LOAN_AMOUNT,
 } from './constants';
 import { calcMonthlyPayment, calcTDSR } from './finance';
 import { selectBankAssessableMonthlyIncome } from './income';
@@ -97,7 +98,8 @@ export function buyPropertyPure(
 
   const validation = validatePurchase(player, property, downPayment, financingMode);
   const cpfEligible = canUseCpfForProperty(propertyId);
-  const allowedCpfUse = cpfEligible ? Math.floor(Math.min(validation.totalUpfront, player.cpfOrdinary)) : 0;
+  // CPF OA may only cover the down payment component, not stamp duties or levy
+  const allowedCpfUse = cpfEligible ? Math.floor(Math.min(validation.downPayment, player.cpfOrdinary)) : 0;
   const cpfToUse = Math.max(0, Math.floor(cpfOrdinaryUsed));
 
   if (!cpfEligible && cpfToUse > 0) {
@@ -261,8 +263,8 @@ export function applyLoanPure(
   propertyId?: string,
 ): ActionResult<{ player: Player }> {
   const roundedAmount = roundMoney(amount);
-  if (roundedAmount <= 0 || termYears <= 0) {
-    return fail('invalid_amount', 'Loan amount and term must be positive.');
+  if (roundedAmount < MIN_LOAN_AMOUNT || termYears <= 0) {
+    return fail('invalid_amount', `Loan amount must be at least S$${MIN_LOAN_AMOUNT.toLocaleString()} and term must be positive.`);
   }
   if (player.creditScore < CREDIT_SCORE_FLOOR) {
     return fail('credit_too_low', `Credit score ${player.creditScore} below minimum ${CREDIT_SCORE_FLOOR}.`);
@@ -302,7 +304,7 @@ export function payLoanPure(player: Player, loanId: string, amount: number): Act
   const loan = player.loans.find(l => l.id === loanId);
   if (!loan) return fail('loan_not_found', 'Loan not found.');
   if (loan.isPaid) return fail('loan_already_paid', 'Loan is already paid off.');
-  if (amount <= 0) return fail('invalid_amount', 'Payment must be positive.');
+  if (!Number.isFinite(amount) || amount <= 0) return fail('invalid_amount', 'Payment must be positive.');
 
   const actualPayment = roundMoney(Math.min(amount, loan.remainingBalance));
   if (player.cash < actualPayment) {
