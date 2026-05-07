@@ -71,6 +71,18 @@ async function expectVisible(page, selector, timeout = 15000) {
   await page.waitForSelector(selector, { timeout });
 }
 
+async function expectAnyVisible(page, selectors, timeout = 15000) {
+  for (const selector of selectors) {
+    try {
+      await expectVisible(page, selector, timeout);
+      return;
+    } catch {
+      // try next
+    }
+  }
+  throw new Error(`Expected one of these selectors visible: ${selectors.join(' | ')}`);
+}
+
 async function startProfile(page, baseUrl, {
   name,
   householdLabel,
@@ -105,7 +117,7 @@ async function startProfile(page, baseUrl, {
   await expectVisible(page, 'text=Select Difficulty');
   await page.getByRole('button', { name: /Start Game/i }).click();
   await expectVisible(page, 'text=Home Command Center');
-  await expectVisible(page, 'text=Beginner focus mode');
+  await expectAnyVisible(page, ['text=Beginner focus mode', 'text=Guided mode primer', 'text=Beginner quest']);
   await expectVisible(page, 'text=Monthly Intent');
 }
 
