@@ -161,3 +161,4 @@ dist/
 output/
 .worktrees/
 playtest-artifacts/
+.claude/
