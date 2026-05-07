@@ -124,6 +124,51 @@ describe('save persistence', () => {
     expect(parseStoredGameState(JSON.stringify({ ...makeState(), version: SAVE_VERSION + 1 }))).toBeNull();
   });
 
+  it('rejects payloads with no version field', () => {
+    // makeState() is the GameState shape; the on-disk shape always has `version`.
+    expect(parseStoredGameState(JSON.stringify({ ...makeState() }))).toBeNull();
+  });
+
+  it('loads a v1 save and treats it as the current version', () => {
+    // v1 saves were shipped in v0.4.0 (2026-04-30). Every v2 addition was made
+    // optional in the schema, so a v1 body should parse cleanly after a version bump.
+    const v1 = JSON.stringify({ ...makeState(), version: 1 });
+    const loaded = parseStoredGameState(v1);
+    expect(loaded).not.toBeNull();
+    expect(loaded?.player.name).toBe('Saved Player');
+    expect(loaded).not.toHaveProperty('version');
+  });
+
+  it('writes a v1 save back as the current version after reload', () => {
+    const v1 = JSON.stringify({ ...makeState(), version: 1 });
+    const loaded = parseStoredGameState(v1);
+    expect(loaded).not.toBeNull();
+    writeAutoSave(loaded!);
+    const reSerialized = localStorage.getItem(AUTO_SAVE_KEY);
+    expect(JSON.parse(reSerialized ?? '{}').version).toBe(SAVE_VERSION);
+  });
+
+  it('accepts v1 save slots through isValidSaveSlot', () => {
+    // SaveSlot.data is itself a JSON string of a stored save. Migration runs
+    // inside parseStoredGameState, which isValidSaveSlot calls during validation.
+    const v1Data = JSON.stringify({ ...makeState(), version: 1 });
+    writeSaveSlots([
+      {
+        id: 1,
+        name: 'Legacy v1 Slot',
+        date: '2026-04-30T00:00:00.000Z',
+        playerName: 'Saved Player',
+        netWorth: 82000,
+        turnCount: 0,
+        year: 2024,
+        month: 1,
+        difficulty: 'normal',
+        data: v1Data,
+      },
+    ]);
+    expect(readSaveSlots()).toHaveLength(1);
+  });
+
   it('serializes save slots with the current save version', () => {
     expect(JSON.parse(serializeGameState(makeState())).version).toBe(SAVE_VERSION);
   });
