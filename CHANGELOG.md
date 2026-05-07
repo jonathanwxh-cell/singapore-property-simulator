@@ -84,6 +84,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New guided onboarding pathways now route new profiles through profile-appropriate starter routes and starter listings, while dashboard primer and settings now include "guided mode" controls to reduce first-run overwhelm for casual players.
 
 ### Fixed
+- v1 save files (shipped in v0.4.0, 2026-04-30) now load and auto-upgrade to the current save version on the next write. Previously v1 saves silently failed validation and the player's auto-save vanished after upgrading to v0.4.x.
+- Insolvency detection now compares take-home pay against the full monthly obligation (loans + property maintenance + property tax + household costs), not just loan payments. Previously a player crushed by ownership costs or household burden could remain "solvent" indefinitely as long as their loan alone fit within take-home.
+- CPF extra +1% interest now splits between OA and SA per MOM rules: the OA portion is capped at the first $20k of OA balance and accrues to OA; the remainder of the $60k threshold accrues to SA. Previously the entire extra interest was credited to OA only.
 - HDB concessionary financing now uses the current 75% LTV / 25% down-payment model throughout purchase validation, decision coaching, glossary copy, and tests.
 - Residential ABSD now counts residential holdings only, so commercial shops/offices do not accidentally make the next residential purchase look like a second home.
 - HDB resale-levy estimates now require subsidised-housing history instead of any generic first-home history.

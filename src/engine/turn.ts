@@ -13,7 +13,7 @@ import { resolveLifeMonth } from './life';
 import { getRouteWeightedScenarios } from './scenarioContext';
 import {
   TAKE_HOME_RATIO,
-  PROPERTY_VALUE_VOL_FACTOR,
+  PROPERTY_VALUE_INDEX_SENSITIVITY,
   PROPERTY_VALUE_FLOOR,
   PRICE_INDEX_BOUNDS,
   RENTAL_INDEX_BOUNDS,
@@ -174,7 +174,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     ...property,
     currentValue: Math.max(
       PROPERTY_VALUE_FLOOR,
-      Math.round(property.currentValue * (1 + (marketPulse.priceChangePct / 100) * PROPERTY_VALUE_VOL_FACTOR * 10)),
+      Math.round(property.currentValue * (1 + (marketPulse.priceChangePct / 100) * PROPERTY_VALUE_INDEX_SENSITIVITY)),
     ),
   }));
 
@@ -237,10 +237,14 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   };
   newPlayer.totalNetWorth = selectNetWorth(newPlayer);
 
-  // Game-over detection
+  // Game-over detection — measure insolvency against the same cashflow used above
+  // (loans + ownership costs + household). Earlier versions only compared loans
+  // against take-home, so a player crushed by maintenance + property tax + life
+  // costs would not register as insolvent until the loan alone exceeded income.
   const monthlyTakeHome = newSalary * TAKE_HOME_RATIO + rentalIncome + lifeResolution.cashDelta;
-  const monthlyDebt = updatedLoans.filter((loan) => !loan.isPaid).reduce((sum, loan) => sum + loan.monthlyPayment, 0);
-  const isInsolvent = newPlayer.cash < 0 && monthlyTakeHome < monthlyDebt;
+  const monthlyLoanPayments = updatedLoans.filter((loan) => !loan.isPaid).reduce((sum, loan) => sum + loan.monthlyPayment, 0);
+  const monthlyObligations = monthlyLoanPayments + totalOwnershipCosts + lifeResolution.householdCost;
+  const isInsolvent = newPlayer.cash < 0 && monthlyTakeHome < monthlyObligations;
   const newStrikes = isInsolvent ? (player.bankruptcyStrikes ?? 0) + 1 : 0;
   newPlayer.bankruptcyStrikes = newStrikes;
 

@@ -1,5 +1,6 @@
 import { saveSchema } from '@/data/saveSchema';
 import { SAVE_VERSION } from '@/engine/constants';
+import { migrateSave } from './saveMigrations';
 import type { Difficulty, GameState, SaveProfile, SaveSlot } from './types';
 
 // Storage keys are intentionally prefixed `sgpt_*` (Singapore Property Tycoon —
@@ -61,7 +62,10 @@ export function parseStoredGameState(rawData: string | null): GameState | null {
   if (!rawData) return null;
 
   try {
-    const parsed = saveSchema.safeParse(JSON.parse(rawData));
+    const migrated = migrateSave(JSON.parse(rawData));
+    if (!migrated) return null;
+
+    const parsed = saveSchema.safeParse(migrated);
     if (!parsed.success) return null;
 
     const state = { ...parsed.data };

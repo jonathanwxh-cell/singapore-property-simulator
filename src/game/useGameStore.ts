@@ -3,7 +3,7 @@ import type { GameState, Difficulty, Player, LifeActionId, LivingArrangement, Bu
 import { createInitialLifeState, difficultySettings, MAX_CREDIT_SCORE, MIN_CREDIT_SCORE, normalizeBuyerProfile } from './types';
 import { careers } from '@/data/careers';
 import { properties } from '@/data/properties';
-import { createRng, newSeed, type Rng } from '@/engine/rng';
+import { createRng, newSeed } from '@/engine/rng';
 import { advanceTurn } from '@/engine/turn';
 import { buyPropertyPure, sellPropertyPure, applyLoanPure, payLoanPure, renovatePropertyPure, resolveScenarioOption } from '@/engine/actions';
 import { selectNetWorth } from '@/engine/selectors';
@@ -32,7 +32,16 @@ import type { ActionResult } from '@/engine/results';
 import { writeAutoSave } from './savePersistence';
 import { inferRunRouteId } from '@/engine/runDirector';
 
-let rng: Rng = createRng(0);
+// RNG ownership: the deterministic RNG state lives in the store as
+// `rngSeed` / `rngState`. Each action that consumes randomness rebuilds the
+// Rng locally from those fields, advances it, and snapshots the new state
+// back. This removes the previous module-level `let rng` singleton, which
+// would have leaked across hot-reloads and parallel test instances.
+function restoreRng(seed: number, state: number) {
+  const rng = createRng(seed);
+  rng.setState(state);
+  return rng;
+}
 
 function createInitialCareerProgressionProfile() {
   return {
@@ -305,7 +314,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   newGame: (name, careerId, difficulty, buyerProfile, runRouteId, options) => {
     const guidedMode = options?.guidedMode ?? true;
     const seed = newSeed();
-    rng = createRng(seed);
+    const rng = createRng(seed);
     set({
       player: createInitialPlayer(name, careerId, difficulty, buyerProfile, runRouteId),
       market: createInitialMarket(),
@@ -323,8 +332,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   loadGame: (state) => {
-    rng = createRng(state.rngSeed);
-    rng.setState(state.rngState);
     const validScenario = state.currentScenario !== null && scenarios.some(s => s.id === state.currentScenario)
       ? state.currentScenario
       : null;
@@ -339,8 +346,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   nextTurn: () => {
-    const { player, market, settings, currentScenario } = get();
+    const { player, market, settings, currentScenario, rngSeed, rngState } = get();
     if (currentScenario) return;
+    const rng = restoreRng(rngSeed, rngState);
     const result = advanceTurn({ player, market, settings, rng });
     const nextState = {
       player: finalizePlayer(result.player),
@@ -348,7 +356,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       settings,
       currentScenario: result.scenarioId,
       isGameActive: !result.gameOver,
-      rngSeed: get().rngSeed,
+      rngSeed,
       rngState: rng.getState(),
     };
     set(nextState);
@@ -553,7 +561,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   resolveScenario: (option) => {
-    const { currentScenario: scenarioId } = get();
+    const { currentScenario: scenarioId, rngSeed, rngState } = get();
     const scenario = scenarioId ? scenarios.find(s => s.id === scenarioId) : null;
     const canonicalOption = scenario?.options.find(o => o.label === option.label) ?? null;
     if (!canonicalOption) {
@@ -563,6 +571,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         careerVolatilityModifierDelta: 0, followUpText: '', success: false,
       };
     }
+    const rng = restoreRng(rngSeed, rngState);
     const resolution = resolveScenarioOption(canonicalOption, rng);
     set(state => ({
       player: finalizePlayer({

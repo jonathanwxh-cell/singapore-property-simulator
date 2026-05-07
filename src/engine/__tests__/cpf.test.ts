@@ -51,22 +51,43 @@ describe('CPF', () => {
       expect(result.ma).toBeGreaterThan(5000);
     });
 
-    it('gives extra 1% interest on first $60k OA+SA', () => {
+    it('gives extra 1% interest on first $60k OA+SA, splitting OA-portion to OA and SA-portion to SA', () => {
+      // OA $20k saturates the $20k OA cap; SA $10k all qualifies (40k headroom).
       const balances = { oa: 20000, sa: 10000, ma: 5000 };
       const result = applyCpfInterest(balances);
       const baseOaInterest = 20000 * 0.025 / 12;
-      const expectedExtra = 30000 * 0.01 / 12;
-      const oaIncrease = result.oa - 20000;
-      expect(oaIncrease).toBeCloseTo(baseOaInterest + expectedExtra, 1);
+      const oaExtra = 20000 * 0.01 / 12;
+      const baseSaInterest = 10000 * 0.04 / 12;
+      const saExtra = 10000 * 0.01 / 12;
+      expect(result.oa - 20000).toBeCloseTo(baseOaInterest + oaExtra, 1);
+      expect(result.sa - 10000).toBeCloseTo(baseSaInterest + saExtra, 1);
     });
 
-    it('caps extra interest at $60k threshold', () => {
+    it('caps OA extra-interest at the $20k OA cap and SA at the $40k remainder', () => {
+      // OA portion of extra interest is capped at $20k; SA picks up the remaining $40k.
       const balances = { oa: 100000, sa: 50000, ma: 10000 };
       const result = applyCpfInterest(balances);
-      const expectedExtra = 60000 * 0.01 / 12;
       const baseOaInterest = 100000 * 0.025 / 12;
-      const oaIncrease = result.oa - 100000;
-      expect(oaIncrease).toBeCloseTo(baseOaInterest + expectedExtra, 1);
+      const oaExtra = 20000 * 0.01 / 12;
+      const baseSaInterest = 50000 * 0.04 / 12;
+      const saExtra = 40000 * 0.01 / 12;
+      expect(result.oa - 100000).toBeCloseTo(baseOaInterest + oaExtra, 1);
+      expect(result.sa - 50000).toBeCloseTo(baseSaInterest + saExtra, 1);
+      // Total extra interest still caps at $60k * 1% / 12.
+      const totalExtra = (result.oa - 100000 - baseOaInterest) + (result.sa - 50000 - baseSaInterest);
+      expect(totalExtra).toBeCloseTo(60000 * 0.01 / 12, 1);
+    });
+
+    it('handles low OA balance: SA absorbs whatever OA cannot reach', () => {
+      // OA only $5k uses $5k of the $20k cap; SA picks up the remaining $55k headroom.
+      const balances = { oa: 5000, sa: 100000, ma: 0 };
+      const result = applyCpfInterest(balances);
+      const oaExtra = 5000 * 0.01 / 12;
+      const saExtra = 55000 * 0.01 / 12;
+      const baseOaInterest = 5000 * 0.025 / 12;
+      const baseSaInterest = 100000 * 0.04 / 12;
+      expect(result.oa - 5000).toBeCloseTo(baseOaInterest + oaExtra, 1);
+      expect(result.sa - 100000).toBeCloseTo(baseSaInterest + saExtra, 1);
     });
   });
 

@@ -5,6 +5,7 @@ import {
   CPF_MA_INTEREST,
   CPF_EXTRA_INTEREST_THRESHOLD,
   CPF_EXTRA_INTEREST_RATE,
+  CPF_EXTRA_INTEREST_OA_CAP,
 } from './constants';
 
 export interface CpfBalances {
@@ -27,7 +28,8 @@ export function getCpfAllocation(age: number): { oa: number; sa: number; ma: num
       return { oa: bracket.oaRate, sa: bracket.saRate, ma: bracket.maRate };
     }
   }
-  return { oa: 0.05, sa: 0.025, ma: 0.075 };
+  // Unreachable: the last bracket has maxAge: Infinity.
+  throw new Error(`getCpfAllocation: no bracket matched age ${age}`);
 }
 
 export function contributeCpf(balances: CpfBalances, monthlySalary: number, age: number): CpfBalances {
@@ -42,17 +44,15 @@ export function contributeCpf(balances: CpfBalances, monthlySalary: number, age:
 }
 
 export function applyCpfInterest(balances: CpfBalances): CpfBalances {
-  const combinedOA_SA = balances.oa + balances.sa;
-  let extraInterest = 0;
-  if (combinedOA_SA < CPF_EXTRA_INTEREST_THRESHOLD) {
-    extraInterest = combinedOA_SA * CPF_EXTRA_INTEREST_RATE / 12;
-  } else {
-    extraInterest = CPF_EXTRA_INTEREST_THRESHOLD * CPF_EXTRA_INTEREST_RATE / 12;
-  }
+  const oaPortion = Math.min(balances.oa, CPF_EXTRA_INTEREST_OA_CAP);
+  const saAvailable = Math.max(0, CPF_EXTRA_INTEREST_THRESHOLD - oaPortion);
+  const saPortion = Math.min(balances.sa, saAvailable);
+  const oaExtra = (oaPortion * CPF_EXTRA_INTEREST_RATE) / 12;
+  const saExtra = (saPortion * CPF_EXTRA_INTEREST_RATE) / 12;
 
   return {
-    oa: round2(balances.oa * (1 + CPF_OA_INTEREST / 12) + extraInterest),
-    sa: round2(balances.sa * (1 + CPF_SA_INTEREST / 12)),
+    oa: round2(balances.oa * (1 + CPF_OA_INTEREST / 12) + oaExtra),
+    sa: round2(balances.sa * (1 + CPF_SA_INTEREST / 12) + saExtra),
     ma: round2(balances.ma * (1 + CPF_MA_INTEREST / 12)),
   };
 }

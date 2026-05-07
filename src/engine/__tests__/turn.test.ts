@@ -169,6 +169,16 @@ describe('advanceTurn', () => {
     expect(result.player.loans[0].isPaid).toBe(false);
   });
 
+  it('flags insolvency when household costs exceed take-home, even without loans', () => {
+    // No loans and no properties -> old code computed monthlyDebt = 0 and reported solvent.
+    // New code correctly compares take-home against loans + ownership costs + householdCost,
+    // so a player crushed by household burden alone should now strike.
+    const player = makePlayer({ cash: -100, salary: 100, bankruptcyStrikes: 0 });
+    const result = advanceTurn({ player, market: baseMarket, settings: baseSettings, rng: createRng(7) });
+    expect(result.player.cash).toBeLessThan(0);
+    expect(result.player.bankruptcyStrikes).toBe(1);
+  });
+
   it('triggers loss state after 3 consecutive insolvent turns', () => {
     const player = makePlayer({
       cash: -50_000, salary: 1000, bankruptcyStrikes: 0,
