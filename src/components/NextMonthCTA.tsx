@@ -53,11 +53,12 @@ export default function NextMonthCTA({
           : commandState.advance.tone === 'warn'
             ? 'border-warning/40 bg-warning/15 text-white shadow-[0_0_24px_rgba(255,215,64,0.12)]'
             : 'border-cyan-glow/50 bg-cyan-glow/15 text-white shadow-[0_0_28px_rgba(0,240,255,0.16)]',
-        variant === 'floating' && 'fixed bottom-20 right-4 z-[60] w-[min(17rem,calc(100vw-2rem))] p-3 lg:hidden',
+        variant === 'floating' && 'fixed right-4 z-[60] w-[min(18rem,calc(100vw-2rem))] p-3 lg:hidden',
         variant === 'sidebar' && 'w-full p-3',
         variant === 'inline' && 'w-full sm:w-auto px-5 py-3',
         className,
       )}
+      style={variant === 'floating' ? { bottom: 'calc(env(safe-area-inset-bottom) + 4.75rem)' } : undefined}
     >
       <span className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
       <span className="relative flex items-center gap-3">

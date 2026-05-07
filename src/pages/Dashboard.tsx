@@ -186,15 +186,26 @@ export default function Dashboard() {
         <motion.div variants={itemVariants} className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
             icon={Wallet}
-            label="Available Cash"
+            label="Spendable Cash"
             value={`S$${(availableCash / 1000).toFixed(1)}K`}
             color="#00F0FF"
-            detail={reservedCash > 0 ? `Reserve S$${(reservedCash / 1000).toFixed(1)}K` : 'No reserve set'}
+            detail={reservedCash > 0 ? `Wallet S$${(player.cash / 1000).toFixed(1)}K | Reserve S$${(reservedCash / 1000).toFixed(1)}K` : 'All wallet cash is currently spendable'}
           />
           <StatCard icon={TrendingUp} label="Net Worth" value={`S$${(netWorth / 1000000).toFixed(2)}M`} color="#00E676" />
           <StatCard icon={Building2} label="Properties" value={String(player.properties.length)} color="#7C4DFF" />
           <StatCard icon={Newspaper} label="Market Index" value={`${market.priceIndex.toFixed(1)}`} color="#FF9100" change={marketChange} />
         </motion.div>
+
+        {reservedCash > 0 && (
+          <motion.div variants={itemVariants} className="mb-6">
+            <div className="rounded-2xl border border-warning/20 bg-warning/10 px-4 py-3">
+              <p className="label-text mb-1 text-[10px] text-warning">Cash split</p>
+              <p className="text-sm leading-relaxed text-text-secondary">
+                Spendable cash is safe to use now. Reserved cash is still part of your net worth, but earmarked for repairs, vacancies, and emergency buffer decisions.
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div variants={itemVariants} className="mb-6 grid gap-3 md:grid-cols-4">
           <ActionTile icon={Banknote} title="Earn" detail="Life actions, side gigs, schemes" onClick={() => navigate('/life')} />

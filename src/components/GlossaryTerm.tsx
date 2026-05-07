@@ -39,7 +39,7 @@ export default function GlossaryTerm({ termId, children, className }: GlossaryTe
       {open && (
         <span
           role="tooltip"
-          className="absolute left-0 top-full z-[70] mt-2 block w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-cyan-glow/35 bg-void-navy/98 p-4 text-left shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-3 right-3 z-[70] block max-h-[70vh] overflow-y-auto rounded-2xl border border-cyan-glow/35 bg-void-navy/98 p-4 text-left shadow-[0_18px_60px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:absolute sm:left-0 sm:right-auto sm:top-full sm:bottom-auto sm:mt-2 sm:block sm:w-80 sm:max-w-[calc(100vw-2rem)] sm:max-h-none sm:overflow-visible"
         >
           <span className="mb-2 flex items-start justify-between gap-3">
             <span>

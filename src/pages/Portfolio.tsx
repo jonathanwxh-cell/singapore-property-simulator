@@ -2,6 +2,7 @@ import { useGameStore } from '@/game/useGameStore';
 import { districts } from '@/data/districts';
 import { achievements } from '@/data/achievements';
 import GlassCard from '@/components/GlassCard';
+import GuidedFocusPanel from '@/components/GuidedFocusPanel';
 import ProgressivePanel from '@/components/ProgressivePanel';
 import { Building2, TrendingUp, Award, Target, Home, DollarSign, ShieldAlert, FileClock } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
@@ -26,6 +27,11 @@ export default function Portfolio() {
   const landlordOps = getLandlordOpsSummary(player);
   const activeRenovations = player.properties.filter((property) => property.activeRenovation).length;
   const showOperationsArc = player.runRouteId === 'heartland-landlord' || player.runRouteId === 'commercial-operator';
+  const showGuidedFocus = player.turnCount <= 8 || player.properties.length <= 1;
+  const activeTenantCount = player.properties.filter((property) => property.tenant).length;
+  const liveLeaseIncome = player.properties.reduce((sum, property) => {
+    return sum + (property.tenant?.contractedRent ?? (property.isRented ? property.monthlyRental : 0));
+  }, 0);
   const portfolioRisk = landlordOps.openIssueCount > 0
     ? `${landlordOps.openIssueCount} repair issue(s)`
     : landlordOps.expiringLeaseCount > 0
@@ -76,6 +82,9 @@ export default function Portfolio() {
               <p className="font-mono text-lg mt-1 text-cyan-glow">{landlordOps.healthScore}/100</p>
               <p className="text-text-secondary text-xs mt-1">{landlordOps.healthLabel}</p>
               <p className={`font-mono text-sm mt-3 ${portfolioRisk === 'No urgent ops risk' ? 'text-success' : 'text-warning'}`}>{portfolioRisk}</p>
+              <p className="mt-3 text-[11px] leading-relaxed text-text-dim">
+                {activeTenantCount} active tenant{activeTenantCount === 1 ? '' : 's'} | {formatCurrency(liveLeaseIncome)}/mo live rent
+              </p>
               <button
                 onClick={() => player.properties[0] ? navigate(`/property/${player.properties[0].propertyId}`) : navigate('/properties')}
                 className="btn-secondary w-full text-xs py-2 mt-4"
@@ -85,6 +94,33 @@ export default function Portfolio() {
             </div>
           </div>
         </GlassCard>
+
+        {showGuidedFocus && (
+          <div className="mb-6">
+            <GuidedFocusPanel
+              eyebrow="How to read owned property"
+              title="Own is about attention first"
+              summary="Before you think about the next acquisition, make sure the current holdings are healthy, rented the way you expect, and protected by reserve cash."
+              bullets={[
+                'Read status first: owner-occupied, room-rented, leased, or vacant changes what the property is doing for you.',
+                'Read live rent next: a property can look valuable while still contributing no monthly income.',
+                'Read repairs and reserve gap last: those are the fastest ways a stable portfolio turns fragile.',
+              ]}
+              termIds={['mop', 'reserve-cash', 'cpf-refund']}
+              actions={(
+                <>
+                  <button type="button" onClick={() => player.properties[0] ? navigate(`/property/${player.properties[0].propertyId}`) : navigate('/properties')} className="btn-primary px-4 py-3 text-xs">
+                    {player.properties[0] ? 'Open top holding' : 'Find first buy'}
+                  </button>
+                  <button type="button" onClick={() => navigate('/learn')} className="btn-secondary px-4 py-3 text-xs">
+                    Learn landlord basics
+                  </button>
+                </>
+              )}
+              footer="Reserved cash is still part of your net worth. It is just ring-fenced so repairs and vacancies do not blindside the run."
+            />
+          </div>
+        )}
 
         <div className="grid md:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
           <GlassCard accentColor="#00E676">
@@ -207,6 +243,15 @@ export default function Portfolio() {
               const leaseMonthsRemaining = owned.tenant ? owned.tenant.leaseEndTurn - player.turnCount : null;
               const repairExposure = (owned.openMaintenanceIssues ?? []).reduce((sum, issue) => sum + issue.estimatedCost, 0);
               const rentalLockedByMop = !owned.isRented && property.isHdb && (owned.mopRemainingMonths ?? 0) > 0;
+              const leaseStatusLabel = owned.tenant
+                ? owned.tenant.rentalMode === 'room-rental'
+                  ? 'Room rental live'
+                  : 'Whole-unit lease live'
+                : rentalLockedByMop
+                  ? 'Owner-occupied during MOP'
+                  : owned.isRented
+                    ? 'Rental active'
+                    : 'No tenant yet';
 
               return (
                 <GlassCard key={i} className="group">
@@ -226,6 +271,9 @@ export default function Portfolio() {
                       <p className="text-text-secondary text-xs">D{district.id} {district.name} | Purchased: {owned.purchaseDate}</p>
                       <p className="text-text-dim text-[10px] mt-0.5">
                         {property.listingChannel} | Carry: {formatCurrency(carryingCost)}/mo | Status: {opsSummary.statusLabel}
+                      </p>
+                      <p className="text-text-dim text-[10px] mt-0.5">
+                        Lease: {leaseStatusLabel} | Live rent: {monthlyLease > 0 ? `${formatCurrency(monthlyLease)}/mo` : 'S$0'}
                       </p>
                       <p className="text-text-dim text-[10px] mt-0.5">
                         Condition: {owned.conditionScore ?? 70}/100 | {opsSummary.tenantLabel}

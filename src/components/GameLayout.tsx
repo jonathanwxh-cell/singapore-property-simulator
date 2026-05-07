@@ -73,7 +73,7 @@ export default function GameLayout() {
   }, [location.pathname]);
 
   const sidebarWidth = isMobile || !shellControlsVisible ? 0 : 224;
-  const bottomNavHeight = isMobile && shellControlsVisible ? 116 : 0;
+  const bottomNavPadding = isMobile && shellControlsVisible ? 'calc(4rem + env(safe-area-inset-bottom))' : 0;
   const routesWithInlineAdvance = ['/dashboard', '/life'];
   const showFloatingAdvance = isMobile
     && shellControlsVisible
@@ -99,7 +99,7 @@ export default function GameLayout() {
         style={{
           paddingTop: 64,
           paddingLeft: sidebarWidth,
-          paddingBottom: bottomNavHeight,
+          paddingBottom: bottomNavPadding,
           height: '100dvh',
         }}
       >
@@ -128,7 +128,8 @@ export default function GameLayout() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 18 }}
               transition={{ duration: 0.18 }}
-              className="fixed bottom-16 left-3 right-3 z-50 rounded-3xl border border-glass-border bg-void-navy/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl lg:hidden"
+              className="fixed left-3 right-3 z-50 rounded-3xl border border-glass-border bg-void-navy/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl lg:hidden"
+              style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom) + 0.5rem)' }}
             >
               <div className="mb-2 flex items-center justify-between px-1">
                 <p className="label-text text-[10px] text-cyan-glow">More game tabs</p>
@@ -168,7 +169,10 @@ export default function GameLayout() {
             </motion.div>
           )}
         </AnimatePresence>
-        <nav className="fixed bottom-0 left-0 right-0 z-50 h-14 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center justify-around gap-0.5 px-1 lg:hidden">
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-50 bg-void-navy/95 backdrop-blur-xl border-t border-glass-border flex items-center justify-around gap-0.5 px-1 lg:hidden"
+          style={{ height: 'calc(4rem + env(safe-area-inset-bottom))', paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
           {mobileNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -180,7 +184,7 @@ export default function GameLayout() {
                   navigate(item.path);
                 }}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 h-14 min-w-0 flex-1 transition-colors',
+                  'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 min-w-0 transition-colors',
                   isActive ? 'text-cyan-glow' : 'text-text-dim'
                 )}
               >
@@ -193,7 +197,7 @@ export default function GameLayout() {
             type="button"
             onClick={() => setShowMoreMenu((value) => !value)}
             className={cn(
-              'flex flex-col items-center justify-center gap-0.5 h-14 min-w-0 flex-1 transition-colors',
+              'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 min-w-0 transition-colors',
               showMoreMenu || mobileMoreItems.some((item) => item.path === location.pathname) ? 'text-cyan-glow' : 'text-text-dim'
             )}
           >

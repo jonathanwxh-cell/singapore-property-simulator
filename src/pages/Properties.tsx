@@ -3,6 +3,7 @@ import { propertyTypeInfo } from '@/data/properties';
 import { districts } from '@/data/districts';
 import { listingChannelInfo } from '@/data/listingChannels';
 import GlassCard from '@/components/GlassCard';
+import GuidedFocusPanel from '@/components/GuidedFocusPanel';
 import ProgressivePanel from '@/components/ProgressivePanel';
 import { Search, MapPin, Bed, Bath, Maximize, Sparkles, SlidersHorizontal, Scale, X } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
@@ -67,6 +68,7 @@ export default function Properties() {
   const comparisonMode = comparisonIds.length > 0 ? 'selected' : 'suggested';
   const activePreset = districtFromQuery ? 'advanced' : preset;
   const showAdvancedFilterControls = showAdvancedFilters || Boolean(districtFromQuery);
+  const showGuidedFocus = settings.guidedMode || player.turnCount <= 6;
 
   const filtered = catalog.filter(p => {
     const district = districts.find(d => d.id === p.districtId);
@@ -176,6 +178,33 @@ export default function Properties() {
               </div>
             </div>
           </GlassCard>
+        )}
+
+        {showGuidedFocus && bestNextBuy && (
+          <div className="mb-6">
+            <GuidedFocusPanel
+              eyebrow="How to read a listing"
+              title="Scan deals in this order"
+              summary="The buy page is easier when you read one listing the same way every time: what it costs, whether you can reach it, and what can go wrong."
+              bullets={[
+                'Read Price first. That tells you the size of the move, not whether it is safe.',
+                'Read Cash Needed next. That is the quickest signal for whether the deal is realistic this month.',
+                'Read Worst Case last. If the downside feels painful, open the deal page before committing.',
+              ]}
+              termIds={['cpf-oa', 'msr', 'tdsr', 'absd']}
+              actions={(
+                <>
+                  <button type="button" onClick={() => navigate(`/property/${bestNextBuy.property.id}`)} className="btn-primary px-4 py-3 text-xs">
+                    Review best deal
+                  </button>
+                  <button type="button" onClick={() => navigate('/learn')} className="btn-secondary px-4 py-3 text-xs">
+                    Learn blockers
+                  </button>
+                </>
+              )}
+              footer="Starter-safe mode narrows the catalogue first so new players learn CPF, duties, and monthly safety before advanced inventory."
+            />
+          </div>
         )}
 
         <DealComparePanel

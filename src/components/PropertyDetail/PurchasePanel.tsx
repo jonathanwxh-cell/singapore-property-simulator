@@ -210,6 +210,8 @@ export default function PurchasePanel({
   onSetActionError: (error: string | null) => void;
   onNavigate: (route: string) => void;
 }) {
+  const reserveDipWarning = reservedCash > 0 && cashRequired > availableCash && cashRequired <= player.cash;
+
   return (
     <div ref={purchasePanelRef} className="scroll-mt-24">
       <GlassCard accentColor="#00E676" className="lg:sticky lg:top-4 lg:max-h-[34rem] lg:overflow-y-auto">
@@ -396,14 +398,25 @@ export default function PurchasePanel({
               <span className="font-mono text-white">{formatCurrency(cashRequired)}</span>
             </div>
             <div className="flex items-center justify-between mt-1">
-              <span className="text-text-secondary text-sm">Your Cash</span>
+              <span className="text-text-secondary text-sm">Wallet Cash</span>
               <span className="font-mono text-white">{formatCurrency(player.cash)}</span>
             </div>
             {reservedCash > 0 && (
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-text-secondary text-sm">Available After Reserve</span>
-                <span className="font-mono text-cyan-glow">{formatCurrency(availableCash)}</span>
-              </div>
+              <>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-text-secondary text-sm"><GlossaryTerm termId="reserve-cash">Reserved Cash</GlossaryTerm></span>
+                  <span className="font-mono text-warning">{formatCurrency(reservedCash)}</span>
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-text-secondary text-sm">Spendable Now</span>
+                  <span className="font-mono text-cyan-glow">{formatCurrency(availableCash)}</span>
+                </div>
+              </>
+            )}
+            {reserveDipWarning && (
+              <p className="mt-2 rounded-lg border border-warning/25 bg-warning/10 p-3 text-[11px] leading-relaxed text-text-secondary">
+                This buy works only by dipping into your reserved cash. The reserve is still yours, but you would be giving up part of your emergency buffer to close the deal.
+              </p>
             )}
           </div>
 

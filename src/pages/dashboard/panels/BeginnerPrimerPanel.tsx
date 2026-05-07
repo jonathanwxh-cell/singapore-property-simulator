@@ -1,5 +1,4 @@
-import GlassCard from '@/components/GlassCard';
-import GlossaryTerm from '@/components/GlossaryTerm';
+import GuidedFocusPanel from '@/components/GuidedFocusPanel';
 
 export default function BeginnerPrimerPanel({
   onDisableGuidance,
@@ -9,24 +8,18 @@ export default function BeginnerPrimerPanel({
   onOpenLearn: () => void;
 }) {
   return (
-    <GlassCard accentColor="#00F0FF">
-      <div className="grid gap-4 md:grid-cols-[1fr,auto] md:items-center">
-        <div>
-          <p className="label-text mb-1 text-[10px] text-cyan-glow">Guided mode primer</p>
-          <h3 className="section-title text-white">Quick Singapore glossary before your first 3 moves</h3>
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-secondary">
-            Tap these terms once to get one-line definitions and why they matter.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <GlossaryTerm termId="absd" />
-            <GlossaryTerm termId="cpf-oa" />
-            <GlossaryTerm termId="mop" />
-            <GlossaryTerm termId="msr" />
-            <GlossaryTerm termId="tdsr" />
-            <GlossaryTerm termId="reserve-cash" />
-          </div>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
+    <GuidedFocusPanel
+      eyebrow="Guided mode primer"
+      title="Read this dashboard in three steps"
+      summary="Start with one objective, one monthly plan, and one reason before you dive into the deeper sim panels."
+      bullets={[
+        'Read the top objective first. It tells you the one move that matters most this month.',
+        'Pick a Monthly Intent next. That is the only place where a one-click plan can advance time.',
+        'Spendable cash is what you can safely use now. Reserved cash is still yours, but earmarked for repairs and emergencies.',
+      ]}
+      termIds={['absd', 'cpf-oa', 'mop', 'msr', 'tdsr', 'reserve-cash']}
+      actions={
+        <>
           <button
             type="button"
             onClick={onOpenLearn}
@@ -41,8 +34,8 @@ export default function BeginnerPrimerPanel({
           >
             Turn off guided mode
           </button>
-        </div>
-      </div>
-    </GlassCard>
+        </>
+      }
+    />
   );
 }

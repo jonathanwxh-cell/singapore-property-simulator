@@ -155,6 +155,17 @@ export default function TitleScreen() {
           ref={subtitleRef}
           className="text-center mb-10 opacity-0"
         >
+          <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+            <span className="rounded-full border border-cyan-glow/25 bg-cyan-glow/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-cyan-glow">
+              Casual-friendly
+            </span>
+            <span className="rounded-full border border-success/25 bg-success/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-success">
+              Guided first run
+            </span>
+            <span className="rounded-full border border-warning/25 bg-warning/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-warning">
+              Singapore rules explained
+            </span>
+          </div>
           <span
             className="font-rajdhani text-text-dim text-sm md:text-lg tracking-[4px] uppercase"
           >
@@ -173,6 +184,13 @@ export default function TitleScreen() {
           ref={menuRef}
           className="w-full max-w-[400px] glass-panel p-8 opacity-0"
         >
+          <div className="mb-4 rounded-2xl border border-success/20 bg-success/10 p-4">
+            <p className="label-text mb-1 text-[10px] text-success">Best first play</p>
+            <p className="text-sm font-semibold text-white">Start Guided Run</p>
+            <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+              The game will suggest a beginner-friendly Singapore Citizen couple route, explain the first acronyms, and keep the first few turns focused.
+            </p>
+          </div>
           <div className="space-y-3">
             <MenuButton
               label="Start Guided Run"

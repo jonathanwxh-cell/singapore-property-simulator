@@ -7,8 +7,9 @@ import { difficultySettings } from '@/game/types';
 import { resolveStarterRouteForProfile } from '@/engine/firstHomeStarter';
 import type { BuyerProfile, BuyerResidencyStatus, Difficulty, HouseholdProfile, RunRouteId } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
+import GuidedFocusPanel from '@/components/GuidedFocusPanel';
 import GlossaryTerm from '@/components/GlossaryTerm';
-import { ArrowLeft, ArrowRight, User, GraduationCap, TrendingUp, Cpu, Rocket, Shield, Heart, Home, Users, Globe2, Compass, BookOpen } from 'lucide-react';
+import { ArrowLeft, ArrowRight, User, GraduationCap, TrendingUp, Cpu, Rocket, Shield, Heart, Home, Users, Globe2, Compass } from 'lucide-react';
 
 const careerIcons: Record<string, React.ElementType> = {
   graduate: GraduationCap,
@@ -129,33 +130,33 @@ export default function NewGame() {
                   </div>
                 </GlassCard>
 
-                <GlassCard accentColor="#FFD740">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-warning/10 border border-warning/30 flex items-center justify-center shrink-0">
-                      <BookOpen size={18} className="text-warning" />
-                    </div>
-                    <div>
-                      <p className="font-rajdhani text-white font-semibold uppercase tracking-[0.12em] text-sm">Beginner Friendly</p>
-                      <p className="text-text-secondary text-xs mt-1 leading-relaxed">
-                        You do not need to know Singapore property terms. The game will teach <GlossaryTerm termId="absd" />, <GlossaryTerm termId="cpf-oa" />, and <GlossaryTerm termId="mop" /> as you play.
-                      </p>
-                      <div className="mt-3 rounded-xl border border-warning/25 bg-warning/10 p-3">
-                        <p className="label-text mb-1 text-[9px] text-warning">Recommended setup preview</p>
-                        <p className="text-xs leading-relaxed text-text-secondary">
-                          Singapore Citizen couple/family, graduate career, Normal difficulty, BTO upgrader route. This gives the cleanest first-home tutorial before advanced investor paths.
-                        </p>
-                      </div>
-                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                        <button type="button" onClick={() => navigate('/learn', { state: { returnTo: '/newgame', returnLabel: 'Back to setup' } })} className="btn-secondary text-xs py-2 px-3">
-                          Preview Learn Hub
-                        </button>
-                        <button type="button" onClick={handleSeniorStart} className="btn-secondary text-xs py-2 px-3">
-                          Start 55+ Rightsizer
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </GlassCard>
+                <GuidedFocusPanel
+                  eyebrow="Beginner friendly"
+                  title="Your first 10 minutes should teach, not overwhelm"
+                  summary="You do not need to know Singapore property terms first. The game introduces the early acronyms and first-home rules while you play."
+                  bullets={[
+                    'Recommended first run: Singapore Citizen couple/family, graduate career, Normal difficulty, BTO upgrader route.',
+                    'You will learn how cash, CPF OA, and loan checks work before the game expects advanced investing decisions.',
+                    'If you already know the basics, you can still customize the whole run after naming your player.',
+                  ]}
+                  termIds={['absd', 'cpf-oa', 'mop']}
+                  accentColor="#FFD740"
+                  actions={
+                    <>
+                      <button type="button" onClick={() => navigate('/learn', { state: { returnTo: '/newgame', returnLabel: 'Back to setup' } })} className="btn-secondary text-xs py-2 px-3">
+                        Preview Learn Hub
+                      </button>
+                      <button type="button" onClick={handleSeniorStart} className="btn-secondary text-xs py-2 px-3">
+                        Start 55+ Rightsizer
+                      </button>
+                    </>
+                  }
+                  footer={(
+                    <>
+                      Guided mode will keep the first few turns focused on one objective, one monthly plan, and one next move at a time.
+                    </>
+                  )}
+                />
               </div>
             </div>
             <div className="shrink-0 pb-4">

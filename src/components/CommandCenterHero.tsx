@@ -56,6 +56,9 @@ export default function CommandCenterHero({ state, onNavigate }: CommandCenterHe
               <Sparkles size={13} className="mr-1 inline text-warning" />
               {objective.why}
             </p>
+            <p className="mt-2 max-w-3xl text-[11px] leading-relaxed text-text-dim md:text-xs">
+              Read this block first, then choose a Monthly Intent below. Opening pages does not advance time by itself.
+            </p>
 
             <div className="mt-5 flex flex-wrap gap-2">
               {objective.primaryRoute && (

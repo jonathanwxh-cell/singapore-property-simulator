@@ -231,14 +231,14 @@ function buildVitalMetrics(
       id: 'available-cash',
       label: 'Spendable Cash',
       value: formatCurrency(availableCash),
-      detail: reservedCash > 0 ? `${formatCurrency(reservedCash)} reserved` : 'No reserve set',
+      detail: reservedCash > 0 ? `${formatCurrency(reservedCash)} ring-fenced as reserve` : 'Everything here is spendable right now',
       tone: availableCash < Math.max(10_000, player.salary * 1.5) ? 'warn' : 'good',
     },
     {
       id: 'monthly-surplus',
       label: 'Monthly Surplus',
       value: formatCurrency(monthlySurplus),
-      detail: monthlySurplus >= 0 ? 'After life, debt, and property costs' : 'Burn rate needs attention',
+      detail: monthlySurplus >= 0 ? 'After life, debt, and property costs' : 'You are spending more than the run is generating',
       tone: monthlySurplus >= 0 ? 'good' : 'bad',
     },
     {

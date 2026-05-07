@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Beginner clarity and mobile UX pass**: guided focus cards now explain how to read Dashboard, Buy, and Own screens in plain English, while spendable-versus-reserved cash language is surfaced more clearly during early runs and deal reviews.
 - **Active MOP / Next Home v1**: owner runs now get a Dashboard gateway for Property #2 planning, a readiness tracker with bottleneck callouts, and MOP-specific monthly intents for home projects, income runway, market study, and room-rental setup.
 - **Landlord depth phase**: renovation cards now support budget / balanced / premium contractor routes with ROI previews, tenant months can generate deterministic upside or warning events, and the portfolio shows a landlord-health score with a concrete next-priority callout.
 - **Wealth During Wait phase**: the Life screen now tracks side-gig and property-hustle income engines across months, shows a clear income mix, and explains which extra-income moves actually moved the run closer to the next home.
 
 ### Changed
+- The title screen and new-game setup now frame the guided run as the cleanest first play, with stronger onboarding language for casual players who do not already know CPF, MOP, or stamp-duty terms.
+- Mobile shell spacing now respects safe-area padding more consistently, keeping the bottom nav, floating advance CTA, and More menu from crowding content on narrow phones.
 - Monthly Intent recommendations now pivot into an active-MOP planning loop once a player owns an HDB inside MOP, instead of staying on the generic cash/deal/career trio.
 - Property Operations now frames upgrades as contractor tradeoffs instead of a single flat renovation path, so owned months teach timing, cash, and yield tension more clearly.
 - Life-month recaps now break cash movement down by source so players can see whether progress came from salary focus, side gigs, property hustle, schemes, or expensive household/training choices.

@@ -150,7 +150,6 @@ async function run() {
       householdLabel: 'Couple / Family',
       residencyLabel: 'Singapore Citizen',
     });
-    await expectVisible(page, 'text=Beginner focus mode');
     await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
     await expectVisible(page, 'text=First-Timer Friendly');
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');

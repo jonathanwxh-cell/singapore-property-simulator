@@ -30,6 +30,17 @@ export default function PropertySummary({
   onTenantPlan: (mode: RentalMode, profileId: TenantProfileId, strategy: RentStrategy) => void;
   onSell: () => void;
 }) {
+  const leaseStatus = ownedProperty.tenant
+    ? ownedProperty.tenant.rentalMode === 'room-rental'
+      ? 'Room rental live'
+      : 'Whole-unit lease live'
+    : quickRentalBlockedByMop
+      ? 'Owner-occupied during MOP'
+      : ownedProperty.isRented
+        ? 'Rental active'
+        : 'No tenant yet';
+  const liveRent = ownedProperty.tenant?.contractedRent ?? (ownedProperty.isRented ? ownedProperty.monthlyRental : 0);
+
   return (
     <GlassCard accentColor="#00E676" className="lg:sticky lg:top-4 lg:max-h-[36rem] lg:overflow-y-auto">
       <h3 className="section-title text-white mb-4">Manage Property</h3>
@@ -65,6 +76,18 @@ export default function PropertySummary({
             <span className="text-text-secondary text-sm">Status</span>
             <span className={`font-mono text-xs ${ownedProperty.isRented ? 'text-cyan-glow' : 'text-text-dim'}`}>
               {formatOwnershipStatus(ownedProperty)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-text-secondary text-sm">Lease Status</span>
+            <span className={`font-mono text-xs ${liveRent > 0 ? 'text-cyan-glow' : 'text-text-dim'}`}>
+              {leaseStatus}
+            </span>
+          </div>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-text-secondary text-sm">Live Rent</span>
+            <span className={`font-mono text-xs ${liveRent > 0 ? 'text-success' : 'text-text-dim'}`}>
+              {liveRent > 0 ? formatCurrency(liveRent) : 'S$0'}
             </span>
           </div>
           <div className="flex items-center justify-between mt-2">
