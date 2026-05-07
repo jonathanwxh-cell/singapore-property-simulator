@@ -1,0 +1,4 @@
+# Default owner for everything in the repo. Lines further down override the
+# default for matching paths. Format reference:
+# https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+*       @jonathanwxh-cell

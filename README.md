@@ -1,7 +1,7 @@
 # Singapore Property Simulator
 
 [![CI](https://github.com/jonathanwxh-cell/singapore-property-simulator/actions/workflows/ci.yml/badge.svg)](https://github.com/jonathanwxh-cell/singapore-property-simulator/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.4.1-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.5.0-green.svg)](CHANGELOG.md)
 [![License: Proprietary](https://img.shields.io/badge/license-proprietary-lightgrey)](LICENSE)
 
 A single-player turn-based property investment game set in Singapore's real estate market. Buy HDB flats, executive condos, private condos, landed homes, and commercial shophouses — while navigating CPF rules, stamp duties, mortgage underwriting, cooling measures, and market cycles.
