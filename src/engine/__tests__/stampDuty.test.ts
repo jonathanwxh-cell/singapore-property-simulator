@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as stampDuty from '../stampDuty';
 import { calculateBSD, calculateABSD, calculateBSDForCategory, calculateTotalStampDuty } from '../stampDuty';
 
 describe('Stamp Duty', () => {
@@ -83,6 +84,53 @@ describe('Stamp Duty', () => {
 
     it('returns BSD only for citizen first property', () => {
       expect(calculateTotalStampDuty(500000, 0)).toBe(9600);
+    });
+  });
+
+  describe('SSD', () => {
+    it('uses the post-4 Jul 2025 residential SSD schedule for short holds', () => {
+      const calculateSSD = (stampDuty as Record<string, unknown>).calculateSSD;
+      expect(typeof calculateSSD).toBe('function');
+      if (typeof calculateSSD !== 'function') return;
+
+      expect(calculateSSD({
+        salePrice: 1_200_000,
+        acquisitionYear: 2025,
+        acquisitionMonth: 8,
+        saleYear: 2026,
+        saleMonth: 4,
+        category: 'private-residential',
+      })).toBe(192_000);
+    });
+
+    it('uses the pre-4 Jul 2025 residential SSD schedule for legacy purchases', () => {
+      const calculateSSD = (stampDuty as Record<string, unknown>).calculateSSD;
+      expect(typeof calculateSSD).toBe('function');
+      if (typeof calculateSSD !== 'function') return;
+
+      expect(calculateSSD({
+        salePrice: 1_000_000,
+        acquisitionYear: 2025,
+        acquisitionMonth: 6,
+        saleYear: 2026,
+        saleMonth: 5,
+        category: 'private-residential',
+      })).toBe(120_000);
+    });
+
+    it('does not apply SSD to commercial sales', () => {
+      const calculateSSD = (stampDuty as Record<string, unknown>).calculateSSD;
+      expect(typeof calculateSSD).toBe('function');
+      if (typeof calculateSSD !== 'function') return;
+
+      expect(calculateSSD({
+        salePrice: 2_000_000,
+        acquisitionYear: 2025,
+        acquisitionMonth: 8,
+        saleYear: 2026,
+        saleMonth: 4,
+        category: 'commercial',
+      })).toBe(0);
     });
   });
 });

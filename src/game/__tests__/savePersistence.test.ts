@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SAVE_VERSION } from '@/engine/constants';
 import type { GameState } from '../types';
+import type { PendingTaxRelief } from '../types';
 import {
   AUTO_SAVE_KEY,
   DEFAULT_PROFILE_ID,
@@ -117,6 +118,36 @@ describe('save persistence', () => {
     expect(JSON.parse(saved ?? '{}').version).toBe(SAVE_VERSION);
     expect(parsed?.player.name).toBe('Saved Player');
     expect(parsed).not.toHaveProperty('version');
+  });
+
+  it('round-trips pending tax relief claims through autosave persistence', () => {
+    const state = makeState({
+      player: {
+        ...makeState().player,
+        pendingTaxReliefs: [{
+          type: 'absd-spouse-refund',
+          purchasePropertyId: 'condo-10',
+          purchaseTurn: 24,
+          deadlineTurn: 30,
+          expectedRefundAmount: 220_000,
+          qualifyingSoldPropertyIds: ['condo-4'],
+          status: 'pending',
+        }] as PendingTaxRelief[],
+      },
+    });
+
+    writeAutoSave(state);
+    const parsed = readAutoSave();
+
+    expect((parsed?.player as { pendingTaxReliefs?: PendingTaxRelief[] } | undefined)?.pendingTaxReliefs).toEqual([{
+      type: 'absd-spouse-refund',
+      purchasePropertyId: 'condo-10',
+      purchaseTurn: 24,
+      deadlineTurn: 30,
+      expectedRefundAmount: 220_000,
+      qualifyingSoldPropertyIds: ['condo-4'],
+      status: 'pending',
+    }]);
   });
 
   it('rejects malformed or version-mismatched save payloads', () => {

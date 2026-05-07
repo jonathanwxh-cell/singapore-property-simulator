@@ -41,6 +41,9 @@ export type MaintenanceSeverity = 'minor' | 'major' | 'urgent';
 export type MaintenanceStatus = 'open' | 'repaired' | 'deferred' | 'insured';
 export type TenantLeaseDecisionId = 'renew' | 'raise-rent' | 'reset-market' | 'end-lease';
 export type MortgageFinancingMode = 'bank' | 'hdb-concessionary';
+export type PendingTaxReliefType = 'absd-spouse-refund' | 'absd-single-senior-refund';
+export type PendingTaxReliefStatus = 'pending' | 'earned' | 'expired';
+export type CpfUsageMode = 'full' | 'prorated' | 'blocked';
 export type IncomeTrackId = 'sideGig' | 'propertyHustle';
 export type LifeActionId =
   | 'focus-at-work'
@@ -231,6 +234,17 @@ export interface PropertyOperationLogEntry {
   tone: 'good' | 'warn' | 'bad' | 'neutral';
 }
 
+export interface PendingTaxRelief {
+  type: PendingTaxReliefType;
+  purchasePropertyId: string;
+  purchaseTurn: number;
+  deadlineTurn: number;
+  expectedRefundAmount: number;
+  qualifyingSoldPropertyIds: string[];
+  status: PendingTaxReliefStatus;
+  replacementPurchasePrice?: number;
+}
+
 export interface OwnedProperty {
   propertyId: string;
   purchasePrice: number;
@@ -338,6 +352,7 @@ export interface Player {
   runRouteId?: RunRouteId;
   reserve?: ReserveState;
   operationHistory?: PropertyOperationLogEntry[];
+  pendingTaxReliefs?: PendingTaxRelief[];
 }
 
 export interface MarketState {

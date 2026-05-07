@@ -7,6 +7,8 @@ const rentStrategySchema = z.enum(['conservative', 'market', 'aggressive']);
 const rentalModeSchema = z.enum(['room-rental', 'whole-unit', 'corporate-lease', 'student-shared', 'commercial-lease']);
 const tenantProfileSchema = z.enum(['local-family', 'expat-pmet', 'student-tenants', 'sme-commercial']);
 const mortgageFinancingModeSchema = z.enum(['bank', 'hdb-concessionary']);
+const pendingTaxReliefTypeSchema = z.enum(['absd-spouse-refund', 'absd-single-senior-refund']);
+const pendingTaxReliefStatusSchema = z.enum(['pending', 'earned', 'expired']);
 const runRouteSchema = z.enum([
   'bto-upgrader',
   'single-resale',
@@ -122,6 +124,17 @@ const loanSchema = z.object({
   financingMode: mortgageFinancingModeSchema.optional(),
 });
 
+const pendingTaxReliefSchema = z.object({
+  type: pendingTaxReliefTypeSchema,
+  purchasePropertyId: z.string(),
+  purchaseTurn: z.number().int().nonnegative(),
+  deadlineTurn: z.number().int().nonnegative(),
+  expectedRefundAmount: z.number().finite().nonnegative(),
+  qualifyingSoldPropertyIds: z.array(z.string()),
+  status: pendingTaxReliefStatusSchema,
+  replacementPurchasePrice: z.number().finite().nonnegative().optional(),
+});
+
 const playerSchema = z.object({
   name: z.string(),
   age: z.number().int().min(18).max(100),
@@ -231,6 +244,7 @@ const playerSchema = z.object({
     detail: z.string(),
     tone: z.enum(['good', 'warn', 'bad', 'neutral']),
   })).optional(),
+  pendingTaxReliefs: z.array(pendingTaxReliefSchema).optional(),
 });
 
 export const saveSchema = z.object({

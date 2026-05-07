@@ -8,7 +8,7 @@ import {
   resolveScenarioOption,
   sellPropertyPure,
 } from '../actions';
-import { createInitialLifeState, type Player } from '@/game/types';
+import { createInitialLifeState, type PendingTaxRelief, type Player } from '@/game/types';
 import { validatePurchase } from '../purchase';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
@@ -115,6 +115,83 @@ describe('buyPropertyPure', () => {
       expect(result.value.player.cash).toBeLessThan(player.cash);
       expect(result.value.player.cpfOrdinary).toBe(20_000);
     }
+  });
+
+  it('creates a pending ABSD spouse refund claim on an SC married second-home purchase', () => {
+    const nextProperty = properties.find((property) => property.id === 'condo-10');
+    expect(nextProperty).toBeDefined();
+
+    const player = makePlayer({
+      cash: 5_000_000,
+      maritalStatus: 'married',
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'couple-family',
+        age: 33,
+      },
+      properties: [{
+        propertyId: 'condo-4',
+        purchasePrice: 900_000,
+        purchaseDate: '2024-01',
+        currentValue: 1_150_000,
+        isRented: false,
+        monthlyRental: 0,
+        renovationLevel: 0,
+      }],
+    });
+
+    const validation = validatePurchase(player, nextProperty!, nextProperty!.price);
+    const result = buyPropertyPure(player, nextProperty!.id, nextProperty!.price);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const pendingTaxReliefs = (result.value.player as { pendingTaxReliefs?: PendingTaxRelief[] }).pendingTaxReliefs;
+    expect(Array.isArray(pendingTaxReliefs)).toBe(true);
+    expect(pendingTaxReliefs).toHaveLength(1);
+    expect(pendingTaxReliefs[0]).toMatchObject({
+      type: 'absd-spouse-refund',
+      status: 'pending',
+      expectedRefundAmount: validation.absd,
+    });
+  });
+
+  it('creates a pending single-senior ABSD refund claim only for a real downsizing path', () => {
+    const cheaperReplacement = properties.find((property) => property.id === 'condo-29');
+    expect(cheaperReplacement).toBeDefined();
+
+    const player = makePlayer({
+      age: 60,
+      cash: 3_000_000,
+      maritalStatus: 'single',
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'single-35-plus',
+        age: 60,
+      },
+      properties: [{
+        propertyId: 'condo-10',
+        purchasePrice: 1_300_000,
+        purchaseDate: '2024-01',
+        currentValue: 1_500_000,
+        isRented: false,
+        monthlyRental: 0,
+        renovationLevel: 0,
+        mopRemainingMonths: 0,
+      }],
+    });
+
+    const result = buyPropertyPure(player, cheaperReplacement!.id, cheaperReplacement!.price);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const pendingTaxReliefs = (result.value.player as { pendingTaxReliefs?: PendingTaxRelief[] }).pendingTaxReliefs;
+    expect(Array.isArray(pendingTaxReliefs)).toBe(true);
+    expect(pendingTaxReliefs[0]).toMatchObject({
+      type: 'absd-single-senior-refund',
+      status: 'pending',
+    });
   });
 
   it('floors fractional CPF OA usage so UI-ready purchases are not rejected by cents', () => {
@@ -320,6 +397,129 @@ describe('sellPropertyPure', () => {
       expect(result.value.player.properties).toHaveLength(0);
       expect(result.value.player.loans[0].isPaid).toBe(true);
     }
+  });
+
+  it('deducts SSD from a fast residential sale using the post-4 Jul 2025 schedule', () => {
+    const player = makePlayer({
+      cash: 0,
+      year: 2026,
+      month: 4,
+      properties: [{
+        propertyId: 'condo-10',
+        purchasePrice: 900_000,
+        purchaseDate: '2025-08',
+        currentValue: 1_200_000,
+        isRented: false,
+        monthlyRental: 0,
+        renovationLevel: 0,
+      }],
+    });
+
+    const result = sellPropertyPure(player, 0);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.player.cash).toBe(1_008_000);
+  });
+
+  it('pays the pending spouse refund after the first home is sold within 6 months', () => {
+    const player = makePlayer({
+      cash: 0,
+      year: 2026,
+      month: 4,
+      maritalStatus: 'married',
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'couple-family',
+        age: 33,
+      },
+      properties: [
+        {
+          propertyId: 'condo-4',
+          purchasePrice: 900_000,
+          purchaseDate: '2024-01',
+          currentValue: 1_100_000,
+          isRented: false,
+          monthlyRental: 0,
+          renovationLevel: 0,
+        },
+        {
+          propertyId: 'condo-10',
+          purchasePrice: 1_100_000,
+          purchaseDate: '2026-01',
+          currentValue: 1_100_000,
+          isRented: false,
+          monthlyRental: 0,
+          renovationLevel: 0,
+        },
+      ],
+      pendingTaxReliefs: [{
+        type: 'absd-spouse-refund',
+        purchasePropertyId: 'condo-10',
+        purchaseTurn: 24,
+        deadlineTurn: 30,
+        expectedRefundAmount: 220_000,
+        qualifyingSoldPropertyIds: ['condo-4'],
+        status: 'pending',
+      }] as PendingTaxRelief[],
+    } as Player);
+
+    const result = sellPropertyPure(player, 0);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.player.cash).toBe(1_276_000);
+    expect((result.value.player as { pendingTaxReliefs?: PendingTaxRelief[] }).pendingTaxReliefs?.[0].status).toBe('earned');
+  });
+
+  it('expires the pending spouse refund if the first home is sold after the 6-month window', () => {
+    const player = makePlayer({
+      cash: 0,
+      year: 2026,
+      month: 8,
+      maritalStatus: 'married',
+      buyerProfile: {
+        residencyStatus: 'sc',
+        householdProfile: 'couple-family',
+        age: 33,
+      },
+      properties: [
+        {
+          propertyId: 'condo-4',
+          purchasePrice: 900_000,
+          purchaseDate: '2024-01',
+          currentValue: 1_100_000,
+          isRented: false,
+          monthlyRental: 0,
+          renovationLevel: 0,
+        },
+        {
+          propertyId: 'condo-10',
+          purchasePrice: 1_100_000,
+          purchaseDate: '2026-01',
+          currentValue: 1_100_000,
+          isRented: false,
+          monthlyRental: 0,
+          renovationLevel: 0,
+        },
+      ],
+      pendingTaxReliefs: [{
+        type: 'absd-spouse-refund',
+        purchasePropertyId: 'condo-10',
+        purchaseTurn: 24,
+        deadlineTurn: 30,
+        expectedRefundAmount: 220_000,
+        qualifyingSoldPropertyIds: ['condo-4'],
+        status: 'pending',
+      }] as PendingTaxRelief[],
+    } as Player);
+
+    const result = sellPropertyPure(player, 0);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.player.cash).toBe(1_056_000);
+    expect((result.value.player as { pendingTaxReliefs?: PendingTaxRelief[] }).pendingTaxReliefs?.[0].status).toBe('expired');
   });
 });
 

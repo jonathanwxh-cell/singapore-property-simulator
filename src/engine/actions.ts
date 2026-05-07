@@ -1,5 +1,5 @@
 import { properties, isResidentialCategory } from '@/data/properties';
-import type { Loan, MortgageFinancingMode, OwnedProperty, Player } from '@/game/types';
+import type { Loan, MortgageFinancingMode, OwnedProperty, PendingTaxRelief, Player } from '@/game/types';
 import { MAX_CREDIT_SCORE, MIN_CREDIT_SCORE } from '@/game/types';
 import type { ActionResult } from './results';
 import { fail, ok } from './results';
@@ -19,6 +19,7 @@ import type { ScenarioOption } from '@/data/scenarios';
 import { formatPercent, roundMoney } from '@/lib/format';
 import { validatePurchase } from './purchase';
 import { deriveMaintenanceCost, derivePropertyTax } from './portfolio';
+import { calculateSSD } from './stampDuty';
 import {
   getSalaryCeilingForProperty,
   evaluatePropertyEligibility,
@@ -99,7 +100,7 @@ export function buyPropertyPure(
   const validation = validatePurchase(player, property, downPayment, financingMode);
   const cpfEligible = canUseCpfForProperty(propertyId);
   // CPF OA may only cover the down payment component, not stamp duties or levy
-  const allowedCpfUse = cpfEligible ? Math.floor(Math.min(validation.downPayment, player.cpfOrdinary)) : 0;
+  const allowedCpfUse = cpfEligible ? Math.floor(Math.min(validation.maxCpfOrdinaryUsable, player.cpfOrdinary)) : 0;
   const cpfToUse = Math.max(0, Math.floor(cpfOrdinaryUsed));
 
   if (!cpfEligible && cpfToUse > 0) {
@@ -197,6 +198,7 @@ export function buyPropertyPure(
         financingMode: validation.financingMode,
       }
     : null;
+  const nextPendingTaxReliefs = getPendingTaxReliefsAfterPurchase(player, property.id, validation.pendingTaxRelief, property.type);
 
   return ok({
     player: {
@@ -208,6 +210,7 @@ export function buyPropertyPure(
       firstHomePurchased: isResidentialPropertyType(property.type) ? true : player.firstHomePurchased,
       ownedPrivateHome: isPrivateResidentialPropertyType(property.type) ? true : player.ownedPrivateHome,
       usedSubsidizedHousing: player.usedSubsidizedHousing || property.type === 'HDB BTO' || property.type === 'Executive Condo',
+      pendingTaxReliefs: nextPendingTaxReliefs,
     },
   });
 }
@@ -228,6 +231,19 @@ export function sellPropertyPure(player: Player, propertyIndex: number): ActionR
 
   const saleValue = Math.round(property.currentValue);
   const profit = saleValue - property.purchasePrice;
+  const currentTurn = deriveTurnFromCalendar(player.year, player.month);
+  const propertyCategory = listing ? (isResidentialCategory(listing.type) ? 'private-residential' : 'commercial') : 'commercial';
+  const acquisition = parsePurchaseDate(property.purchaseDate);
+  const ssd = listing && acquisition
+    ? calculateSSD({
+        salePrice: saleValue,
+        acquisitionYear: acquisition.year,
+        acquisitionMonth: acquisition.month,
+        saleYear: player.year,
+        saleMonth: player.month,
+        category: propertyCategory,
+      })
+    : 0;
 
   let outstandingLoan = 0;
   const updatedLoans = property.loanId
@@ -240,8 +256,37 @@ export function sellPropertyPure(player: Player, propertyIndex: number): ActionR
       })
     : player.loans;
 
-  const netProceeds = saleValue - outstandingLoan;
+  const pendingTaxReliefResolution = resolvePendingTaxReliefsOnSale(
+    player.pendingTaxReliefs ?? [],
+    property.propertyId,
+    saleValue,
+    currentTurn,
+  );
+  const netProceeds = saleValue - outstandingLoan - ssd + pendingTaxReliefResolution.refundCashDelta;
   const newProperties = player.properties.filter((_, i) => i !== propertyIndex);
+  const operationHistory = [...(player.operationHistory ?? [])];
+
+  if (ssd > 0) {
+    operationHistory.unshift({
+      id: `ssd-${property.propertyId}-${currentTurn}`,
+      turn: currentTurn,
+      propertyId: property.propertyId,
+      title: 'SSD reduced sale proceeds',
+      detail: `Seller's Stamp Duty of S$${Math.round(ssd).toLocaleString()} applied because the property was sold too soon after purchase.`,
+      tone: 'warn',
+    });
+  }
+
+  if (pendingTaxReliefResolution.refundCashDelta > 0) {
+    operationHistory.unshift({
+      id: `tax-relief-${property.propertyId}-${currentTurn}`,
+      turn: currentTurn,
+      propertyId: property.propertyId,
+      title: 'ABSD refund received',
+      detail: `A pending ABSD relief of S$${Math.round(pendingTaxReliefResolution.refundCashDelta).toLocaleString()} cleared after the qualifying sale.`,
+      tone: 'good',
+    });
+  }
 
   return ok({
     player: {
@@ -250,6 +295,8 @@ export function sellPropertyPure(player: Player, propertyIndex: number): ActionR
       properties: newProperties,
       loans: updatedLoans,
       totalPropertySalesProfit: player.totalPropertySalesProfit + profit,
+      pendingTaxReliefs: pendingTaxReliefResolution.pendingTaxReliefs,
+      operationHistory,
     },
   });
 }
@@ -346,4 +393,66 @@ export function renovatePropertyPure(player: Player, propertyIndex: number, cost
       properties: updatedProperties,
     },
   });
+}
+
+function getPendingTaxReliefsAfterPurchase(
+  player: Player,
+  purchasePropertyId: string,
+  pendingTaxRelief: PendingTaxRelief | null,
+  propertyType: string,
+): PendingTaxRelief[] {
+  const existing = player.pendingTaxReliefs ?? [];
+  const next = existing.map((claim) => {
+    if (claim.status !== 'pending') return claim;
+    if (!isResidentialPropertyType(propertyType)) return claim;
+    if (claim.purchasePropertyId === purchasePropertyId) return claim;
+    return { ...claim, status: 'expired' as const };
+  });
+
+  return pendingTaxRelief ? [...next, pendingTaxRelief] : next;
+}
+
+function resolvePendingTaxReliefsOnSale(
+  pendingTaxReliefs: PendingTaxRelief[],
+  soldPropertyId: string,
+  saleValue: number,
+  currentTurn: number,
+): {
+  pendingTaxReliefs: PendingTaxRelief[];
+  refundCashDelta: number;
+} {
+  let refundCashDelta = 0;
+
+  const updated = pendingTaxReliefs.map((claim) => {
+    if (claim.status !== 'pending') return claim;
+    if (currentTurn > claim.deadlineTurn) {
+      return { ...claim, status: 'expired' as const };
+    }
+    if (!claim.qualifyingSoldPropertyIds.includes(soldPropertyId)) return claim;
+
+    if (claim.type === 'absd-single-senior-refund') {
+      if (typeof claim.replacementPurchasePrice !== 'number' || saleValue <= claim.replacementPurchasePrice) {
+        return { ...claim, status: 'expired' as const };
+      }
+    }
+
+    refundCashDelta += claim.expectedRefundAmount;
+    return { ...claim, status: 'earned' as const };
+  });
+
+  return { pendingTaxReliefs: updated, refundCashDelta: roundMoney(refundCashDelta) };
+}
+
+function parsePurchaseDate(raw: string): { year: number; month: number } | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(raw.trim());
+  if (!match) return null;
+
+  return {
+    year: Number(match[1]),
+    month: Number(match[2]),
+  };
+}
+
+function deriveTurnFromCalendar(year: number, month: number): number {
+  return Math.max(0, (year - 2024) * 12 + (month - 1));
 }

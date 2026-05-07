@@ -108,6 +108,7 @@ function withPortfolioDefaults(player: Player): Player {
     usedSubsidizedHousing: player.usedSubsidizedHousing ?? ownsSubsidizedHousing,
     reserve: player.reserve ?? createDefaultReserve(),
     operationHistory: player.operationHistory ?? [],
+    pendingTaxReliefs: player.pendingTaxReliefs ?? [],
     properties: player.properties.map((owned) => {
       const listing = properties.find(p => p.id === owned.propertyId);
       const mopActive = listing?.isHdb && (owned.mopRemainingMonths ?? 0) > 0;
@@ -197,6 +198,7 @@ function createInitialPlayer(
     runRouteId,
     reserve: createDefaultReserve(),
     operationHistory: [],
+    pendingTaxReliefs: [],
   });
 }
 

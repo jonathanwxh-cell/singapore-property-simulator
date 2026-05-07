@@ -11,6 +11,16 @@ import type { DealReadiness } from '@/engine/decisionCoach';
 import type { AffordabilityReport } from '@/engine/selectors';
 import type { PracticePurchasePlan, BtoReadinessPlan, SeniorRightsizingPlan } from '@/engine/practicePurchase';
 
+function formatTaxReliefMessage(validation: PurchaseValidation) {
+  if (!validation.pendingTaxRelief) return null;
+
+  if (validation.pendingTaxRelief.type === 'absd-single-senior-refund') {
+    return `Pay ABSD now. This simplified 55+ rightsizing run can reclaim ${formatCurrency(validation.pendingTaxRelief.expectedRefundAmount)} if the bigger home is sold within 6 months.`;
+  }
+
+  return `Pay ABSD now. This married second-home run can reclaim ${formatCurrency(validation.pendingTaxRelief.expectedRefundAmount)} if the first home is sold within 6 months.`;
+}
+
 function PracticeMetric({
   label,
   value,
@@ -351,12 +361,24 @@ export default function PurchasePanel({
                   type="checkbox"
                   checked={useCpfOrdinary}
                   onChange={(e) => onSetUseCpfOrdinary(e.target.checked)}
+                  disabled={validation.maxCpfOrdinaryUsable <= 0}
                   className="mt-1 accent-cyan-glow"
                 />
                 <div>
                   <p className="text-white text-sm font-semibold">Use CPF OA toward eligible upfront costs</p>
                   <p className="text-text-secondary text-xs mt-1">
-                    Available OA: S${player.cpfOrdinary.toLocaleString()} | Applied now: S${cpfApplied.toLocaleString()}
+                    Available OA: S${player.cpfOrdinary.toLocaleString()} | Max usable now: {formatCurrency(validation.maxCpfOrdinaryUsable)} | Applied now: S${cpfApplied.toLocaleString()}
+                  </p>
+                  <p className={`text-xs mt-1 ${
+                    validation.cpfUsageMode === 'full'
+                      ? 'text-text-dim'
+                      : validation.cpfUsageMode === 'prorated'
+                        ? 'text-warning'
+                        : 'text-danger'
+                  }`}>
+                    {validation.cpfUsageMode === 'full'
+                      ? 'Lease covers CPF rules for full OA use in this simplified upfront step.'
+                      : validation.cpfUsageMessage}
                   </p>
                 </div>
               </label>
@@ -369,10 +391,17 @@ export default function PurchasePanel({
               <span className="font-mono text-text-dim">{formatCurrency(validation.bsd)}</span>
             </div>
             {validation.absd > 0 && (
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-text-secondary text-sm"><GlossaryTerm termId="absd">ABSD</GlossaryTerm> {formatPercent(validation.absdRate * 100)} ({player.properties.length > 0 ? '2nd+' : 'Additional'})</span>
-                <span className="font-mono text-danger">{formatCurrency(validation.absd)}</span>
-              </div>
+              <>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-text-secondary text-sm"><GlossaryTerm termId="absd">ABSD</GlossaryTerm> {formatPercent(validation.absdRate * 100)} ({player.properties.length > 0 ? '2nd+' : 'Additional'})</span>
+                  <span className="font-mono text-danger">{formatCurrency(validation.absd)}</span>
+                </div>
+                {formatTaxReliefMessage(validation) && (
+                  <p className="mb-2 rounded-lg border border-cyan-glow/20 bg-cyan-glow/10 px-3 py-2 text-[11px] leading-relaxed text-text-secondary">
+                    {formatTaxReliefMessage(validation)}
+                  </p>
+                )}
+              </>
             )}
             {validation.hdbResaleLevy > 0 && (
               <div className="flex items-center justify-between mb-1">

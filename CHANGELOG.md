@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Active MOP / Next Home v1**: owner runs now get a Dashboard gateway for Property #2 planning, a readiness tracker with bottleneck callouts, and MOP-specific monthly intents for home projects, income runway, market study, and room-rental setup.
 - **Landlord depth phase**: renovation cards now support budget / balanced / premium contractor routes with ROI previews, tenant months can generate deterministic upside or warning events, and the portfolio shows a landlord-health score with a concrete next-priority callout.
 - **Wealth During Wait phase**: the Life screen now tracks side-gig and property-hustle income engines across months, shows a clear income mix, and explains which extra-income moves actually moved the run closer to the next home.
+- **Rules correctness pack**: residential sales now model SSD, qualifying married-couple and single-SC-senior replacement runs can track pending ABSD refunds, and short-lease residential buys now surface full / reduced / blocked CPF OA usage.
 
 ### Changed
 - The title screen and new-game setup now frame the guided run as the cleanest first play, with stronger onboarding language for casual players who do not already know CPF, MOP, or stamp-duty terms.
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Purchase-readiness CPF previews now match the real buy action by capping CPF OA usage at the eligible down-payment amount instead of incorrectly offsetting stamp duties or levy.
+- Fast residential sales no longer overstate net proceeds by ignoring SSD, and qualifying ABSD refund paths now teach pay-now / recover-later cashflow instead of acting like an instant waiver.
 
 ### Improved
 

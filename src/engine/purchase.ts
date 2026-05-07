@@ -1,5 +1,11 @@
 import { getPropertyCategory, properties, type Property } from '@/data/properties';
-import { normalizeBuyerProfile, type MortgageFinancingMode, type Player } from '@/game/types';
+import {
+  normalizeBuyerProfile,
+  type CpfUsageMode,
+  type MortgageFinancingMode,
+  type PendingTaxRelief,
+  type Player,
+} from '@/game/types';
 import { difficultySettings } from '@/game/types';
 import { formatCurrency, formatPercent, roundMoney } from '@/lib/format';
 import {
@@ -16,7 +22,12 @@ import { selectBankAssessableMonthlyIncome } from './income';
 import { getLtvCap, checkMsr, maxBorrowable } from './ltv';
 import type { ActionFailReason } from './results';
 import { selectMonthlyExpenses } from './selectors';
-import { calculateABSDForProfile, calculateABSDRateForProfile, calculateBSDForCategory } from './stampDuty';
+import {
+  buildPendingTaxReliefDraft,
+  calculateABSDForProfile,
+  calculateABSDRateForProfile,
+  calculateBSDForCategory,
+} from './stampDuty';
 
 export interface PurchaseValidationReason {
   code: ActionFailReason;
@@ -48,6 +59,11 @@ export interface PurchaseValidation {
   creditAllowed: boolean;
   isOwned: boolean;
   activeHousingLoans: number;
+  cpfUsageMode: CpfUsageMode;
+  maxCpfOrdinaryUsable: number;
+  remainingLeaseYears: number;
+  cpfUsageMessage: string | null;
+  pendingTaxRelief: PendingTaxRelief | null;
 }
 
 export function getDownPaymentAmount(price: number, downPaymentPercent: number): number {
@@ -62,6 +78,7 @@ export function validatePurchase(
 ): PurchaseValidation {
   const roundedDownPayment = roundMoney(downPayment);
   const residentialPropertyCount = countResidentialHoldings(player);
+  const residentialHoldings = getResidentialHoldings(player);
   const isOwned = player.properties.some((ownedProperty) => ownedProperty.propertyId === property.id);
   const buyerProfile = normalizeBuyerProfile(player.buyerProfile);
   const propertyCategory = getPropertyCategory(property.type);
@@ -73,6 +90,25 @@ export function validatePurchase(
     ? 0
     : calculateABSDRateForProfile(residentialPropertyCount, buyerProfile.residencyStatus);
   const hdbResaleLevy = calculateHdbResaleLevy(player, property);
+  const cpfLeaseAssessment = assessCpfLeaseUsage({
+    property,
+    propertyCategory,
+    purchaseYear: player.year,
+    buyerAge: buyerProfile.age,
+    downPayment: roundedDownPayment,
+  });
+  const pendingTaxRelief = buildPendingTaxReliefDraft({
+    maritalStatus: player.maritalStatus,
+    residencyStatus: buyerProfile.residencyStatus,
+    buyerAge: buyerProfile.age,
+    propertyCategory,
+    propertyCountBeforePurchase: residentialPropertyCount,
+    purchasePropertyId: property.id,
+    purchaseTurn: player.turnCount,
+    expectedRefundAmount: absd,
+    replacementPurchasePrice: property.price,
+    existingResidentialProperties: residentialHoldings,
+  });
   const totalUpfront = roundMoney(roundedDownPayment + bsd + absd + hdbResaleLevy);
   const shortfall = Math.max(0, roundMoney(totalUpfront - player.cash));
   const mortgageAmount = Math.max(0, roundMoney(property.price - roundedDownPayment));
@@ -186,6 +222,11 @@ export function validatePurchase(
     creditAllowed,
     isOwned,
     activeHousingLoans,
+    cpfUsageMode: cpfLeaseAssessment.mode,
+    maxCpfOrdinaryUsable: cpfLeaseAssessment.maxCpfOrdinaryUsable,
+    remainingLeaseYears: cpfLeaseAssessment.remainingLeaseYears,
+    cpfUsageMessage: cpfLeaseAssessment.message,
+    pendingTaxRelief,
   };
 }
 
@@ -203,10 +244,17 @@ export function calculateHdbResaleLevy(player: Player, property: Property): numb
 }
 
 function countResidentialHoldings(player: Player): number {
+  return getResidentialHoldings(player).length;
+}
+
+function getResidentialHoldings(player: Player): Array<{ propertyId: string; currentValue: number }> {
   return player.properties.filter((owned) => {
     const property = propertiesById.get(owned.propertyId);
     return Boolean(property && getPropertyCategory(property.type) !== 'commercial');
-  }).length;
+  }).map((owned) => ({
+    propertyId: owned.propertyId,
+    currentValue: owned.currentValue,
+  }));
 }
 
 function hasSubsidizedHousingHistory(player: Player): boolean {
@@ -222,3 +270,57 @@ function isSubsidizedHousingType(propertyType: string): boolean {
 }
 
 const propertiesById = new Map(properties.map((property) => [property.id, property]));
+
+function assessCpfLeaseUsage(input: {
+  property: Property;
+  propertyCategory: ReturnType<typeof getPropertyCategory>;
+  purchaseYear: number;
+  buyerAge: number;
+  downPayment: number;
+}): {
+  mode: CpfUsageMode;
+  maxCpfOrdinaryUsable: number;
+  remainingLeaseYears: number;
+  message: string | null;
+} {
+  if (input.propertyCategory === 'commercial') {
+    return {
+      mode: 'blocked',
+      maxCpfOrdinaryUsable: 0,
+      remainingLeaseYears: 0,
+      message: null,
+    };
+  }
+
+  const propertyAge = Math.max(0, input.purchaseYear - input.property.yearBuilt);
+  const remainingLeaseYears = Math.max(0, input.property.leaseYears - propertyAge);
+
+  if (remainingLeaseYears <= 20) {
+    return {
+      mode: 'blocked',
+      maxCpfOrdinaryUsable: 0,
+      remainingLeaseYears,
+      message: 'Lease is too short for CPF use in this purchase.',
+    };
+  }
+
+  if (input.buyerAge + remainingLeaseYears >= 95) {
+    return {
+      mode: 'full',
+      maxCpfOrdinaryUsable: input.downPayment,
+      remainingLeaseYears,
+      message: null,
+    };
+  }
+
+  const denominator = Math.max(1, 95 - input.buyerAge);
+  const ratio = Math.min(1, Math.max(0, remainingLeaseYears / denominator));
+  const proratedCpfLimit = roundMoney(input.property.price * ratio);
+
+  return {
+    mode: 'prorated',
+    maxCpfOrdinaryUsable: Math.max(0, Math.min(input.downPayment, proratedCpfLimit)),
+    remainingLeaseYears,
+    message: 'Lease is too short for full CPF use. Only a reduced CPF amount is available.',
+  };
+}

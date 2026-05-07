@@ -261,7 +261,7 @@ export function assessDealReadiness({
   const cpfApplied = cpfEligible && useCpfOrdinary
     // Keep readiness math aligned with the actual purchase action: CPF OA only
     // offsets the down payment in this simplified model, not duties or levy.
-    ? Math.floor(Math.min(player.cpfOrdinary, validation.downPayment))
+    ? Math.floor(Math.min(player.cpfOrdinary, validation.maxCpfOrdinaryUsable))
     : 0;
   const cashRequired = Math.max(0, validation.totalUpfront - cpfApplied);
   const cashShortfall = Math.max(0, cashRequired - player.cash);
@@ -318,9 +318,17 @@ export function assessDealReadiness({
     facts: [
       `Cash needed after CPF: ${formatCurrency(cashRequired)}`,
       `CPF OA applied: ${formatCurrency(cpfApplied)}`,
+      validation.cpfUsageMode === 'full'
+        ? 'CPF lease coverage: full OA usage allowed for this upfront step'
+        : validation.cpfUsageMode === 'prorated'
+          ? `CPF lease coverage: reduced OA usage cap of ${formatCurrency(validation.maxCpfOrdinaryUsable)}`
+          : validation.cpfUsageMessage,
       `New mortgage payment: ${formatCurrency(validation.monthlyPayment)}/mo over ${validation.loanTermYears} years`,
       validation.hdbResaleLevy > 0 ? `Estimated resale levy: ${formatCurrency(validation.hdbResaleLevy)}` : null,
       validation.absd > 0 ? `ABSD rate: ${formatPercent(validation.absdRate * 100)}` : null,
+      validation.pendingTaxRelief
+        ? `ABSD refund path: ${formatCurrency(validation.pendingTaxRelief.expectedRefundAmount)} may return after a qualifying sale within 6 months`
+        : null,
       isIncomeHaircutApplied(player) ? `Bank-assessed income: ${formatCurrency(assessableMonthlyIncome)}/mo after self-employed haircut` : null,
       validation.mortgageAmount <= 0 ? 'No new mortgage: TDSR/MSR loan checks do not apply.' : null,
       `TDSR after purchase: ${formatPercent(validation.tdsrRatio * 100, 1)}`,

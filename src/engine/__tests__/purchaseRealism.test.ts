@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { properties } from '@/data/properties';
+import { properties, type Property } from '@/data/properties';
 import { createInitialLifeState, type Player } from '@/game/types';
 import {
   DEFAULT_MORTGAGE_TERM_YEARS,
@@ -135,5 +135,58 @@ describe('purchase realism fixes', () => {
 
     expect(privateFirstHome.hdbResaleLevy).toBe(0);
     expect(subsidizedSecondTimer.hdbResaleLevy).toBe(HDB_RESALE_LEVY_ESTIMATE);
+  });
+
+  it('prorates CPF OA usage when lease is above 20 years but cannot cover the buyer to age 95', () => {
+    const condo = properties.find((property) => property.id === 'condo-10');
+    expect(condo).toBeDefined();
+
+    const shortLeaseProperty: Property = {
+      ...condo!,
+      id: 'test-short-lease-prorated',
+      yearBuilt: 1990,
+      leaseYears: 60,
+    };
+
+    const validation = validatePurchase(
+      makePlayer({
+        age: 60,
+        cash: 2_000_000,
+        cpfOrdinary: 400_000,
+        buyerProfile: { residencyStatus: 'sc', householdProfile: 'single-35-plus', age: 60 },
+      }),
+      shortLeaseProperty,
+      shortLeaseProperty.price * 0.8,
+    ) as Record<string, unknown> & { downPayment: number };
+
+    expect(validation.cpfUsageMode).toBe('prorated');
+    expect(validation.maxCpfOrdinaryUsable).toBeGreaterThan(0);
+    expect(validation.maxCpfOrdinaryUsable).toBeLessThan(validation.downPayment);
+  });
+
+  it('blocks CPF OA usage when remaining lease is 20 years or below', () => {
+    const condo = properties.find((property) => property.id === 'condo-10');
+    expect(condo).toBeDefined();
+
+    const veryShortLeaseProperty: Property = {
+      ...condo!,
+      id: 'test-short-lease-blocked',
+      yearBuilt: 1980,
+      leaseYears: 60,
+    };
+
+    const validation = validatePurchase(
+      makePlayer({
+        age: 60,
+        cash: 2_000_000,
+        cpfOrdinary: 400_000,
+        buyerProfile: { residencyStatus: 'sc', householdProfile: 'single-35-plus', age: 60 },
+      }),
+      veryShortLeaseProperty,
+      veryShortLeaseProperty.price * 0.25,
+    ) as Record<string, unknown>;
+
+    expect(validation.cpfUsageMode).toBe('blocked');
+    expect(validation.maxCpfOrdinaryUsable).toBe(0);
   });
 });
