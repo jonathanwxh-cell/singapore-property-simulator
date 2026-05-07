@@ -5,7 +5,7 @@ import { useGameStore } from '@/game/useGameStore';
 import GlassCard from '@/components/GlassCard';
 import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Train, ShoppingBag, CheckCircle } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { listingRarityInfo } from '@/data/listingChannels';
 import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
@@ -108,6 +108,37 @@ export default function PropertyDetail() {
   const ownedProperty = isOwned ? player.properties[ownedIndex] : null;
   const associatedLoan = ownedProperty?.loanId ? player.loans.find(l => l.id === ownedProperty.loanId) : null;
 
+  const eligibilityFlags = useMemo(() => deriveEligibilityFlags({
+    salary: player.salary,
+    properties: player.properties,
+    firstHomePurchased: player.firstHomePurchased,
+    ownedPrivateHome: player.ownedPrivateHome,
+    buyerProfile: player.buyerProfile,
+  }), [player.salary, player.properties, player.firstHomePurchased, player.ownedPrivateHome, player.buyerProfile]);
+
+  const seniorRightsizingPlan = useMemo(() => buildSeniorRightsizingPlan(player), [player]);
+
+  const purchaseComputations = useMemo(() => {
+    if (!property) return null;
+    const activeHousingLoans = player.loans.filter(l => l.type === 'mortgage' && !l.isPaid).length;
+    const effectiveFinancingMode: MortgageFinancingMode = property.isHdb ? financingMode : 'bank';
+    const minDpPct = effectiveFinancingMode === 'hdb-concessionary'
+      ? HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT
+      : Math.round((1 - getLtvCap(activeHousingLoans)) * 100);
+    const effectiveDpPct = Math.max(downPaymentPercent, minDpPct);
+    const downPayment = getDownPaymentAmount(property.price, effectiveDpPct);
+    const validation = validatePurchase(player, property, downPayment, effectiveFinancingMode);
+    const dealReadiness = assessDealReadiness({ player, property, downPaymentPercent: effectiveDpPct, useCpfOrdinary, financingMode: effectiveFinancingMode });
+    const dealNextFix = getDealNextFix(dealReadiness);
+    const monthlySurplus = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
+    const grantSupport = property.isHdb ? selectPotentialHousingGrant(player) : 0;
+    const affordability = selectAffordabilityReport(player, dealReadiness.cashRequired, monthlySurplus, grantSupport);
+    const eligibility = evaluatePropertyEligibility({ propertyType: property.type, salary: player.salary, properties: player.properties, firstHomePurchased: player.firstHomePurchased, ownedPrivateHome: player.ownedPrivateHome, buyerProfile: player.buyerProfile });
+    const practicePlan = buildPracticePurchasePlan({ player, property, readiness: dealReadiness });
+    const btoReadinessPlan = buildBtoReadinessPlan(player, property);
+    return { activeHousingLoans, effectiveFinancingMode, minDownPaymentPercent: minDpPct, effectiveDownPaymentPercent: effectiveDpPct, downPayment, validation, dealReadiness, dealNextFix, monthlySurplus, affordability, eligibility, practicePlan, btoReadinessPlan };
+  }, [player, property, financingMode, downPaymentPercent, useCpfOrdinary]);
+
   if (!property || !district) {
     return (
       <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4 flex items-center justify-center">
@@ -124,49 +155,16 @@ export default function PropertyDetail() {
 
   const typeInfo = propertyTypeInfo[property.type];
   const rarityInfo = listingRarityInfo[property.listingRarity];
-  const activeHousingLoans = player.loans.filter(l => l.type === 'mortgage' && !l.isPaid).length;
-  const effectiveFinancingMode: MortgageFinancingMode = property.isHdb ? financingMode : 'bank';
-  const minDownPaymentPercent = effectiveFinancingMode === 'hdb-concessionary'
-    ? HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT
-    : Math.round((1 - getLtvCap(activeHousingLoans)) * 100);
-  const effectiveDownPaymentPercent = Math.max(downPaymentPercent, minDownPaymentPercent);
-  const downPayment = getDownPaymentAmount(property.price, effectiveDownPaymentPercent);
-  const validation = validatePurchase(player, property, downPayment, effectiveFinancingMode);
-  const dealReadiness = assessDealReadiness({
-    player,
-    property,
-    downPaymentPercent: effectiveDownPaymentPercent,
-    useCpfOrdinary,
-    financingMode: effectiveFinancingMode,
-  });
-  const dealNextFix = getDealNextFix(dealReadiness);
+  const {
+    activeHousingLoans, effectiveFinancingMode, minDownPaymentPercent, effectiveDownPaymentPercent,
+    validation, dealReadiness, dealNextFix, monthlySurplus, affordability, eligibility,
+    practicePlan, btoReadinessPlan,
+  } = purchaseComputations!;
   const cpfEligible = !property.type.startsWith('Commercial');
   const cpfApplied = dealReadiness.cpfApplied;
   const cashRequired = dealReadiness.cashRequired;
-  const monthlySurplus = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
   const availableCash = selectAvailableCash(player);
   const reservedCash = selectReservedCash(player);
-  const grantSupport = property.isHdb ? selectPotentialHousingGrant(player) : 0;
-  const affordability = selectAffordabilityReport(player, cashRequired, monthlySurplus, grantSupport);
-  const practicePlan = buildPracticePurchasePlan({ player, property, readiness: dealReadiness });
-  const btoReadinessPlan = buildBtoReadinessPlan(player, property);
-  const seniorRightsizingPlan = buildSeniorRightsizingPlan(player);
-  const extraReasons = validation.reasons.filter((reason) => reason.code !== 'insufficient_cash');
-  const eligibilityFlags = deriveEligibilityFlags({
-    salary: player.salary,
-    properties: player.properties,
-    firstHomePurchased: player.firstHomePurchased,
-    ownedPrivateHome: player.ownedPrivateHome,
-    buyerProfile: player.buyerProfile,
-  });
-  const eligibility = evaluatePropertyEligibility({
-    propertyType: property.type,
-    salary: player.salary,
-    properties: player.properties,
-    firstHomePurchased: player.firstHomePurchased,
-    ownedPrivateHome: player.ownedPrivateHome,
-    buyerProfile: player.buyerProfile,
-  });
   const eligibilityBlocked = Boolean(eligibility.blockedReason);
   const cashShortfall = Math.max(0, cashRequired - player.cash);
   const canAfford = dealReadiness.verdict !== 'blocked' && cashShortfall === 0 && extraReasons.length === 0 && !isOwned && !eligibilityBlocked;

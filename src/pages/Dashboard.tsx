@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import CommandCenterHero from '@/components/CommandCenterHero';
@@ -87,32 +87,32 @@ export default function Dashboard() {
   const monthlyDebt = selectMonthlyExpenses(player);
   const monthlyHouseholdLoad = selectMonthlyHouseholdLoad(player);
   const monthlyNetCashflow = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
-  const commandState = getCommandCenterState(player, currentScenario);
-  const lifeCampaign = getLifeCampaign(player, currentScenario);
+  const commandState = useMemo(() => getCommandCenterState(player, currentScenario), [player, currentScenario]);
+  const lifeCampaign = useMemo(() => getLifeCampaign(player, currentScenario), [player, currentScenario]);
   const selectedPrimaryAction = lifeActions.find((action) => action.id === (player.life.selectedPrimaryActionId ?? 'focus-at-work'))
     ?? lifeActionsById['focus-at-work'];
   const selectedSecondaryAction = player.life.selectedSecondaryActionId
     ? lifeActionsById[player.life.selectedSecondaryActionId]
     : null;
-  const marketChange = formatSignedPercent(market.monthlyPriceChangePct ?? 0);
-  const eligibilityFlags = deriveEligibilityFlags({
+  const marketChange = useMemo(() => formatSignedPercent(market.monthlyPriceChangePct ?? 0), [market.monthlyPriceChangePct]);
+  const eligibilityFlags = useMemo(() => deriveEligibilityFlags({
     salary: player.salary,
     properties: player.properties,
     firstHomePurchased: player.firstHomePurchased,
     ownedPrivateHome: player.ownedPrivateHome,
     buyerProfile: player.buyerProfile,
-  });
+  }), [player.salary, player.properties, player.firstHomePurchased, player.ownedPrivateHome, player.buyerProfile]);
   const latestCareerReview = player.careerReviewHistory[player.careerReviewHistory.length - 1] ?? null;
   const nextJobSwitchIn = Math.max(player.nextJobSwitchTurn - player.turnCount, 0);
   const openIssues = player.properties.flatMap((property) => property.openMaintenanceIssues ?? []);
   const activeRenovations = player.properties.filter((property) => property.activeRenovation);
   const weakTenant = player.properties.find((property) => property.tenant && property.tenant.satisfaction < 55);
   const latestOperation = player.operationHistory?.[0] ?? null;
-  const nextBestMoves = getNextBestMoves({ player, currentScenario });
-  const monthlyIntents = getMonthlyIntentOptions(player);
-  const firstHomeMissions = getFirstHomeMissions(player);
-  const lastTurnRecap = getLastTurnRecap({ player, market, currentScenario });
-  const firstRunQuest = getFirstRunQuest(player, currentScenario);
+  const nextBestMoves = useMemo(() => getNextBestMoves({ player, currentScenario }), [player, currentScenario]);
+  const monthlyIntents = useMemo(() => getMonthlyIntentOptions(player), [player]);
+  const firstHomeMissions = useMemo(() => getFirstHomeMissions(player), [player]);
+  const lastTurnRecap = useMemo(() => getLastTurnRecap({ player, market, currentScenario }), [player, market, currentScenario]);
+  const firstRunQuest = useMemo(() => getFirstRunQuest(player, currentScenario), [player, currentScenario]);
   const beginnerDashboardFocus = settings.guidedMode && player.turnCount <= 6 && player.properties.length === 0 && !settings.compactMode;
   const hideAdvancedPanels = beginnerDashboardFocus && !showAdvancedPanels;
   const hasPropertyAttention = openIssues.length > 0 || activeRenovations.length > 0 || Boolean(weakTenant);
