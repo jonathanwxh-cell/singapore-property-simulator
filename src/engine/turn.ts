@@ -13,7 +13,7 @@ import { resolveLifeMonth } from './life';
 import { getRouteWeightedScenarios } from './scenarioContext';
 import {
   TAKE_HOME_RATIO,
-  PROPERTY_VALUE_VOL_FACTOR,
+  PROPERTY_VALUE_INDEX_SENSITIVITY,
   PROPERTY_VALUE_FLOOR,
   PRICE_INDEX_BOUNDS,
   RENTAL_INDEX_BOUNDS,
@@ -174,7 +174,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     ...property,
     currentValue: Math.max(
       PROPERTY_VALUE_FLOOR,
-      Math.round(property.currentValue * (1 + (marketPulse.priceChangePct / 100) * PROPERTY_VALUE_VOL_FACTOR * 10)),
+      Math.round(property.currentValue * (1 + (marketPulse.priceChangePct / 100) * PROPERTY_VALUE_INDEX_SENSITIVITY)),
     ),
   }));
 

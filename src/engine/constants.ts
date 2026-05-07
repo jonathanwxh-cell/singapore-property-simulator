@@ -13,7 +13,9 @@ export const HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT = 25;
 export const HDB_RESALE_LEVY_ESTIMATE = 40_000;
 
 // Market dynamics
-export const PROPERTY_VALUE_VOL_FACTOR = 0.05;
+// Property values track the broader price index but at this fraction of its move
+// (0.5 = property values move at half the index's monthly pace).
+export const PROPERTY_VALUE_INDEX_SENSITIVITY = 0.5;
 export const PRICE_INDEX_BOUNDS = { min: 60, max: 200 } as const;
 export const RENTAL_INDEX_BOUNDS = { min: 60, max: 200 } as const;
 export const INTEREST_RATE_BOUNDS = { min: 0.5, max: 10 } as const;
