@@ -14,6 +14,19 @@ updates:
       - "deps:locked"
     commit-message:
       prefix: "chore(deps)"
+    ignore:
+      # @types/node should track the runtime, which is pinned to Node 20 in
+      # .nvmrc and CI. Re-enable when we move the runtime to Node 22+ LTS.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # Hold eslint at v9 until typescript-eslint v9 ships with eslint 10
+      # peer-dep support. Bumping eslint alone breaks the peer constraint.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # Hold @vitejs/plugin-react at v5 until we upgrade vite to v8.
+      # plugin-react v6 requires vite ^8 as a peer dep.
+      - dependency-name: "@vitejs/plugin-react"
+        update-types: ["version-update:semver-major"]
     groups:
       # Batch low-risk patch + minor updates so the maintainer reviews one PR
       # per week instead of one per package.
