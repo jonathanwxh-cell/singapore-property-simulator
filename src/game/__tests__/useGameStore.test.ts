@@ -161,6 +161,37 @@ describe('useGameStore', () => {
     expect(useGameStore.getState().player.totalNetWorth).toBe(200_000);
   });
 
+  it('advances the rngState across turns and replays deterministically from a snapshot', () => {
+    // Snapshot the state immediately after newGame so we have a known seed.
+    useGameStore.getState().newGame('Determinism', 'graduate', 'normal');
+    const snapshot: GameState = JSON.parse(JSON.stringify({
+      player: useGameStore.getState().player,
+      market: useGameStore.getState().market,
+      settings: useGameStore.getState().settings,
+      isGameActive: useGameStore.getState().isGameActive,
+      currentScenario: useGameStore.getState().currentScenario,
+      rngSeed: useGameStore.getState().rngSeed,
+      rngState: useGameStore.getState().rngState,
+    }));
+
+    useGameStore.getState().nextTurn();
+    const afterFirst = {
+      cash: useGameStore.getState().player.cash,
+      priceIndex: useGameStore.getState().market.priceIndex,
+      rngState: useGameStore.getState().rngState,
+    };
+
+    // rngState must change after consuming randomness in advanceTurn.
+    expect(afterFirst.rngState).not.toBe(snapshot.rngState);
+
+    // Replay from the snapshot — the same seed/state should reproduce the result.
+    useGameStore.getState().loadGame(snapshot);
+    useGameStore.getState().nextTurn();
+    expect(useGameStore.getState().player.cash).toBe(afterFirst.cash);
+    expect(useGameStore.getState().market.priceIndex).toBe(afterFirst.priceIndex);
+    expect(useGameStore.getState().rngState).toBe(afterFirst.rngState);
+  });
+
   it('does not advance the turn while a scenario is pending', () => {
     resetStore({
       player: makePlayer({ turnCount: 4, month: 5, totalNetWorth: 1_000_000 }),
