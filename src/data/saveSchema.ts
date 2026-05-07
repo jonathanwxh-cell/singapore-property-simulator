@@ -169,6 +169,9 @@ const playerSchema = z.object({
     livingArrangement: z.enum(['with-parents', 'renting-room', 'renting-flat']),
     selectedPrimaryActionId: z.string().nullable(),
     selectedSecondaryActionId: z.string().nullable(),
+    selectedMonthlyIntentId: z.string().nullable().optional(),
+    selectedMonthlyIntentLabel: z.string().nullable().optional(),
+    selectedMonthlyIntentTrack: z.enum(['income', 'market', 'home-project', 'tenant', 'career', 'recovery']).nullable().optional(),
     trainingTrackId: z.string().nullable(),
     trainingMonthsRemaining: z.number().int().nonnegative(),
     schemeProgress: z.object({
@@ -189,6 +192,9 @@ const playerSchema = z.object({
       }),
     }).optional(),
     lastMonthSummary: z.object({
+      monthlyIntentId: z.string().nullable().optional(),
+      monthlyIntentLabel: z.string().nullable().optional(),
+      monthlyIntentTrack: z.enum(['income', 'market', 'home-project', 'tenant', 'career', 'recovery']).nullable().optional(),
       primaryActionId: z.string(),
       secondaryActionId: z.string().nullable(),
       cashDelta: z.number().finite(),

@@ -8,13 +8,13 @@ export default function NextHomeGatewayPanel({
   recommendedIntent,
   onUseIntent,
   onOpenTarget,
-  onBlitz,
+  onAdvanceToNotableMonth,
 }: {
   plan: NextHomePlan;
   recommendedIntent: MonthlyIntentOption | null;
   onUseIntent: (intent: MonthlyIntentOption) => void;
   onOpenTarget: () => void;
-  onBlitz: () => void;
+  onAdvanceToNotableMonth: () => void;
 }) {
   const readinessTone = plan.readinessPct >= 80 ? 'text-success' : plan.readinessPct >= 45 ? 'text-warning' : 'text-cyan-glow';
   const timelineLabel = plan.phase === 'active-mop'
@@ -47,6 +47,7 @@ export default function NextHomeGatewayPanel({
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
             <div className="h-full rounded-full bg-gradient-to-r from-cyan-glow via-success to-warning" style={{ width: `${plan.readinessPct}%` }} />
           </div>
+          <p className="mt-3 text-xs text-text-secondary">{plan.paceLabel}</p>
         </div>
 
         <div className="rounded-2xl border border-glass-border bg-white/[0.03] p-4">
@@ -76,10 +77,10 @@ export default function NextHomeGatewayPanel({
             <button type="button" onClick={onOpenTarget} className="btn-secondary min-h-11 px-3 py-2 text-xs">
               Open Target
             </button>
-            <button type="button" onClick={onBlitz} className="btn-secondary min-h-11 px-3 py-2 text-xs">
+            <button type="button" onClick={onAdvanceToNotableMonth} className="btn-secondary min-h-11 px-3 py-2 text-xs">
               <span className="inline-flex items-center justify-center gap-2">
                 <FastForward size={14} />
-                Blitz 3
+                Next notable month
               </span>
             </button>
           </div>

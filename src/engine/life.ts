@@ -51,6 +51,9 @@ export function normalizeLifeState(life: Partial<PlayerLifeState> | undefined): 
     lastMonthSummary: life?.lastMonthSummary
       ? {
           ...life.lastMonthSummary,
+          monthlyIntentId: life.lastMonthSummary.monthlyIntentId ?? null,
+          monthlyIntentLabel: life.lastMonthSummary.monthlyIntentLabel ?? null,
+          monthlyIntentTrack: life.lastMonthSummary.monthlyIntentTrack ?? null,
           incomeBreakdown: {
             ...createInitialLifeIncomeBreakdown(),
             ...(life.lastMonthSummary.incomeBreakdown ?? {}),
@@ -82,6 +85,9 @@ export function resolveLifeMonth(player: Player, career: Career, rng: Pick<Rng, 
   const householdCost = calculateHouseholdLoad(startingLife);
 
   const summary: LifeMonthSummary = {
+    monthlyIntentId: startingLife.selectedMonthlyIntentId,
+    monthlyIntentLabel: startingLife.selectedMonthlyIntentLabel,
+    monthlyIntentTrack: startingLife.selectedMonthlyIntentTrack,
     primaryActionId: startingLife.selectedPrimaryActionId ?? 'focus-at-work',
     secondaryActionId: canTakeSecondaryAction(startingLife) ? startingLife.selectedSecondaryActionId : null,
     cashDelta: 0,
@@ -113,6 +119,9 @@ export function resolveLifeMonth(player: Player, career: Career, rng: Pick<Rng, 
   nextLife.householdLoad = calculateHouseholdLoad(nextLife);
   nextLife.selectedPrimaryActionId = null;
   nextLife.selectedSecondaryActionId = null;
+  nextLife.selectedMonthlyIntentId = null;
+  nextLife.selectedMonthlyIntentLabel = null;
+  nextLife.selectedMonthlyIntentTrack = null;
   nextLife.lastMonthSummary = summary;
 
   return {

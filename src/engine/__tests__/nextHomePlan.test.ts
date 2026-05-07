@@ -85,6 +85,7 @@ describe('getNextHomePlan', () => {
     expect(plan.target.type).toBe('Executive Condo');
     expect(plan.usableCashAndCpf).toBeGreaterThan(140_000);
     expect(plan.readinessPct).toBeGreaterThan(30);
+    expect(plan.paceLabel).toContain('MOP');
   });
 
   it('recommends recovery before MOP grinding when life state is strained', () => {

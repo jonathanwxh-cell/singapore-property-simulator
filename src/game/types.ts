@@ -45,6 +45,7 @@ export type PendingTaxReliefType = 'absd-spouse-refund' | 'absd-single-senior-re
 export type PendingTaxReliefStatus = 'pending' | 'earned' | 'expired';
 export type CpfUsageMode = 'full' | 'prorated' | 'blocked';
 export type IncomeTrackId = 'sideGig' | 'propertyHustle';
+export type MonthlyIntentTrack = 'income' | 'market' | 'home-project' | 'tenant' | 'career' | 'recovery';
 export type LifeActionId =
   | 'focus-at-work'
   | 'take-side-gig'
@@ -75,6 +76,9 @@ export interface IncomeProgressState {
 }
 
 export interface LifeMonthSummary {
+  monthlyIntentId: string | null;
+  monthlyIntentLabel: string | null;
+  monthlyIntentTrack: MonthlyIntentTrack | null;
   primaryActionId: LifeActionId;
   secondaryActionId: LifeActionId | null;
   cashDelta: number;
@@ -97,6 +101,9 @@ export interface PlayerLifeState {
   livingArrangement: LivingArrangement;
   selectedPrimaryActionId: LifeActionId | null;
   selectedSecondaryActionId: LifeActionId | null;
+  selectedMonthlyIntentId: string | null;
+  selectedMonthlyIntentLabel: string | null;
+  selectedMonthlyIntentTrack: MonthlyIntentTrack | null;
   trainingTrackId: string | null;
   trainingMonthsRemaining: number;
   schemeProgress: {
@@ -528,6 +535,9 @@ export function createInitialLifeState(overrides: Partial<PlayerLifeState> = {})
   const mergedLastMonthSummary = lastMonthSummary
     ? {
         ...lastMonthSummary,
+        monthlyIntentId: lastMonthSummary.monthlyIntentId ?? null,
+        monthlyIntentLabel: lastMonthSummary.monthlyIntentLabel ?? null,
+        monthlyIntentTrack: lastMonthSummary.monthlyIntentTrack ?? null,
         incomeBreakdown: {
           ...createInitialLifeIncomeBreakdown(),
           ...(lastMonthSummary.incomeBreakdown ?? {}),
@@ -545,6 +555,9 @@ export function createInitialLifeState(overrides: Partial<PlayerLifeState> = {})
     livingArrangement: 'with-parents',
     selectedPrimaryActionId: null,
     selectedSecondaryActionId: null,
+    selectedMonthlyIntentId: null,
+    selectedMonthlyIntentLabel: null,
+    selectedMonthlyIntentTrack: null,
     trainingTrackId: null,
     trainingMonthsRemaining: 0,
     schemeProgress: {

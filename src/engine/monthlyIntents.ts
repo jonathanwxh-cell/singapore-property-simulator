@@ -1,4 +1,4 @@
-import type { LifeActionId, Player } from '@/game/types';
+import type { LifeActionId, MonthlyIntentTrack, Player } from '@/game/types';
 import { properties } from '@/data/properties';
 import { getNextHomePlan, type NextHomeFocusId } from './nextHomePlan';
 
@@ -18,8 +18,10 @@ export interface MonthlyIntentOption {
   detail: string;
   upside: string;
   risk: string;
+  track: MonthlyIntentTrack;
   primaryActionId: LifeActionId;
   secondaryActionId: LifeActionId | null;
+  autoActionId: 'start-room-rental' | 'start-flooring-refresh' | 'top-up-reserve-5k' | null;
   route: string;
   recommended: boolean;
   tone: 'good' | 'warn' | 'neutral';
@@ -42,8 +44,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
       detail: 'Protect energy and stress before chasing more income or leverage.',
       upside: 'Lower burnout risk',
       risk: 'Slower cash growth',
+      track: 'recovery',
       primaryActionId: 'recover',
       secondaryActionId: null,
+      autoActionId: null,
       route: '/life',
       recommended: true,
       tone: 'warn',
@@ -60,8 +64,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
         detail: 'Use the MOP-safe landlord loop so the flat starts teaching tenant tradeoffs instead of sitting idle.',
         upside: 'Rental income and tenant XP',
         risk: 'Satisfaction can drift',
+        track: 'tenant',
         primaryActionId: 'property-hustle',
         secondaryActionId: needsRecovery ? null : 'recover',
+        autoActionId: 'start-room-rental',
         route: `/property/${ownedHdbNeedingRoomPlan.propertyId}`,
         recommended: nextHomePlan.recommendedFocusId === 'tenant' && !needsRecovery,
         tone: 'good',
@@ -76,8 +82,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
         detail: 'Use the month for renovation, condition, or sale-readiness work that improves rent/value before MOP exit.',
         upside: 'Higher exit value',
         risk: 'Cash tied up',
+        track: 'home-project',
         primaryActionId: 'property-hustle',
         secondaryActionId: needsRecovery ? null : 'plan-schemes',
+        autoActionId: 'start-flooring-refresh',
         route: nextHomePlan.propertyName ? `/property/${ownedHdbNeedingRoomPlan?.propertyId ?? player.properties[0]?.propertyId}` : '/portfolio',
         recommendedFocusId: nextHomePlan.recommendedFocusId,
         needsRecovery,
@@ -90,8 +98,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
         detail: 'Push side income and scheme planning so the down-payment runway improves while MOP counts down.',
         upside: 'Faster Property #2 readiness',
         risk: 'Energy pressure',
+        track: 'income',
         primaryActionId: 'take-side-gig',
         secondaryActionId: needsRecovery ? null : 'focus-at-work',
+        autoActionId: null,
         route: '/life',
         recommendedFocusId: nextHomePlan.recommendedFocusId,
         needsRecovery,
@@ -104,8 +114,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
         detail: 'Compare districts and timing signals so the MOP exit feels planned instead of sudden.',
         upside: 'Better timing confidence',
         risk: 'Less cash this month',
+        track: 'market',
         primaryActionId: 'property-hustle',
         secondaryActionId: needsRecovery ? null : 'upskill',
+        autoActionId: null,
         route: '/market',
         recommendedFocusId: nextHomePlan.recommendedFocusId,
         needsRecovery,
@@ -136,8 +148,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
       detail: 'Set a MOP-safe room-rental plan or reserve before the next month rolls.',
       upside: 'Unlock rental learning',
       risk: 'Tenant satisfaction matters',
+      track: 'tenant',
       primaryActionId: 'property-hustle',
       secondaryActionId: needsRecovery ? null : 'recover',
+      autoActionId: 'start-room-rental',
       route: `/property/${ownedHdbNeedingRoomPlan.propertyId}`,
       recommended: !needsRecovery,
       tone: 'good',
@@ -150,8 +164,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
     detail: 'Use a side gig and scheme planning to grow spendable cash for the next decision.',
     upside: 'Faster down payment runway',
     risk: 'Energy cost',
+    track: 'income',
     primaryActionId: 'take-side-gig',
     secondaryActionId: needsRecovery ? null : 'plan-schemes',
+    autoActionId: null,
     route: '/life',
     recommended: options.length === 0,
     tone: 'neutral',
@@ -163,8 +179,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
     detail: 'Spend the month learning the market and comparing starter or yield opportunities.',
     upside: 'Better timing and listing confidence',
     risk: 'Less immediate cash',
+    track: 'market',
     primaryActionId: 'property-hustle',
     secondaryActionId: needsRecovery ? null : 'focus-at-work',
+    autoActionId: null,
     route: '/properties',
     recommended: false,
     tone: 'good',
@@ -176,8 +194,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
     detail: 'Prioritize work momentum so annual reviews and loan limits improve over time.',
     upside: 'Higher future income',
     risk: 'Less market scouting',
+    track: 'career',
     primaryActionId: 'focus-at-work',
     secondaryActionId: needsRecovery ? null : 'upskill',
+    autoActionId: null,
     route: '/life',
     recommended: false,
     tone: 'neutral',
@@ -203,8 +223,10 @@ function createMopIntent({
   detail,
   upside,
   risk,
+  track,
   primaryActionId,
   secondaryActionId,
+  autoActionId,
   route,
   recommendedFocusId,
   needsRecovery,
@@ -216,8 +238,10 @@ function createMopIntent({
   detail: string;
   upside: string;
   risk: string;
+  track: MonthlyIntentTrack;
   primaryActionId: LifeActionId;
   secondaryActionId: LifeActionId | null;
+  autoActionId: MonthlyIntentOption['autoActionId'];
   route: string;
   recommendedFocusId: NextHomeFocusId;
   needsRecovery: boolean;
@@ -229,8 +253,10 @@ function createMopIntent({
     detail,
     upside,
     risk,
+    track,
     primaryActionId,
     secondaryActionId,
+    autoActionId,
     route,
     recommended: recommendedFocusId === focusId && !needsRecovery,
     tone,

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGameStore } from '../useGameStore';
 import { createInitialLifeState, type GameState, type Player } from '../types';
+import type { MonthlyIntentOption } from '@/engine/monthlyIntents';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -120,6 +121,47 @@ describe('useGameStore', () => {
 
     expect(useGameStore.getState().player.life.selectedPrimaryActionId).toBe('take-side-gig');
     expect(useGameStore.getState().player.life.selectedSecondaryActionId).toBe('recover');
+  });
+
+  it('applies a landlord MOP intent as a compliant room-rental month before advancing', () => {
+    resetStore({
+      player: makePlayer({
+        properties: [{
+          propertyId: 'hdb-bto-0',
+          purchasePrice: 265_000,
+          purchaseDate: '2024-01',
+          currentValue: 265_000,
+          isRented: false,
+          monthlyRental: 1_300,
+          renovationLevel: 0,
+          occupancyStatus: 'owner-occupied',
+          mopRemainingMonths: 60,
+        }],
+      }),
+    });
+
+    const intent: MonthlyIntentOption = {
+      id: 'landlord-ops',
+      label: 'Activate Room Rental',
+      detail: 'Use the MOP-safe landlord loop.',
+      upside: 'Rental income and tenant XP',
+      risk: 'Satisfaction can drift',
+      primaryActionId: 'property-hustle',
+      secondaryActionId: null,
+      route: '/property/hdb-bto-0',
+      recommended: true,
+      tone: 'good',
+      track: 'tenant',
+      autoActionId: 'start-room-rental',
+    };
+
+    useGameStore.getState().applyMonthlyIntent(intent);
+
+    const player = useGameStore.getState().player;
+    expect(player.turnCount).toBe(1);
+    expect(player.properties[0].tenant?.rentalMode).toBe('room-rental');
+    expect(player.life.lastMonthSummary?.monthlyIntentId).toBe('landlord-ops');
+    expect(player.life.lastMonthSummary?.monthlyIntentLabel).toBe('Activate Room Rental');
   });
 
   it('prevents the same life action from being selected twice', () => {
@@ -556,5 +598,50 @@ describe('useGameStore', () => {
     const player = useGameStore.getState().player;
     expect(player.turnCount).toBe(3);
     expect(player.properties[0].mopRemainingMonths).toBe(57);
+  });
+
+  it('advances only to the next notable month when a renovation completion changes the run state', () => {
+    resetStore({
+      player: makePlayer({
+        properties: [{
+          propertyId: 'hdb-bto-0',
+          purchasePrice: 265_000,
+          purchaseDate: '2024-01',
+          currentValue: 265_000,
+          isRented: true,
+          monthlyRental: 1_300,
+          renovationLevel: 0,
+          occupancyStatus: 'renovating',
+          mopRemainingMonths: 58,
+          activeRenovation: {
+            id: 'reno-1',
+            templateId: 'flooring-paint',
+            propertyId: 'hdb-bto-0',
+            category: 'flooring',
+            contractorTier: 'standard',
+            label: 'Flooring and Paint Refresh',
+            cost: 8_000,
+            durationMonths: 2,
+            remainingMonths: 2,
+            rentUpliftPct: 3,
+            resaleUpliftPct: 1.2,
+            satisfactionUplift: 4,
+            riskPct: 4,
+            conditionDelta: 8,
+            projectedPaybackMonths: 12,
+            projectedCompletionTurn: 2,
+            status: 'active',
+            startedTurn: 0,
+          },
+        }],
+      }),
+    });
+
+    useGameStore.getState().advanceToNextNotableMonth();
+
+    const player = useGameStore.getState().player;
+    expect(player.turnCount).toBe(2);
+    expect(player.properties[0].activeRenovation).toBeUndefined();
+    expect(player.properties[0].completedRenovations).toContain('flooring');
   });
 });

@@ -48,22 +48,19 @@ export function getLastTurnRecap({ player, market, currentScenario }: TurnRecapI
   const planLabel = secondaryAction
     ? `${primaryAction?.label ?? 'Monthly plan'} + ${secondaryAction.label}`
     : primaryAction?.label ?? 'Monthly plan';
+  const recapLabel = lastMonth.monthlyIntentLabel ?? planLabel;
   const breakdown = lastMonth.incomeBreakdown ?? createInitialLifeIncomeBreakdown();
 
   return {
-    title: `Last month: ${planLabel}`,
-    summary: buildSummary(lastMonth.cashDelta, netCashflow, market.lastHeadline),
+    title: `Last month: ${recapLabel}`,
+    summary: buildSummary(lastMonth, netCashflow, market.lastHeadline),
     nextHint: currentScenario
       ? 'A scenario appeared. Resolve it before advancing again.'
-      : netCashflow < 0
-        ? 'Next best move: stabilize monthly cashflow before adding risk.'
-        : player.properties.length === 0
-          ? 'Next best move: compare starter homes or build more buying power.'
-          : 'Next best move: review portfolio operations, then roll the next month.',
+      : getNextHint(lastMonth, player, netCashflow),
     tone: overallTone,
     facts: [
       {
-        label: 'Life action cash',
+        label: getCashFactLabel(lastMonth.monthlyIntentTrack),
         value: formatSignedCurrency(lastMonth.cashDelta),
         detail: buildIncomeBreakdownDetail(breakdown),
         tone: cashTone,
@@ -91,14 +88,18 @@ export function getLastTurnRecap({ player, market, currentScenario }: TurnRecapI
   };
 }
 
-function buildSummary(cashDelta: number, netCashflow: number, headline?: string | null): string {
+function buildSummary(lastMonth: Player['life']['lastMonthSummary'], netCashflow: number, headline?: string | null): string {
+  const cashDelta = lastMonth?.cashDelta ?? 0;
   const cashPhrase = cashDelta >= 0
     ? `Your plan added ${formatCurrency(cashDelta)} before normal salary and costs.`
     : `Your plan spent ${formatCurrency(Math.abs(cashDelta))} before normal salary and costs.`;
   const cashflowPhrase = netCashflow >= 0
     ? `The run is currently generating ${formatCurrency(netCashflow)}/mo.`
     : `The run is currently burning ${formatCurrency(Math.abs(netCashflow))}/mo.`;
-  return headline ? `${cashPhrase} ${cashflowPhrase} Market note: ${headline}.` : `${cashPhrase} ${cashflowPhrase}`;
+  const intentPhrase = getIntentSummaryPrefix(lastMonth?.monthlyIntentTrack);
+  return headline
+    ? `${intentPhrase} ${cashPhrase} ${cashflowPhrase} Market note: ${headline}.`
+    : `${intentPhrase} ${cashPhrase} ${cashflowPhrase}`;
 }
 
 function buildIncomeBreakdownDetail(breakdown: ReturnType<typeof createInitialLifeIncomeBreakdown>): string {
@@ -127,4 +128,68 @@ function formatSignedNumber(value: number): string {
 function formatSignedPercent(value: number): string {
   if (value === 0) return '0%';
   return `${value > 0 ? '+' : ''}${formatPercent(value, 1)}`;
+}
+
+function getIntentSummaryPrefix(track: NonNullable<Player['life']['lastMonthSummary']>['monthlyIntentTrack'] | null | undefined): string {
+  switch (track) {
+    case 'market':
+      return 'You spent the month studying target districts and exit timing.';
+    case 'home-project':
+      return 'You treated the month as home-improvement and sale-readiness time.';
+    case 'tenant':
+      return 'You used the month to make the owned home work harder for you.';
+    case 'income':
+      return 'You used the month to build next-home buying power.';
+    case 'career':
+      return 'You used the month to improve your future earning path.';
+    case 'recovery':
+      return 'You used the month to stabilize energy before the next push.';
+    default:
+      return 'You followed the selected monthly plan.';
+  }
+}
+
+function getNextHint(
+  lastMonth: NonNullable<Player['life']['lastMonthSummary']>,
+  player: Player,
+  netCashflow: number,
+): string {
+  if (netCashflow < 0) {
+    return 'Next best move: stabilize monthly cashflow before adding risk.';
+  }
+  switch (lastMonth.monthlyIntentTrack) {
+    case 'tenant':
+      return 'Next best move: review portfolio operations, then roll the next month.';
+    case 'home-project':
+      return 'Next best move: check property progress or reserve cover before advancing again.';
+    case 'market':
+      return 'Next best move: compare target districts or continue until the next notable month.';
+    case 'income':
+      return 'Next best move: keep building runway or pressure-test the next target.';
+    case 'recovery':
+      return 'Next best move: re-enter a growth month once energy is back.';
+    default:
+      return player.properties.length === 0
+        ? 'Next best move: compare starter homes or build more buying power.'
+        : 'Next best move: review portfolio operations, then roll the next month.';
+  }
+}
+
+function getCashFactLabel(track: NonNullable<Player['life']['lastMonthSummary']>['monthlyIntentTrack'] | null | undefined): string {
+  switch (track) {
+    case 'market':
+      return 'Planning-month cash';
+    case 'home-project':
+      return 'Home-project cash';
+    case 'tenant':
+      return 'Ops-month cash';
+    case 'income':
+      return 'Runway cash';
+    case 'career':
+      return 'Career-month cash';
+    case 'recovery':
+      return 'Recovery-month cash';
+    default:
+      return 'Life action cash';
+  }
 }

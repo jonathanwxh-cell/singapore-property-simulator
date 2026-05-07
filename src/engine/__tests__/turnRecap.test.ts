@@ -66,7 +66,13 @@ describe('getLastTurnRecap', () => {
       player: makePlayer({
         turnCount: 1,
         life: createInitialLifeState({
+          selectedMonthlyIntentId: null,
+          selectedMonthlyIntentLabel: null,
+          selectedMonthlyIntentTrack: null,
           lastMonthSummary: {
+            monthlyIntentId: 'mop-market-intel',
+            monthlyIntentLabel: 'Study Exit Market',
+            monthlyIntentTrack: 'market',
             primaryActionId: 'take-side-gig',
             secondaryActionId: 'plan-schemes',
             cashDelta: 850,
@@ -95,10 +101,11 @@ describe('getLastTurnRecap', () => {
     });
 
     expect(recap).not.toBeNull();
-    expect(recap?.title).toContain('Side Gig');
+    expect(recap?.title).toContain('Study Exit Market');
     expect(recap?.nextHint).toContain('scenario');
+    expect(recap?.summary).toContain('studying');
     expect(recap?.facts.map((fact) => fact.label)).toEqual([
-      'Life action cash',
+      'Planning-month cash',
       'Energy / stress',
       'Market move',
       'Current surplus',

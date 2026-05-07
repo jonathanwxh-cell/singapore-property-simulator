@@ -46,6 +46,7 @@ describe('getMonthlyIntentOptions', () => {
 
     expect(options).toHaveLength(3);
     expect(new Set(options.map((option) => option.primaryActionId)).size).toBeGreaterThan(1);
+    expect(options.every((option) => option.track)).toBe(true);
     expect(options.some((option) => option.id === 'build-cash')).toBe(true);
     expect(options.some((option) => option.id === 'hunt-deal')).toBe(true);
   });
@@ -81,6 +82,8 @@ describe('getMonthlyIntentOptions', () => {
       id: 'landlord-ops',
       route: '/property/hdb-bto-0',
       recommended: true,
+      track: 'tenant',
+      autoActionId: 'start-room-rental',
     });
     expect(options.some((option) => option.id === 'mop-income-runway')).toBe(true);
   });

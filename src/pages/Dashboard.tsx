@@ -69,9 +69,9 @@ export default function Dashboard() {
     settings,
     isGameActive,
     currentScenario,
-    setPrimaryLifeAction,
-    setSecondaryLifeAction,
-    advanceMonths,
+    advanceToNextNotableMonth,
+    applyMonthlyIntent,
+    prepareMonthlyIntent,
     updateSettings,
   } = useGameStore();
   const navigate = useNavigate();
@@ -126,14 +126,11 @@ export default function Dashboard() {
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
   const itemVariants = { hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } } };
   const handleSelectIntent = (intent: MonthlyIntentOption) => {
-    setPrimaryLifeAction(intent.primaryActionId);
-    setSecondaryLifeAction(intent.secondaryActionId);
-    advanceMonths(1);
+    applyMonthlyIntent(intent);
     navigate('/dashboard');
   };
   const handleOpenIntent = (intent: MonthlyIntentOption) => {
-    setPrimaryLifeAction(intent.primaryActionId);
-    setSecondaryLifeAction(intent.secondaryActionId);
+    prepareMonthlyIntent(intent);
     navigate(intent.route);
   };
   const handleQuestStep = (step: FirstRunQuest['steps'][number]) => {
@@ -221,7 +218,7 @@ export default function Dashboard() {
               recommendedIntent={recommendedMonthlyIntent}
               onUseIntent={handleSelectIntent}
               onOpenTarget={() => navigate(nextHomePlan.targetRoute)}
-              onBlitz={() => advanceMonths(3)}
+              onAdvanceToNotableMonth={() => advanceToNextNotableMonth()}
             />
           </motion.div>
         )}

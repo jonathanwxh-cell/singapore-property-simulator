@@ -29,6 +29,7 @@ export interface NextHomePlan {
   projectedReadyInMonths: number | null;
   mopMonthsRemaining: number;
   mopProgressPct: number;
+  paceLabel: string;
   bottleneck: NextHomeBottleneck;
   bottleneckLabel: string;
   recommendedFocusId: NextHomeFocusId;
@@ -85,6 +86,7 @@ export function getNextHomePlan(player: Player): NextHomePlan {
     projectedReadyInMonths,
     mopMonthsRemaining,
     mopProgressPct,
+    paceLabel: getPaceLabel(phase, projectedReadyInMonths, mopMonthsRemaining),
     bottleneck,
     bottleneckLabel: getBottleneckLabel(bottleneck),
     recommendedFocusId,
@@ -277,4 +279,28 @@ function getPlanSummary({
     return 'The next-home runway is almost ready. Start comparing exits and target districts.';
   }
   return `At the current pace, this runway needs about ${projectedReadyInMonths} more month(s) of progress.`;
+}
+
+function getPaceLabel(
+  phase: NextHomePhase,
+  projectedReadyInMonths: number | null,
+  mopMonthsRemaining: number,
+): string {
+  if (phase !== 'active-mop') {
+    return phase === 'pre-owner' ? 'First-home runway first' : 'No MOP pacing lock';
+  }
+  if (projectedReadyInMonths === null) {
+    return 'Not yet on pace for MOP exit';
+  }
+  if (projectedReadyInMonths === 0) {
+    return 'Ready before MOP ends';
+  }
+  const delta = mopMonthsRemaining - projectedReadyInMonths;
+  if (delta >= 6) {
+    return `${delta} month(s) ahead of MOP pace`;
+  }
+  if (delta >= 0) {
+    return 'On pace for MOP exit';
+  }
+  return `${Math.abs(delta)} month(s) behind MOP pace`;
 }

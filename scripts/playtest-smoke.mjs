@@ -87,6 +87,18 @@ async function expectAnyVisible(page, selectors, timeout = 15000) {
   throw new Error(`Expected one of these selectors visible: ${selectors.join(' | ')}`);
 }
 
+async function gotoRoute(page, url) {
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('body');
+  await delay(200);
+}
+
+async function reloadRoute(page) {
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('body');
+  await delay(200);
+}
+
 async function openAdvancedDashboardPanels(page) {
   const advancedPanelsButton = page.getByRole('button', { name: /Open advanced sim panels/i });
   if ((await advancedPanelsButton.count()) === 0) return;
@@ -300,21 +312,21 @@ async function assertMobileRouteHasNoVisibleAdvance(page, routeLabel) {
 }
 
 async function assertManualLoadPromotesAutosave(page) {
-  await page.goto(`${page.url().split('/#/')[0]}/#/saveload`, { waitUntil: 'networkidle' });
+  await gotoRoute(page, `${page.url().split('/#/')[0]}/#/saveload`);
   await expectVisible(page, 'text=Save / Load Game');
   page.once('dialog', (dialog) => dialog.accept('QA Checkpoint'));
   await page.getByRole('button', { name: /^Save$/ }).first().click();
   await expectVisible(page, 'text=QA Checkpoint');
 
-  await page.goto(`${page.url().split('/#/')[0]}/#/dashboard`, { waitUntil: 'networkidle' });
+  await gotoRoute(page, `${page.url().split('/#/')[0]}/#/dashboard`);
   await clickAdvance(page);
   await resolveScenarioIfPresent(page);
 
-  await page.goto(`${page.url().split('/#/')[0]}/#/saveload`, { waitUntil: 'networkidle' });
+  await gotoRoute(page, `${page.url().split('/#/')[0]}/#/saveload`);
   await page.getByRole('button', { name: /^Load$/ }).first().click();
   await expectVisible(page, 'text=Turn 12');
 
-  await page.reload({ waitUntil: 'networkidle' });
+  await reloadRoute(page);
   await expectVisible(page, 'text=Turn 12');
 }
 
@@ -348,7 +360,7 @@ async function run() {
     browser = await chromium.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
 
-    await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/`);
     await expectVisible(page, 'text=Fictional property names');
     await expectVisible(page, 'text=Start Guided Run');
 
@@ -356,7 +368,7 @@ async function run() {
     await expectVisible(page, 'text=Home Command Center');
     await expectVisible(page, 'text=This Month');
 
-    await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/`);
 
     await page.getByRole('button', { name: 'How to Play' }).click();
     await expectVisible(page, 'text=How to Play');
@@ -371,7 +383,7 @@ async function run() {
     await page.getByRole('button', { name: /Explain ABSD/i }).first().click();
     await expectVisible(page, 'text=Why it matters');
 
-    await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/`);
     await expectVisible(page, 'text=New Game');
 
     await page.getByRole('button', { name: 'New Game' }).click();
@@ -402,11 +414,11 @@ async function run() {
     await assertMobileDashboardAdvanceDoesNotCoverVitals(page, { width: 360, height: 640 });
     await assertMobileAdvanceClearsBottomNav(page, 'dashboard short Android', { width: 360, height: 640 });
 
-    await page.goto(`${baseUrl}/#/life`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/life`);
     await expectVisible(page, 'text=Plan This Month');
     await assertMobileAdvanceClearsBottomNav(page, 'life');
     await assertMobileAdvanceClearsBottomNav(page, 'life short Android', { width: 360, height: 640 });
-    await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/dashboard`);
 
     await page.getByRole('button', { name: /Advance to/i }).first().click();
     await expectVisible(page, 'text=Turn 1');
@@ -420,11 +432,11 @@ async function run() {
     await expectVisible(page, 'text=Home Command Center');
     await expectVisible(page, 'text=This Month');
 
-    await page.goto(`${baseUrl}/#/market`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/market`);
     await expectVisible(page, 'text=Market News Feed');
     await expectVisible(page, 'text=Turn 2');
 
-    await page.goto(`${baseUrl}/#/properties`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/properties`);
     await expectVisible(page, 'text=Best next buy for you');
     await expectVisible(page, 'text=Compare Before You Buy');
     await expectVisible(page, 'text=Suggested set');
@@ -453,13 +465,13 @@ async function run() {
     await page.setViewportSize({ width: 1440, height: 1100 });
 
     await expectVisible(page, 'text=Portfolio');
-    await page.goto(`${baseUrl}/#/portfolio`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/portfolio`);
     await expectVisible(page, 'text=Northstar Grove 3-Room');
     await expectVisible(page, 'text=Landlord Ops Command');
     await expectVisible(page, 'img[alt="Landlord operations command dashboard"]');
     await assertMobileRouteHasNoVisibleAdvance(page, 'portfolio');
 
-    await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/property/hdb-bto-0`);
     await expectVisible(page, 'text=First Owner Checklist');
     await expectVisible(page, 'text=Start MOP-Safe Room Rental');
     await expectVisible(page, 'text=Property Operations');
@@ -470,30 +482,30 @@ async function run() {
     await page.getByRole('button', { name: /Renew Steady/i }).click();
     await expectVisible(page, 'text=Satisfaction 80/100');
 
-    await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/dashboard`);
     for (let step = 0; step < 9; step += 1) {
-      await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+      await gotoRoute(page, `${baseUrl}/#/dashboard`);
       await resolveScenarioIfPresent(page);
-      await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+      await gotoRoute(page, `${baseUrl}/#/dashboard`);
       await clickAdvance(page);
       await resolveScenarioIfPresent(page);
       await delay(200);
     }
 
-    await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/dashboard`);
     await resolveScenarioIfPresent(page);
-    await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/dashboard`);
     await clickAdvance(page);
     await expectVisible(page, 'text=Annual Career Review');
     await expectVisible(page, 'img[alt="Career Review"]');
     await page.locator('div.fixed.inset-0 button.group.w-full.text-left:visible:not([disabled])').first().click();
     await expectVisible(page, 'text=Scenario Resolved');
     await page.getByRole('button', { name: 'Continue' }).click();
-    await page.goto(`${baseUrl}/#/dashboard`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/dashboard`);
     await expectVisible(page, 'text=Turn 12');
     await assertManualLoadPromotesAutosave(page);
 
-    await page.goto(`${baseUrl}/#/learn`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/learn`);
     await expectVisible(page, 'text=Learn Singapore Property Without Prereqs');
     await assertMobileRouteHasNoVisibleAdvance(page, 'learn');
 

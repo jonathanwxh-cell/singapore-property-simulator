@@ -31,6 +31,8 @@ import type { TenantLeaseDecisionId } from './types';
 import type { ActionResult } from '@/engine/results';
 import { writeAutoSave } from './savePersistence';
 import { inferRunRouteId } from '@/engine/runDirector';
+import { getNextHomePlan } from '@/engine/nextHomePlan';
+import type { MonthlyIntentOption } from '@/engine/monthlyIntents';
 
 // RNG ownership: the deterministic RNG state lives in the store as
 // `rngSeed` / `rngState`. Each action that consumes randomness rebuilds the
@@ -259,6 +261,108 @@ function saveTurn(state: GameState) {
   }
 }
 
+function withMonthlyIntentSelection(player: Player, intent: Pick<MonthlyIntentOption, 'id' | 'label' | 'track'> | null): Player {
+  return {
+    ...player,
+    life: {
+      ...player.life,
+      selectedMonthlyIntentId: intent?.id ?? null,
+      selectedMonthlyIntentLabel: intent?.label ?? null,
+      selectedMonthlyIntentTrack: intent?.track ?? null,
+    },
+  };
+}
+
+function getPrimaryOwnedPropertyIndex(player: Player): number {
+  const activeMopIndex = player.properties.findIndex((property) => (property.mopRemainingMonths ?? 0) > 0);
+  if (activeMopIndex >= 0) return activeMopIndex;
+  return player.properties.length > 0 ? 0 : -1;
+}
+
+function applyMonthlyIntentAutoAction(player: Player, intent: MonthlyIntentOption): Player {
+  switch (intent.autoActionId) {
+    case 'start-room-rental': {
+      const propertyIndex = getPrimaryOwnedPropertyIndex(player);
+      if (propertyIndex < 0 || player.properties[propertyIndex].tenant) return player;
+      const roomRental = setTenantStrategyPure(player, propertyIndex, {
+        mode: 'room-rental',
+        profileId: 'local-family',
+        rentStrategy: 'market',
+      });
+      return roomRental.ok ? roomRental.value.player : player;
+    }
+    case 'start-flooring-refresh': {
+      const propertyIndex = getPrimaryOwnedPropertyIndex(player);
+      if (propertyIndex < 0) return player;
+      const property = player.properties[propertyIndex];
+      if (!property.activeRenovation && !(property.completedRenovations ?? []).includes('flooring')) {
+        const renovation = startRenovationPure(player, propertyIndex, 'flooring-paint');
+        if (renovation.ok) return renovation.value.player;
+      }
+
+      if ((player.reserve?.allocatedCash ?? 0) < 5_000 && player.cash >= 5_000) {
+        const reserve = setReservePlanPure(player, {
+          targetMonths: Math.max(3, player.reserve?.targetMonths ?? 3),
+          allocatedCash: 5_000,
+          autoTopUpPct: player.reserve?.autoTopUpPct ?? 0,
+        });
+        if (reserve.ok) return reserve.value.player;
+      }
+      return player;
+    }
+    case 'top-up-reserve-5k': {
+      if ((player.reserve?.allocatedCash ?? 0) >= 5_000 || player.cash < 5_000) return player;
+      const reserve = setReservePlanPure(player, {
+        targetMonths: Math.max(3, player.reserve?.targetMonths ?? 3),
+        allocatedCash: 5_000,
+        autoTopUpPct: player.reserve?.autoTopUpPct ?? 0,
+      });
+      return reserve.ok ? reserve.value.player : player;
+    }
+    default:
+      return player;
+  }
+}
+
+function getNotableMonthSnapshot(player: Player) {
+  const nextHomePlan = getNextHomePlan(player);
+  const openIssueCount = player.properties.reduce((sum, property) => sum + (property.openMaintenanceIssues?.length ?? 0), 0);
+  const activeRenovationCount = player.properties.filter((property) => property.activeRenovation).length;
+  const completedRenovationCount = player.properties.reduce((sum, property) => sum + (property.completedRenovations?.length ?? 0), 0);
+  const tenantCount = player.properties.filter((property) => property.tenant).length;
+  const expiringLeaseCount = player.properties.filter((property) => {
+    const leaseEndTurn = property.tenant?.leaseEndTurn;
+    return typeof leaseEndTurn === 'number' && leaseEndTurn - player.turnCount <= 2;
+  }).length;
+
+  return {
+    bottleneck: nextHomePlan.bottleneck,
+    focus: nextHomePlan.recommendedFocusId,
+    openIssueCount,
+    activeRenovationCount,
+    completedRenovationCount,
+    tenantCount,
+    expiringLeaseCount,
+    mopMonthsRemaining: nextHomePlan.mopMonthsRemaining,
+  };
+}
+
+function isNotableMonthSignal(previous: ReturnType<typeof getNotableMonthSnapshot>, next: ReturnType<typeof getNotableMonthSnapshot>) {
+  if (previous.bottleneck !== next.bottleneck) return true;
+  if (previous.focus !== next.focus) return true;
+  if (previous.openIssueCount !== next.openIssueCount) return true;
+  if (previous.activeRenovationCount !== next.activeRenovationCount) return true;
+  if (previous.completedRenovationCount !== next.completedRenovationCount) return true;
+  if (previous.tenantCount !== next.tenantCount) return true;
+  if (previous.expiringLeaseCount !== next.expiringLeaseCount) return true;
+  return hasCrossedMopMilestone(previous.mopMonthsRemaining, next.mopMonthsRemaining);
+}
+
+function hasCrossedMopMilestone(previous: number, next: number): boolean {
+  const milestones = [54, 48, 36, 24, 18, 12, 6, 3, 1, 0];
+  return milestones.some((milestone) => previous > milestone && next <= milestone);
+}
+
 function pickGameState(state: GameState): GameState {
   return {
     player: state.player,
@@ -283,8 +387,11 @@ interface GameStore extends GameState {
   loadGame: (state: GameState) => void;
   nextTurn: () => void;
   advanceMonths: (months: number) => void;
+  advanceToNextNotableMonth: (maxMonths?: number) => void;
   setPrimaryLifeAction: (actionId: LifeActionId | null) => void;
   setSecondaryLifeAction: (actionId: LifeActionId | null) => void;
+  applyMonthlyIntent: (intent: MonthlyIntentOption) => void;
+  prepareMonthlyIntent: (intent: MonthlyIntentOption) => void;
   setLivingArrangement: (arrangement: LivingArrangement) => void;
   buyProperty: (propertyId: string, downPayment: number, cpfOrdinaryUsed?: number, financingMode?: MortgageFinancingMode) => ActionResult;
   sellProperty: (propertyIndex: number) => ActionResult;
@@ -374,6 +481,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
+  advanceToNextNotableMonth: (maxMonths = 6) => {
+    const cap = Math.max(1, Math.min(12, Math.floor(maxMonths)));
+    const previousState = get();
+    if (previousState.currentScenario || !previousState.isGameActive) return;
+    let previousSnapshot = getNotableMonthSnapshot(previousState.player);
+
+    for (let month = 0; month < cap; month += 1) {
+      const stateBeforeAdvance = get();
+      if (stateBeforeAdvance.currentScenario || !stateBeforeAdvance.isGameActive) return;
+      get().nextTurn();
+      const stateAfterAdvance = get();
+      if (stateAfterAdvance.currentScenario || !stateAfterAdvance.isGameActive) return;
+      const nextSnapshot = getNotableMonthSnapshot(stateAfterAdvance.player);
+      if (isNotableMonthSignal(previousSnapshot, nextSnapshot)) return;
+      previousSnapshot = nextSnapshot;
+    }
+  },
+
   setPrimaryLifeAction: (actionId) => {
     set((state) => ({
       player: finalizePlayer({
@@ -398,6 +523,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
           selectedSecondaryActionId: actionId === state.player.life.selectedPrimaryActionId ? null : actionId,
         },
       }),
+    }));
+  },
+
+  applyMonthlyIntent: (intent) => {
+    set((state) => {
+      const preparedPlayer = withMonthlyIntentSelection({
+        ...state.player,
+        life: {
+          ...state.player.life,
+          selectedPrimaryActionId: intent.primaryActionId,
+          selectedSecondaryActionId: intent.secondaryActionId,
+        },
+      }, intent);
+      return { player: finalizePlayer(applyMonthlyIntentAutoAction(preparedPlayer, intent)) };
+    });
+    get().advanceMonths(1);
+  },
+
+  prepareMonthlyIntent: (intent) => {
+    set((state) => ({
+      player: finalizePlayer(withMonthlyIntentSelection({
+        ...state.player,
+        life: {
+          ...state.player.life,
+          selectedPrimaryActionId: intent.primaryActionId,
+          selectedSecondaryActionId: intent.secondaryActionId,
+        },
+      }, intent)),
     }));
   },
 

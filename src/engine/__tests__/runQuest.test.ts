@@ -79,7 +79,7 @@ describe('getFirstRunQuest', () => {
     expect(quest.steps.find((step) => step.id === 'practice-purchase')?.route).toBe(`/property/${starter?.id}`);
   });
 
-  it('celebrates ownership operations once the player has a tenant online', () => {
+  it('switches into an MOP campaign after first-home activation instead of ending the rail immediately', () => {
     const quest = getFirstRunQuest(makePlayer({
       firstHomePurchased: true,
       turnCount: 3,
@@ -91,6 +91,7 @@ describe('getFirstRunQuest', () => {
         isRented: true,
         monthlyRental: 1_250,
         renovationLevel: 0,
+        mopRemainingMonths: 56,
         tenant: {
           profileId: 'local-family',
           rentalMode: 'room-rental',
@@ -106,8 +107,9 @@ describe('getFirstRunQuest', () => {
       }],
     }), null);
 
-    expect(quest.progressPct).toBe(100);
-    expect(quest.activeStep).toBeNull();
+    expect(quest.title).toContain('MOP');
+    expect(quest.progressPct).toBeLessThan(100);
+    expect(quest.activeStep?.id).toBe('protect-reserve');
     expect(quest.rewardBeat?.title).toContain('tenant');
     expect(quest.rewardBeat?.tone).toBe('good');
   });
