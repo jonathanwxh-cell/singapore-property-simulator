@@ -3,13 +3,10 @@ import GlassCard from '@/components/GlassCard';
 import GlossaryTerm from '@/components/GlossaryTerm';
 import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
 import { formatOwnershipStatus } from '@/pages/property/propertyDetailFormatters';
-import type { OwnedProperty, Loan, Player, RentalMode, TenantProfileId, RentStrategy } from '@/game/types';
-import type { ListingProperty } from '@/engine/listings';
+import type { OwnedProperty, Loan, RentalMode, TenantProfileId, RentStrategy } from '@/game/types';
 
 export default function PropertySummary({
   ownedProperty,
-  property,
-  player,
   associatedLoan,
   gain,
   gainPercent,
@@ -22,8 +19,6 @@ export default function PropertySummary({
   onSell,
 }: {
   ownedProperty: OwnedProperty;
-  property: ListingProperty;
-  player: Player;
   associatedLoan: Loan | null | undefined;
   gain: number;
   gainPercent: number;

@@ -168,8 +168,6 @@ export default function PurchasePanel({
   practicePlan,
   btoReadinessPlan,
   seniorRightsizingPlan,
-  eligibilityBlocked,
-  cashShortfall,
   canAfford,
   visibleMessages,
   purchasePanelRef,
@@ -202,11 +200,9 @@ export default function PurchasePanel({
   practicePlan: PracticePurchasePlan;
   btoReadinessPlan: BtoReadinessPlan | null;
   seniorRightsizingPlan: SeniorRightsizingPlan | null;
-  eligibilityBlocked: boolean;
-  cashShortfall: number;
   canAfford: boolean;
   visibleMessages: string[];
-  purchasePanelRef: React.RefObject<HTMLDivElement>;
+  purchasePanelRef: React.RefObject<HTMLDivElement | null>;
   onBuy: () => void;
   onSetFinancingMode: (mode: MortgageFinancingMode) => void;
   onSetDownPaymentPercent: (pct: number) => void;

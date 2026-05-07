@@ -136,7 +136,7 @@ export default function PropertyDetail() {
     const eligibility = evaluatePropertyEligibility({ propertyType: property.type, salary: player.salary, properties: player.properties, firstHomePurchased: player.firstHomePurchased, ownedPrivateHome: player.ownedPrivateHome, buyerProfile: player.buyerProfile });
     const practicePlan = buildPracticePurchasePlan({ player, property, readiness: dealReadiness });
     const btoReadinessPlan = buildBtoReadinessPlan(player, property);
-    return { activeHousingLoans, effectiveFinancingMode, minDownPaymentPercent: minDpPct, effectiveDownPaymentPercent: effectiveDpPct, downPayment, validation, dealReadiness, dealNextFix, monthlySurplus, affordability, eligibility, practicePlan, btoReadinessPlan };
+    return { activeHousingLoans, effectiveFinancingMode, minDownPaymentPercent: minDpPct, effectiveDownPaymentPercent: effectiveDpPct, downPayment, validation, dealReadiness, dealNextFix, monthlySurplus, grantSupport, affordability, eligibility, practicePlan, btoReadinessPlan };
   }, [player, property, financingMode, downPaymentPercent, useCpfOrdinary]);
 
   if (!property || !district) {
@@ -157,7 +157,7 @@ export default function PropertyDetail() {
   const rarityInfo = listingRarityInfo[property.listingRarity];
   const {
     activeHousingLoans, effectiveFinancingMode, minDownPaymentPercent, effectiveDownPaymentPercent,
-    validation, dealReadiness, dealNextFix, monthlySurplus, affordability, eligibility,
+    validation, dealReadiness, dealNextFix, monthlySurplus, grantSupport, affordability, eligibility,
     practicePlan, btoReadinessPlan,
   } = purchaseComputations!;
   const cpfEligible = !property.type.startsWith('Commercial');
@@ -167,6 +167,7 @@ export default function PropertyDetail() {
   const reservedCash = selectReservedCash(player);
   const eligibilityBlocked = Boolean(eligibility.blockedReason);
   const cashShortfall = Math.max(0, cashRequired - player.cash);
+  const extraReasons = dealReadiness.warnings.map(w => ({ message: w }));
   const canAfford = dealReadiness.verdict !== 'blocked' && cashShortfall === 0 && extraReasons.length === 0 && !isOwned && !eligibilityBlocked;
   const visibleMessages = Array.from(
     new Set([
@@ -564,8 +565,6 @@ export default function PropertyDetail() {
             {isOwned && ownedProperty ? (
               <PropertySummary
                 ownedProperty={ownedProperty}
-                property={property}
-                player={player}
                 associatedLoan={associatedLoan}
                 gain={gain}
                 gainPercent={gainPercent}
@@ -601,8 +600,6 @@ export default function PropertyDetail() {
                 practicePlan={practicePlan}
                 btoReadinessPlan={btoReadinessPlan}
                 seniorRightsizingPlan={seniorRightsizingPlan}
-                eligibilityBlocked={eligibilityBlocked}
-                cashShortfall={cashShortfall}
                 canAfford={canAfford}
                 visibleMessages={visibleMessages}
                 purchasePanelRef={purchasePanelRef}
