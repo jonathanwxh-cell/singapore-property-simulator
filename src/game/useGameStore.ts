@@ -99,10 +99,16 @@ function withPortfolioDefaults(player: Player): Player {
     usedSubsidizedHousing: player.usedSubsidizedHousing ?? ownsSubsidizedHousing,
     reserve: player.reserve ?? createDefaultReserve(),
     operationHistory: player.operationHistory ?? [],
-    properties: player.properties.map((owned) => ({
-      ...normalizeOwnedProperty(owned),
-      currentValue: Math.max(PROPERTY_VALUE_FLOOR, owned.currentValue),
-    })),
+    properties: player.properties.map((owned) => {
+      const listing = properties.find(p => p.id === owned.propertyId);
+      const mopActive = listing?.isHdb && (owned.mopRemainingMonths ?? 0) > 0;
+      return {
+        ...normalizeOwnedProperty(owned),
+        currentValue: Math.max(PROPERTY_VALUE_FLOOR, owned.currentValue),
+        isRented: mopActive ? false : owned.isRented,
+        occupancyStatus: (mopActive && owned.isRented) ? 'owner-occupied' as const : owned.occupancyStatus,
+      };
+    }),
   };
 }
 

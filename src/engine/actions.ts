@@ -9,6 +9,7 @@ import {
   CREDIT_DELTA_LOAN_TAKEN,
   CREDIT_DELTA_LOAN_PAYMENT,
   CREDIT_DELTA_LOAN_PAID_OFF,
+  MIN_LOAN_AMOUNT,
 } from './constants';
 import { calcMonthlyPayment, calcTDSR } from './finance';
 import { selectBankAssessableMonthlyIncome } from './income';
@@ -262,8 +263,8 @@ export function applyLoanPure(
   propertyId?: string,
 ): ActionResult<{ player: Player }> {
   const roundedAmount = roundMoney(amount);
-  if (roundedAmount <= 0 || termYears <= 0) {
-    return fail('invalid_amount', 'Loan amount and term must be positive.');
+  if (roundedAmount < MIN_LOAN_AMOUNT || termYears <= 0) {
+    return fail('invalid_amount', `Loan amount must be at least S$${MIN_LOAN_AMOUNT.toLocaleString()} and term must be positive.`);
   }
   if (player.creditScore < CREDIT_SCORE_FLOOR) {
     return fail('credit_too_low', `Credit score ${player.creditScore} below minimum ${CREDIT_SCORE_FLOOR}.`);
