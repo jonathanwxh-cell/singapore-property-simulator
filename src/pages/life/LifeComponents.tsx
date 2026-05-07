@@ -98,3 +98,46 @@ export function LifeActionOptionCard({
     </button>
   );
 }
+
+export function IncomeEngineCard({
+  title,
+  subtitle,
+  projectedPayout,
+  totalEarned,
+  bestMonth,
+  progressValue,
+  progressMax,
+}: {
+  title: string;
+  subtitle: string;
+  projectedPayout: string;
+  totalEarned: string;
+  bestMonth: string;
+  progressValue: number;
+  progressMax: number;
+}) {
+  return (
+    <GlassCard accentColor="#FFD740">
+      <p className="label-text text-text-dim text-[10px] mb-1">Income Engine</p>
+      <h4 className="font-rajdhani text-white font-semibold">{title}</h4>
+      <p className="text-text-secondary text-xs mt-1">{subtitle}</p>
+      <div className="grid grid-cols-3 gap-2 mt-3">
+        <div>
+          <p className="text-text-dim text-[10px]">Projected Month</p>
+          <p className="font-mono text-cyan-glow text-sm">{projectedPayout}</p>
+        </div>
+        <div>
+          <p className="text-text-dim text-[10px]">Total Earned</p>
+          <p className="font-mono text-white text-sm">{totalEarned}</p>
+        </div>
+        <div>
+          <p className="text-text-dim text-[10px]">Best Month</p>
+          <p className="font-mono text-white text-sm">{bestMonth}</p>
+        </div>
+      </div>
+      <div className="mt-3">
+        <ProgressLine label="Next level" value={progressValue} max={progressMax} />
+      </div>
+    </GlassCard>
+  );
+}

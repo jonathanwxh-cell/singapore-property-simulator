@@ -2,19 +2,22 @@ import GlassCard from '@/components/GlassCard';
 import NextMonthCTA from '@/components/NextMonthCTA';
 import ProgressivePanel from '@/components/ProgressivePanel';
 import SceneImage from '@/components/SceneImage';
+import { careers } from '@/data/careers';
 import { lifeActions, lifeActionsById } from '@/data/lifeActions';
 import { getLifeOutcomeVisual, lifeOutcomeVisuals } from '@/data/lifeVisuals';
 import { useGameStore } from '@/game/useGameStore';
 import { canTakeSecondaryAction } from '@/engine/life';
+import { estimateIncomeTrackPayout, getIncomeProgressHeadline, getIncomeTrackDisplay } from '@/engine/lifeIncome';
 import { getLifeActionFeedback } from '@/engine/decisionCoach';
 import { getListingCatalog } from '@/engine/listings';
 import { getDownPaymentAmount, validatePurchase } from '@/engine/purchase';
-import { selectAffordabilityReport, selectMonthlyNetCashflow, selectPotentialHousingGrant } from '@/engine/selectors';
+import { selectAffordabilityReport, selectMonthlyIncomeMix, selectMonthlyNetCashflow, selectPotentialHousingGrant } from '@/engine/selectors';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { formatCurrency } from '@/lib/format';
 import { BatteryCharging, Flame, House } from 'lucide-react';
 import {
   HeroMetric,
+  IncomeEngineCard,
   LifeActionOptionCard,
   LifeStatCard,
   ProgressLine,
@@ -36,12 +39,19 @@ export default function Life() {
   } = useGameStore();
 
   const monthlySurplus = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
+  const monthlyIncomeMix = selectMonthlyIncomeMix(player, TAKE_HOME_RATIO);
   const canTakeSecondAction = canTakeSecondaryAction(player.life);
   const selectedPrimaryActionId = player.life.selectedPrimaryActionId ?? 'focus-at-work';
   const selectedPrimaryAction = lifeActionsById[selectedPrimaryActionId];
   const selectedSecondaryAction = player.life.selectedSecondaryActionId
     ? lifeActionsById[player.life.selectedSecondaryActionId]
     : null;
+  const career = careers.find((candidate) => candidate.id === player.careerId) ?? careers[0];
+  const sideGigTrack = getIncomeTrackDisplay('sideGig', player.life.incomeProgress.sideGig.xp);
+  const propertyHustleTrack = getIncomeTrackDisplay('propertyHustle', player.life.incomeProgress.propertyHustle.xp);
+  const sideGigPayout = estimateIncomeTrackPayout('sideGig', player.life, career);
+  const propertyHustlePayout = estimateIncomeTrackPayout('propertyHustle', player.life, career);
+  const incomeProgressHeadline = getIncomeProgressHeadline(player.life.incomeProgress);
   const cheapestListing = [...getListingCatalog()].sort((a, b) => a.price - b.price)[0];
   const defaultDownPayment = getDownPaymentAmount(cheapestListing.price, 25);
   const purchaseValidation = validatePurchase(player, cheapestListing, defaultDownPayment);
@@ -224,6 +234,49 @@ export default function Life() {
             </GlassCard>
 
             <ProgressivePanel
+              title="Income Mix"
+              eyebrow="Wealth During Wait"
+              summary={`${formatCurrency(monthlyIncomeMix.recurringIncome)} recurring inflow before loans, ownership costs, and household load.`}
+              accentColor="#00F0FF"
+            >
+              <div className="space-y-3">
+                <SnapshotRow label="Salary take-home" value={formatCurrency(monthlyIncomeMix.takeHomePay)} positive />
+                <SnapshotRow label="Rental run-rate" value={formatCurrency(monthlyIncomeMix.rentalIncome)} positive={monthlyIncomeMix.rentalIncome >= 0} />
+                <SnapshotRow label="Last extra-income month" value={formatCurrency(monthlyIncomeMix.lastExtraIncome)} positive={monthlyIncomeMix.lastExtraIncome >= 0} />
+                <SnapshotRow label="Last costly life moves" value={formatCurrency(monthlyIncomeMix.lastCostlyLifeMoves)} positive={monthlyIncomeMix.lastCostlyLifeMoves === 0} />
+                <SnapshotRow label="Current monthly runway" value={formatCurrency(monthlySurplus)} positive={monthlySurplus >= 0} />
+              </div>
+            </ProgressivePanel>
+
+            <ProgressivePanel
+              title="Income Engines"
+              eyebrow="Longer-term compounding"
+              summary={incomeProgressHeadline}
+              accentColor="#FFD740"
+            >
+              <div className="grid gap-4 md:grid-cols-2">
+                <IncomeEngineCard
+                  title={sideGigTrack.label}
+                  subtitle="Tuition, freelance, shift work, and practical extra-income reps."
+                  projectedPayout={formatCurrency(sideGigPayout)}
+                  totalEarned={formatCurrency(player.life.incomeProgress.sideGig.totalEarned)}
+                  bestMonth={formatCurrency(player.life.incomeProgress.sideGig.bestMonth)}
+                  progressValue={Math.max(0, sideGigTrack.xp - sideGigTrack.currentFloorXp)}
+                  progressMax={Math.max(1, (sideGigTrack.nextThresholdXp ?? sideGigTrack.xp) - sideGigTrack.currentFloorXp)}
+                />
+                <IncomeEngineCard
+                  title={propertyHustleTrack.label}
+                  subtitle="Referrals, viewing support, tenant leads, and market-adjacent commissions."
+                  projectedPayout={formatCurrency(propertyHustlePayout)}
+                  totalEarned={formatCurrency(player.life.incomeProgress.propertyHustle.totalEarned)}
+                  bestMonth={formatCurrency(player.life.incomeProgress.propertyHustle.bestMonth)}
+                  progressValue={Math.max(0, propertyHustleTrack.xp - propertyHustleTrack.currentFloorXp)}
+                  progressMax={Math.max(1, (propertyHustleTrack.nextThresholdXp ?? propertyHustleTrack.xp) - propertyHustleTrack.currentFloorXp)}
+                />
+              </div>
+            </ProgressivePanel>
+
+            <ProgressivePanel
               title="Scheme Progress"
               eyebrow="Helper systems"
               summary={`Potential first-home support: ${formatCurrency(grantSupport)}.`}
@@ -291,6 +344,9 @@ export default function Life() {
                       : 'None'}
                   />
                   <SnapshotRow label="Cash delta" value={formatCurrency(player.life.lastMonthSummary.cashDelta)} positive={player.life.lastMonthSummary.cashDelta >= 0} />
+                  <SnapshotRow label="Gig income" value={formatCurrency(player.life.lastMonthSummary.incomeBreakdown.sideGig)} positive={player.life.lastMonthSummary.incomeBreakdown.sideGig >= 0} />
+                  <SnapshotRow label="Market hustle" value={formatCurrency(player.life.lastMonthSummary.incomeBreakdown.propertyHustle)} positive={player.life.lastMonthSummary.incomeBreakdown.propertyHustle >= 0} />
+                  <SnapshotRow label="Scheme cash" value={formatCurrency(player.life.lastMonthSummary.incomeBreakdown.schemes)} positive={player.life.lastMonthSummary.incomeBreakdown.schemes >= 0} />
                   <SnapshotRow label="Energy delta" value={`${player.life.lastMonthSummary.energyDelta >= 0 ? '+' : ''}${player.life.lastMonthSummary.energyDelta}`} positive={player.life.lastMonthSummary.energyDelta >= 0} />
                   <SnapshotRow label="Stress delta" value={`${player.life.lastMonthSummary.stressDelta >= 0 ? '+' : ''}${player.life.lastMonthSummary.stressDelta}`} positive={player.life.lastMonthSummary.stressDelta <= 0} />
                   <div className="space-y-2 pt-1">

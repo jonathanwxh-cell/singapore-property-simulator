@@ -1,7 +1,8 @@
 import type { Career } from '@/data/careers';
-import type { LifeActionId, LifeMonthSummary, LivingArrangement, Player, PlayerLifeState } from '@/game/types';
-import { createInitialLifeState } from '@/game/types';
+import type { IncomeTrackId, LifeActionId, LifeIncomeBreakdown, LifeMonthSummary, LivingArrangement, Player, PlayerLifeState } from '@/game/types';
+import { createInitialIncomeProgressState, createInitialLifeIncomeBreakdown, createInitialLifeState } from '@/game/types';
 import type { Rng } from './rng';
+import { applyIncomeTrackGain, getIncomeTrackMultiplier } from './lifeIncome';
 
 export interface LifeMonthResolution {
   cashDelta: number;
@@ -20,6 +21,9 @@ interface LifeActionResolution {
   schemeFirstTimerGrantDelta: number;
   schemeHouseholdSupportDelta: number;
   startTraining: boolean;
+  incomeBreakdownKey: keyof LifeIncomeBreakdown | null;
+  incomeTrackId: IncomeTrackId | null;
+  incomeXpGain: number;
   note: string;
 }
 
@@ -34,6 +38,25 @@ export function normalizeLifeState(life: Partial<PlayerLifeState> | undefined): 
       ...initial.schemeProgress,
       ...life?.schemeProgress,
     },
+    incomeProgress: {
+      sideGig: {
+        ...createInitialIncomeProgressState().sideGig,
+        ...life?.incomeProgress?.sideGig,
+      },
+      propertyHustle: {
+        ...createInitialIncomeProgressState().propertyHustle,
+        ...life?.incomeProgress?.propertyHustle,
+      },
+    },
+    lastMonthSummary: life?.lastMonthSummary
+      ? {
+          ...life.lastMonthSummary,
+          incomeBreakdown: {
+            ...createInitialLifeIncomeBreakdown(),
+            ...(life.lastMonthSummary.incomeBreakdown ?? {}),
+          },
+        }
+      : null,
   };
 }
 
@@ -67,6 +90,7 @@ export function resolveLifeMonth(player: Player, career: Career, rng: Pick<Rng, 
     reputationDelta: 0,
     careerMomentumDelta: 0,
     householdSupportDelta: 0,
+    incomeBreakdown: createInitialLifeIncomeBreakdown(),
     notes,
   };
 
@@ -111,7 +135,7 @@ function resolveAction(
   switch (actionId) {
     case 'take-side-gig':
       return {
-        cashDelta: Math.max(200, Math.round(600 * modifiers.sideGig * actionFactor)),
+        cashDelta: Math.max(200, Math.round(600 * modifiers.sideGig * getIncomeTrackMultiplier('sideGig', life.incomeProgress.sideGig.xp) * actionFactor)),
         energyDelta: -Math.max(1, Math.round(9 * scale)),
         stressDelta: Math.max(1, Math.round(6 * modifiers.stressSensitivity * scale)),
         reputationDelta: Math.round(1 * scale),
@@ -121,11 +145,14 @@ function resolveAction(
         schemeFirstTimerGrantDelta: 0,
         schemeHouseholdSupportDelta: 0,
         startTraining: false,
+        incomeBreakdownKey: 'sideGig',
+        incomeTrackId: 'sideGig',
+        incomeXpGain: scale >= 1 ? 2 : 1,
         note: 'You picked up extra side income this month.',
       };
     case 'property-hustle':
       return {
-        cashDelta: Math.max(150, Math.round((450 + life.reputation * 4) * modifiers.propertyHustle * actionFactor)),
+        cashDelta: Math.max(150, Math.round((450 + life.reputation * 4) * modifiers.propertyHustle * getIncomeTrackMultiplier('propertyHustle', life.incomeProgress.propertyHustle.xp) * actionFactor)),
         energyDelta: -Math.max(1, Math.round(8 * scale)),
         stressDelta: Math.max(1, Math.round(5 * modifiers.stressSensitivity * scale)),
         reputationDelta: Math.max(1, Math.round(4 * scale)),
@@ -135,6 +162,9 @@ function resolveAction(
         schemeFirstTimerGrantDelta: 0,
         schemeHouseholdSupportDelta: 0,
         startTraining: false,
+        incomeBreakdownKey: 'propertyHustle',
+        incomeTrackId: 'propertyHustle',
+        incomeXpGain: scale >= 1 ? 2 : 1,
         note: 'Property referrals and viewings gave you a stronger market month.',
       };
     case 'upskill': {
@@ -150,6 +180,9 @@ function resolveAction(
         schemeFirstTimerGrantDelta: 0,
         schemeHouseholdSupportDelta: 0,
         startTraining: life.trainingTrackId === null,
+        incomeBreakdownKey: 'upskillCost',
+        incomeTrackId: null,
+        incomeXpGain: 0,
         note: 'You invested in training that should pay off over future months.',
       };
     }
@@ -165,6 +198,9 @@ function resolveAction(
         schemeFirstTimerGrantDelta: 0,
         schemeHouseholdSupportDelta: Math.max(1, Math.round(6 * scale)),
         startTraining: false,
+        incomeBreakdownKey: 'householdSupportCost',
+        incomeTrackId: null,
+        incomeXpGain: 0,
         note: 'Showing up for your household made life feel more stable.',
       };
     case 'plan-schemes':
@@ -179,6 +215,9 @@ function resolveAction(
         schemeFirstTimerGrantDelta: Math.max(1, Math.round(14 * scale)),
         schemeHouseholdSupportDelta: Math.max(1, Math.round(8 * scale)),
         startTraining: false,
+        incomeBreakdownKey: 'schemes',
+        incomeTrackId: null,
+        incomeXpGain: 0,
         note: 'Administrative effort unlocked modest household relief and longer-term support.',
       };
     case 'recover':
@@ -193,6 +232,9 @@ function resolveAction(
         schemeFirstTimerGrantDelta: 0,
         schemeHouseholdSupportDelta: 0,
         startTraining: false,
+        incomeBreakdownKey: null,
+        incomeTrackId: null,
+        incomeXpGain: 0,
         note: 'You took recovery time and came back with more energy.',
       };
     case 'focus-at-work':
@@ -208,6 +250,9 @@ function resolveAction(
         schemeFirstTimerGrantDelta: 0,
         schemeHouseholdSupportDelta: 0,
         startTraining: false,
+        incomeBreakdownKey: 'focusAtWork',
+        incomeTrackId: null,
+        incomeXpGain: 0,
         note: 'A focused work month kept your career moving in the right direction.',
       };
   }
@@ -243,6 +288,9 @@ function applyActionResolution(
   summary.reputationDelta += resolution.reputationDelta;
   summary.careerMomentumDelta += resolution.careerMomentumDelta;
   summary.householdSupportDelta += resolution.householdSupportDelta;
+  if (resolution.incomeBreakdownKey) {
+    summary.incomeBreakdown[resolution.incomeBreakdownKey] += resolution.cashDelta;
+  }
 
   life.energy += resolution.energyDelta;
   life.stress += resolution.stressDelta;
@@ -256,6 +304,18 @@ function applyActionResolution(
   if (resolution.startTraining) {
     life.trainingTrackId = 'skillsfuture-track';
     life.trainingMonthsRemaining = 2;
+  }
+
+  if (resolution.incomeTrackId && resolution.cashDelta > 0 && resolution.incomeXpGain > 0) {
+    const currentTrack = life.incomeProgress[resolution.incomeTrackId];
+    const gain = applyIncomeTrackGain(currentTrack, resolution.incomeTrackId, resolution.cashDelta, resolution.incomeXpGain);
+    life.incomeProgress = {
+      ...life.incomeProgress,
+      [resolution.incomeTrackId]: gain.nextState,
+    };
+    if (gain.leveledUp) {
+      notes.push(`${gain.nextDisplay.label} unlocked. Your ${resolution.incomeTrackId === 'sideGig' ? 'side gig' : 'property hustle'} now compounds faster.`);
+    }
   }
 
   notes.push(resolution.note);

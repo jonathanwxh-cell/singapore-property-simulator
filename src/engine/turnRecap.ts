@@ -1,5 +1,5 @@
 import { lifeActionsById } from '@/data/lifeActions';
-import type { MarketState, Player } from '@/game/types';
+import { createInitialLifeIncomeBreakdown, type MarketState, type Player } from '@/game/types';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { TAKE_HOME_RATIO } from './constants';
 import { selectMonthlyNetCashflow } from './selectors';
@@ -48,6 +48,7 @@ export function getLastTurnRecap({ player, market, currentScenario }: TurnRecapI
   const planLabel = secondaryAction
     ? `${primaryAction?.label ?? 'Monthly plan'} + ${secondaryAction.label}`
     : primaryAction?.label ?? 'Monthly plan';
+  const breakdown = lastMonth.incomeBreakdown ?? createInitialLifeIncomeBreakdown();
 
   return {
     title: `Last month: ${planLabel}`,
@@ -64,7 +65,7 @@ export function getLastTurnRecap({ player, market, currentScenario }: TurnRecapI
       {
         label: 'Life action cash',
         value: formatSignedCurrency(lastMonth.cashDelta),
-        detail: 'Extra cash from side moves, schemes, or training cost',
+        detail: buildIncomeBreakdownDetail(breakdown),
         tone: cashTone,
       },
       {
@@ -98,6 +99,19 @@ function buildSummary(cashDelta: number, netCashflow: number, headline?: string 
     ? `The run is currently generating ${formatCurrency(netCashflow)}/mo.`
     : `The run is currently burning ${formatCurrency(Math.abs(netCashflow))}/mo.`;
   return headline ? `${cashPhrase} ${cashflowPhrase} Market note: ${headline}.` : `${cashPhrase} ${cashflowPhrase}`;
+}
+
+function buildIncomeBreakdownDetail(breakdown: ReturnType<typeof createInitialLifeIncomeBreakdown>): string {
+  const sources: string[] = [];
+
+  if (breakdown.sideGig > 0) sources.push(`gig ${formatCurrency(breakdown.sideGig)}`);
+  if (breakdown.propertyHustle > 0) sources.push(`hustle ${formatCurrency(breakdown.propertyHustle)}`);
+  if (breakdown.schemes > 0) sources.push(`schemes ${formatCurrency(breakdown.schemes)}`);
+  if (breakdown.focusAtWork > 0) sources.push(`work bonus ${formatCurrency(breakdown.focusAtWork)}`);
+  if (breakdown.upskillCost < 0) sources.push(`training ${formatCurrency(Math.abs(breakdown.upskillCost))} cost`);
+  if (breakdown.householdSupportCost < 0) sources.push(`household ${formatCurrency(Math.abs(breakdown.householdSupportCost))} cost`);
+
+  return sources.length > 0 ? sources.join(' | ') : 'No extra life-income sources resolved last month';
 }
 
 function formatSignedCurrency(value: number): string {

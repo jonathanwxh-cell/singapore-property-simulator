@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialLifeState } from '@/game/types';
-import { selectAffordabilityReport, selectAvailableCash, selectMonthlyExpenses, selectMonthlyNetCashflow, selectMonthlyRentalIncome, selectMonthlyTakeHome, selectNetWorth, selectReservedCash } from '../selectors';
+import { selectAffordabilityReport, selectAvailableCash, selectMonthlyExpenses, selectMonthlyIncomeMix, selectMonthlyNetCashflow, selectMonthlyRentalIncome, selectMonthlyTakeHome, selectNetWorth, selectReservedCash } from '../selectors';
 import { TAKE_HOME_RATIO } from '../constants';
 import type { Player } from '@/game/types';
 
@@ -111,6 +111,44 @@ describe('selectMonthlyNetCashflow', () => {
     });
 
     expect(selectMonthlyNetCashflow(player, TAKE_HOME_RATIO)).toBe(3350);
+  });
+});
+
+describe('selectMonthlyIncomeMix', () => {
+  it('breaks out recurring income from last-month extra income and costly life moves', () => {
+    const player = makePlayer({
+      salary: 5_000,
+      properties: [{ propertyId: 'a', purchasePrice: 0, purchaseDate: '', currentValue: 0, isRented: true, monthlyRental: 2_000, renovationLevel: 0 }],
+      life: createInitialLifeState({
+        lastMonthSummary: {
+          primaryActionId: 'take-side-gig',
+          secondaryActionId: 'plan-schemes',
+          cashDelta: 850,
+          energyDelta: -9,
+          stressDelta: 6,
+          reputationDelta: 1,
+          careerMomentumDelta: 0,
+          householdSupportDelta: 1,
+          incomeBreakdown: {
+            focusAtWork: 0,
+            sideGig: 690,
+            propertyHustle: 0,
+            schemes: 160,
+            upskillCost: 0,
+            householdSupportCost: -120,
+          },
+          notes: ['A busy income month.'],
+        },
+      }),
+    });
+
+    const mix = selectMonthlyIncomeMix(player, TAKE_HOME_RATIO);
+
+    expect(mix.takeHomePay).toBe(4_000);
+    expect(mix.rentalIncome).toBe(2_000);
+    expect(mix.recurringIncome).toBe(6_000);
+    expect(mix.lastExtraIncome).toBe(850);
+    expect(mix.lastCostlyLifeMoves).toBe(120);
   });
 });
 

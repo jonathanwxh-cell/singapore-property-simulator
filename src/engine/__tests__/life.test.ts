@@ -61,5 +61,28 @@ describe('life engine', () => {
     expect(result.nextLife.energy).toBe(61);
     expect(result.nextLife.stress).toBe(26);
     expect(result.nextLife.lastMonthSummary?.primaryActionId).toBe('take-side-gig');
+    expect(result.nextLife.lastMonthSummary?.incomeBreakdown.sideGig).toBe(690);
+    expect(result.nextLife.incomeProgress.sideGig.totalEarned).toBe(690);
+    expect(result.nextLife.incomeProgress.sideGig.xp).toBe(2);
+  });
+
+  it('levels up the side-gig engine after consistent use', () => {
+    const result = resolveLifeMonth(
+      makePlayer({
+        careerId: 'tech',
+        life: createInitialLifeState({
+          selectedPrimaryActionId: 'take-side-gig',
+          incomeProgress: {
+            sideGig: { xp: 2, totalEarned: 1_200, bestMonth: 620 },
+            propertyHustle: { xp: 0, totalEarned: 0, bestMonth: 0 },
+          },
+        }),
+      }),
+      careers.find((career) => career.id === 'tech')!,
+      { next: () => 0.5 } as never,
+    );
+
+    expect(result.nextLife.incomeProgress.sideGig.xp).toBe(4);
+    expect(result.nextLife.lastMonthSummary?.notes.some((note) => note.includes('Repeatable Gig'))).toBe(true);
   });
 });

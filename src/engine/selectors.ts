@@ -1,10 +1,18 @@
-import type { Player } from '@/game/types';
+import { createInitialLifeIncomeBreakdown, type Player } from '@/game/types';
 import { deriveMaintenanceCost, derivePropertyTax } from './portfolio';
 
 export interface AffordabilityReport {
   shortfall: number;
   blockers: Array<'cash' | 'cashflow' | 'credit'>;
   monthsAtCurrentPace: number | null;
+}
+
+export interface MonthlyIncomeMix {
+  takeHomePay: number;
+  rentalIncome: number;
+  recurringIncome: number;
+  lastExtraIncome: number;
+  lastCostlyLifeMoves: number;
 }
 
 export function selectNetWorth(player: Player): number {
@@ -60,6 +68,25 @@ export function selectMonthlyNetCashflow(player: Player, takeHomeRatio: number):
     - selectMonthlyExpenses(player)
     - selectMonthlyOwnershipCosts(player)
     - selectMonthlyHouseholdLoad(player);
+}
+
+export function selectMonthlyIncomeMix(player: Player, takeHomeRatio: number): MonthlyIncomeMix {
+  const takeHomePay = selectMonthlyTakeHome(player, takeHomeRatio);
+  const rentalIncome = selectMonthlyRentalIncome(player);
+  const breakdown = player.life.lastMonthSummary?.incomeBreakdown ?? createInitialLifeIncomeBreakdown();
+  const lastExtraIncome = Math.max(0, breakdown.focusAtWork)
+    + Math.max(0, breakdown.sideGig)
+    + Math.max(0, breakdown.propertyHustle)
+    + Math.max(0, breakdown.schemes);
+  const lastCostlyLifeMoves = Math.abs(Math.min(0, breakdown.upskillCost)) + Math.abs(Math.min(0, breakdown.householdSupportCost));
+
+  return {
+    takeHomePay,
+    rentalIncome,
+    recurringIncome: takeHomePay + rentalIncome,
+    lastExtraIncome,
+    lastCostlyLifeMoves,
+  };
 }
 
 export function selectAffordabilityReport(

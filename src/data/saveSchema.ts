@@ -163,6 +163,18 @@ const playerSchema = z.object({
       firstTimerGrant: z.number().min(0).max(100),
       householdSupport: z.number().min(0).max(100),
     }),
+    incomeProgress: z.object({
+      sideGig: z.object({
+        xp: z.number().int().nonnegative(),
+        totalEarned: z.number().finite().nonnegative(),
+        bestMonth: z.number().finite().nonnegative(),
+      }),
+      propertyHustle: z.object({
+        xp: z.number().int().nonnegative(),
+        totalEarned: z.number().finite().nonnegative(),
+        bestMonth: z.number().finite().nonnegative(),
+      }),
+    }).optional(),
     lastMonthSummary: z.object({
       primaryActionId: z.string(),
       secondaryActionId: z.string().nullable(),
@@ -172,6 +184,14 @@ const playerSchema = z.object({
       reputationDelta: z.number().finite(),
       careerMomentumDelta: z.number().finite(),
       householdSupportDelta: z.number().finite(),
+      incomeBreakdown: z.object({
+        focusAtWork: z.number().finite(),
+        sideGig: z.number().finite(),
+        propertyHustle: z.number().finite(),
+        schemes: z.number().finite(),
+        upskillCost: z.number().finite(),
+        householdSupportCost: z.number().finite(),
+      }).optional(),
       notes: z.array(z.string()),
     }).nullable(),
   }).optional(),

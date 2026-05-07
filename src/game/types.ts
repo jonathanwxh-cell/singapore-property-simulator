@@ -41,6 +41,7 @@ export type MaintenanceSeverity = 'minor' | 'major' | 'urgent';
 export type MaintenanceStatus = 'open' | 'repaired' | 'deferred' | 'insured';
 export type TenantLeaseDecisionId = 'renew' | 'raise-rent' | 'reset-market' | 'end-lease';
 export type MortgageFinancingMode = 'bank' | 'hdb-concessionary';
+export type IncomeTrackId = 'sideGig' | 'propertyHustle';
 export type LifeActionId =
   | 'focus-at-work'
   | 'take-side-gig'
@@ -49,6 +50,26 @@ export type LifeActionId =
   | 'support-household'
   | 'plan-schemes'
   | 'recover';
+
+export interface LifeIncomeBreakdown {
+  focusAtWork: number;
+  sideGig: number;
+  propertyHustle: number;
+  schemes: number;
+  upskillCost: number;
+  householdSupportCost: number;
+}
+
+export interface IncomeTrackState {
+  xp: number;
+  totalEarned: number;
+  bestMonth: number;
+}
+
+export interface IncomeProgressState {
+  sideGig: IncomeTrackState;
+  propertyHustle: IncomeTrackState;
+}
 
 export interface LifeMonthSummary {
   primaryActionId: LifeActionId;
@@ -59,6 +80,7 @@ export interface LifeMonthSummary {
   reputationDelta: number;
   careerMomentumDelta: number;
   householdSupportDelta: number;
+  incomeBreakdown: LifeIncomeBreakdown;
   notes: string[];
 }
 
@@ -79,6 +101,7 @@ export interface PlayerLifeState {
     firstTimerGrant: number;
     householdSupport: number;
   };
+  incomeProgress: IncomeProgressState;
   lastMonthSummary: LifeMonthSummary | null;
 }
 
@@ -438,6 +461,32 @@ export const DEFAULT_BUYER_PROFILE: BuyerProfile = {
   age: 30,
 };
 
+export function createInitialLifeIncomeBreakdown(): LifeIncomeBreakdown {
+  return {
+    focusAtWork: 0,
+    sideGig: 0,
+    propertyHustle: 0,
+    schemes: 0,
+    upskillCost: 0,
+    householdSupportCost: 0,
+  };
+}
+
+export function createInitialIncomeTrackState(): IncomeTrackState {
+  return {
+    xp: 0,
+    totalEarned: 0,
+    bestMonth: 0,
+  };
+}
+
+export function createInitialIncomeProgressState(): IncomeProgressState {
+  return {
+    sideGig: createInitialIncomeTrackState(),
+    propertyHustle: createInitialIncomeTrackState(),
+  };
+}
+
 export function normalizeBuyerProfile(profile?: Partial<BuyerProfile> | null): BuyerProfile {
   const householdProfile = profile?.householdProfile ?? DEFAULT_BUYER_PROFILE.householdProfile;
   let age = Math.max(21, Math.round(profile?.age ?? DEFAULT_BUYER_PROFILE.age));
@@ -454,6 +503,23 @@ export function normalizeBuyerProfile(profile?: Partial<BuyerProfile> | null): B
 }
 
 export function createInitialLifeState(overrides: Partial<PlayerLifeState> = {}): PlayerLifeState {
+  const {
+    schemeProgress,
+    incomeProgress,
+    lastMonthSummary,
+    ...restOverrides
+  } = overrides;
+  const defaultIncomeProgress = createInitialIncomeProgressState();
+  const mergedLastMonthSummary = lastMonthSummary
+    ? {
+        ...lastMonthSummary,
+        incomeBreakdown: {
+          ...createInitialLifeIncomeBreakdown(),
+          ...(lastMonthSummary.incomeBreakdown ?? {}),
+        },
+      }
+    : null;
+
   return {
     energy: 70,
     stress: 20,
@@ -470,8 +536,19 @@ export function createInitialLifeState(overrides: Partial<PlayerLifeState> = {})
       skillsFuture: 0,
       firstTimerGrant: 0,
       householdSupport: 0,
+      ...schemeProgress,
     },
-    lastMonthSummary: null,
-    ...overrides,
+    incomeProgress: {
+      sideGig: {
+        ...defaultIncomeProgress.sideGig,
+        ...(incomeProgress?.sideGig ?? {}),
+      },
+      propertyHustle: {
+        ...defaultIncomeProgress.propertyHustle,
+        ...(incomeProgress?.propertyHustle ?? {}),
+      },
+    },
+    lastMonthSummary: mergedLastMonthSummary,
+    ...restOverrides,
   };
 }
