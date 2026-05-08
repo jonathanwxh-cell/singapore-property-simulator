@@ -1,6 +1,7 @@
 import { HDB_MOP_MONTHS, TAKE_HOME_RATIO } from './constants';
 import { getNextHomePlan } from './nextHomePlan';
 import { getOwnershipCampaign } from './ownershipCampaign';
+import { getOwnershipTargetRace } from './ownershipTargets';
 import { selectMonthlyNetCashflow, selectReservedCash } from './selectors';
 import type {
   OwnershipCampaignTrackId,
@@ -107,6 +108,8 @@ function getPressureSignal(
   const isFamilyWeighted = player.children > 0 || player.buyerProfile?.householdProfile === 'multi-gen-family';
   const leaseEndingSoon = typeof holding?.tenant?.leaseEndTurn === 'number'
     && holding.tenant.leaseEndTurn - player.turnCount <= 2;
+  const targetRace = getOwnershipTargetRace(player);
+  const leadTargetName = targetRace.lead?.name;
 
   switch (chapterId) {
     case 'settle-in':
@@ -167,21 +170,21 @@ function getPressureSignal(
         kind: 'pressure',
         title: isFamilyWeighted ? 'Family space pressure' : 'Trade-off pressure',
         detail: isFamilyWeighted
-          ? 'Space, commute, and caregiving constraints are turning the next-home choice into a practical decision.'
-          : 'The next-home trade-offs are getting real, so layout and budget preferences need firmer edges.',
+          ? `Space, commute, and caregiving constraints are turning ${leadTargetName ?? 'the shortlist'} into a practical decision instead of a dream board.`
+          : `The next-home trade-offs around ${leadTargetName ?? 'the lead target'} are getting real, so layout and budget preferences need firmer edges.`,
         tone: isFamilyWeighted ? 'warn' : 'neutral',
         trackId: 'exit-intel',
       };
     case 'line-up-exit':
       if (isFamilyWeighted) {
-        return {
-          id: 'school-deadline',
-          kind: 'pressure',
-          title: 'School-zone deadline',
-          detail: 'School, family, and commuting needs are tightening the shortlist into a narrower timing window.',
-          tone: 'warn',
-          trackId: 'exit-intel',
-        };
+      return {
+        id: 'school-deadline',
+        kind: 'pressure',
+        title: 'School-zone deadline',
+        detail: `School, family, and commuting needs are tightening ${leadTargetName ?? 'the shortlist'} into a narrower timing window.`,
+        tone: 'warn',
+        trackId: 'exit-intel',
+      };
       }
       return {
         id: 'timing-nerve',
@@ -201,6 +204,8 @@ function getUpsideSignal(
   beatIndex: number,
 ): OwnershipMomentSignal {
   const nextHomePlan = getNextHomePlan(player);
+  const targetRace = getOwnershipTargetRace(player);
+  const leadTargetName = targetRace.lead?.name;
   const tenantHealthy = (holding?.tenant?.satisfaction ?? 0) >= 70;
   const shortlistCount = (player.nextHomeShortlistIds ?? []).length;
 
@@ -247,7 +252,7 @@ function getUpsideSignal(
         kind: 'upside',
         title: shortlistCount > 0 ? 'Target preview' : 'District preview',
         detail: shortlistCount > 0
-          ? `One of your pinned targets is starting to feel like a real future move instead of a mood board.`
+          ? `${leadTargetName ?? 'One pinned target'} is starting to feel like a real future move instead of a mood board.`
           : 'A few districts are giving cleaner signals, which makes this a good time to turn browsing into a shortlist.',
         tone: 'good',
         trackId: 'exit-intel',
@@ -258,7 +263,7 @@ function getUpsideSignal(
           id: 'valuation-tailwind',
           kind: 'upside',
           title: 'Valuation tailwind',
-          detail: 'Recent comps and a stronger current-home setup make the exit pathway look more executable.',
+          detail: `Recent comps and a stronger current-home setup make the path toward ${leadTargetName ?? 'the lead target'} look more executable.`,
           tone: 'good',
           trackId: 'exit-intel',
         };

@@ -15,7 +15,9 @@ import { getLifeCampaign } from '@/engine/lifeCampaign';
 import { getNextBestMoves } from '@/engine/decisionCoach';
 import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
 import { getOwnershipBeatState } from '@/engine/ownershipMoments';
+import { getOwnershipPayoffState } from '@/engine/ownershipPayoffs';
 import { getNextHomePlan } from '@/engine/nextHomePlan';
+import { getOwnershipTargetRace } from '@/engine/ownershipTargets';
 import { getOwnershipCampaign } from '@/engine/ownershipCampaign';
 import { getNextHomeShortlist, getOwnershipForkOptions, type OwnershipForkOption } from '@/engine/ownershipForks';
 import { deriveEligibilityFlags } from '@/engine/eligibility';
@@ -118,6 +120,8 @@ export default function Dashboard() {
   const nextHomePlan = useMemo(() => getNextHomePlan(player), [player]);
   const ownershipCampaign = useMemo(() => getOwnershipCampaign(player), [player]);
   const ownershipBeatState = useMemo(() => getOwnershipBeatState(player), [player]);
+  const ownershipTargetRace = useMemo(() => getOwnershipTargetRace(player), [player]);
+  const ownershipPayoffState = useMemo(() => getOwnershipPayoffState(player), [player]);
   const ownershipForks = useMemo(() => getOwnershipForkOptions(player), [player]);
   const nextHomeShortlist = useMemo(() => getNextHomeShortlist(player), [player]);
   const monthlyIntents = useMemo(() => getMonthlyIntentOptions(player), [player]);
@@ -230,6 +234,8 @@ export default function Dashboard() {
               plan={nextHomePlan}
               campaign={ownershipCampaign}
               beatState={ownershipBeatState}
+              targetRace={ownershipTargetRace}
+              payoffState={ownershipPayoffState}
               recommendedIntent={recommendedMonthlyIntent}
               onUseIntent={handleSelectIntent}
               onOpenTarget={() => navigate(nextHomePlan.targetRoute)}

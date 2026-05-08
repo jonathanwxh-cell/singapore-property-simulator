@@ -10,6 +10,7 @@ import { resolveMonthlyCareerIncome } from './income';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
 import { advancePortfolioMonth } from './portfolio';
 import { resolveLifeMonth } from './life';
+import { getOwnershipPayoffTransitions } from './ownershipPayoffs';
 import { getRouteWeightedScenarios } from './scenarioContext';
 import {
   TAKE_HOME_RATIO,
@@ -237,6 +238,20 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     operationHistory: portfolioStep.operationHistory,
   };
   newPlayer.totalNetWorth = selectNetWorth(newPlayer);
+
+  const payoffTransitions = getOwnershipPayoffTransitions(player, newPlayer);
+  if (payoffTransitions.length > 0 && newPlayer.life.lastMonthSummary) {
+    newPlayer.life = {
+      ...newPlayer.life,
+      lastMonthSummary: {
+        ...newPlayer.life.lastMonthSummary,
+        notes: [
+          ...payoffTransitions.slice(0, 2).map((payoff) => `${payoff.label}: ${payoff.detail}`),
+          ...newPlayer.life.lastMonthSummary.notes,
+        ],
+      },
+    };
+  }
 
   // Game-over detection — measure insolvency against the same cashflow used above
   // (loans + ownership costs + household). Earlier versions only compared loans

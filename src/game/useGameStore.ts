@@ -34,7 +34,9 @@ import { inferRunRouteId } from '@/engine/runDirector';
 import { getNextHomePlan } from '@/engine/nextHomePlan';
 import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
 import { getOwnershipBeatState } from '@/engine/ownershipMoments';
+import { getOwnershipPayoffState } from '@/engine/ownershipPayoffs';
 import { getOwnershipCampaign, getOwnershipTrackTierKey } from '@/engine/ownershipCampaign';
+import { getOwnershipTargetRace } from '@/engine/ownershipTargets';
 import {
   canToggleNextHomeShortlist,
   toggleShortlistIds,
@@ -348,6 +350,8 @@ function getNotableMonthSnapshot(player: Player) {
   const nextHomePlan = getNextHomePlan(player);
   const ownershipCampaign = getOwnershipCampaign(player);
   const ownershipBeatState = getOwnershipBeatState(player);
+  const ownershipTargetRace = getOwnershipTargetRace(player);
+  const ownershipPayoffState = getOwnershipPayoffState(player);
   const openIssueCount = player.properties.reduce((sum, property) => sum + (property.openMaintenanceIssues?.length ?? 0), 0);
   const activeRenovationCount = player.properties.filter((property) => property.activeRenovation).length;
   const completedRenovationCount = player.properties.reduce((sum, property) => sum + (property.completedRenovations?.length ?? 0), 0);
@@ -369,6 +373,8 @@ function getNotableMonthSnapshot(player: Player) {
     ownershipChapterId: ownershipCampaign.activeChapter?.id ?? null,
     ownershipTrackTierKey: getOwnershipTrackTierKey(player),
     ownershipBeatKey: ownershipBeatState.notableKey,
+    ownershipTargetKey: ownershipTargetRace.notableKey,
+    ownershipPayoffKey: ownershipPayoffState.notableKey,
   };
 }
 
@@ -383,6 +389,8 @@ function isNotableMonthSignal(previous: ReturnType<typeof getNotableMonthSnapsho
   if (previous.ownershipChapterId !== next.ownershipChapterId) return true;
   if (previous.ownershipTrackTierKey !== next.ownershipTrackTierKey) return true;
   if (previous.ownershipBeatKey !== next.ownershipBeatKey) return true;
+  if (previous.ownershipTargetKey !== next.ownershipTargetKey) return true;
+  if (previous.ownershipPayoffKey !== next.ownershipPayoffKey) return true;
   return hasCrossedMopMilestone(previous.mopMonthsRemaining, next.mopMonthsRemaining);
 }
 

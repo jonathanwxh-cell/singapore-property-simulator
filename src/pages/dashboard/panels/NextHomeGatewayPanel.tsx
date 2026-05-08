@@ -3,12 +3,16 @@ import GlassCard from '@/components/GlassCard';
 import type { NextHomePlan } from '@/engine/nextHomePlan';
 import type { MonthlyIntentOption } from '@/engine/monthlyIntents';
 import type { OwnershipBeatState } from '@/engine/ownershipMoments';
+import type { OwnershipPayoffState } from '@/engine/ownershipPayoffs';
+import type { OwnershipTargetRace, OwnershipTargetRaceTarget } from '@/engine/ownershipTargets';
 import type { OwnershipCampaign, OwnershipCampaignTrack } from '@/engine/ownershipCampaign';
 
 export default function NextHomeGatewayPanel({
   plan,
   campaign,
   beatState,
+  targetRace,
+  payoffState,
   recommendedIntent,
   onUseIntent,
   onOpenTarget,
@@ -17,6 +21,8 @@ export default function NextHomeGatewayPanel({
   plan: NextHomePlan;
   campaign: OwnershipCampaign;
   beatState: OwnershipBeatState;
+  targetRace: OwnershipTargetRace;
+  payoffState: OwnershipPayoffState;
   recommendedIntent: MonthlyIntentOption | null;
   onUseIntent: (intent: MonthlyIntentOption) => void;
   onOpenTarget: () => void;
@@ -65,6 +71,46 @@ export default function NextHomeGatewayPanel({
               </div>
               <p className="text-sm text-white">{beatState.headline}</p>
               <p className="mt-1 text-xs leading-relaxed text-text-secondary">{beatState.summary}</p>
+            </div>
+          )}
+
+          {targetRace.active && targetRace.lead && (
+            <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="label-text text-[10px] text-text-dim">Target race</span>
+                {payoffState.nextPayoff && (
+                  <span className="rounded-full border border-success/20 bg-success/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.14em] text-success">
+                    Next payoff: {payoffState.nextPayoff.label}
+                  </span>
+                )}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <TargetRaceCard label="Lead target" target={targetRace.lead} emphasize />
+                {targetRace.challenger ? (
+                  <TargetRaceCard label="Challenger" target={targetRace.challenger} />
+                ) : (
+                  <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.03] p-3">
+                    <p className="label-text text-[10px] text-text-dim">Challenger</p>
+                    <p className="mt-2 text-sm text-white">No real rival yet</p>
+                    <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                      Pin a second realistic home so market-study months become a real comparison instead of a single-track chase.
+                    </p>
+                  </div>
+                )}
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-text-secondary">{targetRace.summary}</p>
+              {payoffState.activePayoffs.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {payoffState.activePayoffs.slice(0, 3).map((payoff) => (
+                    <span
+                      key={payoff.id}
+                      className="rounded-full border border-cyan-glow/20 bg-cyan-glow/10 px-2 py-1 text-[10px] font-mono uppercase tracking-[0.12em] text-cyan-glow"
+                    >
+                      {payoff.label}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -174,6 +220,47 @@ function OwnershipTrackRow({ track }: { track: OwnershipCampaignTrack }) {
         <div className="h-full rounded-full bg-gradient-to-r from-cyan-glow to-success" style={{ width: `${track.progressPct}%` }} />
       </div>
       <p className="mt-2 text-[11px] leading-relaxed text-text-dim">{track.detail}</p>
+    </div>
+  );
+}
+
+function TargetRaceCard({
+  label,
+  target,
+  emphasize = false,
+}: {
+  label: string;
+  target: OwnershipTargetRaceTarget;
+  emphasize?: boolean;
+}) {
+  const urgencyTone = target.urgencyLabel === 'Window Open'
+    ? 'text-success border-success/25 bg-success/10'
+    : target.urgencyLabel === 'Watch Closely'
+      ? 'text-warning border-warning/25 bg-warning/10'
+      : target.urgencyLabel === 'Stretch'
+        ? 'text-cyan-glow border-cyan-glow/20 bg-cyan-glow/10'
+        : 'text-text-dim border-white/10 bg-black/20';
+
+  return (
+    <div className={`rounded-xl border p-3 ${emphasize ? 'border-warning/20 bg-white/[0.05]' : 'border-glass-border bg-white/[0.03]'}`}>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="label-text text-[10px] text-text-dim">{label}</span>
+        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.12em] ${urgencyTone}`}>
+          {target.urgencyLabel}
+        </span>
+      </div>
+      <p className="font-rajdhani text-base font-semibold text-white">{target.name}</p>
+      <p className="mt-1 text-[11px] text-text-dim">{target.type} | {target.districtLabel}</p>
+      <div className="mt-3 flex items-end justify-between gap-3">
+        <div>
+          <p className="font-mono text-sm text-cyan-glow">S${Math.round(target.price / 1000)}K</p>
+          <p className="mt-1 text-[11px] text-text-secondary">{target.fitLabel}</p>
+        </div>
+        <div className="text-right">
+          <p className="font-mono text-sm text-white">{target.readinessPct}%</p>
+          <p className="text-[10px] uppercase tracking-[0.12em] text-text-dim">readiness</p>
+        </div>
+      </div>
     </div>
   );
 }
