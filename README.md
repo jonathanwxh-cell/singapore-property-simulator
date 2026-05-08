@@ -22,6 +22,8 @@ The dashboard also includes a first-home mission rail and a plain-English rule g
 
 The latest guidance pass adds a "First 3 Moves" quest rail, celebratory reward beats, a practice-purchase simulation on property detail pages, BTO/HFE timeline cards, mobile More navigation, and a 55+ Rightsizer route for CPF-after-55 and retirement-runway playthroughs.
 
+The latest MOP 2.2 pass adds chapter-specific ownership forks and a concrete next-home shortlist. Players can now pin future targets from Buy or Property pages, see them inside the dashboard's active-MOP flow, and play focused beats such as `Neighbour Referral`, `Starter Works Window`, and `Launch Preview Weekend` so the first 60 months feel more like a property campaign than a long wait.
+
 1. **Earn** — Monthly salary (career-dependent) flows in after CPF deductions
 2. **Buy** — Browse 120+ fictional live listings across 9 property types, 28 districts, and 6 listing channels
 3. **Finance** — Take mortgages, manage LTV caps and TDSR/MSR limits
@@ -107,6 +109,7 @@ Property, development, tenant, and listing names are fictional/composite. The si
 
 - Owned properties now track occupancy state, vacancy streaks, maintenance drag, and property tax.
 - HDB flats default to owner-occupied status, allow explicit room-rental strategies during MOP, and keep whole-flat rental locked until the MOP path is clear in the simplified model.
+- Active-MOP runs now support a `Next Home` shortlist plus chapter-specific ownership forks, so market-intel and ownership months can point at real target listings instead of only abstract readiness percentages.
 - Landlord Ops 2.0 adds lease renewal decisions, rent-push vacancy risk, tenant satisfaction, emergency reserve gaps, and maintenance issue queues inspired by common Singapore ownership surprises.
 - Portfolio summaries surface portfolio styles such as `Heartland Landlord` and `Commercial Cashflow Operator`.
 - Contextual scenarios now key off what you actually own, whether it is rented, whether you are holding aging leasehold stock, and which life arc is guiding the run.
@@ -181,74 +184,76 @@ Both checks must pass before a purchase or loan is approved.
 
 ## Engine Architecture
 
-```
+```text
 src/
-├── engine/                     # Pure-logic game engine (no UI, no side effects)
-│   ├── actions.ts              # Buy/sell/renovate/pay-loan (pure functions)
-│   ├── purchase.ts             # Centralised purchase validation + financing math
-│   ├── turn.ts                 # advanceTurn — single-month simulation
-│   ├── turnRecap.ts            # Last-month recap surfaced on the dashboard
-│   ├── cpf.ts                  # CPF contribution + interest + age brackets
-│   ├── stampDuty.ts            # BSD/ABSD calculation
-│   ├── ltv.ts                  # LTV cap, MSR check, max-borrowable
-│   ├── finance.ts              # Amortization, monthly payment, TDSR calc
-│   ├── income.ts               # Take-home pay, variable income, bank haircut
-│   ├── eligibility.ts          # HDB/EC eligibility and buyer-profile rules
-│   ├── selectors.ts            # Derived state: net worth, rental income, expenses
-│   ├── listings.ts             # Listing enrichment, district coverage, market mover helpers
-│   ├── marketNews.ts           # Deterministic per-turn market signals
-│   ├── portfolio.ts            # Carrying costs, occupancy state, investor-route summaries
-│   ├── scenarioContext.ts      # Portfolio-aware scenario gating
-│   ├── propertyOperations.ts   # Top-level renovation/tenant/reserve/repair entry points
-│   ├── tenantOperations.ts     # Lease, rent-push, vacancy, and tenant-satisfaction logic
-│   ├── reserveOperations.ts    # Emergency reserve top-ups and gap calculations
-│   ├── maintenanceOperations.ts# Maintenance issue queue and repair decisions
-│   ├── operationsShared.ts     # Shared helpers used across operations modules
-│   ├── decisionCoach.ts        # Plain-English next-move guidance
-│   ├── commandCenter.ts        # Home Command Center monthly intent state machine
-│   ├── monthlyIntents.ts       # Cash / deal / recovery / landlord stance options
-│   ├── practicePurchase.ts     # Non-mutating property-detail purchase simulation
-│   ├── dealComparison.ts       # "Compare Before You Buy" math
-│   ├── firstHomeMissions.ts    # First-home mission rail logic
-│   ├── firstHomeStarter.ts     # One-click beginner Singapore Citizen run
-│   ├── runDirector.ts          # Run Director route weighting and milestones
-│   ├── runQuest.ts             # "First 3 Moves" quest rail
-│   ├── careerProgression.ts    # Annual career review + job-switch flow
-│   ├── life.ts                 # Hybrid life-sim layer (energy/stress/actions)
-│   ├── lifeCampaign.ts         # Life campaign panel state
-│   ├── achievements.ts         # Achievement evaluation
-│   ├── achievementRules.ts     # Achievement rule definitions
-│   ├── constants.ts            # All tunable parameters in one place
-│   ├── rng.ts                  # Seeded PRNG for deterministic replays
-│   ├── results.ts              # ActionResult<T> discriminated union
-│   └── __tests__/              # 290+ vitest specs covering the modules above
-├── game/
-│   ├── types.ts                # Player, Loan, Property, MarketState, GameState
-│   ├── useGameStore.ts         # Zustand store — thin wrapper around engine actions
-│   ├── savePersistence.ts      # Local save/load + profile transfer bundle
-│   └── saveMigrations.ts       # Forward-compatible save version upgrades
-├── data/
-│   ├── properties.ts           # Base catalog plus expansion hook for the live market
-│   ├── propertyExpansion.ts    # Expanded listing pack to reach full district coverage
-│   ├── propertyArchetypes.ts   # Strategy labels and reusable listing archetypes
-│   ├── listingChannels.ts      # Market channels, rarity metadata, and badges
-│   ├── careers.ts              # 7 career paths
-│   ├── districts.ts            # 28 Singapore districts
-│   ├── eras.ts                 # Game era definitions
-│   ├── scenarios.ts            # Event deck with branching choices
-│   ├── runRoutes.ts            # Run Director life-arc route definitions
-│   ├── ruleGlossary.ts         # Inline glossary entries (CPF OA, ABSD, MOP, MSR, TDSR…)
-│   ├── tenantProfiles.ts       # Tenant archetypes for landlord ops
-│   ├── maintenanceEvents.ts    # Maintenance issue catalogue
-│   ├── renovations.ts          # Renovation packages
-│   ├── lifeActions.ts          # Hybrid life-sim action catalogue
-│   ├── lifeVisuals.ts          # Life-scene art bindings
-│   ├── achievements.ts         # Achievement metadata
-│   └── saveSchema.ts           # Zod schema for save validation
-├── pages/                      # Route-level React components (Dashboard, Buy, Own, Life, Learn…)
-├── components/                 # Shared UI (GlassCard, HUDTopBar, Sidebar, CommandCenterHero…)
-├── hooks/                      # use-mobile, useSaveLoad
-└── lib/                        # format helpers and small UI utilities
+|- engine/                     # Pure-logic game engine (no UI, no side effects)
+|  |- actions.ts               # Buy/sell/renovate/pay-loan (pure functions)
+|  |- purchase.ts              # Centralized purchase validation + financing math
+|  |- turn.ts                  # advanceTurn - single-month simulation
+|  |- turnRecap.ts             # Last-month recap surfaced on the dashboard
+|  |- cpf.ts                   # CPF contribution + interest + age brackets
+|  |- stampDuty.ts             # BSD/ABSD calculation
+|  |- ltv.ts                   # LTV cap, MSR check, max-borrowable
+|  |- finance.ts               # Amortization, monthly payment, TDSR calc
+|  |- income.ts                # Take-home pay, variable income, bank haircut
+|  |- eligibility.ts           # HDB/EC eligibility and buyer-profile rules
+|  |- selectors.ts             # Derived state: net worth, rental income, expenses
+|  |- listings.ts              # Listing enrichment, district coverage, market mover helpers
+|  |- marketNews.ts            # Deterministic per-turn market signals
+|  |- portfolio.ts             # Carrying costs, occupancy state, investor-route summaries
+|  |- scenarioContext.ts       # Portfolio-aware scenario gating
+|  |- propertyOperations.ts    # Top-level renovation/tenant/reserve/repair entry points
+|  |- tenantOperations.ts      # Lease, rent-push, vacancy, and tenant-satisfaction logic
+|  |- reserveOperations.ts     # Emergency reserve top-ups and gap calculations
+|  |- maintenanceOperations.ts # Maintenance issue catalog and repair decisions
+|  |- operationsShared.ts      # Shared helpers used across operations modules
+|  |- decisionCoach.ts         # Plain-English next-move guidance
+|  |- commandCenter.ts         # Home Command Center monthly intent state machine
+|  |- monthlyIntents.ts        # Cash / deal / recovery / landlord stance options
+|  |- practicePurchase.ts      # Non-mutating property-detail purchase simulation
+|  |- dealComparison.ts        # "Compare Before You Buy" math
+|  |- firstHomeMissions.ts     # First-home mission rail logic
+|  |- firstHomeStarter.ts      # One-click beginner Singapore Citizen run
+|  |- runDirector.ts           # Run Director route weighting and milestones
+|  |- runQuest.ts              # "First 3 Moves" quest rail
+|  |- ownershipCampaign.ts     # Chaptered MOP campaign progress and track state
+|  |- ownershipForks.ts        # MOP chapter forks and next-home shortlist helpers
+|  |- careerProgression.ts     # Annual career review + job-switch flow
+|  |- life.ts                  # Hybrid life-sim layer (energy/stress/actions)
+|  |- lifeCampaign.ts          # Life campaign panel state
+|  |- achievements.ts          # Achievement evaluation
+|  |- achievementRules.ts      # Achievement rule definitions
+|  |- constants.ts             # All tunable parameters in one place
+|  |- rng.ts                   # Seeded PRNG for deterministic replays
+|  |- results.ts               # ActionResult<T> discriminated union
+|  `- __tests__/               # 329 vitest specs covering the modules above
+|- game/
+|  |- types.ts                 # Player, Loan, Property, MarketState, GameState
+|  |- useGameStore.ts          # Zustand store - thin wrapper around engine actions
+|  |- savePersistence.ts       # Local save/load + profile transfer bundle
+|  `- saveMigrations.ts        # Forward-compatible save version upgrades
+|- data/
+|  |- properties.ts            # Base catalog plus expansion hook for the live market
+|  |- propertyExpansion.ts     # Expanded listing pack to reach full district coverage
+|  |- propertyArchetypes.ts    # Strategy labels and reusable listing archetypes
+|  |- listingChannels.ts       # Market channels, rarity metadata, and badges
+|  |- careers.ts               # 7 career paths
+|  |- districts.ts             # 28 Singapore districts
+|  |- eras.ts                  # Game era definitions
+|  |- scenarios.ts             # Event deck with branching choices
+|  |- runRoutes.ts             # Run Director life-arc route definitions
+|  |- ruleGlossary.ts          # Inline glossary entries (CPF OA, ABSD, MOP, MSR, TDSR...)
+|  |- tenantProfiles.ts        # Tenant archetypes for landlord ops
+|  |- maintenanceEvents.ts     # Maintenance issue catalog
+|  |- renovations.ts           # Renovation packages
+|  |- lifeActions.ts           # Hybrid life-sim action catalog
+|  |- lifeVisuals.ts           # Life-scene art bindings
+|  |- achievements.ts          # Achievement metadata
+|  `- saveSchema.ts            # Zod schema for save validation
+|- pages/                      # Route-level React components (Dashboard, Buy, Own, Life, Learn...)
+|- components/                 # Shared UI (GlassCard, HUDTopBar, Sidebar, CommandCenterHero...)
+|- hooks/                      # use-mobile, useSaveLoad
+`- lib/                        # format helpers and small UI utilities
 ```
 
 ### Design Principles
