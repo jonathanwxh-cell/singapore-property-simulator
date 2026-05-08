@@ -427,6 +427,7 @@ describe('sellPropertyPure', () => {
       cash: 0,
       year: 2026,
       month: 4,
+      turnCount: 27,
       maritalStatus: 'married',
       buyerProfile: {
         residencyStatus: 'sc',
@@ -477,6 +478,7 @@ describe('sellPropertyPure', () => {
       cash: 0,
       year: 2026,
       month: 8,
+      turnCount: 31,
       maritalStatus: 'married',
       buyerProfile: {
         residencyStatus: 'sc',
