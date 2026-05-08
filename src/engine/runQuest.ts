@@ -3,6 +3,7 @@ import { selectAvailableCash, selectMonthlyNetCashflow } from './selectors';
 import { resolveStarterPropertyRoute } from './firstHomeStarter';
 import { TAKE_HOME_RATIO } from './constants';
 import { getNextHomePlan } from './nextHomePlan';
+import { getOwnershipCampaign } from './ownershipCampaign';
 
 export type FirstRunQuestStepId =
   | 'choose-monthly-intent'
@@ -110,6 +111,7 @@ export function getFirstRunQuest(player: Player, currentScenario: string | null)
 
 function getMopQuest(player: Player, currentScenario: string | null): FirstRunQuest {
   const nextHomePlan = getNextHomePlan(player);
+  const ownershipCampaign = getOwnershipCampaign(player);
   const hasTenant = player.properties.some((property) => Boolean(property.tenant || property.isRented));
   const reserveCash = player.reserve?.allocatedCash ?? 0;
   const hasHomeProject = player.properties.some((property) =>
@@ -164,7 +166,9 @@ function getMopQuest(player: Player, currentScenario: string | null): FirstRunQu
 
   return {
     title: 'First MOP Campaign',
-    beginnerHint: 'The first ownership chapter should still feel directed. Stabilize the home, then turn MOP into preparation for the next move.',
+    beginnerHint: ownershipCampaign.activeChapter
+      ? `${ownershipCampaign.activeChapter.label}: ${ownershipCampaign.activeChapter.objective}`
+      : 'The first ownership chapter should still feel directed. Stabilize the home, then turn MOP into preparation for the next move.',
     progressPct: Math.round((completedCount / steps.length) * 100),
     activeStep,
     steps,

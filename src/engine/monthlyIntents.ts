@@ -1,6 +1,7 @@
 import type { LifeActionId, MonthlyIntentTrack, Player } from '@/game/types';
 import { properties } from '@/data/properties';
-import { getNextHomePlan, type NextHomeFocusId } from './nextHomePlan';
+import { getNextHomePlan } from './nextHomePlan';
+import { getOwnershipCampaign } from './ownershipCampaign';
 
 export type MonthlyIntentId =
   | 'landlord-ops'
@@ -29,6 +30,7 @@ export interface MonthlyIntentOption {
 
 export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
   const nextHomePlan = getNextHomePlan(player);
+  const ownershipCampaign = getOwnershipCampaign(player);
   const ownedHdbNeedingRoomPlan = player.properties.find((ownedProperty) => {
     const listing = properties.find((property) => property.id === ownedProperty.propertyId);
     return Boolean(listing?.isHdb && !ownedProperty.tenant && (ownedProperty.mopRemainingMonths ?? 0) > 0);
@@ -56,6 +58,7 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
 
   if (nextHomePlan.phase === 'active-mop') {
     const mopOptions: MonthlyIntentOption[] = [];
+    const chapterId = ownershipCampaign.activeChapter?.id ?? 'settle-in';
 
     if (ownedHdbNeedingRoomPlan) {
       mopOptions.push({
@@ -69,7 +72,7 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
         secondaryActionId: needsRecovery ? null : 'recover',
         autoActionId: 'start-room-rental',
         route: `/property/${ownedHdbNeedingRoomPlan.propertyId}`,
-        recommended: nextHomePlan.recommendedFocusId === 'tenant' && !needsRecovery,
+        recommended: false,
         tone: 'good',
       });
     }
@@ -77,7 +80,6 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
     mopOptions.push(
       createMopIntent({
         id: 'mop-home-project',
-        focusId: 'home-project',
         label: 'Improve Current Home',
         detail: 'Use the month for renovation, condition, or sale-readiness work that improves rent/value before MOP exit.',
         upside: 'Higher exit value',
@@ -87,13 +89,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
         secondaryActionId: needsRecovery ? null : 'plan-schemes',
         autoActionId: 'start-flooring-refresh',
         route: nextHomePlan.propertyName ? `/property/${ownedHdbNeedingRoomPlan?.propertyId ?? player.properties[0]?.propertyId}` : '/portfolio',
-        recommendedFocusId: nextHomePlan.recommendedFocusId,
-        needsRecovery,
         tone: 'good',
       }),
       createMopIntent({
         id: 'mop-income-runway',
-        focusId: 'income',
         label: 'Grow Next-Home Cash',
         detail: 'Push side income and scheme planning so the down-payment runway improves while MOP counts down.',
         upside: 'Faster Property #2 readiness',
@@ -103,13 +102,10 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
         secondaryActionId: needsRecovery ? null : 'focus-at-work',
         autoActionId: null,
         route: '/life',
-        recommendedFocusId: nextHomePlan.recommendedFocusId,
-        needsRecovery,
         tone: 'neutral',
       }),
       createMopIntent({
         id: 'mop-market-intel',
-        focusId: 'market',
         label: 'Study Exit Market',
         detail: 'Compare districts and timing signals so the MOP exit feels planned instead of sudden.',
         upside: 'Better timing confidence',
@@ -119,20 +115,18 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
         secondaryActionId: needsRecovery ? null : 'upskill',
         autoActionId: null,
         route: '/market',
-        recommendedFocusId: nextHomePlan.recommendedFocusId,
-        needsRecovery,
         tone: 'good',
       }),
     );
 
-    const rankedMopOptions = [
-      ...mopOptions.filter((option) => option.recommended),
-      ...mopOptions.filter((option) => !option.recommended),
-    ];
+    const rankedMopOptions = rankMopOptionsForChapter(mopOptions, chapterId);
     const activeMopOptions = [
       ...options,
       ...rankedMopOptions,
-    ].slice(0, 3);
+    ].slice(0, 3).map((option, index) => ({
+      ...option,
+      recommended: index === 0,
+    }));
 
     if (activeMopOptions.length > 0 && !activeMopOptions.some((option) => option.recommended)) {
       activeMopOptions[0] = { ...activeMopOptions[0], recommended: true };
@@ -218,7 +212,6 @@ export function getMonthlyIntentOptions(player: Player): MonthlyIntentOption[] {
 
 function createMopIntent({
   id,
-  focusId,
   label,
   detail,
   upside,
@@ -228,12 +221,9 @@ function createMopIntent({
   secondaryActionId,
   autoActionId,
   route,
-  recommendedFocusId,
-  needsRecovery,
   tone,
 }: {
   id: Extract<MonthlyIntentId, 'mop-home-project' | 'mop-income-runway' | 'mop-market-intel'>;
-  focusId: NextHomeFocusId;
   label: string;
   detail: string;
   upside: string;
@@ -243,8 +233,6 @@ function createMopIntent({
   secondaryActionId: LifeActionId | null;
   autoActionId: MonthlyIntentOption['autoActionId'];
   route: string;
-  recommendedFocusId: NextHomeFocusId;
-  needsRecovery: boolean;
   tone: MonthlyIntentOption['tone'];
 }): MonthlyIntentOption {
   return {
@@ -258,7 +246,38 @@ function createMopIntent({
     secondaryActionId,
     autoActionId,
     route,
-    recommended: recommendedFocusId === focusId && !needsRecovery,
+    recommended: false,
     tone,
   };
+}
+
+function rankMopOptionsForChapter(
+  options: MonthlyIntentOption[],
+  chapterId: Exclude<ReturnType<typeof getOwnershipCampaign>['activeChapter'], null>['id'],
+): MonthlyIntentOption[] {
+  const order = getMopIntentOrder(chapterId);
+  const ranked = [...options].sort((left, right) => {
+    const leftIndex = order.indexOf(left.id);
+    const rightIndex = order.indexOf(right.id);
+    return (leftIndex === -1 ? 99 : leftIndex) - (rightIndex === -1 ? 99 : rightIndex);
+  });
+
+  if (chapterId === 'settle-in') {
+    return ranked.filter((option) => option.id !== 'mop-market-intel');
+  }
+
+  return ranked;
+}
+
+function getMopIntentOrder(chapterId: Exclude<ReturnType<typeof getOwnershipCampaign>['activeChapter'], null>['id']): MonthlyIntentId[] {
+  switch (chapterId) {
+    case 'settle-in':
+      return ['landlord-ops', 'mop-home-project', 'mop-income-runway', 'mop-market-intel', 'recover', 'build-cash', 'hunt-deal', 'career-push'];
+    case 'stabilise-income':
+      return ['mop-income-runway', 'landlord-ops', 'mop-home-project', 'mop-market-intel', 'recover', 'build-cash', 'hunt-deal', 'career-push'];
+    case 'prepare-upgrade':
+      return ['mop-home-project', 'mop-market-intel', 'mop-income-runway', 'landlord-ops', 'recover', 'build-cash', 'hunt-deal', 'career-push'];
+    case 'line-up-exit':
+      return ['mop-market-intel', 'mop-home-project', 'mop-income-runway', 'landlord-ops', 'recover', 'build-cash', 'hunt-deal', 'career-push'];
+  }
 }

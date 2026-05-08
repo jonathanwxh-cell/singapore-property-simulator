@@ -174,6 +174,11 @@ const playerSchema = z.object({
     selectedMonthlyIntentTrack: z.enum(['income', 'market', 'home-project', 'tenant', 'career', 'recovery']).nullable().optional(),
     trainingTrackId: z.string().nullable(),
     trainingMonthsRemaining: z.number().int().nonnegative(),
+    ownershipCampaign: z.object({
+      incomeRunwayXp: z.number().int().nonnegative(),
+      homeReadinessXp: z.number().int().nonnegative(),
+      exitIntelXp: z.number().int().nonnegative(),
+    }).optional(),
     schemeProgress: z.object({
       skillsFuture: z.number().min(0).max(100),
       firstTimerGrant: z.number().min(0).max(100),

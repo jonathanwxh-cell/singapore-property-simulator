@@ -644,4 +644,41 @@ describe('useGameStore', () => {
     expect(player.properties[0].activeRenovation).toBeUndefined();
     expect(player.properties[0].completedRenovations).toContain('flooring');
   });
+
+  it('stops notable-month skipping when an ownership chapter changes', () => {
+    resetStore({
+      player: makePlayer({
+        properties: [{
+          propertyId: 'hdb-bto-0',
+          purchasePrice: 265_000,
+          purchaseDate: '2024-01',
+          currentValue: 265_000,
+          isRented: true,
+          monthlyRental: 1_300,
+          renovationLevel: 0,
+          occupancyStatus: 'owner-occupied',
+          mopRemainingMonths: 13,
+          tenant: {
+            profileId: 'local-family',
+            rentalMode: 'room-rental',
+            leaseStartTurn: 1,
+            leaseEndTurn: 13,
+            satisfaction: 80,
+            rentStrategy: 'market',
+            askingRent: 1_300,
+            contractedRent: 1_300,
+            defaultRiskPct: 4,
+            renewalIntent: 75,
+          },
+        }],
+        reserve: { targetMonths: 3, allocatedCash: 8_000, autoTopUpPct: 0 },
+      }),
+    });
+
+    useGameStore.getState().advanceToNextNotableMonth(6);
+
+    const player = useGameStore.getState().player;
+    expect(player.turnCount).toBe(1);
+    expect(player.properties[0].mopRemainingMonths).toBe(12);
+  });
 });

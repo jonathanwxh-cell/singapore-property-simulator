@@ -15,6 +15,7 @@ import { getLifeCampaign } from '@/engine/lifeCampaign';
 import { getNextBestMoves } from '@/engine/decisionCoach';
 import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
 import { getNextHomePlan } from '@/engine/nextHomePlan';
+import { getOwnershipCampaign } from '@/engine/ownershipCampaign';
 import { deriveEligibilityFlags } from '@/engine/eligibility';
 import { getFirstHomeMissions } from '@/engine/firstHomeMissions';
 import { getLastTurnRecap } from '@/engine/turnRecap';
@@ -111,6 +112,7 @@ export default function Dashboard() {
   const latestOperation = player.operationHistory?.[0] ?? null;
   const nextBestMoves = useMemo(() => getNextBestMoves({ player, currentScenario }), [player, currentScenario]);
   const nextHomePlan = useMemo(() => getNextHomePlan(player), [player]);
+  const ownershipCampaign = useMemo(() => getOwnershipCampaign(player), [player]);
   const monthlyIntents = useMemo(() => getMonthlyIntentOptions(player), [player]);
   const recommendedMonthlyIntent = monthlyIntents.find((intent) => intent.recommended) ?? monthlyIntents[0] ?? null;
   const firstHomeMissions = useMemo(() => getFirstHomeMissions(player), [player]);
@@ -215,6 +217,7 @@ export default function Dashboard() {
           <motion.div variants={itemVariants} className="mb-6">
             <NextHomeGatewayPanel
               plan={nextHomePlan}
+              campaign={ownershipCampaign}
               recommendedIntent={recommendedMonthlyIntent}
               onUseIntent={handleSelectIntent}
               onOpenTarget={() => navigate(nextHomePlan.targetRoute)}

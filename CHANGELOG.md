@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Guidance-first mobile More sheet**: the mobile shell now opens secondary tabs inside a grouped bottom sheet with clearer route purpose text for Market, Bank, Scenarios, Save, Leaderboard, and Settings.
 - **Active MOP / Next Home v1**: owner runs now get a Dashboard gateway for Property #2 planning, a readiness tracker with bottleneck callouts, and MOP-specific monthly intents for home projects, income runway, market study, and room-rental setup.
 - **MOP 2.0 v1**: first-home owners now carry monthly-intent context through recap generation, get a continuing `First MOP Campaign` after purchase, and can advance to the next notable month instead of blindly blitzing fixed time.
+- **MOP 2.1 chaptered ownership**: active-MOP runs now surface `Settle In`, `Stabilise Income`, `Prepare Upgrade`, and `Line Up Exit` chapters with visible ownership-track progress, chapter-aware monthly intent rotation, and notable-month stopping on chapter beats.
 - **Landlord depth phase**: renovation cards now support budget / balanced / premium contractor routes with ROI previews, tenant months can generate deterministic upside or warning events, and the portfolio shows a landlord-health score with a concrete next-priority callout.
 - **Wealth During Wait phase**: the Life screen now tracks side-gig and property-hustle income engines across months, shows a clear income mix, and explains which extra-income moves actually moved the run closer to the next home.
 - **Rules correctness pack**: residential sales now model SSD, qualifying married-couple and single-SC-senior replacement runs can track pending ABSD refunds, and short-lease residential buys now surface full / reduced / blocked CPF OA usage.
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mobile shell spacing now respects safe-area padding more consistently, keeping the bottom nav, floating advance CTA, and More menu from crowding content on narrow phones.
 - Monthly Intent recommendations now pivot into an active-MOP planning loop once a player owns an HDB inside MOP, instead of staying on the generic cash/deal/career trio.
 - The guided MOP fast path now performs small safe ownership moves for room rental and starter home projects before advancing the month, while recaps describe the chosen MOP track instead of flattening back into generic side-income language.
+- Active-MOP dashboard guidance now changes shape as the run matures, promoting room-rental and reserve setup early, then upgrade prep and exit-intel later instead of repeating the same card order for the entire five-year stretch.
 - Property Operations now frames upgrades as contractor tradeoffs instead of a single flat renovation path, so owned months teach timing, cash, and yield tension more clearly.
 - Life-month recaps now break cash movement down by source so players can see whether progress came from salary focus, side gigs, property hustle, schemes, or expensive household/training choices.
 

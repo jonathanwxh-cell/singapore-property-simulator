@@ -46,6 +46,8 @@ export type PendingTaxReliefStatus = 'pending' | 'earned' | 'expired';
 export type CpfUsageMode = 'full' | 'prorated' | 'blocked';
 export type IncomeTrackId = 'sideGig' | 'propertyHustle';
 export type MonthlyIntentTrack = 'income' | 'market' | 'home-project' | 'tenant' | 'career' | 'recovery';
+export type OwnershipChapterId = 'settle-in' | 'stabilise-income' | 'prepare-upgrade' | 'line-up-exit';
+export type OwnershipCampaignTrackId = 'income-runway' | 'home-readiness' | 'exit-intel';
 export type LifeActionId =
   | 'focus-at-work'
   | 'take-side-gig'
@@ -73,6 +75,12 @@ export interface IncomeTrackState {
 export interface IncomeProgressState {
   sideGig: IncomeTrackState;
   propertyHustle: IncomeTrackState;
+}
+
+export interface OwnershipCampaignProgressState {
+  incomeRunwayXp: number;
+  homeReadinessXp: number;
+  exitIntelXp: number;
 }
 
 export interface LifeMonthSummary {
@@ -106,6 +114,7 @@ export interface PlayerLifeState {
   selectedMonthlyIntentTrack: MonthlyIntentTrack | null;
   trainingTrackId: string | null;
   trainingMonthsRemaining: number;
+  ownershipCampaign: OwnershipCampaignProgressState;
   schemeProgress: {
     skillsFuture: number;
     firstTimerGrant: number;
@@ -509,6 +518,14 @@ export function createInitialIncomeProgressState(): IncomeProgressState {
   };
 }
 
+export function createInitialOwnershipCampaignProgressState(): OwnershipCampaignProgressState {
+  return {
+    incomeRunwayXp: 0,
+    homeReadinessXp: 0,
+    exitIntelXp: 0,
+  };
+}
+
 export function normalizeBuyerProfile(profile?: Partial<BuyerProfile> | null): BuyerProfile {
   const householdProfile = profile?.householdProfile ?? DEFAULT_BUYER_PROFILE.householdProfile;
   let age = Math.max(21, Math.round(profile?.age ?? DEFAULT_BUYER_PROFILE.age));
@@ -528,10 +545,12 @@ export function createInitialLifeState(overrides: Partial<PlayerLifeState> = {})
   const {
     schemeProgress,
     incomeProgress,
+    ownershipCampaign,
     lastMonthSummary,
     ...restOverrides
   } = overrides;
   const defaultIncomeProgress = createInitialIncomeProgressState();
+  const defaultOwnershipCampaign = createInitialOwnershipCampaignProgressState();
   const mergedLastMonthSummary = lastMonthSummary
     ? {
         ...lastMonthSummary,
@@ -560,6 +579,10 @@ export function createInitialLifeState(overrides: Partial<PlayerLifeState> = {})
     selectedMonthlyIntentTrack: null,
     trainingTrackId: null,
     trainingMonthsRemaining: 0,
+    ownershipCampaign: {
+      ...defaultOwnershipCampaign,
+      ...ownershipCampaign,
+    },
     schemeProgress: {
       skillsFuture: 0,
       firstTimerGrant: 0,

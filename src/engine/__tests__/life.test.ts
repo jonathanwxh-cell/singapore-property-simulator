@@ -85,4 +85,32 @@ describe('life engine', () => {
     expect(result.nextLife.incomeProgress.sideGig.xp).toBe(4);
     expect(result.nextLife.lastMonthSummary?.notes.some((note) => note.includes('Repeatable Gig'))).toBe(true);
   });
+
+  it('adds ownership campaign progress notes for active-MOP planning months', () => {
+    const result = resolveLifeMonth(
+      makePlayer({
+        properties: [{
+          propertyId: 'hdb-bto-0',
+          purchasePrice: 265_000,
+          purchaseDate: '2024-01',
+          currentValue: 265_000,
+          isRented: false,
+          monthlyRental: 1_300,
+          renovationLevel: 0,
+          occupancyStatus: 'owner-occupied',
+          mopRemainingMonths: 58,
+        }],
+        life: createInitialLifeState({
+          selectedPrimaryActionId: 'property-hustle',
+          selectedMonthlyIntentId: 'mop-market-intel',
+          selectedMonthlyIntentLabel: 'Study Exit Market',
+          selectedMonthlyIntentTrack: 'market',
+        }),
+      }),
+      careers.find((career) => career.id === 'tech')!,
+      { next: () => 0.5 } as never,
+    );
+
+    expect(result.nextLife.lastMonthSummary?.notes.some((note) => note.includes('Exit intel'))).toBe(true);
+  });
 });

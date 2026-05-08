@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { createInitialLifeState, type Player } from '@/game/types';
-import { getMonthlyIntentOptions } from '../monthlyIntents';
+import { getOwnershipCampaign } from '../ownershipCampaign';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
-    name: 'Test',
+    name: 'Owner',
     age: 30,
     careerId: 'graduate',
-    salary: 5_500,
-    cash: 80_000,
-    cpfOrdinary: 35_000,
+    salary: 6_500,
+    cash: 90_000,
+    cpfOrdinary: 45_000,
     cpfSpecial: 10_000,
     cpfMedisave: 12_000,
     creditScore: 700,
     properties: [],
     loans: [],
-    maritalStatus: 'single',
+    maritalStatus: 'married',
     children: 0,
     year: 2024,
     month: 1,
@@ -36,60 +36,34 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
     ownedPrivateHome: false,
     careerProgressionProfile: { reviewCount: 0, lastOutcome: null, lastSalaryDelta: 0, lastBonus: 0 },
     careerReviewHistory: [],
+    reserve: { targetMonths: 3, allocatedCash: 0, autoTopUpPct: 0 },
     ...overrides,
   };
 }
 
-describe('getMonthlyIntentOptions', () => {
-  it('offers distinct monthly plans that map to life actions', () => {
-    const options = getMonthlyIntentOptions(makePlayer());
-
-    expect(options).toHaveLength(3);
-    expect(new Set(options.map((option) => option.primaryActionId)).size).toBeGreaterThan(1);
-    expect(options.every((option) => option.track)).toBe(true);
-    expect(options.some((option) => option.id === 'build-cash')).toBe(true);
-    expect(options.some((option) => option.id === 'hunt-deal')).toBe(true);
-  });
-
-  it('recommends recovery when stress is high', () => {
-    const options = getMonthlyIntentOptions(makePlayer({
-      life: createInitialLifeState({ stress: 82, energy: 28 }),
-    }));
-
-    expect(options[0]).toMatchObject({
-      id: 'recover',
-      primaryActionId: 'recover',
-      recommended: true,
-    });
-  });
-
-  it('surfaces landlord ops after buying an MOP-active HDB', () => {
-    const options = getMonthlyIntentOptions(makePlayer({
+describe('getOwnershipCampaign', () => {
+  it('starts active-MOP owners in the settle-in chapter when the home is not operational yet', () => {
+    const campaign = getOwnershipCampaign(makePlayer({
       properties: [{
         propertyId: 'hdb-bto-0',
         purchasePrice: 265_000,
         purchaseDate: '2024-01',
         currentValue: 265_000,
         isRented: false,
-        monthlyRental: 1300,
+        monthlyRental: 1_300,
         renovationLevel: 0,
         occupancyStatus: 'owner-occupied',
-        mopRemainingMonths: 60,
+        mopRemainingMonths: 58,
       }],
     }));
 
-    expect(options[0]).toMatchObject({
-      id: 'landlord-ops',
-      route: '/property/hdb-bto-0',
-      recommended: true,
-      track: 'tenant',
-      autoActionId: 'start-room-rental',
-    });
-    expect(options.some((option) => option.id === 'mop-income-runway')).toBe(true);
+    expect(campaign.active).toBe(true);
+    expect(campaign.activeChapter?.id).toBe('settle-in');
+    expect(campaign.tracks[0]?.id).toBe('home-readiness');
   });
 
-  it('rotates toward market-intel heavy choices in late-stage MOP chapters', () => {
-    const options = getMonthlyIntentOptions(makePlayer({
+  it('moves late-MOP owners into line-up-exit with exit intel on top', () => {
+    const campaign = getOwnershipCampaign(makePlayer({
       cash: 180_000,
       cpfOrdinary: 85_000,
       reserve: { targetMonths: 3, allocatedCash: 12_000, autoTopUpPct: 0 },
@@ -97,28 +71,38 @@ describe('getMonthlyIntentOptions', () => {
         propertyId: 'hdb-bto-0',
         purchasePrice: 265_000,
         purchaseDate: '2024-01',
-        currentValue: 310_000,
+        currentValue: 320_000,
         isRented: true,
         monthlyRental: 1_600,
         renovationLevel: 0,
         occupancyStatus: 'owner-occupied',
-        mopRemainingMonths: 10,
+        mopRemainingMonths: 9,
+        conditionScore: 82,
+        completedRenovations: ['flooring'],
         tenant: {
           profileId: 'local-family',
           rentalMode: 'room-rental',
           leaseStartTurn: 2,
           leaseEndTurn: 14,
-          satisfaction: 82,
+          satisfaction: 83,
           rentStrategy: 'market',
           askingRent: 1_600,
           contractedRent: 1_600,
           defaultRiskPct: 4,
-          renewalIntent: 78,
+          renewalIntent: 80,
         },
       }],
+      life: createInitialLifeState({
+        ownershipCampaign: {
+          incomeRunwayXp: 4,
+          homeReadinessXp: 5,
+          exitIntelXp: 6,
+        },
+      }),
     }));
 
-    expect(options[0]?.id).toBe('mop-market-intel');
-    expect(options.some((option) => option.id === 'mop-home-project')).toBe(true);
+    expect(campaign.activeChapter?.id).toBe('line-up-exit');
+    expect(campaign.tracks[0]?.id).toBe('exit-intel');
+    expect(campaign.tracks[0]?.progressPct).toBeGreaterThan(60);
   });
 });

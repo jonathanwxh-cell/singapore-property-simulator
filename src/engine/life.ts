@@ -1,8 +1,14 @@
 import type { Career } from '@/data/careers';
 import type { IncomeTrackId, LifeActionId, LifeIncomeBreakdown, LifeMonthSummary, LivingArrangement, Player, PlayerLifeState } from '@/game/types';
-import { createInitialIncomeProgressState, createInitialLifeIncomeBreakdown, createInitialLifeState } from '@/game/types';
+import {
+  createInitialIncomeProgressState,
+  createInitialLifeIncomeBreakdown,
+  createInitialLifeState,
+  createInitialOwnershipCampaignProgressState,
+} from '@/game/types';
 import type { Rng } from './rng';
 import { applyIncomeTrackGain, getIncomeTrackMultiplier } from './lifeIncome';
+import { applyOwnershipCampaignProgress } from './ownershipCampaign';
 
 export interface LifeMonthResolution {
   cashDelta: number;
@@ -47,6 +53,10 @@ export function normalizeLifeState(life: Partial<PlayerLifeState> | undefined): 
         ...createInitialIncomeProgressState().propertyHustle,
         ...life?.incomeProgress?.propertyHustle,
       },
+    },
+    ownershipCampaign: {
+      ...createInitialOwnershipCampaignProgressState(),
+      ...life?.ownershipCampaign,
     },
     lastMonthSummary: life?.lastMonthSummary
       ? {
@@ -117,6 +127,7 @@ export function resolveLifeMonth(player: Player, career: Career, rng: Pick<Rng, 
   nextLife.careerMomentum = clamp(nextLife.careerMomentum, -100, 100);
   nextLife.householdSupport = clamp(nextLife.householdSupport, 0, 100);
   nextLife.householdLoad = calculateHouseholdLoad(nextLife);
+  applyOwnershipCampaignProgress(player, nextLife, notes);
   nextLife.selectedPrimaryActionId = null;
   nextLife.selectedSecondaryActionId = null;
   nextLife.selectedMonthlyIntentId = null;

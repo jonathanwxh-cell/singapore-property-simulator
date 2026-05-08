@@ -503,6 +503,8 @@ async function run() {
     await page.getByRole('button', { name: 'Continue' }).click();
     await gotoRoute(page, `${baseUrl}/#/dashboard`);
     await expectVisible(page, 'text=Turn 12');
+    await expectVisible(page, 'text=Ownership chapter');
+    await expectVisible(page, 'text=Settle In');
     await assertManualLoadPromotesAutosave(page);
 
     await gotoRoute(page, `${baseUrl}/#/learn`);

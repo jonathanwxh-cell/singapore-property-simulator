@@ -1,16 +1,19 @@
-import { Clock, FastForward, Gauge, Target, WalletCards } from 'lucide-react';
+import { Clock, FastForward, Gauge, LineChart, Target, WalletCards, Wrench } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 import type { NextHomePlan } from '@/engine/nextHomePlan';
 import type { MonthlyIntentOption } from '@/engine/monthlyIntents';
+import type { OwnershipCampaign, OwnershipCampaignTrack } from '@/engine/ownershipCampaign';
 
 export default function NextHomeGatewayPanel({
   plan,
+  campaign,
   recommendedIntent,
   onUseIntent,
   onOpenTarget,
   onAdvanceToNotableMonth,
 }: {
   plan: NextHomePlan;
+  campaign: OwnershipCampaign;
   recommendedIntent: MonthlyIntentOption | null;
   onUseIntent: (intent: MonthlyIntentOption) => void;
   onOpenTarget: () => void;
@@ -48,6 +51,27 @@ export default function NextHomeGatewayPanel({
             <div className="h-full rounded-full bg-gradient-to-r from-cyan-glow via-success to-warning" style={{ width: `${plan.readinessPct}%` }} />
           </div>
           <p className="mt-3 text-xs text-text-secondary">{plan.paceLabel}</p>
+
+          {campaign.active && campaign.activeChapter && (
+            <div className="mt-4 rounded-2xl border border-cyan-glow/15 bg-cyan-glow/5 p-4">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="label-text text-[10px] text-cyan-glow">Ownership chapter</span>
+                <span className="rounded-full border border-cyan-glow/30 bg-cyan-glow/10 px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.16em] text-cyan-glow">
+                  {campaign.activeChapter.label}
+                </span>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.16em] text-text-dim">
+                  {campaign.activeChapter.progressPct}%
+                </span>
+              </div>
+              <p className="text-sm leading-relaxed text-text-secondary">{campaign.activeChapter.objective}</p>
+              <p className="mt-2 text-[11px] uppercase tracking-[0.14em] text-text-dim">{campaign.activeChapter.milestoneLabel}</p>
+              <div className="mt-4 grid gap-3">
+                {campaign.tracks.map((track) => (
+                  <OwnershipTrackRow key={track.id} track={track} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="rounded-2xl border border-glass-border bg-white/[0.03] p-4">
@@ -115,4 +139,25 @@ function PlanMetric({
 function formatMoney(value: number): string {
   if (Math.abs(value) >= 1_000_000) return `S$${(value / 1_000_000).toFixed(2)}M`;
   return `S$${Math.round(value / 1000)}K`;
+}
+
+function OwnershipTrackRow({ track }: { track: OwnershipCampaignTrack }) {
+  const Icon = track.id === 'income-runway' ? WalletCards : track.id === 'home-readiness' ? Wrench : LineChart;
+  const tone = track.progressPct >= 75 ? 'text-success' : track.progressPct >= 45 ? 'text-warning' : 'text-cyan-glow';
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-text-secondary">
+          <Icon size={14} className={tone} />
+          <span className="font-rajdhani text-sm font-semibold uppercase tracking-[0.08em] text-white">{track.label}</span>
+        </div>
+        <span className={`font-mono text-xs ${tone}`}>{track.progressPct}%</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/10">
+        <div className="h-full rounded-full bg-gradient-to-r from-cyan-glow to-success" style={{ width: `${track.progressPct}%` }} />
+      </div>
+      <p className="mt-2 text-[11px] leading-relaxed text-text-dim">{track.detail}</p>
+    </div>
+  );
 }
