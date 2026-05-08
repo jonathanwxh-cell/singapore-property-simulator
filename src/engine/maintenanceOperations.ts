@@ -5,6 +5,7 @@ import { fail, ok } from './results';
 import { roundMoney } from '@/lib/format';
 import { clamp, normalizeOperationProperty, withOperationLog } from './operationsShared';
 import { createDefaultReserve } from './reserveOperations';
+import { DEFAULT_CONDITION_SCORE } from './constants';
 
 export function resolveMaintenanceIssuePure(
   player: Player,
@@ -39,7 +40,7 @@ export function resolveMaintenanceIssuePure(
   updatedProperties[propertyIndex] = {
     ...property,
     tenant,
-    conditionScore: clamp((property.conditionScore ?? 70) + choice.conditionDelta, 0, 100),
+    conditionScore: clamp((property.conditionScore ?? DEFAULT_CONDITION_SCORE) + choice.conditionDelta, 0, 100),
     openMaintenanceIssues: (property.openMaintenanceIssues ?? []).filter((candidate) => candidate.id !== issueId),
   };
 
@@ -71,7 +72,7 @@ export function createMaintenanceIssue(
   propertyIndex: number,
 ): MaintenanceIssue {
   const template = maintenanceTemplates[(turn + propertyIndex) % maintenanceTemplates.length];
-  const conditionPenalty = Math.max(0, 70 - (property.conditionScore ?? 70)) * 18;
+  const conditionPenalty = Math.max(0, DEFAULT_CONDITION_SCORE - (property.conditionScore ?? DEFAULT_CONDITION_SCORE)) * 18;
   return {
     id: `issue_${turn}_${propertyIndex}_${template.category}`,
     propertyId: property.propertyId,

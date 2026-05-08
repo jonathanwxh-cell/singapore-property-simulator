@@ -8,7 +8,7 @@ import type {
   PlayerLifeState,
 } from '@/game/types';
 import { createInitialOwnershipCampaignProgressState } from '@/game/types';
-import { TAKE_HOME_RATIO } from './constants';
+import { DEFAULT_CONDITION_SCORE, TAKE_HOME_RATIO } from './constants';
 import { getNextHomePlan } from './nextHomePlan';
 import { selectMonthlyNetCashflow, selectReservedCash } from './selectors';
 
@@ -228,7 +228,7 @@ function getHomeReadinessPct(
   const reservePct = Math.min(18, Math.round((reserveCash / 5_000) * 18));
   const tenantPct = holding?.tenant ? 28 : 0;
   const maintenancePct = (holding?.openMaintenanceIssues?.length ?? 0) > 0 ? 6 : 14;
-  const conditionPct = Math.round(((holding?.conditionScore ?? 70) / 100) * 24);
+  const conditionPct = Math.round(((holding?.conditionScore ?? DEFAULT_CONDITION_SCORE) / 100) * 24);
   const upgradePct = holding?.activeRenovation || (holding?.completedRenovations?.length ?? 0) > 0 ? 16 : 0;
   return clampPct(Math.max(xpPct, reservePct + tenantPct + maintenancePct + conditionPct + upgradePct));
 }

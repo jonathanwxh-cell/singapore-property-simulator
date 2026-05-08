@@ -13,6 +13,9 @@ import type { ActionResult } from './results';
 import { fail, ok } from './results';
 import { roundMoney } from '@/lib/format';
 import { clamp, getListing, normalizeOperationProperty, withOperationLog } from './operationsShared';
+import { DEFAULT_CONDITION_SCORE, TENANT_LEASE_TERM_MONTHS, TENANT_RENT_RAISE_PCT } from './constants';
+
+const RENT_RAISE_LABEL = `Raise Rent ${Math.round(TENANT_RENT_RAISE_PCT * 100)}%`;
 
 export interface TenantStrategyInput {
   mode: RentalMode;
@@ -69,15 +72,16 @@ export function setTenantStrategyPure(
   }
 
   const askingRent = Math.round(property.monthlyRental * mode.rentMultiplier * strategy.rentMultiplier * profile.rentMultiplier);
-  const conditionAdjustment = (property.conditionScore ?? 70) >= 80 ? 4 : (property.conditionScore ?? 70) < 55 ? -6 : 0;
+  const conditionScore = property.conditionScore ?? DEFAULT_CONDITION_SCORE;
+  const conditionAdjustment = conditionScore >= 80 ? 4 : conditionScore < 55 ? -6 : 0;
   const satisfaction = clamp(profile.baseSatisfaction + strategy.satisfactionDelta + conditionAdjustment, 20, 96);
-  const defaultRiskPct = roundMoney(clamp(profile.baseDefaultRiskPct + strategy.defaultRiskDelta + ((property.conditionScore ?? 70) < 55 ? 2 : 0), 0.5, 18));
+  const defaultRiskPct = roundMoney(clamp(profile.baseDefaultRiskPct + strategy.defaultRiskDelta + (conditionScore < 55 ? 2 : 0), 0.5, 18));
 
   const tenant = {
     profileId: input.profileId,
     rentalMode: input.mode,
     leaseStartTurn: player.turnCount,
-    leaseEndTurn: player.turnCount + 12,
+    leaseEndTurn: player.turnCount + TENANT_LEASE_TERM_MONTHS,
     satisfaction,
     rentStrategy: input.rentStrategy,
     askingRent,
@@ -128,7 +132,7 @@ export function getTenantLeaseOptions(
       * (currentMode?.rentMultiplier ?? 1)
       * (currentProfile?.rentMultiplier ?? 1),
   );
-  const raisedRent = Math.round(currentRent * 1.08);
+  const raisedRent = Math.round(currentRent * (1 + TENANT_RENT_RAISE_PCT));
 
   return [
     {
@@ -145,7 +149,7 @@ export function getTenantLeaseOptions(
     },
     {
       id: 'raise-rent',
-      label: 'Raise Rent 8%',
+      label: RENT_RAISE_LABEL,
       detail: 'Push income, but weak renewal intent can turn this into a vacancy.',
       projectedRent: raisedRent,
       rentDelta: raisedRent - currentRent,
@@ -270,7 +274,7 @@ export function applyTenantLeaseDecisionPure(
       renewalIntent: intentAfterDecision,
       defaultRiskPct: roundMoney(clamp(tenant.defaultRiskPct + (decisionId === 'raise-rent' ? 1.5 : decisionId === 'renew' ? -0.3 : -0.1), 0.5, 20)),
       leaseStartTurn: player.turnCount,
-      leaseEndTurn: player.turnCount + 12,
+      leaseEndTurn: player.turnCount + TENANT_LEASE_TERM_MONTHS,
       lastLeaseDecisionTurn: player.turnCount,
     },
     isRented: true,
@@ -335,7 +339,7 @@ export function applyTenantMonthlyEvent(
     });
   }
 
-  if ((property.conditionScore ?? 70) < 65) {
+  if ((property.conditionScore ?? DEFAULT_CONDITION_SCORE) < 65) {
     return buildTenantEventResult({
       property,
       nextTurn,

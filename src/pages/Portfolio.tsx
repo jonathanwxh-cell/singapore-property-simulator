@@ -13,6 +13,7 @@ import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/form
 import { describeInvestorRoute, describePortfolioHoldingOperations } from '@/engine/portfolio';
 import { getListingCatalog } from '@/engine/listings';
 import { getLandlordOpsSummary, type LandlordOpsSummary } from '@/engine/propertyOperations';
+import { DEFAULT_CONDITION_SCORE } from '@/engine/constants';
 
 export default function Portfolio() {
   const { player, toggleRental } = useGameStore();
@@ -258,7 +259,7 @@ export default function Portfolio() {
                         Lease: {leaseStatusLabel} | Live rent: {monthlyLease > 0 ? `${formatCurrency(monthlyLease)}/mo` : 'S$0'}
                       </p>
                       <p className="text-text-dim text-[10px] mt-0.5">
-                        Condition: {owned.conditionScore ?? 70}/100 | {opsSummary.tenantLabel}
+                        Condition: {owned.conditionScore ?? DEFAULT_CONDITION_SCORE}/100 | {opsSummary.tenantLabel}
                       </p>
                       {opsSummary.attentionTags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">

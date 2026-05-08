@@ -79,3 +79,16 @@ export const MSR_LIMIT = 0.30;
 
 // Save versioning
 export const SAVE_VERSION = 2;
+
+// Property condition: when a property is missing a `conditionScore` (e.g. on
+// older saves or fresh purchases that haven't been normalized yet), engine
+// reads fall back to this baseline so wear-driven branches stay deterministic.
+export const DEFAULT_CONDITION_SCORE = 70;
+
+// Tenant operations
+// 12-month tenancy term: lease signing and renewals both extend the lease end
+// by this many turns (turn = 1 month).
+export const TENANT_LEASE_TERM_MONTHS = 12;
+// Rent uplift applied by the "Raise Rent" lease decision. Player-facing copy
+// (e.g. the "Raise Rent 8%" button label) is derived from this constant.
+export const TENANT_RENT_RAISE_PCT = 0.08;
