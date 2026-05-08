@@ -5,22 +5,22 @@ import { listingChannelInfo } from '@/data/listingChannels';
 import GlassCard from '@/components/GlassCard';
 import GuidedFocusPanel from '@/components/GuidedFocusPanel';
 import ProgressivePanel from '@/components/ProgressivePanel';
-import { Search, MapPin, Bed, Bath, Maximize, Sparkles, SlidersHorizontal, Scale, Target, X } from 'lucide-react';
+import { Search, Sparkles, SlidersHorizontal } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { buildListingSummary, getDynamicListingSignals, getListingCatalog } from '@/engine/listings';
-import { formatCompactCurrency, formatCurrency } from '@/lib/format';
+import { formatCompactCurrency } from '@/lib/format';
 import { useGameStore } from '@/game/useGameStore';
 import { deriveEligibilityFlags, evaluatePropertyEligibility } from '@/engine/eligibility';
-import EligibilityBadge from '@/components/EligibilityBadge';
 import { assessDealReadiness, selectBestNextBuyForPlayer } from '@/engine/decisionCoach';
 import {
   buildDealComparisons,
   getDealComparisonShortlist,
   getWorstCaseReadout,
-  type DealComparisonResult,
 } from '@/engine/dealComparison';
 import { HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT } from '@/engine/constants';
+import PropertyListingCard from './property/PropertyListingCard';
+import { DealComparePanel, HeroFact, MarketFact } from './property/PropertiesPanels';
 
 type FilterPreset = 'starter' | 'yield' | 'upgrade' | 'advanced';
 
@@ -384,11 +384,8 @@ export default function Properties() {
           )}
         </p>
 
-        {/* Property Grid */}
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           {visibleListings.map((property) => {
-            const district = districts.find(d => d.id === property.districtId);
-            const typeInfo = propertyTypeInfo[property.type];
             const eligibility = evaluatePropertyEligibility({ ...eligibilityInput, propertyType: property.type });
             const readiness = assessDealReadiness({
               player,
@@ -397,155 +394,28 @@ export default function Properties() {
               useCpfOrdinary: true,
               financingMode: property.isHdb ? 'hdb-concessionary' : 'bank',
             });
-            const signal = dynamicSignals.find((entry) => entry.propertyId === property.id);
-            const worstCase = getWorstCaseReadout(property);
             const selectedForCompare = comparisonIds.includes(property.id);
-            const compareDisabled = comparisonIds.length >= 3 && !selectedForCompare;
             const shortlisted = nextHomeShortlistIds.includes(property.id);
-            const shortlistDisabled = ownedPropertyIds.has(property.id) || (shortlistFull && !shortlisted);
             return (
-              <GlassCard
+              <PropertyListingCard
                 key={property.id}
-                hoverable
-                onClick={() => navigate(`/property/${property.id}`)}
-                className="cursor-pointer"
-              >
-                <div className="relative h-40 mb-3 rounded-lg overflow-hidden bg-void-navy">
-                  <PropertyImage
-                    src={property.image}
-                    alt={property.name}
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                  />
-                  <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
-                    <span className="px-2 py-1 rounded text-[10px] font-rajdhani font-semibold uppercase"
-                      style={{ backgroundColor: typeInfo.color + '30', color: typeInfo.color, border: `1px solid ${typeInfo.color}50` }}>
-                      {property.type}
-                    </span>
-                    <span className="px-2 py-1 rounded text-[10px] font-rajdhani font-semibold bg-black/60 text-white border border-white/10">
-                      {property.listingChannel}
-                    </span>
-                    {signal && (
-                      <span className="px-2 py-1 rounded text-[10px] font-rajdhani font-semibold bg-warning/20 text-warning border border-warning/30">
-                        {signal.label}
-                      </span>
-                    )}
-                  </div>
-                  <div className="absolute bottom-2 left-2 text-[10px] font-mono text-white bg-black/50 px-2 py-0.5 rounded">
-                    PSF: S${property.psf.toLocaleString()}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!shortlistDisabled || shortlisted) toggleNextHomeShortlist(property.id);
-                    }}
-                    disabled={shortlistDisabled && !shortlisted}
-                    className={`absolute top-2 left-2 inline-flex min-h-9 items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-rajdhani font-semibold uppercase tracking-wider transition-colors ${
-                      shortlisted
-                        ? 'border-success/50 bg-success/25 text-success'
-                        : shortlistDisabled
-                          ? 'cursor-not-allowed border-white/10 bg-black/50 text-text-dim'
-                          : 'border-cyan-glow/40 bg-black/60 text-cyan-glow hover:bg-cyan-glow/20'
-                    }`}
-                  >
-                    <Target size={12} />
-                    {shortlisted ? 'Pinned' : ownedPropertyIds.has(property.id) ? 'Owned' : shortlistFull ? 'Full' : 'Pin'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (!compareDisabled) handleToggleCompare(property.id);
-                    }}
-                    disabled={compareDisabled}
-                    className={`absolute bottom-2 right-2 inline-flex min-h-9 items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-rajdhani font-semibold uppercase tracking-wider transition-colors ${
-                      selectedForCompare
-                        ? 'border-success/50 bg-success/25 text-success'
-                        : compareDisabled
-                          ? 'cursor-not-allowed border-white/10 bg-black/50 text-text-dim'
-                          : 'border-cyan-glow/40 bg-black/60 text-cyan-glow hover:bg-cyan-glow/20'
-                    }`}
-                  >
-                    <Scale size={12} />
-                    {selectedForCompare ? 'Compared' : 'Compare'}
-                  </button>
-                </div>
-
-                <h3 className="font-rajdhani font-semibold text-white text-base mb-1 truncate">{property.name}</h3>
-                <div className="flex items-center gap-1 text-text-secondary text-xs mb-2">
-                  <MapPin size={12} />
-                  <span>D{district?.id} {district?.name} ({district?.region})</span>
-                </div>
-                {!settings.compactMode && (
-                  <p className="text-text-dim text-[11px] mb-2 line-clamp-2">
-                    {property.strategyTag} | {property.districtTheme}
-                  </p>
-                )}
-
-                <div className="flex items-center gap-4 text-text-dim text-xs mb-3">
-                  <span className="flex items-center gap-1"><Bed size={12} /> {property.bedrooms || '-'}</span>
-                  <span className="flex items-center gap-1"><Bath size={12} /> {property.bathrooms || '-'}</span>
-                  <span className="flex items-center gap-1"><Maximize size={12} /> {property.size}sqm</span>
-                </div>
-
-                <div className="mb-3 flex flex-wrap gap-2">
-                  {flags.firstTimer && eligibility.firstTimerFriendly && (
-                    <EligibilityBadge label="First-Timer Friendly" tone="good" />
-                  )}
-                  {property.type === 'Executive Condo' && eligibility.ecEligible && (
-                    <EligibilityBadge label="EC Eligible" tone="good" />
-                  )}
-                  {eligibility.salaryCeilingExceeded && (
-                    <EligibilityBadge label="Salary Ceiling Exceeded" tone="blocked" />
-                  )}
-                  {eligibility.upgraderTier && (
-                    <EligibilityBadge label="Upgrader Tier" tone="warn" />
-                  )}
-                  {property.type === 'Executive Condo' && eligibility.blockedReason && !eligibility.salaryCeilingExceeded && (
-                    <EligibilityBadge label="Private-Owner Blocked" tone="blocked" />
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-cyan-glow font-bold">{formatCompactCurrency(property.price)}</span>
-                  <span className="text-success text-xs font-mono">{property.rentalYield}% yield</span>
-                </div>
-                <div className={`mt-3 rounded-lg border px-3 py-2 ${
-                  readiness.verdict === 'ready'
-                    ? 'border-success/30 bg-success/10'
-                    : readiness.verdict === 'stretch'
-                      ? 'border-warning/30 bg-warning/10'
-                      : 'border-danger/30 bg-danger/10'
-                }`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className={`text-[10px] font-mono uppercase tracking-[0.16em] ${
-                      readiness.verdict === 'ready'
-                        ? 'text-success'
-                        : readiness.verdict === 'stretch'
-                          ? 'text-warning'
-                          : 'text-danger'
-                    }`}>
-                      {readiness.verdict === 'ready' ? 'Can buy' : readiness.verdict === 'stretch' ? 'Tight' : 'Blocked'}
-                    </span>
-                    <span className="font-mono text-[10px] text-white">{formatCompactCurrency(readiness.cashRequired)} cash</span>
-                  </div>
-                  {!settings.compactMode && (
-                    <p className="text-text-secondary text-[11px] mt-1 line-clamp-1">
-                      {readiness.verdict === 'ready'
-                        ? 'Ready with current CPF and cash.'
-                        : readiness.verdict === 'stretch'
-                          ? 'Buyable, but monthly buffer is thin.'
-                          : readiness.primaryBlocker?.message ?? 'Improve readiness before buying.'}
-                    </p>
-                  )}
-                </div>
-                {!settings.compactMode && (
-                  <div className="mt-2 rounded-lg border border-warning/20 bg-warning/10 px-3 py-2">
-                    <p className="label-text text-[9px] text-warning">Worst case</p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{worstCase}</p>
-                  </div>
-                )}
-              </GlassCard>
+                property={property}
+                readiness={readiness}
+                eligibility={eligibility}
+                flags={flags}
+                signal={dynamicSignals.find((entry) => entry.propertyId === property.id)}
+                worstCase={getWorstCaseReadout(property)}
+                selectedForCompare={selectedForCompare}
+                compareDisabled={comparisonIds.length >= 3 && !selectedForCompare}
+                shortlisted={shortlisted}
+                shortlistDisabled={ownedPropertyIds.has(property.id) || (shortlistFull && !shortlisted)}
+                shortlistFull={shortlistFull}
+                ownedPropertyIds={ownedPropertyIds}
+                compactMode={settings.compactMode}
+                onOpen={(propertyId) => navigate(`/property/${propertyId}`)}
+                onToggleCompare={handleToggleCompare}
+                onToggleShortlist={toggleNextHomeShortlist}
+              />
             );
           })}
         </div>
@@ -561,139 +431,3 @@ export default function Properties() {
   );
 }
 
-function DealComparePanel({
-  comparison,
-  mode,
-  onOpenProperty,
-  onRemove,
-  onClear,
-}: {
-  comparison: DealComparisonResult;
-  mode: 'selected' | 'suggested';
-  onOpenProperty: (propertyId: string) => void;
-  onRemove: (propertyId: string) => void;
-  onClear: () => void;
-}) {
-  return (
-    <GlassCard accentColor="#7C4DFF" className="mb-6">
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="label-text mb-1 text-[10px] text-purple-glow">Practice mode</p>
-          <h2 className="section-title text-white">Compare Before You Buy</h2>
-          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-text-secondary">
-            {comparison.summary.headline} {comparison.summary.detail}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full border border-purple-glow/25 bg-purple-glow/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-purple-glow">
-            {mode === 'selected' ? 'Your picks' : 'Suggested set'}
-          </span>
-          {mode === 'selected' && (
-            <button type="button" onClick={onClear} className="btn-secondary min-h-10 px-3 py-2 text-xs">
-              Clear picks
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="grid gap-3 lg:grid-cols-3">
-        {comparison.items.map((item) => (
-          <div
-            key={item.id}
-            className={`rounded-2xl border p-4 ${
-              comparison.summary.bestId === item.id
-                ? 'border-success/40 bg-success/10'
-                : 'border-glass-border bg-white/[0.03]'
-            }`}
-          >
-            <div className="mb-3 flex items-start justify-between gap-3">
-              <div>
-                <p className="font-rajdhani text-lg font-semibold text-white">{item.name}</p>
-                <p className="text-[11px] text-text-dim">{item.type} | {item.routeFitLabel}</p>
-              </div>
-              {mode === 'selected' && (
-                <button
-                  type="button"
-                  onClick={() => onRemove(item.id)}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-text-secondary hover:text-white"
-                  aria-label={`Remove ${item.name} from comparison`}
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <CompareMetric label="Cash after CPF" value={formatCompactCurrency(item.cashRequired)} tone={item.verdict === 'blocked' ? 'bad' : 'good'} />
-              <CompareMetric label="Duties / levy" value={formatCompactCurrency(item.upfrontDuties)} tone="neutral" />
-              <CompareMetric label="Monthly surplus" value={formatCurrency(item.monthlySurplusAfterPurchase)} tone={item.monthlySurplusAfterPurchase >= 0 ? 'good' : 'bad'} />
-              <CompareMetric label="Yield" value={`${item.rentalYieldPct}%`} tone={item.rentalYieldPct >= 4 ? 'good' : 'neutral'} />
-            </div>
-            <div className={`mt-3 rounded-xl border p-3 ${
-              item.verdict === 'ready'
-                ? 'border-success/25 bg-success/10'
-                : item.verdict === 'stretch'
-                  ? 'border-warning/25 bg-warning/10'
-                  : 'border-danger/25 bg-danger/10'
-            }`}>
-              <p className="label-text mb-1 text-[9px] text-text-dim">Practice read</p>
-              <p className="text-xs leading-relaxed text-text-secondary">{item.nextFix}</p>
-            </div>
-            <div className="mt-3 rounded-xl border border-warning/20 bg-warning/10 p-3">
-              <p className="label-text mb-1 text-[9px] text-warning">Worst case</p>
-              <p className="text-xs leading-relaxed text-text-secondary">{item.worstCase}</p>
-            </div>
-            <button type="button" onClick={() => onOpenProperty(item.id)} className="btn-secondary mt-3 w-full py-3 text-xs">
-              Open deal page
-            </button>
-          </div>
-        ))}
-      </div>
-      <p className="mt-3 text-xs leading-relaxed text-text-dim">
-        Use Compare on listing cards to swap the suggested set. Comparing does not reserve cash, advance time, or buy anything.
-      </p>
-    </GlassCard>
-  );
-}
-
-function CompareMetric({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: 'good' | 'bad' | 'neutral';
-}) {
-  return (
-    <div className="rounded-xl border border-glass-border bg-black/20 p-3">
-      <p className="label-text text-[9px] text-text-dim">{label}</p>
-      <p className={`mt-1 font-mono text-sm ${
-        tone === 'good'
-          ? 'text-success'
-          : tone === 'bad'
-            ? 'text-danger'
-            : 'text-white'
-      }`}>
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function HeroFact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-glass-border bg-black/20 p-3">
-      <p className="label-text text-text-dim text-[10px]">{label}</p>
-      <p className="font-mono text-white mt-1">{value}</p>
-    </div>
-  );
-}
-
-function MarketFact({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return (
-    <div className="rounded-xl border border-glass-border bg-white/[0.03] p-3">
-      <p className="label-text text-text-dim text-[10px]">{label}</p>
-      <p className="font-mono text-2xl text-white mt-1">{value}</p>
-      <p className="text-text-secondary text-xs mt-1">{detail}</p>
-    </div>
-  );
-}
