@@ -233,7 +233,7 @@ src/
 |  |- constants.ts             # All tunable parameters in one place
 |  |- rng.ts                   # Seeded PRNG for deterministic replays
 |  |- results.ts               # ActionResult<T> discriminated union
-|  `- __tests__/               # 329 vitest specs covering the modules above
+|  `- __tests__/               # 337 vitest specs covering the modules above
 |- game/
 |  |- types.ts                 # Player, Loan, Property, MarketState, GameState
 |  |- useGameStore.ts          # Zustand store - thin wrapper around engine actions
@@ -256,8 +256,11 @@ src/
 |  |- lifeActions.ts           # Hybrid life-sim action catalog
 |  |- lifeVisuals.ts           # Life-scene art bindings
 |  |- achievements.ts          # Achievement metadata
+|  |- buyerOptions.ts          # New-game household / residency / age option lists
 |  `- saveSchema.ts            # Zod schema for save validation
 |- pages/                      # Route-level React components (Dashboard, Buy, Own, Life, Learn...)
+|  |- dashboard/               # Dashboard subcomponents, panels, motion variants
+|  `- property/                # Property listing card and Buy-page panels
 |- components/                 # Shared UI (GlassCard, HUDTopBar, Sidebar, CommandCenterHero...)
 |- hooks/                      # use-mobile, useSaveLoad
 `- lib/                        # format helpers and small UI utilities

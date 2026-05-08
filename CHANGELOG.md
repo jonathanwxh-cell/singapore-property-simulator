@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fast residential sales no longer overstate net proceeds by ignoring SSD, and qualifying ABSD refund paths now teach pay-now / recover-later cashflow instead of acting like an instant waiver.
 
 ### Improved
+- Internal code-quality pass (no behaviour change): the eight player-mutating store actions now share a single `runPlayerAction` helper; the 23-case ownership-fork effect switch and the parallel decision-coach blocker switches were converted into data tables; MOP notable-month milestones, the default property condition score, the 12-month tenancy term, and the 8% rent-raise step moved to named engine constants. `Dashboard.tsx` (480 → 299 LOC) split out a `DashboardAdvancedRail`; `Properties.tsx` (700 → 433 LOC) split out a `PropertyListingCard` plus a panels module. New-game household and residency option lists were lifted into `src/data/buyerOptions.ts`.
 
 ## [0.5.0] - 2026-05-07
 

@@ -43,8 +43,8 @@ When opening a PR that touches files outside the rough split below, post a comme
 | Pure engine: financial math | `src/engine/cpf.ts`, `src/engine/stampDuty.ts`, `src/engine/ltv.ts`, `src/engine/finance.ts`, `src/engine/constants.ts` |
 | Pure engine: actions / turn | `src/engine/actions.ts`, `src/engine/turn.ts`, `src/engine/selectors.ts`, `src/engine/results.ts`, `src/engine/rng.ts` |
 | Game store / types | `src/game/useGameStore.ts`, `src/game/types.ts` |
-| Data tables | `src/data/properties.ts`, `src/data/careers.ts`, `src/data/districts.ts`, `src/data/eras.ts`, `src/data/scenarios.ts`, `src/data/saveSchema.ts` |
-| Pages / UI | `src/pages/*.tsx`, `src/components/*.tsx` |
+| Data tables | `src/data/properties.ts`, `src/data/careers.ts`, `src/data/districts.ts`, `src/data/eras.ts`, `src/data/scenarios.ts`, `src/data/saveSchema.ts`, `src/data/buyerOptions.ts` |
+| Pages / UI | `src/pages/*.tsx`, `src/pages/dashboard/**`, `src/pages/property/**`, `src/components/**` |
 | Tests | Co-located with the file under test (`src/engine/__tests__/`); you own the test if you own the file. |
 | Playwright smoke / scripts | `scripts/playtest-*.mjs` |
 | Always shared | `package.json`, `package-lock.json`, `CHANGELOG.md`, `README.md`, this file |
