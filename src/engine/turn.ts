@@ -170,7 +170,8 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   );
 
   // Property values follow the same broader market pulse, but with dampened sensitivity
-  const finalProperties = portfolioStep.updatedProperties.map((property) => ({
+  const forkAdjustedProperties = applyOwnershipForkPropertyEffects(portfolioStep.updatedProperties, lifeResolution.propertyEffects);
+  const finalProperties = forkAdjustedProperties.map((property) => ({
     ...property,
     currentValue: Math.max(
       PROPERTY_VALUE_FLOOR,
@@ -272,4 +273,40 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+function applyOwnershipForkPropertyEffects<
+  T extends Pick<NonNullable<Player['properties']>[number], 'propertyId' | 'currentValue' | 'conditionScore' | 'tenant'>
+>(properties: T[], effects: { propertyId: string; conditionDelta?: number; valueDeltaPct?: number; tenantSatisfactionDelta?: number }[]): T[] {
+  if (effects.length === 0) return properties;
+
+  return properties.map((property) => {
+    const matchingEffects = effects.filter((effect) => effect.propertyId === property.propertyId);
+    if (matchingEffects.length === 0) return property;
+
+    const totalConditionDelta = matchingEffects.reduce((sum, effect) => sum + (effect.conditionDelta ?? 0), 0);
+    const totalValuePctDelta = matchingEffects.reduce((sum, effect) => sum + (effect.valueDeltaPct ?? 0), 0);
+    const totalTenantSatisfactionDelta = matchingEffects.reduce((sum, effect) => sum + (effect.tenantSatisfactionDelta ?? 0), 0);
+
+    return {
+      ...property,
+      currentValue: Math.max(
+        PROPERTY_VALUE_FLOOR,
+        Math.round(property.currentValue * (1 + totalValuePctDelta / 100)),
+      ),
+      conditionScore: property.conditionScore === undefined
+        ? property.conditionScore
+        : clamp(property.conditionScore + totalConditionDelta, 0, 100),
+      tenant: property.tenant
+        ? {
+            ...property.tenant,
+            satisfaction: clamp(property.tenant.satisfaction + totalTenantSatisfactionDelta, 0, 100),
+          }
+        : property.tenant,
+    };
+  });
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
 }

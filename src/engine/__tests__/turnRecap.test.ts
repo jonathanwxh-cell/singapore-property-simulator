@@ -73,6 +73,8 @@ describe('getLastTurnRecap', () => {
             monthlyIntentId: 'mop-market-intel',
             monthlyIntentLabel: 'Study Exit Market',
             monthlyIntentTrack: 'market',
+            ownershipForkId: 'launch-preview-weekend',
+            ownershipForkLabel: 'Launch Preview Weekend',
             primaryActionId: 'take-side-gig',
             secondaryActionId: 'plan-schemes',
             cashDelta: 850,
@@ -101,7 +103,7 @@ describe('getLastTurnRecap', () => {
     });
 
     expect(recap).not.toBeNull();
-    expect(recap?.title).toContain('Study Exit Market');
+    expect(recap?.title).toContain('Launch Preview Weekend');
     expect(recap?.nextHint).toContain('scenario');
     expect(recap?.summary).toContain('studying');
     expect(recap?.facts.map((fact) => fact.label)).toEqual([

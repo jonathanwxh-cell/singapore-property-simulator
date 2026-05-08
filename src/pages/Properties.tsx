@@ -5,7 +5,7 @@ import { listingChannelInfo } from '@/data/listingChannels';
 import GlassCard from '@/components/GlassCard';
 import GuidedFocusPanel from '@/components/GuidedFocusPanel';
 import ProgressivePanel from '@/components/ProgressivePanel';
-import { Search, MapPin, Bed, Bath, Maximize, Sparkles, SlidersHorizontal, Scale, X } from 'lucide-react';
+import { Search, MapPin, Bed, Bath, Maximize, Sparkles, SlidersHorizontal, Scale, Target, X } from 'lucide-react';
 import PropertyImage from '@/components/PropertyImage';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { buildListingSummary, getDynamicListingSignals, getListingCatalog } from '@/engine/listings';
@@ -34,7 +34,7 @@ const filterPresets: Array<{ id: FilterPreset; label: string; detail: string }> 
 export default function Properties() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { player, settings, updateSettings } = useGameStore();
+  const { player, settings, updateSettings, toggleNextHomeShortlist } = useGameStore();
   const districtParam = Number(searchParams.get('district'));
   const districtFromQuery = districts.find((district) => district.id === districtParam);
   const [search, setSearch] = useState('');
@@ -66,6 +66,9 @@ export default function Properties() {
     propertyIds: comparisonIds.length > 0 ? comparisonIds : suggestedComparisonIds,
   });
   const comparisonMode = comparisonIds.length > 0 ? 'selected' : 'suggested';
+  const nextHomeShortlistIds = player.nextHomeShortlistIds ?? [];
+  const shortlistFull = nextHomeShortlistIds.length >= 3;
+  const ownedPropertyIds = new Set(player.properties.map((ownedProperty) => ownedProperty.propertyId));
   const activePreset = districtFromQuery ? 'advanced' : preset;
   const showAdvancedFilterControls = showAdvancedFilters || Boolean(districtFromQuery);
   const showGuidedFocus = settings.guidedMode || player.turnCount <= 6;
@@ -165,6 +168,26 @@ export default function Properties() {
                 <div className="flex flex-wrap gap-2 mt-4">
                   <button onClick={() => navigate(`/property/${bestNextBuy.property.id}`)} className="btn-primary px-4 py-3 text-sm">
                     Review Deal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleNextHomeShortlist(bestNextBuy.property.id)}
+                    disabled={ownedPropertyIds.has(bestNextBuy.property.id) || (shortlistFull && !nextHomeShortlistIds.includes(bestNextBuy.property.id))}
+                    className={`min-h-11 rounded-lg border px-4 py-3 text-sm font-rajdhani font-semibold uppercase tracking-wider ${
+                      nextHomeShortlistIds.includes(bestNextBuy.property.id)
+                        ? 'border-success/40 bg-success/10 text-success'
+                        : ownedPropertyIds.has(bestNextBuy.property.id) || (shortlistFull && !nextHomeShortlistIds.includes(bestNextBuy.property.id))
+                          ? 'cursor-not-allowed border-white/10 bg-black/20 text-text-dim'
+                          : 'border-cyan-glow/30 bg-cyan-glow/10 text-cyan-glow hover:bg-cyan-glow/20'
+                    }`}
+                  >
+                    {nextHomeShortlistIds.includes(bestNextBuy.property.id)
+                      ? 'Pinned to shortlist'
+                      : ownedPropertyIds.has(bestNextBuy.property.id)
+                        ? 'Current home'
+                        : shortlistFull
+                          ? 'Shortlist full'
+                          : 'Pin as target'}
                   </button>
                   <button onClick={() => handlePresetChange('starter')} className="btn-secondary px-4 py-3 text-sm">
                     Starter List
@@ -355,6 +378,7 @@ export default function Properties() {
         <p className="text-text-secondary text-sm mb-4">
           {filtered.length} properties found
           <span className="text-text-dim"> | {new Set(filtered.map((property) => property.districtId)).size} districts in view</span>
+          <span className="text-text-dim"> | shortlist {nextHomeShortlistIds.length}/3</span>
           {!showAllVisibleListings && filtered.length > visibleListings.length && (
             <span className="text-text-dim"> | showing the first {visibleListings.length} to keep browsing readable</span>
           )}
@@ -377,6 +401,8 @@ export default function Properties() {
             const worstCase = getWorstCaseReadout(property);
             const selectedForCompare = comparisonIds.includes(property.id);
             const compareDisabled = comparisonIds.length >= 3 && !selectedForCompare;
+            const shortlisted = nextHomeShortlistIds.includes(property.id);
+            const shortlistDisabled = ownedPropertyIds.has(property.id) || (shortlistFull && !shortlisted);
             return (
               <GlassCard
                 key={property.id}
@@ -407,6 +433,24 @@ export default function Properties() {
                   <div className="absolute bottom-2 left-2 text-[10px] font-mono text-white bg-black/50 px-2 py-0.5 rounded">
                     PSF: S${property.psf.toLocaleString()}
                   </div>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (!shortlistDisabled || shortlisted) toggleNextHomeShortlist(property.id);
+                    }}
+                    disabled={shortlistDisabled && !shortlisted}
+                    className={`absolute top-2 left-2 inline-flex min-h-9 items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-rajdhani font-semibold uppercase tracking-wider transition-colors ${
+                      shortlisted
+                        ? 'border-success/50 bg-success/25 text-success'
+                        : shortlistDisabled
+                          ? 'cursor-not-allowed border-white/10 bg-black/50 text-text-dim'
+                          : 'border-cyan-glow/40 bg-black/60 text-cyan-glow hover:bg-cyan-glow/20'
+                    }`}
+                  >
+                    <Target size={12} />
+                    {shortlisted ? 'Pinned' : ownedPropertyIds.has(property.id) ? 'Owned' : shortlistFull ? 'Full' : 'Pin'}
+                  </button>
                   <button
                     type="button"
                     onClick={(event) => {

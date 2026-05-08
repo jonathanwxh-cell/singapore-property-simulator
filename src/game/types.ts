@@ -87,6 +87,8 @@ export interface LifeMonthSummary {
   monthlyIntentId: string | null;
   monthlyIntentLabel: string | null;
   monthlyIntentTrack: MonthlyIntentTrack | null;
+  ownershipForkId?: string | null;
+  ownershipForkLabel?: string | null;
   primaryActionId: LifeActionId;
   secondaryActionId: LifeActionId | null;
   cashDelta: number;
@@ -112,6 +114,8 @@ export interface PlayerLifeState {
   selectedMonthlyIntentId: string | null;
   selectedMonthlyIntentLabel: string | null;
   selectedMonthlyIntentTrack: MonthlyIntentTrack | null;
+  selectedOwnershipForkId: string | null;
+  selectedOwnershipForkLabel: string | null;
   trainingTrackId: string | null;
   trainingMonthsRemaining: number;
   ownershipCampaign: OwnershipCampaignProgressState;
@@ -369,6 +373,7 @@ export interface Player {
   reserve?: ReserveState;
   operationHistory?: PropertyOperationLogEntry[];
   pendingTaxReliefs?: PendingTaxRelief[];
+  nextHomeShortlistIds?: string[];
 }
 
 export interface MarketState {
@@ -557,6 +562,8 @@ export function createInitialLifeState(overrides: Partial<PlayerLifeState> = {})
         monthlyIntentId: lastMonthSummary.monthlyIntentId ?? null,
         monthlyIntentLabel: lastMonthSummary.monthlyIntentLabel ?? null,
         monthlyIntentTrack: lastMonthSummary.monthlyIntentTrack ?? null,
+        ownershipForkId: lastMonthSummary.ownershipForkId ?? null,
+        ownershipForkLabel: lastMonthSummary.ownershipForkLabel ?? null,
         incomeBreakdown: {
           ...createInitialLifeIncomeBreakdown(),
           ...(lastMonthSummary.incomeBreakdown ?? {}),
@@ -577,6 +584,8 @@ export function createInitialLifeState(overrides: Partial<PlayerLifeState> = {})
     selectedMonthlyIntentId: null,
     selectedMonthlyIntentLabel: null,
     selectedMonthlyIntentTrack: null,
+    selectedOwnershipForkId: null,
+    selectedOwnershipForkLabel: null,
     trainingTrackId: null,
     trainingMonthsRemaining: 0,
     ownershipCampaign: {

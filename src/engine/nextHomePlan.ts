@@ -119,6 +119,11 @@ function getNextHomePhase(player: Player, holding: OwnedProperty | null, listing
 }
 
 function resolveNextHomeTarget(player: Player, currentListing: Property | null): Property {
+  const shortlistedTarget = resolveShortlistedTarget(player, currentListing?.id ?? null);
+  if (shortlistedTarget) {
+    return shortlistedTarget;
+  }
+
   if (!currentListing) {
     return properties.find((property) => property.id === 'hdb-bto-0') ?? properties[0];
   }
@@ -152,6 +157,18 @@ function resolveNextHomeTarget(player: Player, currentListing: Property | null):
   return findCheapest((property) => isResidentialCategory(property.type) && !property.isHdb && property.price > currentValue * 1.05)
     ?? findCheapest((property) => property.type === 'Private Condo')
     ?? currentListing;
+}
+
+function resolveShortlistedTarget(player: Player, currentPropertyId: string | null): Property | null {
+  for (const propertyId of player.nextHomeShortlistIds ?? []) {
+    if (propertyId === currentPropertyId) continue;
+    const listing = properties.find((property) => property.id === propertyId);
+    if (listing && isResidentialCategory(listing.type)) {
+      return listing;
+    }
+  }
+
+  return null;
 }
 
 function findCheapest(predicate: (property: Property) => boolean): Property | null {

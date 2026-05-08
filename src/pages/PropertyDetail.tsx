@@ -27,7 +27,7 @@ import PurchasePanel from '@/components/PropertyDetail/PurchasePanel';
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { player, buyProperty, sellProperty, toggleRental, startRenovation, setTenantStrategy, applyTenantLeaseDecision, resolveMaintenanceIssue, setReservePlan } = useGameStore();
+  const { player, buyProperty, sellProperty, toggleRental, startRenovation, setTenantStrategy, applyTenantLeaseDecision, resolveMaintenanceIssue, setReservePlan, toggleNextHomeShortlist } = useGameStore();
   const [downPaymentPercent, setDownPaymentPercent] = useState(HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT);
   const [financingMode, setFinancingMode] = useState<MortgageFinancingMode>('hdb-concessionary');
   const [renovationContractorTier, setRenovationContractorTier] = useState<RenovationContractorTier>('standard');
@@ -38,11 +38,14 @@ export default function PropertyDetail() {
 
   const property = getListingCatalog().find(p => p.id === id);
   const district = property ? districts.find(d => d.id === property.districtId) : null;
+  const nextHomeShortlistIds = player.nextHomeShortlistIds ?? [];
 
   const ownedIndex = property ? player.properties.findIndex(op => op.propertyId === property.id) : -1;
   const isOwned = ownedIndex >= 0;
   const ownedProperty = isOwned ? player.properties[ownedIndex] : null;
   const associatedLoan = ownedProperty?.loanId ? player.loans.find(l => l.id === ownedProperty.loanId) : null;
+  const isShortlisted = property ? nextHomeShortlistIds.includes(property.id) : false;
+  const shortlistDisabled = isOwned || (nextHomeShortlistIds.length >= 3 && !isShortlisted);
 
   const readiness = usePurchaseReadiness(player, property, financingMode, downPaymentPercent, useCpfOrdinary, isOwned, actionError);
   const ownedState = useOwnedPropertyState(player, property ?? {} as ReturnType<typeof getListingCatalog>[number], ownedProperty);
@@ -133,6 +136,11 @@ export default function PropertyDetail() {
     purchasePanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const handleToggleShortlist = () => {
+    if (!property || shortlistDisabled && !isShortlisted) return;
+    toggleNextHomeShortlist(property.id);
+  };
+
   const quickPanelProps = {
     propertyName: property.name, readiness: dealReadiness.verdict, summary: practicePlan.summary,
     projectedMonthlySurplus: practicePlan.projectedMonthlySurplusAfterPurchase,
@@ -153,6 +161,11 @@ export default function PropertyDetail() {
           property={property} district={district} typeColor={typeInfo.color}
           isOwned={isOwned} ownedProperty={ownedProperty}
           eligibilityFlags={eligibilityFlags} eligibility={eligibility}
+          shortlistAction={isOwned ? undefined : {
+            label: isShortlisted ? 'Pinned to shortlist' : shortlistDisabled ? 'Shortlist full' : 'Pin next-home target',
+            disabled: shortlistDisabled && !isShortlisted,
+            onClick: handleToggleShortlist,
+          }}
         />
 
         {!isOwned && <div className="hidden md:block"><QuickPurchasePanel {...quickPanelProps} /></div>}

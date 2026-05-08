@@ -172,6 +172,8 @@ const playerSchema = z.object({
     selectedMonthlyIntentId: z.string().nullable().optional(),
     selectedMonthlyIntentLabel: z.string().nullable().optional(),
     selectedMonthlyIntentTrack: z.enum(['income', 'market', 'home-project', 'tenant', 'career', 'recovery']).nullable().optional(),
+    selectedOwnershipForkId: z.string().nullable().optional(),
+    selectedOwnershipForkLabel: z.string().nullable().optional(),
     trainingTrackId: z.string().nullable(),
     trainingMonthsRemaining: z.number().int().nonnegative(),
     ownershipCampaign: z.object({
@@ -200,6 +202,8 @@ const playerSchema = z.object({
       monthlyIntentId: z.string().nullable().optional(),
       monthlyIntentLabel: z.string().nullable().optional(),
       monthlyIntentTrack: z.enum(['income', 'market', 'home-project', 'tenant', 'career', 'recovery']).nullable().optional(),
+      ownershipForkId: z.string().nullable().optional(),
+      ownershipForkLabel: z.string().nullable().optional(),
       primaryActionId: z.string(),
       secondaryActionId: z.string().nullable(),
       cashDelta: z.number().finite(),
@@ -256,6 +260,7 @@ const playerSchema = z.object({
     tone: z.enum(['good', 'warn', 'bad', 'neutral']),
   })).optional(),
   pendingTaxReliefs: z.array(pendingTaxReliefSchema).optional(),
+  nextHomeShortlistIds: z.array(z.string()).max(3).optional(),
 });
 
 export const saveSchema = z.object({

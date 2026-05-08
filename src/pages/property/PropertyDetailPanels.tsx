@@ -191,6 +191,7 @@ export function PropertyImageHeader({
   ownedProperty,
   eligibilityFlags,
   eligibility,
+  shortlistAction,
 }: {
   property: ListingProperty;
   district: District;
@@ -199,11 +200,30 @@ export function PropertyImageHeader({
   ownedProperty: OwnedProperty | null;
   eligibilityFlags: EligibilityFlags;
   eligibility: PropertyEligibilityStatus;
+  shortlistAction?: {
+    label: string;
+    disabled: boolean;
+    onClick: () => void;
+  };
 }) {
   return (
     <div className="relative mb-4 h-52 overflow-hidden rounded-xl md:mb-6 md:h-80">
       <PropertyImage src={property.image} alt={property.name} className="w-full h-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+      {shortlistAction && (
+        <button
+          type="button"
+          onClick={shortlistAction.onClick}
+          disabled={shortlistAction.disabled}
+          className={`absolute right-4 top-4 z-10 rounded-full border px-4 py-2 text-[10px] font-mono uppercase tracking-[0.18em] ${
+            shortlistAction.disabled
+              ? 'cursor-not-allowed border-white/10 bg-black/40 text-text-dim'
+              : 'border-cyan-glow/35 bg-cyan-glow/10 text-cyan-glow hover:bg-cyan-glow/20'
+          }`}
+        >
+          {shortlistAction.label}
+        </button>
+      )}
       <div className="absolute bottom-4 left-4 right-4">
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className="px-2 py-1 rounded text-[10px] font-rajdhani font-semibold uppercase"

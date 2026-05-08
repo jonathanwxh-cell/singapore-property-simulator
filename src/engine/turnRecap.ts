@@ -48,7 +48,7 @@ export function getLastTurnRecap({ player, market, currentScenario }: TurnRecapI
   const planLabel = secondaryAction
     ? `${primaryAction?.label ?? 'Monthly plan'} + ${secondaryAction.label}`
     : primaryAction?.label ?? 'Monthly plan';
-  const recapLabel = lastMonth.monthlyIntentLabel ?? planLabel;
+  const recapLabel = lastMonth.ownershipForkLabel ?? lastMonth.monthlyIntentLabel ?? planLabel;
   const breakdown = lastMonth.incomeBreakdown ?? createInitialLifeIncomeBreakdown();
 
   return {

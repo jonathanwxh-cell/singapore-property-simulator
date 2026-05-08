@@ -376,7 +376,7 @@ async function run() {
     await expectVisible(page, 'text=Quickstart');
     await expectVisible(page, 'text=Terms You Will See Early');
 
-    await page.getByRole('button', { name: 'Learn the Rules' }).click();
+    await gotoRoute(page, `${baseUrl}/#/learn`);
     await expectVisible(page, 'text=Learn Singapore Property Without Prereqs');
     await expectVisible(page, 'text=Who this game is for');
     await expectVisible(page, "text=Additional Buyer's Stamp Duty");

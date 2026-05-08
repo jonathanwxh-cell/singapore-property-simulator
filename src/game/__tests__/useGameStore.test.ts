@@ -123,6 +123,67 @@ describe('useGameStore', () => {
     expect(useGameStore.getState().player.life.selectedSecondaryActionId).toBe('recover');
   });
 
+  it('caps the next-home shortlist at three future homes and ignores owned homes', () => {
+    resetStore({
+      player: makePlayer({
+        properties: [{
+          propertyId: 'hdb-bto-0',
+          purchasePrice: 265_000,
+          purchaseDate: '2024-01',
+          currentValue: 265_000,
+          isRented: false,
+          monthlyRental: 1_300,
+          renovationLevel: 0,
+          occupancyStatus: 'owner-occupied',
+          mopRemainingMonths: 60,
+        }],
+      }),
+    });
+
+    useGameStore.getState().toggleNextHomeShortlist('hdb-bto-0');
+    useGameStore.getState().toggleNextHomeShortlist('ec-1');
+    useGameStore.getState().toggleNextHomeShortlist('condo-1');
+    useGameStore.getState().toggleNextHomeShortlist('condo-2');
+    useGameStore.getState().toggleNextHomeShortlist('condo-3');
+
+    expect(useGameStore.getState().player.nextHomeShortlistIds).toEqual(['ec-1', 'condo-1', 'condo-2']);
+  });
+
+  it('plays an ownership fork as a specific month and records it in the recap', () => {
+    resetStore({
+      player: makePlayer({
+        properties: [{
+          propertyId: 'hdb-bto-0',
+          purchasePrice: 265_000,
+          purchaseDate: '2024-01',
+          currentValue: 265_000,
+          isRented: false,
+          monthlyRental: 1_300,
+          renovationLevel: 0,
+          occupancyStatus: 'owner-occupied',
+          mopRemainingMonths: 58,
+        }],
+      }),
+    });
+
+    useGameStore.getState().applyOwnershipFork({
+      id: 'neighbour-referral',
+      title: 'Neighbour Referral',
+      detail: 'A neighbour asks whether you would consider a spare-room tenant.',
+      payoff: 'Kickstart the MOP-safe landlord loop with extra referral momentum.',
+      tone: 'good',
+      intentId: 'landlord-ops',
+      route: '/property/hdb-bto-0',
+      targetPropertyId: 'hdb-bto-0',
+    });
+
+    const player = useGameStore.getState().player;
+    expect(player.turnCount).toBe(1);
+    expect(player.life.lastMonthSummary?.ownershipForkId).toBe('neighbour-referral');
+    expect(player.life.lastMonthSummary?.ownershipForkLabel).toBe('Neighbour Referral');
+    expect(player.life.lastMonthSummary?.notes.some((note) => note.includes('referral'))).toBe(true);
+  });
+
   it('applies a landlord MOP intent as a compliant room-rental month before advancing', () => {
     resetStore({
       player: makePlayer({

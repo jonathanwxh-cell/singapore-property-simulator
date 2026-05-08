@@ -16,6 +16,7 @@ import { getNextBestMoves } from '@/engine/decisionCoach';
 import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
 import { getNextHomePlan } from '@/engine/nextHomePlan';
 import { getOwnershipCampaign } from '@/engine/ownershipCampaign';
+import { getNextHomeShortlist, getOwnershipForkOptions, type OwnershipForkOption } from '@/engine/ownershipForks';
 import { deriveEligibilityFlags } from '@/engine/eligibility';
 import { getFirstHomeMissions } from '@/engine/firstHomeMissions';
 import { getLastTurnRecap } from '@/engine/turnRecap';
@@ -48,6 +49,7 @@ import FirstRunQuestPanel from './dashboard/panels/FirstRunQuestPanel';
 import LastMonthRecapPanel from './dashboard/panels/LastMonthRecapPanel';
 import MonthlyIntentPanel from './dashboard/panels/MonthlyIntentPanel';
 import NextHomeGatewayPanel from './dashboard/panels/NextHomeGatewayPanel';
+import OwnershipForksPanel from './dashboard/panels/OwnershipForksPanel';
 import PropertyOperationsPanel from './dashboard/panels/PropertyOperationsPanel';
 import {
   Banknote,
@@ -72,6 +74,7 @@ export default function Dashboard() {
     currentScenario,
     advanceToNextNotableMonth,
     applyMonthlyIntent,
+    applyOwnershipFork,
     prepareMonthlyIntent,
     updateSettings,
   } = useGameStore();
@@ -113,6 +116,8 @@ export default function Dashboard() {
   const nextBestMoves = useMemo(() => getNextBestMoves({ player, currentScenario }), [player, currentScenario]);
   const nextHomePlan = useMemo(() => getNextHomePlan(player), [player]);
   const ownershipCampaign = useMemo(() => getOwnershipCampaign(player), [player]);
+  const ownershipForks = useMemo(() => getOwnershipForkOptions(player), [player]);
+  const nextHomeShortlist = useMemo(() => getNextHomeShortlist(player), [player]);
   const monthlyIntents = useMemo(() => getMonthlyIntentOptions(player), [player]);
   const recommendedMonthlyIntent = monthlyIntents.find((intent) => intent.recommended) ?? monthlyIntents[0] ?? null;
   const firstHomeMissions = useMemo(() => getFirstHomeMissions(player), [player]);
@@ -134,6 +139,10 @@ export default function Dashboard() {
   const handleOpenIntent = (intent: MonthlyIntentOption) => {
     prepareMonthlyIntent(intent);
     navigate(intent.route);
+  };
+  const handlePlayOwnershipFork = (fork: OwnershipForkOption) => {
+    applyOwnershipFork(fork);
+    navigate('/dashboard');
   };
   const handleQuestStep = (step: FirstRunQuest['steps'][number]) => {
     if (step.id === 'choose-monthly-intent') {
@@ -222,6 +231,18 @@ export default function Dashboard() {
               onUseIntent={handleSelectIntent}
               onOpenTarget={() => navigate(nextHomePlan.targetRoute)}
               onAdvanceToNotableMonth={() => advanceToNextNotableMonth()}
+            />
+          </motion.div>
+        )}
+
+        {ownershipCampaign.active && ownershipForks.length > 0 && (
+          <motion.div variants={itemVariants} className="mb-6">
+            <OwnershipForksPanel
+              forks={ownershipForks}
+              shortlist={nextHomeShortlist}
+              onPlayFork={handlePlayOwnershipFork}
+              onOpenRoute={(route) => navigate(route)}
+              onOpenBuy={() => navigate('/properties')}
             />
           </motion.div>
         )}

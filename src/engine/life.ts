@@ -9,11 +9,13 @@ import {
 import type { Rng } from './rng';
 import { applyIncomeTrackGain, getIncomeTrackMultiplier } from './lifeIncome';
 import { applyOwnershipCampaignProgress } from './ownershipCampaign';
+import { getOwnershipForkEffect, type OwnershipForkPropertyEffect } from './ownershipForks';
 
 export interface LifeMonthResolution {
   cashDelta: number;
   householdCost: number;
   nextLife: PlayerLifeState;
+  propertyEffects: OwnershipForkPropertyEffect[];
 }
 
 interface LifeActionResolution {
@@ -64,6 +66,8 @@ export function normalizeLifeState(life: Partial<PlayerLifeState> | undefined): 
           monthlyIntentId: life.lastMonthSummary.monthlyIntentId ?? null,
           monthlyIntentLabel: life.lastMonthSummary.monthlyIntentLabel ?? null,
           monthlyIntentTrack: life.lastMonthSummary.monthlyIntentTrack ?? null,
+          ownershipForkId: life.lastMonthSummary.ownershipForkId ?? null,
+          ownershipForkLabel: life.lastMonthSummary.ownershipForkLabel ?? null,
           incomeBreakdown: {
             ...createInitialLifeIncomeBreakdown(),
             ...(life.lastMonthSummary.incomeBreakdown ?? {}),
@@ -98,6 +102,8 @@ export function resolveLifeMonth(player: Player, career: Career, rng: Pick<Rng, 
     monthlyIntentId: startingLife.selectedMonthlyIntentId,
     monthlyIntentLabel: startingLife.selectedMonthlyIntentLabel,
     monthlyIntentTrack: startingLife.selectedMonthlyIntentTrack,
+    ownershipForkId: startingLife.selectedOwnershipForkId,
+    ownershipForkLabel: startingLife.selectedOwnershipForkLabel,
     primaryActionId: startingLife.selectedPrimaryActionId ?? 'focus-at-work',
     secondaryActionId: canTakeSecondaryAction(startingLife) ? startingLife.selectedSecondaryActionId : null,
     cashDelta: 0,
@@ -121,6 +127,8 @@ export function resolveLifeMonth(player: Player, career: Career, rng: Pick<Rng, 
     applyActionResolution(nextLife, summary, secondaryResolution, notes);
   }
 
+  const propertyEffects = applyOwnershipForkResolution(player, nextLife, summary, notes);
+
   nextLife.energy = clamp(nextLife.energy, 0, 100);
   nextLife.stress = clamp(nextLife.stress, 0, 100);
   nextLife.reputation = clamp(nextLife.reputation, 0, 100);
@@ -133,12 +141,15 @@ export function resolveLifeMonth(player: Player, career: Career, rng: Pick<Rng, 
   nextLife.selectedMonthlyIntentId = null;
   nextLife.selectedMonthlyIntentLabel = null;
   nextLife.selectedMonthlyIntentTrack = null;
+  nextLife.selectedOwnershipForkId = null;
+  nextLife.selectedOwnershipForkLabel = null;
   nextLife.lastMonthSummary = summary;
 
   return {
     cashDelta: summary.cashDelta,
     householdCost,
     nextLife,
+    propertyEffects,
   };
 }
 
@@ -339,6 +350,39 @@ function applyActionResolution(
   }
 
   notes.push(resolution.note);
+}
+
+function applyOwnershipForkResolution(
+  player: Player,
+  life: PlayerLifeState,
+  summary: LifeMonthSummary,
+  notes: string[],
+): OwnershipForkPropertyEffect[] {
+  const fork = getOwnershipForkEffect(player, summary.ownershipForkId);
+  if (!fork) return [];
+
+  summary.cashDelta += fork.cashDelta;
+  summary.energyDelta += fork.energyDelta;
+  summary.stressDelta += fork.stressDelta;
+  summary.reputationDelta += fork.reputationDelta;
+  summary.householdSupportDelta += fork.householdSupportDelta;
+
+  life.energy += fork.energyDelta;
+  life.stress += fork.stressDelta;
+  life.reputation += fork.reputationDelta;
+  life.householdSupport += fork.householdSupportDelta;
+
+  if (fork.campaignXp) {
+    life.ownershipCampaign = {
+      ...life.ownershipCampaign,
+      incomeRunwayXp: life.ownershipCampaign.incomeRunwayXp + (fork.campaignXp['income-runway'] ?? 0),
+      homeReadinessXp: life.ownershipCampaign.homeReadinessXp + (fork.campaignXp['home-readiness'] ?? 0),
+      exitIntelXp: life.ownershipCampaign.exitIntelXp + (fork.campaignXp['exit-intel'] ?? 0),
+    };
+  }
+
+  notes.push(fork.note);
+  return fork.propertyEffects ?? [];
 }
 
 export function calculateHouseholdLoad(life: PlayerLifeState): number {

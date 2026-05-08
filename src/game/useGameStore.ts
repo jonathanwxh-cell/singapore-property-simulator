@@ -32,8 +32,13 @@ import type { ActionResult } from '@/engine/results';
 import { writeAutoSave } from './savePersistence';
 import { inferRunRouteId } from '@/engine/runDirector';
 import { getNextHomePlan } from '@/engine/nextHomePlan';
-import type { MonthlyIntentOption } from '@/engine/monthlyIntents';
+import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
 import { getOwnershipCampaign, getOwnershipTrackTierKey } from '@/engine/ownershipCampaign';
+import {
+  canToggleNextHomeShortlist,
+  toggleShortlistIds,
+  type OwnershipForkOption,
+} from '@/engine/ownershipForks';
 
 // RNG ownership: the deterministic RNG state lives in the store as
 // `rngSeed` / `rngState`. Each action that consumes randomness rebuilds the
@@ -112,6 +117,7 @@ function withPortfolioDefaults(player: Player): Player {
     reserve: player.reserve ?? createDefaultReserve(),
     operationHistory: player.operationHistory ?? [],
     pendingTaxReliefs: player.pendingTaxReliefs ?? [],
+    nextHomeShortlistIds: (player.nextHomeShortlistIds ?? []).slice(0, 3),
     properties: player.properties.map((owned) => {
       const listing = properties.find(p => p.id === owned.propertyId);
       const mopActive = listing?.isHdb && (owned.mopRemainingMonths ?? 0) > 0;
@@ -202,6 +208,7 @@ function createInitialPlayer(
     reserve: createDefaultReserve(),
     operationHistory: [],
     pendingTaxReliefs: [],
+    nextHomeShortlistIds: [],
   });
 }
 
@@ -270,6 +277,17 @@ function withMonthlyIntentSelection(player: Player, intent: Pick<MonthlyIntentOp
       selectedMonthlyIntentId: intent?.id ?? null,
       selectedMonthlyIntentLabel: intent?.label ?? null,
       selectedMonthlyIntentTrack: intent?.track ?? null,
+    },
+  };
+}
+
+function withOwnershipForkSelection(player: Player, fork: Pick<OwnershipForkOption, 'id' | 'title'> | null): Player {
+  return {
+    ...player,
+    life: {
+      ...player.life,
+      selectedOwnershipForkId: fork?.id ?? null,
+      selectedOwnershipForkLabel: fork?.title ?? null,
     },
   };
 }
@@ -398,6 +416,8 @@ interface GameStore extends GameState {
   setSecondaryLifeAction: (actionId: LifeActionId | null) => void;
   applyMonthlyIntent: (intent: MonthlyIntentOption) => void;
   prepareMonthlyIntent: (intent: MonthlyIntentOption) => void;
+  applyOwnershipFork: (fork: OwnershipForkOption) => void;
+  toggleNextHomeShortlist: (propertyId: string) => void;
   setLivingArrangement: (arrangement: LivingArrangement) => void;
   buyProperty: (propertyId: string, downPayment: number, cpfOrdinaryUsed?: number, financingMode?: MortgageFinancingMode) => ActionResult;
   sellProperty: (propertyIndex: number) => ActionResult;
@@ -549,6 +569,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
     get().advanceMonths(1);
   },
 
+  applyOwnershipFork: (fork) => {
+    set((state) => {
+      const intent = getMonthlyIntentOptions(state.player).find((option) => option.id === fork.intentId);
+      if (!intent) return {};
+
+      const preparedPlayer = withOwnershipForkSelection(withMonthlyIntentSelection({
+        ...state.player,
+        life: {
+          ...state.player.life,
+          selectedPrimaryActionId: intent.primaryActionId,
+          selectedSecondaryActionId: intent.secondaryActionId,
+        },
+      }, intent), fork);
+
+      return {
+        player: finalizePlayer(applyMonthlyIntentAutoAction(preparedPlayer, intent)),
+      };
+    });
+    get().advanceMonths(1);
+  },
+
   prepareMonthlyIntent: (intent) => {
     set((state) => ({
       player: finalizePlayer(withMonthlyIntentSelection({
@@ -560,6 +601,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
       }, intent)),
     }));
+  },
+
+  toggleNextHomeShortlist: (propertyId) => {
+    set((state) => {
+      const permission = canToggleNextHomeShortlist(state.player, propertyId);
+      if (!permission.allowed) return {};
+
+      return {
+        player: finalizePlayer({
+          ...state.player,
+          nextHomeShortlistIds: toggleShortlistIds(state.player.nextHomeShortlistIds, propertyId),
+        }),
+      };
+    });
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
   },
 
   setLivingArrangement: (arrangement) => {
