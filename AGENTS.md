@@ -68,7 +68,7 @@ Before requesting merge:
 - [ ] `npm test` passes (vitest unit suite)
 - [ ] `npm run build` clean
 - [ ] If touching gameplay flows: at least one of `npm run test:smoke`, `npm run test:profiles`, `npm run test:scroll` exercised manually
-- [ ] CHANGELOG `[Unreleased]` updated if user-visible
+- [ ] Commit messages use Conventional Commits prefixes (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`) — release-please reads these to assemble the next CHANGELOG entry
 - [ ] Linked the closing issue
 - [ ] Marked which agent authored (`agent:claude` or `agent:codex`)
 - [ ] Did not modify files outside your declared scope without coordinating
@@ -85,14 +85,33 @@ Before requesting merge:
 
 ---
 
-## What goes in `[Unreleased]`
+## Release process (release-please)
+
+Releases are automated by [release-please](https://github.com/googleapis/release-please) — see `.github/workflows/release-please.yml`. **Do not manually edit `[Unreleased]`, bump `package.json`, or cut tags.** The workflow:
+
+1. Every push to `main` triggers release-please.
+2. release-please reads conventional-commit messages since the last tag and maintains an open `chore: release X.Y.Z` PR with the proposed CHANGELOG entry and version bump.
+3. To ship, merge that PR. release-please then tags `vX.Y.Z`, pushes the tag, and creates the GitHub Release.
+
+### Commit message → CHANGELOG mapping
+
+| Prefix | Result |
+|---|---|
+| `feat:` | Adds bullet under **Features**, bumps minor (0.6.0 → 0.7.0) |
+| `fix:` | Adds bullet under **Bug Fixes**, bumps patch (0.6.0 → 0.6.1) |
+| `feat!:` / `fix!:` (breaking) | Adds bullet under **BREAKING CHANGES**, bumps minor while pre-1.0 |
+| `chore:`, `refactor:`, `test:`, `docs:`, `style:`, `ci:`, `build:` | Excluded from CHANGELOG |
+
+Want richer prose than the commit subject? Put it in the commit body — release-please includes it.
+
+### What still belongs in a `feat:` / `fix:` commit
 
 - User-visible behavior changes (new feature, balance change, UI update)
-- Save schema changes (always)
+- Save schema changes (always — and bump `SAVE_VERSION` + add a migrator)
 - Singapore-realism rule changes (CPF rates, LTV caps, stamp duty tables, ABSD profile rules)
 - Performance changes the player can feel
 
-What does **not** need a CHANGELOG entry:
+### What stays out (use `chore:`, `refactor:`, `test:`, `docs:`)
 
 - Refactors that don't change behavior
 - Test-only changes
