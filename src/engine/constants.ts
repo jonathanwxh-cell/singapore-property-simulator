@@ -13,6 +13,10 @@ export const HDB_CONCESSIONARY_LTV = 0.75;
 export const HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT = 25;
 export const HDB_RESALE_LEVY_ESTIMATE = 40_000;
 export const HDB_MOP_MONTHS = 60;
+// Months-remaining checkpoints used to surface MOP urgency to the player.
+// Crossing any of these (e.g. dropping from 19 to 18 months) triggers a
+// notable-month signal so the auto-advance loop can stop and present a beat.
+export const HDB_MOP_NOTABLE_MILESTONES = [54, 48, 36, 24, 18, 12, 6, 3, 1, 0] as const;
 
 // Market dynamics
 // Property values track the broader price index but at this fraction of its move

@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/game/useGameStore';
 import { careers } from '@/data/careers';
 import { runRoutes } from '@/data/runRoutes';
+import { getAgeOptions, householdOptions, residencyOptions } from '@/data/buyerOptions';
 import { difficultySettings } from '@/game/types';
 import { resolveStarterRouteForProfile } from '@/engine/firstHomeStarter';
-import type { BuyerProfile, BuyerResidencyStatus, Difficulty, HouseholdProfile, RunRouteId } from '@/game/types';
+import type { BuyerProfile, Difficulty, RunRouteId } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
 import GuidedFocusPanel from '@/components/GuidedFocusPanel';
 import GlossaryTerm from '@/components/GlossaryTerm';
@@ -413,92 +414,6 @@ export default function NewGame() {
       </div>
     </div>
   );
-}
-
-const householdOptions: Array<{
-  value: HouseholdProfile;
-  label: string;
-  hint: string;
-  defaultAge?: number;
-  defaultResidency?: BuyerResidencyStatus;
-}> = [
-  {
-    value: 'couple-family',
-    label: 'Couple / Family',
-    hint: 'Best starter path for HDB BTO/resale, grants, and the classic first-home ladder.',
-    defaultAge: 30,
-  },
-  {
-    value: 'single-parent',
-    label: 'Single Parent',
-    hint: 'Shelter-first family route with higher household load, childcare pressure, and HDB-family style learning.',
-    defaultAge: 35,
-  },
-  {
-    value: 'multi-gen-family',
-    label: 'Multi-Gen Family',
-    hint: 'Sandwich-generation route with elder/child support, bigger space needs, and stronger reserve pressure.',
-    defaultAge: 40,
-  },
-  {
-    value: 'domestic-partners',
-    label: 'Domestic Partners',
-    hint: 'Private-first route for couples who may not fit simplified HDB family-nucleus assumptions.',
-    defaultAge: 30,
-  },
-  {
-    value: 'single-35-plus',
-    label: 'Single 35+',
-    hint: 'A tighter but realistic solo-buyer path where HDB access starts after age 35.',
-    defaultAge: 35,
-  },
-  {
-    value: 'single-under-35',
-    label: 'Single Under 35',
-    hint: 'Harder early game: private/rental-first decisions before subsidized HDB access opens.',
-    defaultAge: 27,
-  },
-  {
-    value: 'foreigner-investor',
-    label: 'Foreign Investor',
-    hint: 'Private and commercial focus with heavy ABSD and no simplified HDB/EC access.',
-    defaultAge: 40,
-    defaultResidency: 'foreigner',
-  },
-];
-
-const residencyOptions: Array<{
-  value: BuyerResidencyStatus;
-  label: string;
-  rateLabel: string;
-  hint: string;
-}> = [
-  {
-    value: 'sc',
-    label: 'Singapore Citizen',
-    rateLabel: '0% first-home ABSD',
-    hint: 'Default learning route: first residential purchase has no ABSD, then cooling measures bite on upgrades.',
-  },
-  {
-    value: 'spr',
-    label: 'Singapore PR',
-    rateLabel: '5% first-home ABSD',
-    hint: 'Private/resale-oriented run with PR ABSD and a stricter simplified HDB BTO path.',
-  },
-  {
-    value: 'foreigner',
-    label: 'Foreigner',
-    rateLabel: '60% ABSD',
-    hint: 'High-friction investor route that steers away from subsidized housing and ECs.',
-  },
-];
-
-function getAgeOptions(householdProfile: HouseholdProfile): number[] {
-  if (householdProfile === 'single-under-35') return [27, 30, 34];
-  if (householdProfile === 'single-35-plus') return [35, 40, 45, 55, 58, 65];
-  if (householdProfile === 'single-parent') return [30, 35, 40, 45, 55];
-  if (householdProfile === 'multi-gen-family') return [35, 40, 45, 55, 58, 65];
-  return [27, 30, 35, 40, 45, 55, 58, 65];
 }
 
 function recommendRunRoute(profile: BuyerProfile): RunRouteId {

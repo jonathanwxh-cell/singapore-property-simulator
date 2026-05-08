@@ -26,7 +26,7 @@ import { scenarios } from '@/data/scenarios';
 import type { ScenarioOption } from '@/data/scenarios';
 import type { ScenarioResolution } from '@/engine/actions';
 import { achievements } from '@/data/achievements';
-import { PROPERTY_VALUE_FLOOR } from '@/engine/constants';
+import { HDB_MOP_NOTABLE_MILESTONES, PROPERTY_VALUE_FLOOR } from '@/engine/constants';
 import type { TenantLeaseDecisionId } from './types';
 import type { ActionResult } from '@/engine/results';
 import { writeAutoSave } from './savePersistence';
@@ -395,8 +395,7 @@ function isNotableMonthSignal(previous: ReturnType<typeof getNotableMonthSnapsho
 }
 
 function hasCrossedMopMilestone(previous: number, next: number): boolean {
-  const milestones = [54, 48, 36, 24, 18, 12, 6, 3, 1, 0];
-  return milestones.some((milestone) => previous > milestone && next <= milestone);
+  return HDB_MOP_NOTABLE_MILESTONES.some((milestone) => previous > milestone && next <= milestone);
 }
 
 function pickGameState(state: GameState): GameState {
@@ -409,6 +408,27 @@ function pickGameState(state: GameState): GameState {
     rngSeed: state.rngSeed,
     rngState: state.rngState,
   };
+}
+
+// Shared wrapper for player-mutating actions: every store action that ran a
+// pure `*Pure(player, ...)` engine function used to repeat the same finalize +
+// auto-save dance, with subtly different copies. Centralising it here keeps
+// each store method to a single line and guarantees the dance stays in sync.
+type StoreSet = (
+  partial: Partial<GameStore> | ((state: GameStore) => Partial<GameStore>),
+) => void;
+type StoreGet = () => GameStore;
+
+function runPlayerAction(
+  set: StoreSet,
+  get: StoreGet,
+  result: ActionResult<{ player: Player }>,
+): ActionResult {
+  if (!result.ok) return result;
+  set({ player: finalizePlayer(result.value.player) });
+  const state = get();
+  if (state.settings.autoSave) saveTurn(pickGameState(state));
+  return { ok: true as const, value: undefined };
 }
 
 interface GameStore extends GameState {
@@ -647,105 +667,35 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }));
   },
 
-  buyProperty: (propertyId, downPayment, cpfOrdinaryUsed = 0, financingMode = 'bank') => {
-    const result = buyPropertyPure(get().player, propertyId, downPayment, cpfOrdinaryUsed, financingMode);
-    if (result.ok) {
-      set({ player: finalizePlayer(result.value.player) });
-      const state = get();
-      if (state.settings.autoSave) saveTurn(pickGameState(state));
-    }
-    return result.ok ? { ok: true as const, value: undefined } : result;
-  },
+  buyProperty: (propertyId, downPayment, cpfOrdinaryUsed = 0, financingMode = 'bank') =>
+    runPlayerAction(set, get, buyPropertyPure(get().player, propertyId, downPayment, cpfOrdinaryUsed, financingMode)),
 
-  sellProperty: (propertyIndex) => {
-    const result = sellPropertyPure(get().player, propertyIndex);
-    if (result.ok) {
-      set({ player: finalizePlayer(result.value.player) });
-      const state = get();
-      if (state.settings.autoSave) saveTurn(pickGameState(state));
-    }
-    return result.ok ? { ok: true as const, value: undefined } : result;
-  },
+  sellProperty: (propertyIndex) =>
+    runPlayerAction(set, get, sellPropertyPure(get().player, propertyIndex)),
 
-  applyLoan: (amount, interestRate, termYears, type, propertyId) => {
-    const result = applyLoanPure(get().player, amount, interestRate, termYears, type, propertyId);
-    if (result.ok) {
-      set({ player: finalizePlayer(result.value.player) });
-      const state = get();
-      if (state.settings.autoSave) saveTurn(pickGameState(state));
-    }
-    return result.ok ? { ok: true as const, value: undefined } : result;
-  },
+  applyLoan: (amount, interestRate, termYears, type, propertyId) =>
+    runPlayerAction(set, get, applyLoanPure(get().player, amount, interestRate, termYears, type, propertyId)),
 
-  payLoan: (loanId, amount) => {
-    const result = payLoanPure(get().player, loanId, amount);
-    if (result.ok) {
-      set({ player: finalizePlayer(result.value.player) });
-      const state = get();
-      if (state.settings.autoSave) saveTurn(pickGameState(state));
-    }
-    return result.ok ? { ok: true as const, value: undefined } : result;
-  },
+  payLoan: (loanId, amount) =>
+    runPlayerAction(set, get, payLoanPure(get().player, loanId, amount)),
 
-  renovateProperty: (propertyIndex, cost) => {
-    const result = renovatePropertyPure(get().player, propertyIndex, cost);
-    if (result.ok) {
-      set({ player: finalizePlayer(result.value.player) });
-      const state = get();
-      if (state.settings.autoSave) saveTurn(pickGameState(state));
-    }
-    return result.ok ? { ok: true as const, value: undefined } : result;
-  },
+  renovateProperty: (propertyIndex, cost) =>
+    runPlayerAction(set, get, renovatePropertyPure(get().player, propertyIndex, cost)),
 
-  startRenovation: (propertyIndex, templateId, contractorTier = 'standard') => {
-    const result = startRenovationPure(get().player, propertyIndex, templateId, contractorTier);
-    if (result.ok) {
-      set({ player: finalizePlayer(result.value.player) });
-      const state = get();
-      if (state.settings.autoSave) saveTurn(pickGameState(state));
-    }
-    return result.ok ? { ok: true as const, value: undefined } : result;
-  },
+  startRenovation: (propertyIndex, templateId, contractorTier = 'standard') =>
+    runPlayerAction(set, get, startRenovationPure(get().player, propertyIndex, templateId, contractorTier)),
 
-  setTenantStrategy: (propertyIndex, input) => {
-    const result = setTenantStrategyPure(get().player, propertyIndex, input);
-    if (result.ok) {
-      set({ player: finalizePlayer(result.value.player) });
-      const state = get();
-      if (state.settings.autoSave) saveTurn(pickGameState(state));
-    }
-    return result.ok ? { ok: true as const, value: undefined } : result;
-  },
+  setTenantStrategy: (propertyIndex, input) =>
+    runPlayerAction(set, get, setTenantStrategyPure(get().player, propertyIndex, input)),
 
-  applyTenantLeaseDecision: (propertyIndex, decisionId) => {
-    const result = applyTenantLeaseDecisionPure(get().player, propertyIndex, decisionId);
-    if (result.ok) {
-      set({ player: finalizePlayer(result.value.player) });
-      const state = get();
-      if (state.settings.autoSave) saveTurn(pickGameState(state));
-    }
-    return result.ok ? { ok: true as const, value: undefined } : result;
-  },
+  applyTenantLeaseDecision: (propertyIndex, decisionId) =>
+    runPlayerAction(set, get, applyTenantLeaseDecisionPure(get().player, propertyIndex, decisionId)),
 
-  resolveMaintenanceIssue: (propertyIndex, issueId, choiceId) => {
-    const result = resolveMaintenanceIssuePure(get().player, propertyIndex, issueId, choiceId);
-    if (result.ok) {
-      set({ player: finalizePlayer(result.value.player) });
-      const state = get();
-      if (state.settings.autoSave) saveTurn(pickGameState(state));
-    }
-    return result.ok ? { ok: true as const, value: undefined } : result;
-  },
+  resolveMaintenanceIssue: (propertyIndex, issueId, choiceId) =>
+    runPlayerAction(set, get, resolveMaintenanceIssuePure(get().player, propertyIndex, issueId, choiceId)),
 
-  setReservePlan: (input) => {
-    const result = setReservePlanPure(get().player, input);
-    if (result.ok) {
-      set({ player: finalizePlayer(result.value.player) });
-      const state = get();
-      if (state.settings.autoSave) saveTurn(pickGameState(state));
-    }
-    return result.ok ? { ok: true as const, value: undefined } : result;
-  },
+  setReservePlan: (input) =>
+    runPlayerAction(set, get, setReservePlanPure(get().player, input)),
 
   toggleRental: (propertyIndex) => {
     const { player } = get();
