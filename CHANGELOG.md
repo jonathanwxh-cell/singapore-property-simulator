@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-08
+
 ### Added
 - **Beginner clarity and mobile UX pass**: guided focus cards now explain how to read Dashboard, Buy, and Own screens in plain English, while spendable-versus-reserved cash language is surfaced more clearly during early runs and deal reviews.
 - **Guidance-first mobile More sheet**: the mobile shell now opens secondary tabs inside a grouped bottom sheet with clearer route purpose text for Market, Bank, Scenarios, Save, Leaderboard, and Settings.
@@ -31,10 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Active-MOP planning now reads more like a real chase than a static savings meter, with lead-target versus challenger framing, fit labels, and visible next-payoff callouts that reward smart realistic play.
 - Property Operations now frames upgrades as contractor tradeoffs instead of a single flat renovation path, so owned months teach timing, cash, and yield tension more clearly.
 - Life-month recaps now break cash movement down by source so players can see whether progress came from salary focus, side gigs, property hustle, schemes, or expensive household/training choices.
+- CI Node runtime upgraded from 20 to 22 LTS.
+- Dependabot now ignores major-version bumps for `tailwindcss`, `vite`, `@eslint/js`, and `typescript`, and the unused `deps:locked` label was dropped.
 
 ### Fixed
 - Purchase-readiness CPF previews now match the real buy action by capping CPF OA usage at the eligible down-payment amount instead of incorrectly offsetting stamp duties or levy.
 - Fast residential sales no longer overstate net proceeds by ignoring SSD, and qualifying ABSD refund paths now teach pay-now / recover-later cashflow instead of acting like an instant waiver.
+- Dashboard beginner-panel smoke test now uses `expectAnyVisible`, eliminating false positives from minor copy variations.
 
 ### Improved
 - Internal code-quality pass (no behaviour change): the eight player-mutating store actions now share a single `runPlayerAction` helper; the 23-case ownership-fork effect switch and the parallel decision-coach blocker switches were converted into data tables; MOP notable-month milestones, the default property condition score, the 12-month tenancy term, and the 8% rent-raise step moved to named engine constants. `Dashboard.tsx` (480 → 299 LOC) split out a `DashboardAdvancedRail`; `Properties.tsx` (700 → 433 LOC) split out a `PropertyListingCard` plus a panels module. New-game household and residency option lists were lifted into `src/data/buyerOptions.ts`.
@@ -218,7 +223,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Singapore Property Simulator - first playable build with property catalog, basic mortgage handling, and turn loop.
 
-[Unreleased]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/jonathanwxh-cell/singapore-property-simulator/compare/v0.3.1...v0.4.0
