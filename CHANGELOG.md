@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added a structured **Singapore: A Lifetime** roadmap and `Lifetime Shell v1` implementation handoff so the next product direction is documented around named endings, life memories, causal scenarios, cultural texture, and gradual README updates without discarding the current property engine.
+
 ## [0.6.0] - 2026-05-08
 
 ### Added

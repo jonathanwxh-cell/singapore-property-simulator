@@ -14,6 +14,12 @@ A single-player turn-based property investment game set in Singapore's real esta
 
 You start with a career, modest savings, a selectable buyer profile, and a guided life arc such as BTO Upgrader, Single 35 Resale Buyer, PR Private-Market Climber, Heartland Landlord, Commercial Operator, or FIRE Homeowner. Each turn is one month. Your goal: reach the target net worth before insolvency strikes you out.
 
+### Product Direction
+
+The long-term direction is **Singapore: A Lifetime**: a realistic Singapore life tycoon built on top of the current property and finance engine. The simulator is not being rewritten; CPF, loans, stamp duties, MOP, buyer profiles, landlord operations, and market cycles remain the foundation while future phases add named endings, life memories, cultural texture, and replay identity.
+
+The detailed roadmap lives in [docs/roadmap/singapore-a-lifetime-roadmap.md](docs/roadmap/singapore-a-lifetime-roadmap.md), and the first implementation handoff is [docs/superpowers/plans/2026-05-08-lifetime-shell-v1.md](docs/superpowers/plans/2026-05-08-lifetime-shell-v1.md). README gameplay sections should continue to describe only shipped behavior as each phase lands.
+
 ### Core Loop
 
 The current build includes a Decision Coach layer across the dashboard, property browser, property detail, scenarios, and life-planning screens. It explains the next sensible move, deal blockers, expected life-action effects, and scenario upside/downside before players commit.
