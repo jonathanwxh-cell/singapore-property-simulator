@@ -68,7 +68,7 @@ Before requesting merge:
 - [ ] `npm test` passes (vitest unit suite)
 - [ ] `npm run build` clean
 - [ ] If touching gameplay flows: at least one of `npm run test:smoke`, `npm run test:profiles`, `npm run test:scroll` exercised manually
-- [ ] Commit messages use Conventional Commits prefixes (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`) — release-please reads these to assemble the next CHANGELOG entry
+- [ ] Commit messages use Conventional Commits prefixes (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`)
 - [ ] Linked the closing issue
 - [ ] Marked which agent authored (`agent:claude` or `agent:codex`)
 - [ ] Did not modify files outside your declared scope without coordinating
@@ -85,38 +85,23 @@ Before requesting merge:
 
 ---
 
-## Release process (release-please)
+## Release process (manual)
 
-Releases are automated by [release-please](https://github.com/googleapis/release-please) — see `.github/workflows/release-please.yml`. **Do not manually edit `[Unreleased]`, bump `package.json`, or cut tags.** The workflow:
+Releases are managed manually. To cut a new release:
 
-1. Every push to `main` triggers release-please.
-2. release-please reads conventional-commit messages since the last tag and maintains an open `chore: release X.Y.Z` PR with the proposed CHANGELOG entry and version bump.
-3. To ship, merge that PR. release-please then tags `vX.Y.Z`, pushes the tag, and creates the GitHub Release.
+1. Update `## [Unreleased]` in `CHANGELOG.md` with what changed, then rename it to `## [X.Y.Z] - YYYY-MM-DD`.
+2. Add a new empty `## [Unreleased]` section above it.
+3. Update the version in `package.json`.
+4. Update the version badge in `README.md`.
+5. Open a PR titled `chore: cut X.Y.Z release` and merge it.
 
-### Commit message → CHANGELOG mapping
+### Version bump guide
 
-| Prefix | Result |
+| Change type | Bump |
 |---|---|
-| `feat:` | Adds bullet under **Features**, bumps minor (0.6.0 → 0.7.0) |
-| `fix:` | Adds bullet under **Bug Fixes**, bumps patch (0.6.0 → 0.6.1) |
-| `feat!:` / `fix!:` (breaking) | Adds bullet under **BREAKING CHANGES**, bumps minor while pre-1.0 |
-| `chore:`, `refactor:`, `test:`, `docs:`, `style:`, `ci:`, `build:` | Excluded from CHANGELOG |
-
-Want richer prose than the commit subject? Put it in the commit body — release-please includes it.
-
-### What still belongs in a `feat:` / `fix:` commit
-
-- User-visible behavior changes (new feature, balance change, UI update)
-- Save schema changes (always — and bump `SAVE_VERSION` + add a migrator)
-- Singapore-realism rule changes (CPF rates, LTV caps, stamp duty tables, ABSD profile rules)
-- Performance changes the player can feel
-
-### What stays out (use `chore:`, `refactor:`, `test:`, `docs:`)
-
-- Refactors that don't change behavior
-- Test-only changes
-- Internal docs (including this file)
-- Lockfile-only updates
+| New player-visible feature | Minor (0.6.0 → 0.7.0) |
+| Bug fix or rules correction | Patch (0.6.0 → 0.6.1) |
+| Breaking save schema change | Minor (always ship a migrator) |
 
 ---
 
