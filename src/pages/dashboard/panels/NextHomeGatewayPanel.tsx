@@ -2,11 +2,13 @@ import { Clock, FastForward, Gauge, LineChart, Target, WalletCards, Wrench } fro
 import GlassCard from '@/components/GlassCard';
 import type { NextHomePlan } from '@/engine/nextHomePlan';
 import type { MonthlyIntentOption } from '@/engine/monthlyIntents';
+import type { OwnershipBeatState } from '@/engine/ownershipMoments';
 import type { OwnershipCampaign, OwnershipCampaignTrack } from '@/engine/ownershipCampaign';
 
 export default function NextHomeGatewayPanel({
   plan,
   campaign,
+  beatState,
   recommendedIntent,
   onUseIntent,
   onOpenTarget,
@@ -14,6 +16,7 @@ export default function NextHomeGatewayPanel({
 }: {
   plan: NextHomePlan;
   campaign: OwnershipCampaign;
+  beatState: OwnershipBeatState;
   recommendedIntent: MonthlyIntentOption | null;
   onUseIntent: (intent: MonthlyIntentOption) => void;
   onOpenTarget: () => void;
@@ -51,6 +54,19 @@ export default function NextHomeGatewayPanel({
             <div className="h-full rounded-full bg-gradient-to-r from-cyan-glow via-success to-warning" style={{ width: `${plan.readinessPct}%` }} />
           </div>
           <p className="mt-3 text-xs text-text-secondary">{plan.paceLabel}</p>
+
+          {beatState.active && beatState.headline && (
+            <div className="mt-3 rounded-2xl border border-warning/20 bg-warning/10 p-3">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className="label-text text-[10px] text-warning">Next chapter beat</span>
+                <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.14em] text-text-dim">
+                  {beatState.monthsUntilNextBeat} month(s)
+                </span>
+              </div>
+              <p className="text-sm text-white">{beatState.headline}</p>
+              <p className="mt-1 text-xs leading-relaxed text-text-secondary">{beatState.summary}</p>
+            </div>
+          )}
 
           {campaign.active && campaign.activeChapter && (
             <div className="mt-4 rounded-2xl border border-cyan-glow/15 bg-cyan-glow/5 p-4">
@@ -104,7 +120,7 @@ export default function NextHomeGatewayPanel({
             <button type="button" onClick={onAdvanceToNotableMonth} className="btn-secondary min-h-11 px-3 py-2 text-xs">
               <span className="inline-flex items-center justify-center gap-2">
                 <FastForward size={14} />
-                Next notable month
+                {beatState.active ? 'Next chapter beat' : 'Next notable month'}
               </span>
             </button>
           </div>

@@ -14,6 +14,7 @@ import { getCommandCenterState } from '@/engine/commandCenter';
 import { getLifeCampaign } from '@/engine/lifeCampaign';
 import { getNextBestMoves } from '@/engine/decisionCoach';
 import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
+import { getOwnershipBeatState } from '@/engine/ownershipMoments';
 import { getNextHomePlan } from '@/engine/nextHomePlan';
 import { getOwnershipCampaign } from '@/engine/ownershipCampaign';
 import { getNextHomeShortlist, getOwnershipForkOptions, type OwnershipForkOption } from '@/engine/ownershipForks';
@@ -116,6 +117,7 @@ export default function Dashboard() {
   const nextBestMoves = useMemo(() => getNextBestMoves({ player, currentScenario }), [player, currentScenario]);
   const nextHomePlan = useMemo(() => getNextHomePlan(player), [player]);
   const ownershipCampaign = useMemo(() => getOwnershipCampaign(player), [player]);
+  const ownershipBeatState = useMemo(() => getOwnershipBeatState(player), [player]);
   const ownershipForks = useMemo(() => getOwnershipForkOptions(player), [player]);
   const nextHomeShortlist = useMemo(() => getNextHomeShortlist(player), [player]);
   const monthlyIntents = useMemo(() => getMonthlyIntentOptions(player), [player]);
@@ -227,6 +229,7 @@ export default function Dashboard() {
             <NextHomeGatewayPanel
               plan={nextHomePlan}
               campaign={ownershipCampaign}
+              beatState={ownershipBeatState}
               recommendedIntent={recommendedMonthlyIntent}
               onUseIntent={handleSelectIntent}
               onOpenTarget={() => navigate(nextHomePlan.targetRoute)}
@@ -238,6 +241,7 @@ export default function Dashboard() {
         {ownershipCampaign.active && ownershipForks.length > 0 && (
           <motion.div variants={itemVariants} className="mb-6">
             <OwnershipForksPanel
+              beatState={ownershipBeatState}
               forks={ownershipForks}
               shortlist={nextHomeShortlist}
               onPlayFork={handlePlayOwnershipFork}

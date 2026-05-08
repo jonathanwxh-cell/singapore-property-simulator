@@ -59,12 +59,13 @@ describe('getOwnershipForkOptions', () => {
       }],
     }));
 
-    expect(forks).toHaveLength(2);
+    expect(forks).toHaveLength(3);
     expect(forks[0]).toMatchObject({
       id: 'neighbour-referral',
       intentId: 'landlord-ops',
       route: '/property/hdb-bto-0',
     });
+    expect(forks.some((fork) => fork.id === 'reserve-gap')).toBe(true);
   });
 
   it('uses the pinned shortlist target for late-stage market forks', () => {
@@ -107,6 +108,8 @@ describe('getOwnershipForkOptions', () => {
       }),
     }));
 
+    expect(forks).toHaveLength(3);
     expect(forks.some((fork) => fork.intentId === 'mop-market-intel' && fork.route === '/property/ec-1')).toBe(true);
+    expect(forks.some((fork) => fork.id === 'school-deadline' || fork.id === 'timing-nerve')).toBe(true);
   });
 });

@@ -24,6 +24,8 @@ The latest guidance pass adds a "First 3 Moves" quest rail, celebratory reward b
 
 The latest MOP 2.2 pass adds chapter-specific ownership forks and a concrete next-home shortlist. Players can now pin future targets from Buy or Property pages, see them inside the dashboard's active-MOP flow, and play focused beats such as `Neighbour Referral`, `Starter Works Window`, and `Launch Preview Weekend` so the first 60 months feel more like a property campaign than a long wait.
 
+The latest MOP 2.3 pass adds visible chapter beats on top of that flow. Active-MOP owners now see what pressure is building, what upside is opening, how many months remain until the next beat rotates, and a third signal-driven fork such as `Reserve Catch-Up`, `Shortlist Sprint`, or `School Zone Commit` so the first 60 months feel more alive even when no giant scenario fires.
+
 1. **Earn** — Monthly salary (career-dependent) flows in after CPF deductions
 2. **Buy** — Browse 120+ fictional live listings across 9 property types, 28 districts, and 6 listing channels
 3. **Finance** — Take mortgages, manage LTV caps and TDSR/MSR limits
@@ -218,6 +220,7 @@ src/
 |  |- runQuest.ts              # "First 3 Moves" quest rail
 |  |- ownershipCampaign.ts     # Chaptered MOP campaign progress and track state
 |  |- ownershipForks.ts        # MOP chapter forks and next-home shortlist helpers
+|  |- ownershipMoments.ts      # Pressure/upside beats and next-chapter-beat cadence
 |  |- careerProgression.ts     # Annual career review + job-switch flow
 |  |- life.ts                  # Hybrid life-sim layer (energy/stress/actions)
 |  |- lifeCampaign.ts          # Life campaign panel state

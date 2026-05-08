@@ -1,14 +1,17 @@
 import { ArrowUpRight, Compass, MapPinned, Target } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
+import type { OwnershipBeatState } from '@/engine/ownershipMoments';
 import type { NextHomeShortlistItem, OwnershipForkOption } from '@/engine/ownershipForks';
 
 export default function OwnershipForksPanel({
+  beatState,
   forks,
   shortlist,
   onPlayFork,
   onOpenRoute,
   onOpenBuy,
 }: {
+  beatState: OwnershipBeatState;
   forks: OwnershipForkOption[];
   shortlist: NextHomeShortlistItem[];
   onPlayFork: (fork: OwnershipForkOption) => void;
@@ -22,13 +25,47 @@ export default function OwnershipForksPanel({
           <p className="label-text mb-1 text-[10px] text-purple-glow">MOP chapter forks</p>
           <h3 className="section-title text-white">Specific moments inside the wait</h3>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-text-secondary">
-            These are the two most relevant chapter beats right now. Playing one advances a month with a more specific ownership consequence than the generic plan picker alone.
+            These chapter beats keep the first 60 months from flattening out. Playing one advances a month with a more specific ownership consequence than the generic plan picker alone.
           </p>
         </div>
         <button type="button" onClick={onOpenBuy} className="btn-secondary min-h-11 px-4 py-2 text-xs">
           Pin more targets
         </button>
       </div>
+
+      {beatState.active && beatState.signals.length > 0 && (
+        <div className="mb-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="label-text text-[10px] text-text-dim">What is brewing</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.14em] text-text-dim">
+              Next beat in {beatState.monthsUntilNextBeat} month(s)
+            </span>
+          </div>
+          <p className="mb-3 text-sm text-white">{beatState.headline}</p>
+          <div className="grid gap-3 md:grid-cols-2">
+            {beatState.signals.map((signal) => (
+              <div
+                key={signal.id}
+                className={`rounded-2xl border p-3 ${
+                  signal.tone === 'good'
+                    ? 'border-success/25 bg-success/10'
+                    : signal.tone === 'warn'
+                      ? 'border-warning/25 bg-warning/10'
+                      : 'border-glass-border bg-white/[0.03]'
+                }`}
+              >
+                <div className="mb-1 flex items-center justify-between gap-3">
+                  <p className="font-rajdhani text-base font-semibold text-white">{signal.title}</p>
+                  <span className="rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.12em] text-text-dim">
+                    {signal.kind}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed text-text-secondary">{signal.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mb-4 rounded-2xl border border-purple-glow/20 bg-purple-glow/10 p-4">
         <div className="mb-3 flex items-center gap-2">
@@ -75,7 +112,7 @@ export default function OwnershipForksPanel({
         )}
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-3 xl:grid-cols-3">
         {forks.map((fork) => (
           <div
             key={fork.id}
