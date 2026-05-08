@@ -5,6 +5,7 @@
 // surface.
 import type { OwnedProperty, Player, PropertyOperationLogEntry } from '@/game/types';
 import { getListingCatalog } from './listings';
+import { DEFAULT_CONDITION_SCORE } from './constants';
 
 export const OPERATION_HISTORY_LIMIT = 12;
 
@@ -35,7 +36,7 @@ export function normalizeOperationProperty(property: OwnedProperty): OwnedProper
   return {
     ...property,
     occupancyStatus: property.occupancyStatus ?? (listing?.isHdb ? 'owner-occupied' : 'vacant'),
-    conditionScore: property.conditionScore ?? 70,
+    conditionScore: property.conditionScore ?? DEFAULT_CONDITION_SCORE,
     mopRemainingMonths: property.mopRemainingMonths ?? 0,
     completedRenovations: property.completedRenovations ?? [],
     openMaintenanceIssues: property.openMaintenanceIssues ?? [],

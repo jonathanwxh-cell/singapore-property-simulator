@@ -12,7 +12,8 @@ import { selectNetWorth, selectMonthlyOwnershipCosts, selectMonthlyRentalIncome 
 import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
 import { describeInvestorRoute, describePortfolioHoldingOperations } from '@/engine/portfolio';
 import { getListingCatalog } from '@/engine/listings';
-import { getLandlordOpsSummary } from '@/engine/propertyOperations';
+import { getLandlordOpsSummary, type LandlordOpsSummary } from '@/engine/propertyOperations';
+import { DEFAULT_CONDITION_SCORE } from '@/engine/constants';
 
 export default function Portfolio() {
   const { player, toggleRental } = useGameStore();
@@ -32,18 +33,8 @@ export default function Portfolio() {
   const liveLeaseIncome = player.properties.reduce((sum, property) => {
     return sum + (property.tenant?.contractedRent ?? (property.isRented ? property.monthlyRental : 0));
   }, 0);
-  const portfolioRisk = landlordOps.openIssueCount > 0
-    ? `${landlordOps.openIssueCount} repair issue(s)`
-    : landlordOps.expiringLeaseCount > 0
-      ? `${landlordOps.expiringLeaseCount} lease decision(s)`
-      : landlordOps.unprotectedRisk > 0
-        ? `${formatCurrency(landlordOps.unprotectedRisk)} reserve gap`
-        : 'No urgent ops risk';
-  const portfolioAction = landlordOps.openIssueCount > 0 || landlordOps.expiringLeaseCount > 0
-    ? 'Review property operations before the next month.'
-    : player.properties.length === 0
-      ? 'Buy your first property to unlock landlord operations.'
-      : 'Portfolio is stable. Consider upgrades, reserves, or the next acquisition.';
+  const portfolioStatus = describePortfolioStatus(landlordOps, player.properties.length);
+  const { riskLabel: portfolioRisk, action: portfolioAction } = portfolioStatus;
 
   const unlockedAchievements = achievements.filter(a => player.achievements.includes(a.id));
 
@@ -57,19 +48,11 @@ export default function Portfolio() {
           </p>
         </div>
 
-        <GlassCard accentColor={landlordOps.openIssueCount > 0 ? '#FF1744' : landlordOps.expiringLeaseCount > 0 ? '#FFD740' : '#00E676'} className="mb-6">
+        <GlassCard accentColor={portfolioStatus.accentColor} className="mb-6">
           <div className="grid gap-4 lg:grid-cols-[1fr,220px]">
             <div>
               <p className="label-text text-text-dim text-[10px] mb-1">Portfolio Health</p>
-              <h2 className="section-title text-white">
-                {player.properties.length === 0
-                  ? 'No owned property yet'
-                  : landlordOps.openIssueCount > 0
-                    ? 'Repairs need attention'
-                    : landlordOps.expiringLeaseCount > 0
-                      ? 'Lease decision coming up'
-                      : 'Holdings are stable'}
-              </h2>
+              <h2 className="section-title text-white">{portfolioStatus.headline}</h2>
               <p className="text-text-secondary text-sm mt-2 max-w-3xl">{portfolioAction}</p>
               {player.properties.length > 0 && (
                 <p className="text-text-dim text-xs mt-2 max-w-3xl">
@@ -276,7 +259,7 @@ export default function Portfolio() {
                         Lease: {leaseStatusLabel} | Live rent: {monthlyLease > 0 ? `${formatCurrency(monthlyLease)}/mo` : 'S$0'}
                       </p>
                       <p className="text-text-dim text-[10px] mt-0.5">
-                        Condition: {owned.conditionScore ?? 70}/100 | {opsSummary.tenantLabel}
+                        Condition: {owned.conditionScore ?? DEFAULT_CONDITION_SCORE}/100 | {opsSummary.tenantLabel}
                       </p>
                       {opsSummary.attentionTags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
@@ -404,4 +387,52 @@ function OpsMetric({
       <p className={`font-mono text-sm mt-1 ${toneClass[tone]}`}>{value}</p>
     </div>
   );
+}
+
+interface PortfolioStatus {
+  accentColor: string;
+  headline: string;
+  riskLabel: string;
+  action: string;
+}
+
+function describePortfolioStatus(landlordOps: LandlordOpsSummary, propertyCount: number): PortfolioStatus {
+  if (propertyCount === 0) {
+    return {
+      accentColor: '#00E676',
+      headline: 'No owned property yet',
+      riskLabel: 'No urgent ops risk',
+      action: 'Buy your first property to unlock landlord operations.',
+    };
+  }
+  if (landlordOps.openIssueCount > 0) {
+    return {
+      accentColor: '#FF1744',
+      headline: 'Repairs need attention',
+      riskLabel: `${landlordOps.openIssueCount} repair issue(s)`,
+      action: 'Review property operations before the next month.',
+    };
+  }
+  if (landlordOps.expiringLeaseCount > 0) {
+    return {
+      accentColor: '#FFD740',
+      headline: 'Lease decision coming up',
+      riskLabel: `${landlordOps.expiringLeaseCount} lease decision(s)`,
+      action: 'Review property operations before the next month.',
+    };
+  }
+  if (landlordOps.unprotectedRisk > 0) {
+    return {
+      accentColor: '#00E676',
+      headline: 'Holdings are stable',
+      riskLabel: `${formatCurrency(landlordOps.unprotectedRisk)} reserve gap`,
+      action: 'Portfolio is stable. Consider upgrades, reserves, or the next acquisition.',
+    };
+  }
+  return {
+    accentColor: '#00E676',
+    headline: 'Holdings are stable',
+    riskLabel: 'No urgent ops risk',
+    action: 'Portfolio is stable. Consider upgrades, reserves, or the next acquisition.',
+  };
 }

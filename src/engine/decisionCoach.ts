@@ -413,28 +413,7 @@ export function getDealNextFix(readiness: DealReadiness): string {
       : 'Ready. Review the monthly surplus and worst-case notes, then buy if it fits your route.';
   }
 
-  switch (blocker.code) {
-    case 'insufficient_cash':
-      return 'Build spendable cash first: use Build Cash Buffer, side gigs, schemes, or compare cheaper starter homes.';
-    case 'tdsr_exceeded':
-      return 'Improve bank-assessed income, reduce other debt, or pick a lower mortgage so TDSR falls back under the cap.';
-    case 'msr_exceeded':
-      return 'For HDB/EC, raise income or reduce the loan size; MSR is about the monthly mortgage, not just cash on hand.';
-    case 'ltv_exceeded':
-      return 'Raise the down payment, pick a cheaper unit, or use the HDB loan path when the listing and profile allow it.';
-    case 'credit_too_low':
-      return 'Stabilize cashflow and avoid missed payments; a stronger credit score unlocks safer borrowing.';
-    case 'financing_not_allowed':
-      return 'Switch financing mode or clear the active housing loan that blocks this simplified loan path.';
-    case 'mop_restricted':
-      return 'Wait out MOP or use MOP-safe actions like room rental and cash-building while the flat stays owner-occupied.';
-    case 'eligibility_blocked':
-      return 'This is a profile-rule blocker. Check the Learn hub or choose a route that fits your residency, age, and household.';
-    case 'already_owned':
-      return 'You already own this listing. Manage tenants, repairs, upgrades, or sale timing from the portfolio.';
-    default:
-      return 'Open Learn for the rule explanation, then adjust cash, income, debt, or buyer profile before trying again.';
-  }
+  return BLOCKER_INFO[blocker.code]?.hint ?? FALLBACK_BLOCKER_HINT;
 }
 
 function buildDealHeadline(
@@ -456,16 +435,57 @@ function buildDealHeadline(
 }
 
 function blockerLabel(primaryBlocker: PurchaseValidationReason, shortfall: number): string {
-  if (primaryBlocker.code === 'tdsr_exceeded') return 'Blocked: TDSR';
-  if (primaryBlocker.code === 'msr_exceeded') return 'Blocked: MSR';
-  if (primaryBlocker.code === 'ltv_exceeded') return 'Raise Down Payment';
-  if (primaryBlocker.code === 'credit_too_low') return 'Improve Credit';
-  if (primaryBlocker.code === 'already_owned') return 'Already Owned';
-  if (primaryBlocker.code === 'mop_restricted') return 'Blocked: MOP';
-  if (primaryBlocker.code === 'eligibility_blocked') return 'Not Eligible Yet';
-  if (primaryBlocker.code === 'insufficient_cash') return `Need ${formatCurrency(shortfall)} More`;
-  return 'Not Eligible Yet';
+  const info = BLOCKER_INFO[primaryBlocker.code];
+  if (!info) return FALLBACK_BLOCKER_LABEL;
+  return typeof info.label === 'function' ? info.label(shortfall) : info.label;
 }
+
+const FALLBACK_BLOCKER_LABEL = 'Not Eligible Yet';
+const FALLBACK_BLOCKER_HINT = 'Open Learn for the rule explanation, then adjust cash, income, debt, or buyer profile before trying again.';
+
+interface BlockerCopy {
+  label: string | ((shortfall: number) => string);
+  hint: string;
+}
+
+const BLOCKER_INFO: Partial<Record<PurchaseValidationReason['code'], BlockerCopy>> = {
+  insufficient_cash: {
+    label: (shortfall) => `Need ${formatCurrency(shortfall)} More`,
+    hint: 'Build spendable cash first: use Build Cash Buffer, side gigs, schemes, or compare cheaper starter homes.',
+  },
+  tdsr_exceeded: {
+    label: 'Blocked: TDSR',
+    hint: 'Improve bank-assessed income, reduce other debt, or pick a lower mortgage so TDSR falls back under the cap.',
+  },
+  msr_exceeded: {
+    label: 'Blocked: MSR',
+    hint: 'For HDB/EC, raise income or reduce the loan size; MSR is about the monthly mortgage, not just cash on hand.',
+  },
+  ltv_exceeded: {
+    label: 'Raise Down Payment',
+    hint: 'Raise the down payment, pick a cheaper unit, or use the HDB loan path when the listing and profile allow it.',
+  },
+  credit_too_low: {
+    label: 'Improve Credit',
+    hint: 'Stabilize cashflow and avoid missed payments; a stronger credit score unlocks safer borrowing.',
+  },
+  financing_not_allowed: {
+    label: FALLBACK_BLOCKER_LABEL,
+    hint: 'Switch financing mode or clear the active housing loan that blocks this simplified loan path.',
+  },
+  mop_restricted: {
+    label: 'Blocked: MOP',
+    hint: 'Wait out MOP or use MOP-safe actions like room rental and cash-building while the flat stays owner-occupied.',
+  },
+  eligibility_blocked: {
+    label: FALLBACK_BLOCKER_LABEL,
+    hint: 'This is a profile-rule blocker. Check the Learn hub or choose a route that fits your residency, age, and household.',
+  },
+  already_owned: {
+    label: 'Already Owned',
+    hint: 'You already own this listing. Manage tenants, repairs, upgrades, or sale timing from the portfolio.',
+  },
+};
 
 function lifeActionExpectedEffects(actionId: LifeActionId): string[] {
   const effects: Record<LifeActionId, string[]> = {

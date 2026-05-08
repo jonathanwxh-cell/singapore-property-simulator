@@ -31,6 +31,7 @@ import {
 } from './operationsShared';
 import { createMaintenanceIssue } from './maintenanceOperations';
 import { applyTenantMonthlyEvent } from './tenantOperations';
+import { DEFAULT_CONDITION_SCORE } from './constants';
 
 // Re-exports — keeps the existing `import { ... } from './propertyOperations'`
 // surface intact for `useGameStore`, `portfolio.ts`, `Portfolio.tsx`,
@@ -236,7 +237,7 @@ export function getLandlordOpsSummary(player: Player): LandlordOpsSummary {
 function shouldOpenMaintenanceIssue(property: OwnedProperty, nextTurn: number, propertyIndex: number): boolean {
   if ((property.openMaintenanceIssues ?? []).length > 0 || property.activeRenovation) return false;
   if (nextTurn < 4) return false;
-  const condition = property.conditionScore ?? 70;
+  const condition = property.conditionScore ?? DEFAULT_CONDITION_SCORE;
   const cadence = condition < 55 ? 5 : condition < 70 ? 7 : 11;
   const tenantWear = property.tenant?.profileId === 'student-tenants' ? 1 : 0;
   return (nextTurn + propertyIndex + tenantWear) % cadence === 0;
@@ -270,7 +271,7 @@ function advanceTenant(property: OwnedProperty): OwnedProperty {
 
   const strategy = rentStrategies[property.tenant.rentStrategy];
   const issueDrag = (property.openMaintenanceIssues ?? []).length * 4;
-  const conditionBonus = (property.conditionScore ?? 70) >= 80 ? 2 : (property.conditionScore ?? 70) < 55 ? -4 : 0;
+  const conditionBonus = (property.conditionScore ?? DEFAULT_CONDITION_SCORE) >= 80 ? 2 : (property.conditionScore ?? DEFAULT_CONDITION_SCORE) < 55 ? -4 : 0;
   const satisfaction = clamp(property.tenant.satisfaction + Math.round(strategy.satisfactionDelta / 4) + conditionBonus - issueDrag, 0, 100);
 
   return {
@@ -322,7 +323,7 @@ export function advancePropertyOperationsMonth(player: Player): {
           renovationLevel: property.renovationLevel + 1,
           currentValue: roundMoney(property.currentValue * (1 + completed.resaleUpliftPct / 100)),
           monthlyRental: Math.round(property.monthlyRental * (1 + completed.rentUpliftPct / 100)),
-          conditionScore: clamp((property.conditionScore ?? 70) + completed.conditionDelta, 0, 100),
+          conditionScore: clamp((property.conditionScore ?? DEFAULT_CONDITION_SCORE) + completed.conditionDelta, 0, 100),
           occupancyStatus: getPostRenovationOccupancyStatus(property),
         };
         operationHistory.unshift({
@@ -357,7 +358,7 @@ export function advancePropertyOperationsMonth(player: Player): {
       const issue = createMaintenanceIssue(property, nextTurn, propertyIndex);
       property = {
         ...property,
-        conditionScore: clamp((property.conditionScore ?? 70) - (issue.severity === 'urgent' ? 8 : issue.severity === 'major' ? 5 : 3), 0, 100),
+        conditionScore: clamp((property.conditionScore ?? DEFAULT_CONDITION_SCORE) - (issue.severity === 'urgent' ? 8 : issue.severity === 'major' ? 5 : 3), 0, 100),
         currentValue: roundMoney(property.currentValue * (1 + issue.valueImpactPct / 100)),
         tenant: property.tenant
           ? {

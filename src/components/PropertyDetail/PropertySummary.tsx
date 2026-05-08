@@ -3,6 +3,7 @@ import GlassCard from '@/components/GlassCard';
 import GlossaryTerm from '@/components/GlossaryTerm';
 import { formatCompactCurrency, formatCurrency, formatPercent } from '@/lib/format';
 import { formatOwnershipStatus } from '@/pages/property/propertyDetailFormatters';
+import { DEFAULT_CONDITION_SCORE } from '@/engine/constants';
 import type { OwnedProperty, Loan, RentalMode, TenantProfileId, RentStrategy } from '@/game/types';
 
 export default function PropertySummary({
@@ -92,7 +93,7 @@ export default function PropertySummary({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-text-secondary text-sm">Condition</span>
-            <span className="font-mono text-white">{ownedProperty.conditionScore ?? 70}/100</span>
+            <span className="font-mono text-white">{ownedProperty.conditionScore ?? DEFAULT_CONDITION_SCORE}/100</span>
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-text-secondary text-sm"><GlossaryTerm termId="mop">MOP</GlossaryTerm> Remaining</span>

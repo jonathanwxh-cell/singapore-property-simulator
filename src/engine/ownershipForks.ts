@@ -201,251 +201,166 @@ export function getOwnershipForkOptions(player: Player): OwnershipForkOption[] {
 
 export function getOwnershipForkEffect(player: Player, forkId: string | null | undefined): OwnershipForkEffect | null {
   if (!forkId) return null;
+  const template = FORK_EFFECT_TEMPLATES[forkId as OwnershipForkId];
+  if (!template) return null;
 
   const currentHome = getPrimaryOwnedHome(player);
   const leadTarget = getNextHomeShortlist(player)[0];
   const targetName = leadTarget?.name ?? getNextHomePlan(player).target.name;
 
-  switch (forkId as OwnershipForkId) {
-    case 'neighbour-referral':
-      return {
-        cashDelta: 250,
-        energyDelta: -1,
-        stressDelta: 0,
-        reputationDelta: 2,
-        householdSupportDelta: 0,
-        note: 'A neighbour referral gave your landlord month a warmer starting point.',
-        campaignXp: { 'home-readiness': 1 },
-        propertyEffects: currentHome ? [{ propertyId: currentHome.propertyId, tenantSatisfactionDelta: 4 }] : [],
-      };
-    case 'starter-works-window':
-      return {
-        cashDelta: -450,
-        energyDelta: -1,
-        stressDelta: 1,
-        reputationDelta: 0,
-        householdSupportDelta: 0,
-        note: 'You used a short works window to tidy the home before bigger moves.',
-        campaignXp: { 'home-readiness': 1 },
-        propertyEffects: currentHome ? [{ propertyId: currentHome.propertyId, conditionDelta: 4, valueDeltaPct: 0.6 }] : [],
-      };
-    case 'bonus-season':
-      return {
-        cashDelta: 900,
-        energyDelta: -2,
-        stressDelta: 2,
-        reputationDelta: 1,
-        householdSupportDelta: 0,
-        note: 'A higher-intensity month converted into extra runway cash.',
-        campaignXp: { 'income-runway': 1 },
-      };
-    case 'household-budget-talk':
-      return {
-        cashDelta: 400,
-        energyDelta: 0,
-        stressDelta: -4,
-        reputationDelta: 0,
-        householdSupportDelta: 4,
-        note: 'A household budget reset freed up a bit more runway without adding risk.',
-        campaignXp: { 'income-runway': 1 },
-      };
-    case 'launch-preview-weekend':
-      return {
-        cashDelta: -180,
-        energyDelta: -2,
-        stressDelta: 1,
-        reputationDelta: 0,
-        householdSupportDelta: 0,
-        note: `A preview weekend sharpened your feel for ${targetName} and the timing around it.`,
-        campaignXp: { 'exit-intel': 2 },
-      };
-    case 'space-planning-talk':
-      return {
-        cashDelta: 0,
-        energyDelta: 0,
-        stressDelta: -1,
-        reputationDelta: 0,
-        householdSupportDelta: 5,
-        note: 'The household became more aligned on what the next home actually needs to solve.',
-        campaignXp: { 'home-readiness': 1, 'exit-intel': 1 },
-      };
-    case 'valuation-window':
-      return {
-        cashDelta: 0,
-        energyDelta: 0,
-        stressDelta: -1,
-        reputationDelta: 0,
-        householdSupportDelta: 0,
-        note: 'A cleaner valuation window improved your exit maths before the final stretch.',
-        campaignXp: { 'exit-intel': 2 },
-        propertyEffects: currentHome ? [{ propertyId: currentHome.propertyId, valueDeltaPct: 1.25 }] : [],
-      };
-    case 'school-radius-pressure':
-      return {
-        cashDelta: -120,
-        energyDelta: -1,
-        stressDelta: 3,
-        reputationDelta: 0,
-        householdSupportDelta: 2,
-        note: 'School and commute pressure forced the shortlist to become more practical.',
-        campaignXp: { 'exit-intel': 1, 'home-readiness': 1 },
-      };
-    case 'rate-check-window':
-      return {
-        cashDelta: 0,
-        energyDelta: 0,
-        stressDelta: -2,
-        reputationDelta: 0,
-        householdSupportDelta: 0,
-        note: 'A calmer rate window made the exit plan feel more executable.',
-        campaignXp: { 'exit-intel': 1 },
-      };
-    case 'reserve-gap':
-      return {
-        cashDelta: 320,
-        energyDelta: -1,
-        stressDelta: -2,
-        reputationDelta: 0,
-        householdSupportDelta: 1,
-        note: 'You treated the month like a reserve catch-up push, which made the home feel safer to carry.',
-        campaignXp: { 'income-runway': 1, 'home-readiness': 1 },
-      };
-    case 'setup-fatigue':
-      return {
-        cashDelta: -120,
-        energyDelta: 2,
-        stressDelta: -3,
-        reputationDelta: 0,
-        householdSupportDelta: 2,
-        note: 'You used the month to make ownership routines calmer instead of chasing more noise.',
-        campaignXp: { 'home-readiness': 2 },
-      };
-    case 'renewal-cliff':
-      return {
-        cashDelta: 280,
-        energyDelta: -1,
-        stressDelta: 1,
-        reputationDelta: 1,
-        householdSupportDelta: 0,
-        note: 'You got ahead of the next lease conversation before it became a last-minute problem.',
-        campaignXp: { 'home-readiness': 1, 'income-runway': 1 },
-      };
-    case 'burnout-squeeze':
-      return {
-        cashDelta: 180,
-        energyDelta: 4,
-        stressDelta: -6,
-        reputationDelta: 0,
-        householdSupportDelta: 3,
-        note: 'You reset the pace of the month so the runway kept growing without grinding yourself down.',
-        campaignXp: { 'income-runway': 2 },
-      };
-    case 'shortlist-blur':
-      return {
-        cashDelta: -90,
-        energyDelta: -1,
-        stressDelta: -1,
-        reputationDelta: 0,
-        householdSupportDelta: 1,
-        note: 'You forced the market month to become a real shortlist decision instead of open-ended browsing.',
-        campaignXp: { 'exit-intel': 2 },
-      };
-    case 'space-pressure':
-      return {
-        cashDelta: -160,
-        energyDelta: -1,
-        stressDelta: 1,
-        reputationDelta: 0,
-        householdSupportDelta: 4,
-        note: 'The household got more concrete about space needs, which made the upgrade plan sharper and more useful.',
-        campaignXp: { 'home-readiness': 1, 'exit-intel': 1 },
-      };
-    case 'school-deadline':
-      return {
-        cashDelta: -140,
-        energyDelta: -1,
-        stressDelta: 2,
-        reputationDelta: 0,
-        householdSupportDelta: 3,
-        note: 'You turned school and commute pressure into a clearer target-zone decision rather than vague anxiety.',
-        campaignXp: { 'exit-intel': 2 },
-      };
-    case 'timing-nerve':
-      return {
-        cashDelta: 0,
-        energyDelta: 1,
-        stressDelta: -3,
-        reputationDelta: 0,
-        householdSupportDelta: 0,
-        note: 'You used the month to pressure-test the move calmly, which made the exit plan feel less shaky.',
-        campaignXp: { 'exit-intel': 2 },
-      };
-    case 'referral-tailwind':
-      return {
-        cashDelta: 220,
-        energyDelta: -1,
-        stressDelta: -1,
-        reputationDelta: 2,
-        householdSupportDelta: 1,
-        note: 'Warm local momentum made the month feel friendlier and easier to convert into ownership progress.',
-        campaignXp: { 'home-readiness': 1 },
-      };
-    case 'works-slot':
-      return {
-        cashDelta: -240,
-        energyDelta: -1,
-        stressDelta: 0,
-        reputationDelta: 0,
-        householdSupportDelta: 0,
-        note: 'You used a rare contractor gap to improve the home before the next bigger decision window.',
-        campaignXp: { 'home-readiness': 1, 'exit-intel': 1 },
-        propertyEffects: currentHome ? [{ propertyId: currentHome.propertyId, conditionDelta: 3, valueDeltaPct: 0.5 }] : [],
-      };
-    case 'bonus-tailwind':
-      return {
-        cashDelta: 640,
-        energyDelta: -2,
-        stressDelta: 1,
-        reputationDelta: 1,
-        householdSupportDelta: 0,
-        note: 'A stronger-than-usual month at work and on the side gave your runway a satisfying bump.',
-        campaignXp: { 'income-runway': 2 },
-      };
-    case 'district-preview':
-      return {
-        cashDelta: -150,
-        energyDelta: -1,
-        stressDelta: 0,
-        reputationDelta: 0,
-        householdSupportDelta: 2,
-        note: `You spent the month turning district vibes into a more believable next-home plan around ${targetName}.`,
-        campaignXp: { 'exit-intel': 2 },
-      };
-    case 'valuation-tailwind':
-      return {
-        cashDelta: 0,
-        energyDelta: 0,
-        stressDelta: -2,
-        reputationDelta: 0,
-        householdSupportDelta: 0,
-        note: 'A friendlier valuation read made the final MOP stretch feel more like execution than hope.',
-        campaignXp: { 'exit-intel': 2 },
-        propertyEffects: currentHome ? [{ propertyId: currentHome.propertyId, valueDeltaPct: 0.9 }] : [],
-      };
-    case 'rate-window':
-      return {
-        cashDelta: 0,
-        energyDelta: 1,
-        stressDelta: -2,
-        reputationDelta: 0,
-        householdSupportDelta: 0,
-        note: 'A calmer financing window gave you space to think more clearly about the move.',
-        campaignXp: { 'income-runway': 1, 'exit-intel': 1 },
-      };
-    default:
-      return null;
+  const note = typeof template.note === 'string' ? template.note : template.note({ targetName });
+  const effect: OwnershipForkEffect = {
+    cashDelta: template.cashDelta,
+    energyDelta: template.energyDelta,
+    stressDelta: template.stressDelta,
+    reputationDelta: template.reputationDelta,
+    householdSupportDelta: template.householdSupportDelta,
+    note,
+  };
+  if (template.campaignXp) effect.campaignXp = template.campaignXp;
+  if (template.propertyEffectFromHome) {
+    effect.propertyEffects = currentHome
+      ? [{ propertyId: currentHome.propertyId, ...template.propertyEffectFromHome }]
+      : [];
   }
+  return effect;
 }
+
+interface ForkEffectTemplate {
+  cashDelta: number;
+  energyDelta: number;
+  stressDelta: number;
+  reputationDelta: number;
+  householdSupportDelta: number;
+  note: string | ((ctx: { targetName: string }) => string);
+  campaignXp?: Partial<Record<OwnershipCampaignTrackId, number>>;
+  // Per-fork: when the player has a primary home, apply this delta to it.
+  // Stored without `propertyId` so the table doesn't need access to player state.
+  propertyEffectFromHome?: Omit<OwnershipForkPropertyEffect, 'propertyId'>;
+}
+
+const FORK_EFFECT_TEMPLATES: Record<OwnershipForkId, ForkEffectTemplate> = {
+  'neighbour-referral': {
+    cashDelta: 250, energyDelta: -1, stressDelta: 0, reputationDelta: 2, householdSupportDelta: 0,
+    note: 'A neighbour referral gave your landlord month a warmer starting point.',
+    campaignXp: { 'home-readiness': 1 },
+    propertyEffectFromHome: { tenantSatisfactionDelta: 4 },
+  },
+  'starter-works-window': {
+    cashDelta: -450, energyDelta: -1, stressDelta: 1, reputationDelta: 0, householdSupportDelta: 0,
+    note: 'You used a short works window to tidy the home before bigger moves.',
+    campaignXp: { 'home-readiness': 1 },
+    propertyEffectFromHome: { conditionDelta: 4, valueDeltaPct: 0.6 },
+  },
+  'bonus-season': {
+    cashDelta: 900, energyDelta: -2, stressDelta: 2, reputationDelta: 1, householdSupportDelta: 0,
+    note: 'A higher-intensity month converted into extra runway cash.',
+    campaignXp: { 'income-runway': 1 },
+  },
+  'household-budget-talk': {
+    cashDelta: 400, energyDelta: 0, stressDelta: -4, reputationDelta: 0, householdSupportDelta: 4,
+    note: 'A household budget reset freed up a bit more runway without adding risk.',
+    campaignXp: { 'income-runway': 1 },
+  },
+  'launch-preview-weekend': {
+    cashDelta: -180, energyDelta: -2, stressDelta: 1, reputationDelta: 0, householdSupportDelta: 0,
+    note: ({ targetName }) => `A preview weekend sharpened your feel for ${targetName} and the timing around it.`,
+    campaignXp: { 'exit-intel': 2 },
+  },
+  'space-planning-talk': {
+    cashDelta: 0, energyDelta: 0, stressDelta: -1, reputationDelta: 0, householdSupportDelta: 5,
+    note: 'The household became more aligned on what the next home actually needs to solve.',
+    campaignXp: { 'home-readiness': 1, 'exit-intel': 1 },
+  },
+  'valuation-window': {
+    cashDelta: 0, energyDelta: 0, stressDelta: -1, reputationDelta: 0, householdSupportDelta: 0,
+    note: 'A cleaner valuation window improved your exit maths before the final stretch.',
+    campaignXp: { 'exit-intel': 2 },
+    propertyEffectFromHome: { valueDeltaPct: 1.25 },
+  },
+  'school-radius-pressure': {
+    cashDelta: -120, energyDelta: -1, stressDelta: 3, reputationDelta: 0, householdSupportDelta: 2,
+    note: 'School and commute pressure forced the shortlist to become more practical.',
+    campaignXp: { 'exit-intel': 1, 'home-readiness': 1 },
+  },
+  'rate-check-window': {
+    cashDelta: 0, energyDelta: 0, stressDelta: -2, reputationDelta: 0, householdSupportDelta: 0,
+    note: 'A calmer rate window made the exit plan feel more executable.',
+    campaignXp: { 'exit-intel': 1 },
+  },
+  'reserve-gap': {
+    cashDelta: 320, energyDelta: -1, stressDelta: -2, reputationDelta: 0, householdSupportDelta: 1,
+    note: 'You treated the month like a reserve catch-up push, which made the home feel safer to carry.',
+    campaignXp: { 'income-runway': 1, 'home-readiness': 1 },
+  },
+  'setup-fatigue': {
+    cashDelta: -120, energyDelta: 2, stressDelta: -3, reputationDelta: 0, householdSupportDelta: 2,
+    note: 'You used the month to make ownership routines calmer instead of chasing more noise.',
+    campaignXp: { 'home-readiness': 2 },
+  },
+  'renewal-cliff': {
+    cashDelta: 280, energyDelta: -1, stressDelta: 1, reputationDelta: 1, householdSupportDelta: 0,
+    note: 'You got ahead of the next lease conversation before it became a last-minute problem.',
+    campaignXp: { 'home-readiness': 1, 'income-runway': 1 },
+  },
+  'burnout-squeeze': {
+    cashDelta: 180, energyDelta: 4, stressDelta: -6, reputationDelta: 0, householdSupportDelta: 3,
+    note: 'You reset the pace of the month so the runway kept growing without grinding yourself down.',
+    campaignXp: { 'income-runway': 2 },
+  },
+  'shortlist-blur': {
+    cashDelta: -90, energyDelta: -1, stressDelta: -1, reputationDelta: 0, householdSupportDelta: 1,
+    note: 'You forced the market month to become a real shortlist decision instead of open-ended browsing.',
+    campaignXp: { 'exit-intel': 2 },
+  },
+  'space-pressure': {
+    cashDelta: -160, energyDelta: -1, stressDelta: 1, reputationDelta: 0, householdSupportDelta: 4,
+    note: 'The household got more concrete about space needs, which made the upgrade plan sharper and more useful.',
+    campaignXp: { 'home-readiness': 1, 'exit-intel': 1 },
+  },
+  'school-deadline': {
+    cashDelta: -140, energyDelta: -1, stressDelta: 2, reputationDelta: 0, householdSupportDelta: 3,
+    note: 'You turned school and commute pressure into a clearer target-zone decision rather than vague anxiety.',
+    campaignXp: { 'exit-intel': 2 },
+  },
+  'timing-nerve': {
+    cashDelta: 0, energyDelta: 1, stressDelta: -3, reputationDelta: 0, householdSupportDelta: 0,
+    note: 'You used the month to pressure-test the move calmly, which made the exit plan feel less shaky.',
+    campaignXp: { 'exit-intel': 2 },
+  },
+  'referral-tailwind': {
+    cashDelta: 220, energyDelta: -1, stressDelta: -1, reputationDelta: 2, householdSupportDelta: 1,
+    note: 'Warm local momentum made the month feel friendlier and easier to convert into ownership progress.',
+    campaignXp: { 'home-readiness': 1 },
+  },
+  'works-slot': {
+    cashDelta: -240, energyDelta: -1, stressDelta: 0, reputationDelta: 0, householdSupportDelta: 0,
+    note: 'You used a rare contractor gap to improve the home before the next bigger decision window.',
+    campaignXp: { 'home-readiness': 1, 'exit-intel': 1 },
+    propertyEffectFromHome: { conditionDelta: 3, valueDeltaPct: 0.5 },
+  },
+  'bonus-tailwind': {
+    cashDelta: 640, energyDelta: -2, stressDelta: 1, reputationDelta: 1, householdSupportDelta: 0,
+    note: 'A stronger-than-usual month at work and on the side gave your runway a satisfying bump.',
+    campaignXp: { 'income-runway': 2 },
+  },
+  'district-preview': {
+    cashDelta: -150, energyDelta: -1, stressDelta: 0, reputationDelta: 0, householdSupportDelta: 2,
+    note: ({ targetName }) => `You spent the month turning district vibes into a more believable next-home plan around ${targetName}.`,
+    campaignXp: { 'exit-intel': 2 },
+  },
+  'valuation-tailwind': {
+    cashDelta: 0, energyDelta: 0, stressDelta: -2, reputationDelta: 0, householdSupportDelta: 0,
+    note: 'A friendlier valuation read made the final MOP stretch feel more like execution than hope.',
+    campaignXp: { 'exit-intel': 2 },
+    propertyEffectFromHome: { valueDeltaPct: 0.9 },
+  },
+  'rate-window': {
+    cashDelta: 0, energyDelta: 1, stressDelta: -2, reputationDelta: 0, householdSupportDelta: 0,
+    note: 'A calmer financing window gave you space to think more clearly about the move.',
+    campaignXp: { 'income-runway': 1, 'exit-intel': 1 },
+  },
+};
 
 export function getNextHomeShortlist(player: Player): NextHomeShortlistItem[] {
   const listingCatalog = getListingCatalog();

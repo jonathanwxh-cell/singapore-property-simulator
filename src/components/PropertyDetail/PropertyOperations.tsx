@@ -7,6 +7,7 @@ import { getRenovationQuote, renovationContractors, type RenovationTemplate } fr
 import type { OwnedProperty, Player, RentalMode, RenovationContractorTier, TenantProfileId, RentStrategy, TenantLeaseDecisionId } from '@/game/types';
 import type { TenantLeaseOption } from '@/engine/propertyOperations';
 import type { ListingProperty } from '@/engine/listings';
+import { DEFAULT_CONDITION_SCORE } from '@/engine/constants';
 
 type TenantPlan = {
   label: string;
@@ -67,7 +68,7 @@ export default function PropertyOperations({
           <h3 className="section-title text-white">Property Operations</h3>
         </div>
         <div className="text-right">
-          <p className="font-mono text-white">{ownedProperty.conditionScore ?? 70}/100</p>
+          <p className="font-mono text-white">{ownedProperty.conditionScore ?? DEFAULT_CONDITION_SCORE}/100</p>
           <p className="text-text-dim text-[10px]">condition</p>
         </div>
       </div>

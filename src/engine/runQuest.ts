@@ -1,7 +1,7 @@
 import type { Player } from '@/game/types';
 import { selectAvailableCash, selectMonthlyNetCashflow } from './selectors';
 import { resolveStarterPropertyRoute } from './firstHomeStarter';
-import { TAKE_HOME_RATIO } from './constants';
+import { DEFAULT_CONDITION_SCORE, TAKE_HOME_RATIO } from './constants';
 import { getNextHomePlan } from './nextHomePlan';
 import { getOwnershipCampaign } from './ownershipCampaign';
 
@@ -115,7 +115,7 @@ function getMopQuest(player: Player, currentScenario: string | null): FirstRunQu
   const hasTenant = player.properties.some((property) => Boolean(property.tenant || property.isRented));
   const reserveCash = player.reserve?.allocatedCash ?? 0;
   const hasHomeProject = player.properties.some((property) =>
-    Boolean(property.activeRenovation || (property.completedRenovations?.length ?? 0) > 0 || (property.conditionScore ?? 70) >= 80),
+    Boolean(property.activeRenovation || (property.completedRenovations?.length ?? 0) > 0 || (property.conditionScore ?? DEFAULT_CONDITION_SCORE) >= 80),
   );
   const steps: FirstRunQuestStep[] = [
     {

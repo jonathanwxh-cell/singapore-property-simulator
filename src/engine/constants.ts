@@ -13,6 +13,10 @@ export const HDB_CONCESSIONARY_LTV = 0.75;
 export const HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT = 25;
 export const HDB_RESALE_LEVY_ESTIMATE = 40_000;
 export const HDB_MOP_MONTHS = 60;
+// Months-remaining checkpoints used to surface MOP urgency to the player.
+// Crossing any of these (e.g. dropping from 19 to 18 months) triggers a
+// notable-month signal so the auto-advance loop can stop and present a beat.
+export const HDB_MOP_NOTABLE_MILESTONES = [54, 48, 36, 24, 18, 12, 6, 3, 1, 0] as const;
 
 // Market dynamics
 // Property values track the broader price index but at this fraction of its move
@@ -75,3 +79,16 @@ export const MSR_LIMIT = 0.30;
 
 // Save versioning
 export const SAVE_VERSION = 2;
+
+// Property condition: when a property is missing a `conditionScore` (e.g. on
+// older saves or fresh purchases that haven't been normalized yet), engine
+// reads fall back to this baseline so wear-driven branches stay deterministic.
+export const DEFAULT_CONDITION_SCORE = 70;
+
+// Tenant operations
+// 12-month tenancy term: lease signing and renewals both extend the lease end
+// by this many turns (turn = 1 month).
+export const TENANT_LEASE_TERM_MONTHS = 12;
+// Rent uplift applied by the "Raise Rent" lease decision. Player-facing copy
+// (e.g. the "Raise Rent 8%" button label) is derived from this constant.
+export const TENANT_RENT_RAISE_PCT = 0.08;
