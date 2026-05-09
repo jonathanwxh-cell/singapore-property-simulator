@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import CommandCenterHero from '@/components/CommandCenterHero';
-import LifeCampaignPanel from '@/components/LifeCampaignPanel';
 import { lifeActions, lifeActionsById } from '@/data/lifeActions';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { getCommandCenterState } from '@/engine/commandCenter';
-import { getLifeCampaign } from '@/engine/lifeCampaign';
 import { getNextBestMoves } from '@/engine/decisionCoach';
 import { getMonthlyIntentOptions, type MonthlyIntentOption } from '@/engine/monthlyIntents';
 import { getOwnershipBeatState } from '@/engine/ownershipMoments';
@@ -15,22 +12,20 @@ import { getNextHomePlan } from '@/engine/nextHomePlan';
 import { getOwnershipTargetRace } from '@/engine/ownershipTargets';
 import { getOwnershipCampaign } from '@/engine/ownershipCampaign';
 import { getNextHomeShortlist, getOwnershipForkOptions, type OwnershipForkOption } from '@/engine/ownershipForks';
+import { getPlaySurfaceState, type PlaySurfaceChoice } from '@/engine/playSurface';
 import { deriveEligibilityFlags } from '@/engine/eligibility';
 import { getFirstHomeMissions } from '@/engine/firstHomeMissions';
 import { getLastTurnRecap } from '@/engine/turnRecap';
 import { getFirstRunQuest, type FirstRunQuest } from '@/engine/runQuest';
 import {
-  selectAvailableCash,
   selectMonthlyExpenses,
   selectMonthlyHouseholdLoad,
   selectMonthlyNetCashflow,
   selectMonthlyRentalIncome,
   selectMonthlyTakeHome,
-  selectNetWorth,
-  selectReservedCash,
 } from '@/engine/selectors';
 import { useGameStore } from '@/game/useGameStore';
-import { StatCard } from './dashboard/DashboardComponents';
+import NextMonthCTA from '@/components/NextMonthCTA';
 import { formatSignedPercent } from './dashboard/dashboardFormatters';
 import { dashboardContainerVariants, dashboardItemVariants } from './dashboard/dashboardMotion';
 import DashboardAdvancedRail from './dashboard/DashboardAdvancedRail';
@@ -39,19 +34,15 @@ import BeginnerAdvancedGate from './dashboard/panels/BeginnerAdvancedGate';
 import BeginnerPrimerPanel from './dashboard/panels/BeginnerPrimerPanel';
 import FirstRunQuestPanel from './dashboard/panels/FirstRunQuestPanel';
 import LastMonthRecapPanel from './dashboard/panels/LastMonthRecapPanel';
-import MonthlyIntentPanel from './dashboard/panels/MonthlyIntentPanel';
 import NextHomeGatewayPanel from './dashboard/panels/NextHomeGatewayPanel';
 import OwnershipForksPanel from './dashboard/panels/OwnershipForksPanel';
+import PlaySurfacePanel from './dashboard/panels/PlaySurfacePanel';
 import PropertyOperationsPanel from './dashboard/panels/PropertyOperationsPanel';
 import {
   Banknote,
   BookOpen,
-  Building2,
-  Newspaper,
   PieChart,
   ShoppingBag,
-  TrendingUp,
-  Wallet,
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -70,19 +61,16 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [showAdvancedPanels, setShowAdvancedPanels] = useState(false);
   const [highlightMonthlyIntent, setHighlightMonthlyIntent] = useState(false);
-  const monthlyIntentRef = useRef<HTMLDivElement>(null);
+  const playSurfaceRef = useRef<HTMLDivElement>(null);
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  const netWorth = selectNetWorth(player);
-  const availableCash = selectAvailableCash(player);
-  const reservedCash = selectReservedCash(player);
   const monthlyTakeHome = selectMonthlyTakeHome(player, TAKE_HOME_RATIO);
   const monthlyRental = selectMonthlyRentalIncome(player);
   const monthlyDebt = selectMonthlyExpenses(player);
   const monthlyHouseholdLoad = selectMonthlyHouseholdLoad(player);
   const monthlyNetCashflow = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
   const commandState = useMemo(() => getCommandCenterState(player, currentScenario), [player, currentScenario]);
-  const lifeCampaign = useMemo(() => getLifeCampaign(player, currentScenario), [player, currentScenario]);
+  const playSurface = useMemo(() => getPlaySurfaceState({ player, currentScenario }), [player, currentScenario]);
   const selectedPrimaryAction = lifeActions.find((action) => action.id === (player.life.selectedPrimaryActionId ?? 'focus-at-work'))
     ?? lifeActionsById['focus-at-work'];
   const selectedSecondaryAction = player.life.selectedSecondaryActionId
@@ -134,9 +122,29 @@ export default function Dashboard() {
     applyOwnershipFork(fork);
     navigate('/dashboard');
   };
+  const handlePlaySurfaceChoice = (choice: PlaySurfaceChoice) => {
+    if (choice.kind === 'intent' && choice.intentId) {
+      const intent = monthlyIntents.find((candidate) => candidate.id === choice.intentId);
+      if (intent) {
+        handleSelectIntent(intent);
+        return;
+      }
+    }
+    navigate(choice.route);
+  };
+  const handleInspectSurfaceChoice = (choice: PlaySurfaceChoice) => {
+    if (choice.kind === 'intent' && choice.intentId) {
+      const intent = monthlyIntents.find((candidate) => candidate.id === choice.intentId);
+      if (intent) {
+        handleOpenIntent(intent);
+        return;
+      }
+    }
+    navigate(choice.route);
+  };
   const handleQuestStep = (step: FirstRunQuest['steps'][number]) => {
     if (step.id === 'choose-monthly-intent') {
-      monthlyIntentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      playSurfaceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setHighlightMonthlyIntent(true);
       window.setTimeout(() => setHighlightMonthlyIntent(false), 1800);
       return;
@@ -148,60 +156,39 @@ export default function Dashboard() {
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
       <motion.div variants={dashboardContainerVariants} initial="hidden" animate="show" className="mx-auto max-w-6xl">
         <motion.div variants={dashboardItemVariants} className="mb-5 pt-1">
-          <h1 className="page-title text-white">Home Command Center</h1>
+          <h1 className="page-title text-white">This Month</h1>
           <p className="mt-1 font-rajdhani text-text-secondary">
-            {monthNames[player.month - 1]} {player.year} | Turn {player.turnCount} | Age {player.age} | Welcome, {player.name}
+            {monthNames[player.month - 1]} {player.year} | Age {player.age} | {player.name}'s Singapore life
           </p>
         </motion.div>
 
-        <motion.div variants={dashboardItemVariants}>
-          <CommandCenterHero state={commandState} onNavigate={navigate} />
+        <motion.div ref={playSurfaceRef} variants={dashboardItemVariants} className="scroll-mt-24">
+          <PlaySurfacePanel
+            state={playSurface}
+            compactMode={settings.compactMode}
+            highlighted={highlightMonthlyIntent}
+            advanceSlot={<NextMonthCTA variant="inline" />}
+            onPlayChoice={handlePlaySurfaceChoice}
+            onInspectChoice={handleInspectSurfaceChoice}
+            onToggleCompact={() => updateSettings({ compactMode: !settings.compactMode })}
+          />
         </motion.div>
 
-        <motion.div variants={dashboardItemVariants} className="mb-6">
+        <motion.div variants={dashboardItemVariants} className="mb-6 grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
           <FirstRunQuestPanel quest={firstRunQuest} onNavigate={navigate} onContinueStep={handleQuestStep} />
-        </motion.div>
-
-        {settings.guidedMode && (
-          <motion.div variants={dashboardItemVariants} className="mb-6">
+          {settings.guidedMode ? (
             <BeginnerPrimerPanel
               onDisableGuidance={() => updateSettings({ guidedMode: false })}
               onOpenLearn={() => navigate('/learn')}
             />
-          </motion.div>
-        )}
-
-        <motion.div variants={dashboardItemVariants} className="mb-6">
-          <LifeCampaignPanel campaign={lifeCampaign} onNavigate={navigate} />
+          ) : lastTurnRecap ? (
+            <LastMonthRecapPanel recap={lastTurnRecap} />
+          ) : null}
         </motion.div>
 
-        {lastTurnRecap && (
+        {lastTurnRecap && settings.guidedMode && (
           <motion.div variants={dashboardItemVariants} className="mb-6">
             <LastMonthRecapPanel recap={lastTurnRecap} />
-          </motion.div>
-        )}
-
-        <motion.div variants={dashboardItemVariants} className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard
-            icon={Wallet}
-            label="Spendable Cash"
-            value={`S$${(availableCash / 1000).toFixed(1)}K`}
-            color="#00F0FF"
-            detail={reservedCash > 0 ? `Wallet S$${(player.cash / 1000).toFixed(1)}K | Reserve S$${(reservedCash / 1000).toFixed(1)}K` : 'All wallet cash is currently spendable'}
-          />
-          <StatCard icon={TrendingUp} label="Net Worth" value={`S$${(netWorth / 1000000).toFixed(2)}M`} color="#00E676" />
-          <StatCard icon={Building2} label="Properties" value={String(player.properties.length)} color="#7C4DFF" />
-          <StatCard icon={Newspaper} label="Market Index" value={`${market.priceIndex.toFixed(1)}`} color="#FF9100" change={marketChange} />
-        </motion.div>
-
-        {reservedCash > 0 && (
-          <motion.div variants={dashboardItemVariants} className="mb-6">
-            <div className="rounded-2xl border border-warning/20 bg-warning/10 px-4 py-3">
-              <p className="label-text mb-1 text-[10px] text-warning">Cash split</p>
-              <p className="text-sm leading-relaxed text-text-secondary">
-                Spendable cash is safe to use now. Reserved cash is still part of your net worth, but earmarked for repairs, vacancies, and emergency buffer decisions.
-              </p>
-            </div>
           </motion.div>
         )}
 
@@ -240,17 +227,6 @@ export default function Dashboard() {
             />
           </motion.div>
         )}
-
-        <motion.div ref={monthlyIntentRef} variants={dashboardItemVariants} className="mb-6 scroll-mt-24">
-          <MonthlyIntentPanel
-            intents={monthlyIntents}
-            compactMode={settings.compactMode}
-            highlighted={highlightMonthlyIntent}
-            onSelect={handleSelectIntent}
-            onOpen={handleOpenIntent}
-            onToggleCompact={() => updateSettings({ compactMode: !settings.compactMode })}
-          />
-        </motion.div>
 
         {player.properties.length > 0 && hasPropertyAttention && (
           <motion.div variants={dashboardItemVariants} className="mb-6">

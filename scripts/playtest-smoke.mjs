@@ -324,10 +324,12 @@ async function assertManualLoadPromotesAutosave(page) {
 
   await gotoRoute(page, `${page.url().split('/#/')[0]}/#/saveload`);
   await page.getByRole('button', { name: /^Load$/ }).first().click();
-  await expectVisible(page, 'text=Turn 12');
+  await expectVisible(page, 'text=This Month');
+  await expectVisible(page, 'text=Life Board');
 
   await reloadRoute(page);
-  await expectVisible(page, 'text=Turn 12');
+  await expectVisible(page, 'text=This Month');
+  await expectVisible(page, 'text=Life Board');
 }
 
 async function assertNewGameStepResetsMobileScroll(page) {
@@ -365,8 +367,8 @@ async function run() {
     await expectVisible(page, 'text=Start Guided Run');
 
     await page.getByRole('button', { name: 'Start Guided Run' }).click();
-    await expectVisible(page, 'text=Home Command Center');
     await expectVisible(page, 'text=This Month');
+    await expectVisible(page, 'text=Life Board');
 
     await gotoRoute(page, `${baseUrl}/#/`);
 
@@ -399,13 +401,12 @@ async function run() {
     await expectVisible(page, 'text=Select Difficulty');
     await page.getByRole('button', { name: /Start Game/i }).click();
 
-    await expectVisible(page, 'text=Home Command Center');
     await expectVisible(page, 'text=This Month');
+    await expectVisible(page, 'text=Life Board');
     await expectAnyVisible(page, ['text=Beginner focus mode', 'text=Guided mode primer', 'text=Beginner quest']);
-    await expectVisible(page, 'text=Campaign Chapter');
-    await expectVisible(page, 'text=Current Mission');
-    await expectVisible(page, 'text=Campaign Score');
-    await expectVisible(page, 'text=Monthly Intent');
+    await expectVisible(page, 'text=Life path');
+    await expectVisible(page, 'text=Make your move');
+    await expectVisible(page, 'text=Play this month');
     await openAdvancedDashboardPanels(page);
     await expectVisible(page, 'text=Life Arc');
     await assertVisibleAdvanceExists(page, 'dashboard');
@@ -421,7 +422,7 @@ async function run() {
     await gotoRoute(page, `${baseUrl}/#/dashboard`);
 
     await page.getByRole('button', { name: /Advance to/i }).first().click();
-    await expectVisible(page, 'text=Turn 1');
+    await expectVisible(page, 'text=Life Board');
 
     await page.getByRole('button', { name: /Advance to/i }).first().click();
     await expectVisible(page, 'text=First-Home Window Opens');
@@ -429,8 +430,8 @@ async function run() {
     await page.getByRole('button', { name: /Claim the grant/i }).click();
     await expectVisible(page, 'text=Scenario Resolved');
     await page.getByRole('button', { name: 'Continue' }).click();
-    await expectVisible(page, 'text=Home Command Center');
     await expectVisible(page, 'text=This Month');
+    await expectVisible(page, 'text=Life Board');
 
     await gotoRoute(page, `${baseUrl}/#/market`);
     await expectVisible(page, 'text=Market News Feed');
@@ -502,7 +503,9 @@ async function run() {
     await expectVisible(page, 'text=Scenario Resolved');
     await page.getByRole('button', { name: 'Continue' }).click();
     await gotoRoute(page, `${baseUrl}/#/dashboard`);
-    await expectVisible(page, 'text=Turn 12');
+    await expectVisible(page, 'text=This Month');
+    await expectVisible(page, 'text=Life Board');
+    await expectVisible(page, 'text=Home Season');
     await expectVisible(page, 'text=Ownership chapter');
     await expectVisible(page, 'text=Settle In');
     await assertManualLoadPromotesAutosave(page);

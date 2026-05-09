@@ -110,7 +110,7 @@ export default function Learn() {
                     onClick={isGameActive ? () => navigate('/dashboard') : startBeginnerRun}
                     className="btn-primary flex items-center justify-center gap-2"
                   >
-                    {isGameActive ? 'Back to Home Command Center' : 'Start Beginner Run'}
+                    {isGameActive ? 'Back to This Month' : 'Start Beginner Run'}
                     <ArrowRight size={16} />
                   </button>
                   {!isGameActive && (
@@ -222,7 +222,7 @@ export default function Learn() {
             onClick={isGameActive ? () => navigate('/dashboard') : startBeginnerRun}
             className="btn-primary flex items-center justify-center gap-2"
           >
-            {isGameActive ? 'Back to Home Command Center' : 'Start Beginner Run'}
+            {isGameActive ? 'Back to This Month' : 'Start Beginner Run'}
             <ArrowRight size={16} />
           </button>
           <button type="button" onClick={() => navigate('/market')} className="btn-secondary">

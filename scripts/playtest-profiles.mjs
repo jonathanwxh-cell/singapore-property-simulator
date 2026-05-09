@@ -116,9 +116,10 @@ async function startProfile(page, baseUrl, {
   await page.getByRole('button', { name: /^Next$/ }).click();
   await expectVisible(page, 'text=Select Difficulty');
   await page.getByRole('button', { name: /Start Game/i }).click();
-  await expectVisible(page, 'text=Home Command Center');
+  await expectVisible(page, 'text=This Month');
+  await expectVisible(page, 'text=Life Board');
   await expectAnyVisible(page, ['text=Beginner focus mode', 'text=Guided mode primer', 'text=Beginner quest']);
-  await expectVisible(page, 'text=Monthly Intent');
+  await expectVisible(page, 'text=Make your move');
 }
 
 function getResidencyRateText(residencyLabel) {

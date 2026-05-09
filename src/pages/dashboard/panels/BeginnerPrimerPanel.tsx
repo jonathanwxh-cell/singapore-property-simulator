@@ -14,7 +14,7 @@ export default function BeginnerPrimerPanel({
       summary="Start with one objective, one monthly plan, and one reason before you dive into the deeper sim panels."
       bullets={[
         'Read the top objective first. It tells you the one move that matters most this month.',
-        'Pick a Monthly Intent next. That is the only place where a one-click plan can advance time.',
+        'Pick a Life Board move next. That is the clearest place where one click can advance time.',
         'Spendable cash is what you can safely use now. Reserved cash is still yours, but earmarked for repairs and emergencies.',
       ]}
       termIds={['absd', 'cpf-oa', 'mop', 'msr', 'tdsr', 'reserve-cash']}

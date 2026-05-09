@@ -24,6 +24,8 @@ The detailed roadmap lives in [docs/roadmap/singapore-a-lifetime-roadmap.md](doc
 
 The current build includes a Decision Coach layer across the dashboard, property browser, property detail, scenarios, and life-planning screens. It explains the next sensible move, deal blockers, expected life-action effects, and scenario upside/downside before players commit.
 
+The Home screen now leads with a **Life Board** play surface instead of a stats-first dashboard: the current month, life-path timeline, compact vital HUD, and 2-3 playable choice cards sit above deeper finance inspection. The full CPF, loan, MOP, ABSD, and portfolio detail remains available, but the first read is "what should I play this month?"
+
 The dashboard also includes a first-home mission rail and a plain-English rule glossary so players can understand CPF OA, ABSD, MOP, room rental, MSR, TDSR, and reserves without leaving the game flow. A dedicated Learn hub and inline glossary chips make the sim approachable for casual tycoon players with no prior Singapore property knowledge.
 
 The latest guidance pass adds a "First 3 Moves" quest rail, celebratory reward beats, a practice-purchase simulation on property detail pages, BTO/HFE timeline cards, mobile More navigation, and a 55+ Rightsizer route for CPF-after-55 and retirement-runway playthroughs.
@@ -218,7 +220,7 @@ src/
 |  |- maintenanceOperations.ts # Maintenance issue catalog and repair decisions
 |  |- operationsShared.ts      # Shared helpers used across operations modules
 |  |- decisionCoach.ts         # Plain-English next-move guidance
-|  |- commandCenter.ts         # Home Command Center monthly intent state machine
+|  |- commandCenter.ts         # This Month / Life Board objective state machine
 |  |- monthlyIntents.ts        # Cash / deal / recovery / landlord stance options
 |  |- practicePurchase.ts      # Non-mutating property-detail purchase simulation
 |  |- dealComparison.ts        # "Compare Before You Buy" math
