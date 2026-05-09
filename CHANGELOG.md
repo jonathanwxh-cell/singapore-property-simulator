@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a structured **Singapore: A Lifetime** roadmap and `Lifetime Shell v1` implementation handoff so the next product direction is documented around named endings, life memories, causal scenarios, cultural texture, and gradual README updates without discarding the current property engine.
 
 ### Fixed
+- Clarified the former compact-mode UX as **Less Text View**, with action-oriented toggle labels and visible "Show full guide" recovery controls on Dashboard, Buy, monthly-plan, and Settings surfaces.
 - Tightened the browser-playtested beginner flow: mobile Home now keeps Next Month visible near the Life Board, monthly action copy says it advances time, `/new-game` works as a setup alias, and direct `/gameover` access redirects active runs instead of showing a fake ending.
 - Clarified commercial-property purchase UX by removing first-timer badges from commercial listings/details and replacing CPF-facing cash labels with commercial upfront-cost language.
 
