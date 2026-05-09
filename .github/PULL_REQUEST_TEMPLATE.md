@@ -1,26 +1,46 @@
 ## Summary
-<!-- 1-3 bullets on what changes and why -->
+<!-- 1-3 bullets on what changed and why. -->
 
-## Linked issue
-<!-- e.g. Closes #12 -->
+## Linked Issue
+<!-- Use a closing keyword, e.g. Closes #12. -->
 
-## Agent
-<!-- Which agent authored the bulk of this PR? Helps with attribution and coordination per AGENTS.md. -->
+## Agent / Author
+<!-- Mark the main author. Helps coordination per AGENTS.md. -->
 - [ ] `agent:claude`
 - [ ] `agent:codex`
 - [ ] human
 
-## Scope confirmation
-<!-- Per AGENTS.md, the agent that opens a PR owns its files until merge. -->
-- [ ] No open PR is currently touching the same files (checked `gh pr list`)
-- [ ] If this PR modifies `package-lock.json`, the `deps:locked` label is applied and no other lockfile-touching PR is open
+## Coordination
+<!-- The PR owner owns touched files until merge. -->
+- [ ] I checked open PRs for file overlap: `gh pr list --state open --json number,title,headRefName,files`
+- [ ] I declared/confirmed scope in the linked issue.
+- [ ] No other open PR currently owns these files, or coordination is documented in comments.
+- [ ] If this PR modifies `package-lock.json`, the `deps:locked` label is applied and no other lockfile PR is open.
 
-## Test plan
+## Research
+<!-- Required for current facts, external APIs, security, finance rules, Singapore policy, or platform behavior. -->
+- Required: yes / no
+- Sources:
+- Last checked:
+- Simplification or game-balance notes:
+
+## Test Plan
 - [ ] `npm test` passes (vitest)
 - [ ] `npm run lint` clean
 - [ ] `npm run build` clean
 - [ ] If gameplay changed: at least one of `npm run test:smoke`, `npm run test:profiles`, `npm run test:scroll` exercised
-- [ ] Manual smoke test (start a game, buy a property, advance a turn) where applicable
+- [ ] If UI changed: browser route(s) tested and listed below
+
+Browser routes tested:
+-
 
 ## Changelog
 <!-- Add an entry under [Unreleased] in CHANGELOG.md if user-visible. Refactors and test-only changes can skip. -->
+- [ ] CHANGELOG updated
+- [ ] Not user-visible / not needed
+
+## Handoff / Follow-ups
+<!-- Anything the next agent or reviewer should know. -->
+- Follow-up issues:
+- Known risks:
+- Cleanup needed after merge:
