@@ -75,6 +75,7 @@ export function detectLifetimeEnding(player: Player, outcome: RunOutcome): Lifet
     ending: lifetimeEndingsById[winner.id],
     score: winner.score,
     reasons: winner.reasons,
+    // Last six memories form the run epilogue; fewer is fine for short runs.
     memories: memories.slice(-6),
   };
 }
@@ -86,7 +87,10 @@ export function recordLifetimeRun(player: Player, outcome: RunOutcome, completed
     runHistory: [],
   };
   const record: LifetimeRunRecord = {
-    id: `run-${player.year}-${player.month}-${player.turnCount}-${result.ending.id}`,
+    // completedAt is included so two runs that finish on the same in-game month
+    // with the same ending don't share an id (they would otherwise collide in
+    // runHistory and break per-record lookups).
+    id: `run-${player.year}-${player.month}-${player.turnCount}-${result.ending.id}-${completedAt}`,
     endingId: result.ending.id,
     endingLabel: result.ending.label,
     playerName: player.name,

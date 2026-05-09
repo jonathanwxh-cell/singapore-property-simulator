@@ -8,9 +8,14 @@ export interface LifeMemoryDraft {
   scoreImpact?: number;
 }
 
-const MEMORY_LIMIT = 80;
+// Hard cap so a long run can't grow lifeMemories indefinitely. Older memories
+// fall off when this is exceeded; the run epilogue keeps the most recent six
+// (see detectLifetimeEnding), so older entries are only used for stats/tagging.
+export const MEMORY_LIMIT = 80;
 
 export function createLifeMemory(player: Player, draft: LifeMemoryDraft): LifeMemory {
+  // tags can legitimately be empty for category-only memories; fall back to the
+  // category so the synthesised id stays stable per (turn, draft).
   const primaryTag = draft.tags[0] ?? draft.category;
 
   return {

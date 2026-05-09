@@ -87,10 +87,24 @@ const postcardLabels = {
 } satisfies Record<HeroVariant, string>;
 
 function PostcardArt({ variant }: { variant: HeroVariant }) {
-  if (variant === 'market') return <PostcardMap />;
-  if (variant === 'portfolio' || variant === 'property') return <PostcardHome />;
-  if (variant === 'life' || variant === 'learn' || variant === 'newgame') return <PostcardBoard />;
-  return <PostcardCity />;
+  switch (variant) {
+    case 'market':
+      return <PostcardMap />;
+    case 'portfolio':
+    case 'property':
+      return <PostcardHome />;
+    case 'life':
+    case 'learn':
+    case 'newgame':
+      return <PostcardBoard />;
+    case 'dashboard':
+    case 'buy':
+      return <PostcardCity />;
+    default: {
+      const _exhaustive: never = variant;
+      return _exhaustive;
+    }
+  }
 }
 
 function PostcardCity() {
@@ -189,10 +203,24 @@ const variantBackdrop = {
 } satisfies Record<HeroVariant, string>;
 
 function HeroIllustration({ variant }: { variant: HeroVariant }) {
-  if (variant === 'market') return <MapIllustration />;
-  if (variant === 'life' || variant === 'learn' || variant === 'newgame') return <LifeIllustration />;
-  if (variant === 'portfolio' || variant === 'property') return <HomeIllustration />;
-  return <CityIllustration />;
+  switch (variant) {
+    case 'market':
+      return <MapIllustration />;
+    case 'life':
+    case 'learn':
+    case 'newgame':
+      return <LifeIllustration />;
+    case 'portfolio':
+    case 'property':
+      return <HomeIllustration />;
+    case 'dashboard':
+    case 'buy':
+      return <CityIllustration />;
+    default: {
+      const _exhaustive: never = variant;
+      return _exhaustive;
+    }
+  }
 }
 
 function CityIllustration() {
