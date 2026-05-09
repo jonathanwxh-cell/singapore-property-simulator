@@ -8,6 +8,7 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { formatCompactCurrency, formatCurrency, formatPercent, formatRate } from '@/lib/format';
 import { buildDistrictOpportunityCards, buildListingSummary, getMarketMovers } from '@/engine/listings';
 import PageSceneHero, { HeroAction } from '@/components/visuals/PageSceneHero';
+import NextMonthCTA from '@/components/NextMonthCTA';
 
 export default function Market() {
   const { market } = useGameStore();
@@ -36,7 +37,12 @@ export default function Market() {
             { label: 'Rental Index', value: market.rentalIndex.toFixed(1), tone: 'neutral' },
             { label: 'Rate', value: formatPercent(market.interestRate, 2), tone: 'warn' },
           ]}
-          actions={<HeroAction onClick={() => navigate('/properties')}>Browse listings</HeroAction>}
+          actions={(
+            <>
+              <HeroAction onClick={() => navigate('/properties')}>Browse listings</HeroAction>
+              <NextMonthCTA variant="inline" className="w-full sm:w-auto lg:hidden" />
+            </>
+          )}
         />
 
         <div className="grid md:grid-cols-4 gap-4 mb-6">

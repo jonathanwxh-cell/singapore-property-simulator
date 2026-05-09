@@ -235,6 +235,32 @@ async function assertMobileAdvanceClearsBottomNav(page, routeLabel, viewport = {
   await page.setViewportSize({ width: 1440, height: 1100 });
 }
 
+async function assertMobileAdvanceIsInFlow(page, routeLabel, viewport = { width: 390, height: 844 }) {
+  await page.setViewportSize(viewport);
+  await delay(150);
+
+  const fixedAdvanceCount = await page.locator('button').evaluateAll((buttons) => (
+    buttons.filter((button) => {
+      const text = `${button.innerText} ${button.getAttribute('aria-label') ?? ''}`;
+      const rect = button.getBoundingClientRect();
+      if (!text.toUpperCase().includes('ADVANCE TO') || rect.width === 0 || rect.height === 0) return false;
+
+      let node = button;
+      while (node) {
+        if (window.getComputedStyle(node).position === 'fixed') return true;
+        node = node.parentElement;
+      }
+      return false;
+    }).length
+  ));
+
+  if (fixedAdvanceCount > 0) {
+    throw new Error(`Mobile ${routeLabel} should keep Next Month in flow, not as a fixed overlay over content.`);
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+}
+
 async function assertMobileScenarioCanScroll(page) {
   await page.setViewportSize({ width: 390, height: 844 });
   await delay(150);
@@ -470,6 +496,13 @@ async function run() {
     await gotoRoute(page, `${baseUrl}/#/market`);
     await expectVisible(page, 'text=Market News Feed');
     await expectVisible(page, 'text=Turn 2');
+    await assertMobileAdvanceClearsBottomNav(page, 'market');
+    await assertMobileAdvanceIsInFlow(page, 'market');
+
+    await gotoRoute(page, `${baseUrl}/#/bank`);
+    await expectVisible(page, 'text=Debt is a rule gate');
+    await assertMobileAdvanceClearsBottomNav(page, 'bank');
+    await assertMobileAdvanceIsInFlow(page, 'bank');
 
     await gotoRoute(page, `${baseUrl}/#/properties`);
     await expectVisible(page, 'text=Best next buy for you');

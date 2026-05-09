@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGameStore } from '@/game/useGameStore';
-import NextMonthCTA from './NextMonthCTA';
 import { isMobileMorePath } from './mobileMoreNavigation';
 
 const mobileNavItems = [
@@ -63,11 +62,6 @@ export default function GameLayout() {
 
   const sidebarWidth = isMobile || !shellControlsVisible ? 0 : 224;
   const bottomNavPadding = isMobile && shellControlsVisible ? 'calc(4rem + env(safe-area-inset-bottom))' : 0;
-  const routesWithInlineAdvance = ['/dashboard', '/life'];
-  const showFloatingAdvance = isMobile
-    && shellControlsVisible
-    && !routesWithInlineAdvance.includes(location.pathname)
-    && ['/market', '/bank'].includes(location.pathname);
   const navigateFromMobileMore = (path: string) => {
     setShowMoreMenu(false);
     window.setTimeout(() => navigate(path), 0);
@@ -112,7 +106,6 @@ export default function GameLayout() {
       {/* Mobile bottom nav */}
       {isMobile && shellControlsVisible && (
         <>
-        {showFloatingAdvance && <NextMonthCTA variant="floating" />}
         <MobileMoreSheet
           open={showMoreMenu}
           pathname={location.pathname}

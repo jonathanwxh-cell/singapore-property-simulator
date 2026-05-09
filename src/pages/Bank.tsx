@@ -8,6 +8,8 @@ import GlossaryTerm from '@/components/GlossaryTerm';
 import { Landmark, Wallet, TrendingDown, Plus, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import PageSceneHero from '@/components/visuals/PageSceneHero';
+import NextMonthCTA from '@/components/NextMonthCTA';
+import { formatCurrency } from '@/lib/format';
 
 export default function Bank() {
   const { player, applyLoan, payLoan } = useGameStore();
@@ -35,10 +37,11 @@ export default function Bank() {
           subtitle="See CPF balances, active loans, TDSR pressure, and borrowing room before making the next property move."
           className="mb-6"
           stats={[
-            { label: 'Outstanding', value: `S$${totalDebt.toLocaleString()}`, tone: totalDebt > 0 ? 'warn' : 'good' },
-            { label: 'Monthly Debt', value: `S$${monthlyPayments.toLocaleString()}`, tone: monthlyPayments > 0 ? 'warn' : 'good' },
+            { label: 'Outstanding', value: formatCurrency(totalDebt), tone: totalDebt > 0 ? 'warn' : 'good' },
+            { label: 'Monthly Debt', value: formatCurrency(monthlyPayments), tone: monthlyPayments > 0 ? 'warn' : 'good' },
             { label: 'TDSR Test', value: `${(tdsr * 100).toFixed(1)}%`, tone: tdsr > TDSR_LIMIT ? 'bad' : 'good' },
           ]}
+          actions={<NextMonthCTA variant="inline" className="w-full sm:w-auto lg:hidden" />}
         />
 
         <div className="grid md:grid-cols-3 gap-4 mb-6">
@@ -52,8 +55,8 @@ export default function Bank() {
             <h3 className="section-title text-white mb-4">Active Loans</h3>
             <GlassCard className="mb-4">
               <div className="flex items-center justify-between mb-4">
-                <div><p className="label-text text-text-dim text-[10px]">Total Outstanding</p><p className="font-mono text-xl text-danger">S${totalDebt.toLocaleString()}</p></div>
-                <div className="text-right"><p className="label-text text-text-dim text-[10px]">Monthly Payment</p><p className="font-mono text-xl text-warning">S${monthlyPayments.toLocaleString()}</p></div>
+                <div><p className="label-text text-text-dim text-[10px]">Total Outstanding</p><p className="font-mono text-xl text-danger">{formatCurrency(totalDebt)}</p></div>
+                <div className="text-right"><p className="label-text text-text-dim text-[10px]">Monthly Payment</p><p className="font-mono text-xl text-warning">{formatCurrency(monthlyPayments)}</p></div>
               </div>
             </GlassCard>
 
@@ -65,7 +68,7 @@ export default function Bank() {
                   <GlassCard key={loan.id} className={selectedLoanId === loan.id ? 'border-cyan-glow/50' : ''}>
                     <div className="flex items-center justify-between">
                       <div><p className="font-rajdhani font-semibold text-white text-sm capitalize">{loan.type} Loan</p><p className="text-text-dim text-[10px] font-mono">Started: {loan.startDate} | {loan.interestRate}% p.a.</p></div>
-                      <div className="text-right"><p className="font-mono text-white">S${loan.remainingBalance.toLocaleString()}</p><p className="text-text-dim text-[10px] font-mono">S${loan.monthlyPayment}/mo</p></div>
+                      <div className="text-right"><p className="font-mono text-white">{formatCurrency(loan.remainingBalance)}</p><p className="text-text-dim text-[10px] font-mono">{formatCurrency(loan.monthlyPayment)}/mo</p></div>
                     </div>
                     <div className="mt-3 flex gap-2">
                       <button onClick={() => { setSelectedLoanId(loan.id); setPayAmount(Math.min(player.cash, loan.remainingBalance)); }} className="flex-1 btn-secondary text-xs py-2">Pay</button>
@@ -98,7 +101,7 @@ export default function Bank() {
                   <input type="range" min={50000} max={5000000} step={50000} value={loanAmount}
                     onChange={(e) => { setLoanAmount(Number(e.target.value)); setLoanError(null); }} className="w-full accent-cyan-glow" />
                   <div className="flex justify-between font-mono text-xs text-white mt-1">
-                    <span>S$50K</span><span className="text-cyan-glow text-lg">S${loanAmount.toLocaleString()}</span><span>S$5M</span>
+                    <span>S$50K</span><span className="text-cyan-glow text-lg">{formatCurrency(loanAmount)}</span><span>S$5M</span>
                   </div>
                 </div>
                 <div>
@@ -114,7 +117,7 @@ export default function Bank() {
                   </div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-text-secondary text-sm">Est. Monthly</span>
-                    <span className="font-mono text-cyan-glow">S${estimatedMonthly.toLocaleString()}</span>
+                    <span className="font-mono text-cyan-glow">{formatCurrency(estimatedMonthly)}</span>
                   </div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-text-secondary text-sm"><GlossaryTerm termId="tdsr">TDSR</GlossaryTerm> ({Math.round(TDSR_LIMIT * 100)}% cap)</span>
@@ -126,7 +129,7 @@ export default function Bank() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-text-secondary text-sm">Total Interest</span>
-                    <span className="font-mono text-danger">S${(estimatedMonthly * loanYears * 12 - loanAmount).toLocaleString()}</span>
+                    <span className="font-mono text-danger">{formatCurrency(estimatedMonthly * loanYears * 12 - loanAmount)}</span>
                   </div>
                 </div>
 
