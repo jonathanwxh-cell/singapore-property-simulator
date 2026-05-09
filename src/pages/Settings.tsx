@@ -5,6 +5,14 @@ import GlassCard from '@/components/GlassCard';
 import { ArrowLeft, Volume2, Zap, RotateCcw, Type, SunMedium, Sparkles } from 'lucide-react';
 import PageSceneHero from '@/components/visuals/PageSceneHero';
 
+function quickToggleClass(active: boolean) {
+  return `min-h-11 rounded-lg border px-4 py-3 text-sm font-rajdhani font-semibold uppercase tracking-wider transition-colors ${
+    active
+      ? 'border-success/35 bg-success/10 text-success hover:bg-success/15'
+      : 'border-cyan-glow/30 bg-cyan-glow/10 text-cyan-glow hover:bg-cyan-glow/15'
+  }`;
+}
+
 export default function Settings() {
   const navigate = useNavigate();
   const { settings, updateSettings, player, isGameActive } = useGameStore();
@@ -28,6 +36,46 @@ export default function Settings() {
             { label: 'Less Text', value: settings.compactMode ? 'On' : 'Off', tone: settings.compactMode ? 'good' : 'neutral' },
             { label: 'Large Text', value: settings.largeTextMode ? 'On' : 'Off', tone: settings.largeTextMode ? 'good' : 'neutral' },
           ]}
+          actions={(
+            <>
+              <button
+                type="button"
+                aria-pressed={settings.guidedMode}
+                aria-label={settings.guidedMode ? 'Turn guided help off' : 'Turn guided help on'}
+                onClick={() => updateSettings({ guidedMode: !settings.guidedMode })}
+                className={quickToggleClass(settings.guidedMode)}
+              >
+                Guided {settings.guidedMode ? 'On' : 'Off'}
+              </button>
+              <button
+                type="button"
+                aria-pressed={settings.compactMode}
+                aria-label={settings.compactMode ? 'Turn off Less Text View and show full guide text' : 'Turn on Less Text View'}
+                onClick={() => updateSettings({ compactMode: !settings.compactMode })}
+                className={quickToggleClass(settings.compactMode)}
+              >
+                Less Text {settings.compactMode ? 'On' : 'Off'}
+              </button>
+              <button
+                type="button"
+                aria-pressed={settings.largeTextMode}
+                aria-label={settings.largeTextMode ? 'Turn large text mode off' : 'Turn large text mode on'}
+                onClick={() => updateSettings({ largeTextMode: !settings.largeTextMode })}
+                className={quickToggleClass(settings.largeTextMode)}
+              >
+                Large Text {settings.largeTextMode ? 'On' : 'Off'}
+              </button>
+              <button
+                type="button"
+                aria-pressed={settings.highContrastMode}
+                aria-label={settings.highContrastMode ? 'Turn high contrast mode off' : 'Turn high contrast mode on'}
+                onClick={() => updateSettings({ highContrastMode: !settings.highContrastMode })}
+                className={quickToggleClass(settings.highContrastMode)}
+              >
+                High Contrast {settings.highContrastMode ? 'On' : 'Off'}
+              </button>
+            </>
+          )}
         />
 
         {/* Audio */}
@@ -44,6 +92,8 @@ export default function Settings() {
               </div>
               <button
                 onClick={() => updateSettings({ soundEnabled: !settings.soundEnabled })}
+                aria-pressed={settings.soundEnabled}
+                aria-label={settings.soundEnabled ? 'Turn sound effects off' : 'Turn sound effects on'}
                 className={`w-12 h-6 rounded-full transition-all ${settings.soundEnabled ? 'bg-cyan-glow' : 'bg-white/10'}`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.soundEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
@@ -56,6 +106,8 @@ export default function Settings() {
               </div>
               <button
                 onClick={() => updateSettings({ musicEnabled: !settings.musicEnabled })}
+                aria-pressed={settings.musicEnabled}
+                aria-label={settings.musicEnabled ? 'Turn background music off' : 'Turn background music on'}
                 className={`w-12 h-6 rounded-full transition-all ${settings.musicEnabled ? 'bg-cyan-glow' : 'bg-white/10'}`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.musicEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
@@ -96,6 +148,8 @@ export default function Settings() {
               </div>
               <button
                 onClick={() => updateSettings({ autoSave: !settings.autoSave })}
+                aria-pressed={settings.autoSave}
+                aria-label={settings.autoSave ? 'Turn auto-save off' : 'Turn auto-save on'}
                 className={`w-12 h-6 rounded-full transition-all ${settings.autoSave ? 'bg-cyan-glow' : 'bg-white/10'}`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.autoSave ? 'translate-x-6' : 'translate-x-0.5'}`} />
@@ -108,6 +162,8 @@ export default function Settings() {
               </div>
               <button
                 onClick={() => updateSettings({ guidedMode: !settings.guidedMode })}
+                aria-pressed={settings.guidedMode}
+                aria-label={settings.guidedMode ? 'Turn guided onboarding off' : 'Turn guided onboarding on'}
                 className={`w-12 h-6 rounded-full transition-all ${settings.guidedMode ? 'bg-cyan-glow' : 'bg-white/10'}`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.guidedMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
@@ -170,6 +226,8 @@ export default function Settings() {
               </div>
               <button
                 onClick={() => updateSettings({ largeTextMode: !settings.largeTextMode })}
+                aria-pressed={settings.largeTextMode}
+                aria-label={settings.largeTextMode ? 'Turn large text mode off' : 'Turn large text mode on'}
                 className={`w-12 h-6 rounded-full transition-all ${settings.largeTextMode ? 'bg-success' : 'bg-white/10'}`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.largeTextMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
@@ -182,6 +240,8 @@ export default function Settings() {
               </div>
               <button
                 onClick={() => updateSettings({ highContrastMode: !settings.highContrastMode })}
+                aria-pressed={settings.highContrastMode}
+                aria-label={settings.highContrastMode ? 'Turn high contrast mode off' : 'Turn high contrast mode on'}
                 className={`w-12 h-6 rounded-full transition-all ${settings.highContrastMode ? 'bg-success' : 'bg-white/10'}`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.highContrastMode ? 'translate-x-6' : 'translate-x-0.5'}`} />

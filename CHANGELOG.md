@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Made Settings cockpit status controls directly interactive, so Guided Help, Less Text View, Large Text, and High Contrast can be changed from the top settings hero instead of only through small lower switches.
+
 ## [0.6.1] - 2026-05-09
 
 ### Added
