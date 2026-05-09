@@ -50,6 +50,7 @@ const NO_AUTO_HYDRATE_ROUTES = new Set([
   '/',
   '/how-to-play',
   '/newgame',
+  '/new-game',
   '/saveload',
   '/leaderboard',
 ]);

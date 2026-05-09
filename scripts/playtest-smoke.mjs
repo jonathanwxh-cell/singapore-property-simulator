@@ -88,14 +88,14 @@ async function expectAnyVisible(page, selectors, timeout = 15000) {
 }
 
 async function gotoRoute(page, url) {
-  await page.goto(url, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('body');
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForSelector('body', { state: 'attached' });
   await delay(200);
 }
 
 async function reloadRoute(page) {
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('body');
+  await page.waitForSelector('body', { state: 'attached' });
   await delay(200);
 }
 
@@ -387,6 +387,9 @@ async function run() {
 
     await gotoRoute(page, `${baseUrl}/#/`);
     await expectVisible(page, 'text=New Game');
+    await gotoRoute(page, `${baseUrl}/#/new-game`);
+    await expectVisible(page, 'text=Enter Your Name');
+    await gotoRoute(page, `${baseUrl}/#/`);
 
     await page.getByRole('button', { name: 'New Game' }).click();
     await page.getByPlaceholder('Enter your name...').fill('Codex QA');
@@ -406,7 +409,7 @@ async function run() {
     await expectAnyVisible(page, ['text=Beginner focus mode', 'text=Guided mode primer', 'text=Beginner quest']);
     await expectVisible(page, 'text=Life path');
     await expectVisible(page, 'text=Make your move');
-    await expectVisible(page, 'text=Play this month');
+    await expectVisible(page, 'text=Do + Advance Month');
     await openAdvancedDashboardPanels(page);
     await expectVisible(page, 'text=Life Arc');
     await assertVisibleAdvanceExists(page, 'dashboard');

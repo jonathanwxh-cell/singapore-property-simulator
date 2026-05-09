@@ -40,7 +40,7 @@ const state: PlaySurfaceState = {
       route: '/life',
       recommended: true,
       tone: 'neutral',
-      primaryLabel: 'Play this month',
+      primaryLabel: 'Do + Advance Month',
       secondaryLabel: 'Inspect first',
       intentId: 'build-cash',
     },
@@ -64,7 +64,7 @@ describe('PlaySurfacePanel', () => {
     expect(html).toContain('Life Board');
     expect(html).toContain('First Home');
     expect(html).toContain('Build Cash Buffer');
-    expect(html).toContain('Play this month');
+    expect(html).toContain('Do + Advance Month');
     expect(html).toContain('Inspect finances');
     expect(html).toContain('Next Month');
   });

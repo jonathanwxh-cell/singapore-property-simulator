@@ -86,9 +86,10 @@ export function computePurchaseReadiness(input: PurchaseReadinessInput): Purchas
   const practicePlan = buildPracticePurchasePlan({ player, property, readiness: dealReadiness });
   const btoReadinessPlan = buildBtoReadinessPlan(player, property);
   const seniorRightsizingPlan = buildSeniorRightsizingPlan(player);
+  const isCommercial = property.type.startsWith('Commercial');
 
   // Derived flat values (lines 158-179 of original PropertyDetail.tsx)
-  const cpfEligible = !property.type.startsWith('Commercial');
+  const cpfEligible = !isCommercial;
   const cpfApplied = dealReadiness.cpfApplied;
   const cashRequired = dealReadiness.cashRequired;
   const availableCash = selectAvailableCash(player);
@@ -99,7 +100,11 @@ export function computePurchaseReadiness(input: PurchaseReadinessInput): Purchas
   const canAfford = dealReadiness.verdict !== 'blocked' && cashShortfall === 0 && extraReasons.length === 0 && !isOwned && !eligibilityBlocked;
   const visibleMessages = Array.from(
     new Set([
-      ...(cashShortfall > 0 ? [`You need ${formatCurrency(cashShortfall)} more cash after CPF OA`] : []),
+      ...(cashShortfall > 0
+        ? [isCommercial
+          ? `You need ${formatCurrency(cashShortfall)} more cash for upfront costs`
+          : `You need ${formatCurrency(cashShortfall)} more cash after CPF OA`]
+        : []),
       ...extraReasons.map((reason) => reason.message),
       ...(eligibility.blockedReason ? [eligibility.blockedReason] : []),
       ...(actionError ? [actionError] : []),

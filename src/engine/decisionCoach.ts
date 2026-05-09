@@ -284,7 +284,12 @@ export function assessDealReadiness({
     : null;
   const primaryBlocker = eligibilityBlocker
     ?? structuralBlocker
-    ?? (cashShortfall > 0 ? { code: 'insufficient_cash' as const, message: `You need ${formatCurrency(cashShortfall)} more spendable cash after CPF.` } : null);
+    ?? (cashShortfall > 0 ? {
+      code: 'insufficient_cash' as const,
+      message: cpfEligible
+        ? `You need ${formatCurrency(cashShortfall)} more spendable cash after CPF.`
+        : `You need ${formatCurrency(cashShortfall)} more spendable cash for upfront costs.`,
+    } : null);
   const warnings: string[] = [];
 
   if (monthlySurplusAfterDebt < 0) {
@@ -316,13 +321,13 @@ export function assessDealReadiness({
     monthlyPayment: validation.monthlyPayment,
     monthlySurplusAfterDebt,
     facts: [
-      `Cash needed after CPF: ${formatCurrency(cashRequired)}`,
-      `CPF OA applied: ${formatCurrency(cpfApplied)}`,
-      validation.cpfUsageMode === 'full'
+      `${cpfEligible ? 'Cash needed after CPF' : 'Cash needed upfront'}: ${formatCurrency(cashRequired)}`,
+      cpfEligible ? `CPF OA applied: ${formatCurrency(cpfApplied)}` : 'CPF OA not usable for commercial property',
+      cpfEligible && validation.cpfUsageMode === 'full'
         ? 'CPF lease coverage: full OA usage allowed for this upfront step'
-        : validation.cpfUsageMode === 'prorated'
+        : cpfEligible && validation.cpfUsageMode === 'prorated'
           ? `CPF lease coverage: reduced OA usage cap of ${formatCurrency(validation.maxCpfOrdinaryUsable)}`
-          : validation.cpfUsageMessage,
+          : cpfEligible ? validation.cpfUsageMessage : null,
       `New mortgage payment: ${formatCurrency(validation.monthlyPayment)}/mo over ${validation.loanTermYears} years`,
       validation.hdbResaleLevy > 0 ? `Estimated resale levy: ${formatCurrency(validation.hdbResaleLevy)}` : null,
       validation.absd > 0 ? `ABSD rate: ${formatPercent(validation.absdRate * 100)}` : null,

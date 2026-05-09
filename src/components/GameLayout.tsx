@@ -36,6 +36,7 @@ export default function GameLayout() {
   const mainRef = useRef<HTMLElement>(null);
   const shellControlsVisible = isGameActive && ![
     '/newgame',
+    '/new-game',
     '/saveload',
     '/settings',
     '/gameover',

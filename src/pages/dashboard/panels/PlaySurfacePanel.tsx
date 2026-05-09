@@ -59,6 +59,12 @@ export default function PlaySurfacePanel({
                 {state.subtitle}
               </p>
 
+              {advanceSlot && (
+                <div className="mt-4 rounded-2xl border border-cyan-glow/20 bg-black/20 p-2 xl:hidden">
+                  {advanceSlot}
+                </div>
+              )}
+
               <div className="mt-5 rounded-3xl border border-white/10 bg-black/20 p-4">
                 <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -86,7 +92,7 @@ export default function PlaySurfacePanel({
 
             <aside className="grid content-start gap-3">
               {advanceSlot && (
-                <div className="rounded-2xl border border-cyan-glow/20 bg-black/20 p-2">
+                <div className="hidden rounded-2xl border border-cyan-glow/20 bg-black/20 p-2 xl:block">
                   {advanceSlot}
                 </div>
               )}

@@ -64,6 +64,7 @@ export default function PropertyDetail() {
 
   const typeInfo = propertyTypeInfo[property.type];
   const rarityInfo = listingRarityInfo[property.listingRarity];
+  const isCommercial = property.type.startsWith('Commercial');
   const {
     activeHousingLoans, effectiveFinancingMode, minDownPaymentPercent, effectiveDownPaymentPercent,
     validation, dealReadiness, dealNextFix, monthlySurplus, grantSupport, affordability, eligibility,
@@ -83,7 +84,12 @@ export default function PropertyDetail() {
     setActionError(null);
     if (eligibilityBlocked) { setActionError(eligibility.blockedReason); return; }
     if (dealReadiness.warnings.length > 0) { setActionError(dealReadiness.warnings[0]); return; }
-    if (cashShortfall > 0) { setActionError(`You need ${formatCurrency(cashShortfall)} more cash after CPF OA.`); return; }
+    if (cashShortfall > 0) {
+      setActionError(isCommercial
+        ? `You need ${formatCurrency(cashShortfall)} more cash for upfront costs.`
+        : `You need ${formatCurrency(cashShortfall)} more cash after CPF OA.`);
+      return;
+    }
     const result = buyProperty(property.id, validation.downPayment, cpfApplied, effectiveFinancingMode);
     if (result.ok) { setActionError(null); navigate('/portfolio'); return; }
     setActionError(result.message);
@@ -144,7 +150,7 @@ export default function PropertyDetail() {
   const quickPanelProps = {
     propertyName: property.name, readiness: dealReadiness.verdict, summary: practicePlan.summary,
     projectedMonthlySurplus: practicePlan.projectedMonthlySurplusAfterPurchase,
-    cashRequired, canAfford, onReview: handleReviewPurchase, onBuy: handleBuy,
+    cashRequired, canAfford, onReview: handleReviewPurchase,
   };
 
   return (

@@ -221,11 +221,12 @@ export default function PurchasePanel({
   onNavigate: (route: string) => void;
 }) {
   const reserveDipWarning = reservedCash > 0 && cashRequired > availableCash && cashRequired <= player.cash;
+  const isCommercial = property.type.startsWith('Commercial');
 
   return (
     <div ref={purchasePanelRef} className="scroll-mt-24">
       <GlassCard accentColor="#00E676" className="lg:sticky lg:top-4 lg:max-h-[34rem] lg:overflow-y-auto">
-        <h3 className="section-title text-white mb-4">Purchase</h3>
+        <h3 className="section-title text-white mb-4">{isCommercial ? 'Commercial Purchase' : 'Purchase'}</h3>
 
         <div className="space-y-4 mb-6">
           <div className="flex items-center justify-between">
@@ -498,7 +499,9 @@ export default function PurchasePanel({
                 {affordability.monthsAtCurrentPace === null
                   ? 'Current monthly surplus is too tight to project a clean purchase timeline.'
                   : affordability.monthsAtCurrentPace === 0
-                    ? 'You already have enough to cover the cash requirement after CPF OA.'
+                    ? isCommercial
+                      ? 'You already have enough to cover the upfront cash requirement.'
+                      : 'You already have enough to cover the cash requirement after CPF OA.'
                     : `At your current pace, this cash requirement is about ${affordability.monthsAtCurrentPace} months away.`}
               </p>
               <p className="text-text-dim text-[11px] mt-2">

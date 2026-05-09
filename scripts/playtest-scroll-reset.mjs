@@ -84,8 +84,8 @@ async function expectAnyVisible(page, selectors, timeout = 15000) {
 }
 
 async function gotoRoute(page, url) {
-  await page.goto(url, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('body');
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForSelector('body', { state: 'attached' });
   await delay(200);
 }
 

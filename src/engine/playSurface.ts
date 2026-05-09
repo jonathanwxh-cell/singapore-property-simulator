@@ -197,7 +197,7 @@ function intentToChoice(intent: MonthlyIntentOption): PlaySurfaceChoice {
     route: intent.route,
     recommended: intent.recommended,
     tone: intent.tone,
-    primaryLabel: 'Play this month',
+    primaryLabel: 'Do + Advance Month',
     secondaryLabel: 'Inspect first',
     intentId: intent.id,
   };

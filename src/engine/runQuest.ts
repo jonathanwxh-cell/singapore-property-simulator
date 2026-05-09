@@ -56,7 +56,7 @@ export function getFirstRunQuest(player: Player, currentScenario: string | null)
     {
       id: 'choose-monthly-intent',
       label: 'Pick 1 monthly plan',
-      detail: 'Choose Earn, Buy, Own, or Learn. Time moves only when you advance.',
+      detail: 'Choose Earn, Buy, Own, or Learn. Do + Advance spends one month; Inspect First just opens the page.',
       route: '/dashboard',
       completed: player.turnCount > 0 || hasHome,
       rewardLabel: '+ confidence',

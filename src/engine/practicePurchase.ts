@@ -64,6 +64,7 @@ export function buildPracticePurchasePlan({
   const availableCash = selectAvailableCash(player);
   const projectedCashAfterUpfront = Math.round(player.cash - readiness.cashRequired);
   const projectedAvailableCashAfterReserve = Math.round(availableCash - readiness.cashRequired);
+  const cashLabel = property.type.startsWith('Commercial') ? 'cash upfront' : 'cash after CPF';
   const riskLevel = readiness.verdict === 'ready'
     ? 'safe'
     : readiness.verdict === 'stretch'
@@ -86,7 +87,7 @@ export function buildPracticePurchasePlan({
 
   return {
     title: 'Practice purchase simulation',
-    summary: `${property.name}: ${formatCompactCurrency(readiness.cashRequired)} cash after CPF, then ${formatCurrency(readiness.monthlySurplusAfterDebt)}/mo projected surplus.`,
+    summary: `${property.name}: ${formatCompactCurrency(readiness.cashRequired)} ${cashLabel}, then ${formatCurrency(readiness.monthlySurplusAfterDebt)}/mo projected surplus.`,
     riskLevel,
     cashRequired: readiness.cashRequired,
     cpfApplied: readiness.cpfApplied,

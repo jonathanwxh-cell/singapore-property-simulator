@@ -250,6 +250,7 @@ describe('save persistence', () => {
     expect(shouldHydrateAutoSaveForPath('/dashboard')).toBe(true);
     expect(shouldHydrateAutoSaveForPath('/')).toBe(false);
     expect(shouldHydrateAutoSaveForPath('/newgame')).toBe(false);
+    expect(shouldHydrateAutoSaveForPath('/new-game')).toBe(false);
     expect(shouldHydrateAutoSaveForPath('/saveload')).toBe(false);
   });
 

@@ -63,6 +63,7 @@ export default function App() {
           {/* Game screens with layout */}
           <Route element={<GameLayout />}>
             <Route path="/newgame" element={<NewGame />} />
+            <Route path="/new-game" element={<NewGame />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/life" element={<Life />} />
             <Route path="/properties" element={<Properties />} />

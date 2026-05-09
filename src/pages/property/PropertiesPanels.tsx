@@ -40,15 +40,17 @@ export function DealComparePanel({
         </div>
       </div>
       <div className="grid gap-3 lg:grid-cols-3">
-        {comparison.items.map((item) => (
-          <div
-            key={item.id}
-            className={`rounded-2xl border p-4 ${
-              comparison.summary.bestId === item.id
-                ? 'border-success/40 bg-success/10'
-                : 'border-glass-border bg-white/[0.03]'
-            }`}
-          >
+        {comparison.items.map((item) => {
+          const isCommercial = item.type.startsWith('Commercial');
+          return (
+            <div
+              key={item.id}
+              className={`rounded-2xl border p-4 ${
+                comparison.summary.bestId === item.id
+                  ? 'border-success/40 bg-success/10'
+                  : 'border-glass-border bg-white/[0.03]'
+              }`}
+            >
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
                 <p className="font-rajdhani text-lg font-semibold text-white">{item.name}</p>
@@ -66,7 +68,7 @@ export function DealComparePanel({
               )}
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <CompareMetric label="Cash after CPF" value={formatCompactCurrency(item.cashRequired)} tone={item.verdict === 'blocked' ? 'bad' : 'good'} />
+              <CompareMetric label={isCommercial ? 'Cash required' : 'Cash after CPF'} value={formatCompactCurrency(item.cashRequired)} tone={item.verdict === 'blocked' ? 'bad' : 'good'} />
               <CompareMetric label="Duties / levy" value={formatCompactCurrency(item.upfrontDuties)} tone="neutral" />
               <CompareMetric label="Monthly surplus" value={formatCurrency(item.monthlySurplusAfterPurchase)} tone={item.monthlySurplusAfterPurchase >= 0 ? 'good' : 'bad'} />
               <CompareMetric label="Yield" value={`${item.rentalYieldPct}%`} tone={item.rentalYieldPct >= 4 ? 'good' : 'neutral'} />
@@ -88,8 +90,9 @@ export function DealComparePanel({
             <button type="button" onClick={() => onOpenProperty(item.id)} className="btn-secondary mt-3 w-full py-3 text-xs">
               Open deal page
             </button>
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
       <p className="mt-3 text-xs leading-relaxed text-text-dim">
         Use Compare on listing cards to swap the suggested set. Comparing does not reserve cash, advance time, or buy anything.

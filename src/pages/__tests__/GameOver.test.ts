@@ -3,9 +3,32 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { detectLifetimeEnding } from '@/engine/lifetime/endings';
 import { useGameStore } from '@/game/useGameStore';
+import { getGameOverRedirectTarget } from '../gameOverGuards';
 import { LifetimeEndingSummary } from '../GameOver';
 
 describe('GameOver', () => {
+  it('guards the ending screen while a run is still active', () => {
+    const player = {
+      ...useGameStore.getState().player,
+      name: 'Active Runner',
+      turnCount: 6,
+    };
+
+    expect(getGameOverRedirectTarget(player, true)).toBe('/dashboard');
+  });
+
+  it('keeps an untouched default store from showing a fake ending', () => {
+    const player = {
+      ...useGameStore.getState().player,
+      name: 'Player',
+      turnCount: 0,
+      properties: [],
+      achievements: [],
+    };
+
+    expect(getGameOverRedirectTarget(player, false)).toBe('/');
+  });
+
   it('renders the lifetime ending summary and recent memories', () => {
     const player = {
       ...useGameStore.getState().player,

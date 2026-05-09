@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useGameStore } from '@/game/useGameStore';
 import { selectNetWorth } from '@/engine/selectors';
 import { difficultySettings } from '@/game/types';
@@ -10,10 +11,30 @@ import EligibilityBadge from '@/components/EligibilityBadge';
 import { runRoutesById } from '@/data/runRoutes';
 import { scoreRunRoute } from '@/engine/runDirector';
 import { detectLifetimeEnding, type LifetimeEndingResult } from '@/engine/lifetime/endings';
+import { getGameOverRedirectTarget } from './gameOverGuards';
 
 export default function GameOver() {
   const navigate = useNavigate();
-  const { player } = useGameStore();
+  const { player, isGameActive } = useGameStore();
+  const redirectTarget = getGameOverRedirectTarget(player, isGameActive);
+
+  useEffect(() => {
+    if (redirectTarget) navigate(redirectTarget, { replace: true });
+  }, [navigate, redirectTarget]);
+
+  if (redirectTarget) {
+    return (
+      <div className="min-h-[calc(100dvh-64px)] bg-deep-space flex items-center justify-center px-4">
+        <GlassCard className="max-w-md text-center">
+          <p className="label-text text-[10px] text-cyan-glow">Run still in progress</p>
+          <h1 className="section-title mt-2 text-white">Returning you to the right screen</h1>
+          <p className="mt-2 text-sm text-text-secondary">
+            Endings unlock only after the run actually resolves.
+          </p>
+        </GlassCard>
+      </div>
+    );
+  }
 
   const netWorth = selectNetWorth(player);
   const target = difficultySettings[player.difficulty].targetNetWorth;

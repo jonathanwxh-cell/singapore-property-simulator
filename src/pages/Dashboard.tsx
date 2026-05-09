@@ -113,9 +113,17 @@ export default function Dashboard() {
     if (!isGameActive) navigate('/gameover');
   }, [isGameActive, navigate]);
 
+  const scrollToLifeBoard = () => {
+    window.requestAnimationFrame(() => {
+      document.querySelector('main')?.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    });
+  };
+
   const handleSelectIntent = (intent: MonthlyIntentOption) => {
     applyMonthlyIntent(intent);
     navigate('/dashboard');
+    scrollToLifeBoard();
   };
   const handleOpenIntent = (intent: MonthlyIntentOption) => {
     prepareMonthlyIntent(intent);

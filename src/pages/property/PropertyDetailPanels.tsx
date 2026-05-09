@@ -22,11 +22,11 @@ export function PracticeMetric({ label, value, tone }: { label: string; value: s
 
 export function QuickPurchasePanel({
   propertyName, readiness, summary, projectedMonthlySurplus, cashRequired,
-  canAfford, onReview, onBuy, compact = false, className = 'mb-6',
+  canAfford, onReview, compact = false, className = 'mb-6',
 }: {
   propertyName: string; readiness: 'ready' | 'stretch' | 'blocked'; summary: string;
   projectedMonthlySurplus: number; cashRequired: number; canAfford: boolean;
-  onReview: () => void; onBuy: () => void; compact?: boolean; className?: string;
+  onReview: () => void; compact?: boolean; className?: string;
 }) {
   return (
     <GlassCard
@@ -53,11 +53,10 @@ export function QuickPurchasePanel({
           </button>
           <button
             type="button"
-            onClick={onBuy}
-            disabled={!canAfford}
-            className="btn-primary min-h-11 px-4 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={onReview}
+            className="btn-primary min-h-11 px-4 py-3 text-sm"
           >
-            {canAfford ? 'Buy Property' : readiness === 'blocked' ? 'Fix blocker first' : 'Build cash first'}
+            {canAfford ? 'Jump To Buy Panel' : readiness === 'blocked' ? 'See Blocker Details' : 'Review Cash Gap'}
           </button>
         </div>
       </div>
@@ -125,11 +124,13 @@ export function EligibilitySection({
   eligibilityBlocked: boolean;
   isOwned: boolean;
 }) {
+  const isCommercial = property.type.startsWith('Commercial');
+
   return (
     <GlassCard accentColor={eligibilityBlocked ? '#FF1744' : '#FFD740'}>
       <h3 className="section-title text-white mb-4">Eligibility</h3>
       <div className="flex flex-wrap gap-2 mb-4">
-        {eligibilityFlags.firstTimer && (
+        {!isCommercial && eligibilityFlags.firstTimer && (
           <EligibilityBadge label="First-Timer" tone="good" />
         )}
         {eligibilityFlags.homeowner && (
@@ -150,7 +151,7 @@ export function EligibilitySection({
       </div>
 
       <div className="space-y-2 text-sm">
-        {eligibility.firstTimerFriendly && (
+        {!isCommercial && eligibility.firstTimerFriendly && (
           <p className="text-success">This listing fits the early-game first-home ladder and stays readable on a starter salary.</p>
         )}
         {eligibility.salaryCeiling !== null && (
@@ -206,6 +207,8 @@ export function PropertyImageHeader({
     onClick: () => void;
   };
 }) {
+  const isCommercial = property.type.startsWith('Commercial');
+
   return (
     <div className="relative mb-4 h-52 overflow-hidden rounded-xl md:mb-6 md:h-80">
       <PropertyImage src={property.image} alt={property.name} className="w-full h-full object-cover" />
@@ -243,7 +246,7 @@ export function PropertyImageHeader({
               {ownedProperty.tenant?.rentalMode === 'room-rental' ? 'Room Rented' : 'Rented Out'}
             </span>
           )}
-          {!isOwned && eligibilityFlags.firstTimer && eligibility.firstTimerFriendly && (
+          {!isOwned && !isCommercial && eligibilityFlags.firstTimer && eligibility.firstTimerFriendly && (
             <EligibilityBadge label="First-Timer Friendly" tone="good" />
           )}
           {!isOwned && property.type === 'Executive Condo' && eligibility.ecEligible && (

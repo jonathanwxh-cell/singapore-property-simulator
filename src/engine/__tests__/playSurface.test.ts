@@ -73,7 +73,7 @@ describe('play surface director', () => {
     expect(surface.timeline.some((stage) => stage.id === 'first-home' && stage.status === 'current')).toBe(true);
     expect(surface.choices).toHaveLength(3);
     expect(surface.choices[0].kind).toBe('intent');
-    expect(surface.choices[0].primaryLabel).toBe('Play this month');
+    expect(surface.choices[0].primaryLabel).toBe('Do + Advance Month');
     expect(surface.financeModeLabel).toBe('Inspect finances');
   });
 

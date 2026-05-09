@@ -109,4 +109,13 @@ describe('computePurchaseReadiness', () => {
     const result = computePurchaseReadiness({ player, property, ...defaultInput });
     expect(result.cpfEligible).toBe(false);
   });
+
+  it('uses upfront-cost wording for commercial cash shortfalls', () => {
+    const player = makePlayer({ cash: 10_000, cpfOrdinary: 300_000 });
+    const property = makeProperty({ type: 'Commercial Shop', isHdb: false, price: 500_000 });
+    const result = computePurchaseReadiness({ player, property, ...defaultInput });
+
+    expect(result.visibleMessages.some((message) => message.includes('upfront costs'))).toBe(true);
+    expect(result.visibleMessages.some((message) => message.includes('after CPF OA'))).toBe(false);
+  });
 });

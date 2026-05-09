@@ -259,6 +259,23 @@ describe('assessDealReadiness', () => {
     expect(readiness.headline).toContain('MOP');
     expect(readiness.ctaLabel).toBe('Blocked: MOP');
   });
+
+  it('uses commercial purchase wording instead of CPF wording for commercial deals', () => {
+    const property = properties.find((candidate) => candidate.type === 'Commercial Shop');
+    if (!property) throw new Error('Expected commercial property fixture.');
+
+    const readiness = assessDealReadiness({
+      player: makePlayer({ cash: 1_000, cpfOrdinary: 200_000 }),
+      property,
+      downPaymentPercent: 100,
+      useCpfOrdinary: true,
+    });
+
+    expect(readiness.cpfApplied).toBe(0);
+    expect(readiness.primaryBlocker?.message ?? '').toContain('upfront costs');
+    expect(readiness.facts).toContain('CPF OA not usable for commercial property');
+    expect(readiness.facts.some((fact) => fact.includes('Cash needed after CPF'))).toBe(false);
+  });
 });
 
 describe('getDealNextFix', () => {

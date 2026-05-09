@@ -50,6 +50,7 @@ export default function PropertyListingCard({
 }: PropertyListingCardProps) {
   const district = districts.find((d) => d.id === property.districtId);
   const typeInfo = propertyTypeInfo[property.type];
+  const isCommercial = property.type.startsWith('Commercial');
 
   return (
     <GlassCard hoverable onClick={() => onOpen(property.id)} className="cursor-pointer">
@@ -122,7 +123,7 @@ export default function PropertyListingCard({
       </div>
 
       <div className="mb-3 flex flex-wrap gap-2">
-        {flags.firstTimer && eligibility.firstTimerFriendly && (
+        {!isCommercial && flags.firstTimer && eligibility.firstTimerFriendly && (
           <EligibilityBadge label="First-Timer Friendly" tone="good" />
         )}
         {property.type === 'Executive Condo' && eligibility.ecEligible && (
@@ -153,7 +154,7 @@ export default function PropertyListingCard({
         {!compactMode && (
           <p className="text-text-secondary text-[11px] mt-1 line-clamp-1">
             {readiness.verdict === 'ready'
-              ? 'Ready with current CPF and cash.'
+              ? isCommercial ? 'Ready with current cash and financing.' : 'Ready with current CPF and cash.'
               : readiness.verdict === 'stretch'
                 ? 'Buyable, but monthly buffer is thin.'
                 : readiness.primaryBlocker?.message ?? 'Improve readiness before buying.'}
