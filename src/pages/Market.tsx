@@ -7,6 +7,7 @@ import PropertyImage from '@/components/PropertyImage';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { formatCompactCurrency, formatCurrency, formatPercent, formatRate } from '@/lib/format';
 import { buildDistrictOpportunityCards, buildListingSummary, getMarketMovers } from '@/engine/listings';
+import PageSceneHero, { HeroAction } from '@/components/visuals/PageSceneHero';
 
 export default function Market() {
   const { market } = useGameStore();
@@ -24,7 +25,19 @@ export default function Market() {
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4 game-screen">
       <div className="max-w-6xl mx-auto">
-        <h1 className="page-title text-white mb-6">Market Overview</h1>
+        <PageSceneHero
+          variant="market"
+          eyebrow="Market overview"
+          title="Read Singapore like a living map"
+          subtitle="Price, rent, rates, district heat, and policy stories now start as a market scene before the tables."
+          className="mb-6"
+          stats={[
+            { label: 'Price Index', value: market.priceIndex.toFixed(1), tone: market.lastEvent === 'crash' ? 'bad' : market.lastEvent === 'boom' ? 'good' : 'neutral' },
+            { label: 'Rental Index', value: market.rentalIndex.toFixed(1), tone: 'neutral' },
+            { label: 'Rate', value: formatPercent(market.interestRate, 2), tone: 'warn' },
+          ]}
+          actions={<HeroAction onClick={() => navigate('/properties')}>Browse listings</HeroAction>}
+        />
 
         <div className="grid md:grid-cols-4 gap-4 mb-6">
           <GlassCard>

@@ -23,6 +23,7 @@ import {
   ProgressLine,
   SnapshotRow,
 } from './life/LifeComponents';
+import PageSceneHero from '@/components/visuals/PageSceneHero';
 
 const arrangementOptions = [
   { value: 'with-parents', label: 'Live with Parents', hint: 'Lower cash burn, more shared obligations.' },
@@ -73,12 +74,19 @@ export default function Life() {
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-6">
-          <h1 className="page-title text-white">Plan This Month</h1>
-          <p className="text-text-secondary mt-1 font-rajdhani">
-            Pick one main life move, check energy and stress, then advance the month from the same screen.
-          </p>
-        </div>
+        <PageSceneHero
+          variant="life"
+          eyebrow="Plan this month"
+          title="Your life choices move the board"
+          subtitle="Pick one main life move, check energy and stress, then advance the month from the same screen."
+          className="mb-6"
+          stats={[
+            { label: 'Energy', value: `${player.life.energy}/100`, tone: player.life.energy >= 60 ? 'good' : 'warn' },
+            { label: 'Stress', value: `${player.life.stress}/100`, tone: player.life.stress > 65 ? 'bad' : player.life.stress > 35 ? 'warn' : 'good' },
+            { label: 'Surplus', value: formatCurrency(monthlySurplus), tone: monthlySurplus >= 0 ? 'good' : 'bad' },
+          ]}
+          actions={<NextMonthCTA variant="inline" />}
+        />
 
         <GlassCard accentColor={selectedPrimaryAction.accent} className="mb-6 overflow-hidden" padding="none">
           <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
@@ -98,8 +106,7 @@ export default function Life() {
                 </p>
               </div>
               <div className="flex flex-col gap-3">
-                <NextMonthCTA variant="inline" className="order-1 sm:order-2" />
-                <div className="order-2 grid gap-3 sm:order-1 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-3">
                   <HeroMetric label="Energy" value={`${player.life.energy}/100`} tone="text-cyan-glow" />
                   <HeroMetric label="Stress" value={`${player.life.stress}/100`} tone="text-warning" />
                   <HeroMetric

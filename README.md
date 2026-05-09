@@ -24,7 +24,9 @@ The detailed roadmap lives in [docs/roadmap/singapore-a-lifetime-roadmap.md](doc
 
 The current build includes a Decision Coach layer across the dashboard, property browser, property detail, scenarios, and life-planning screens. It explains the next sensible move, deal blockers, expected life-action effects, and scenario upside/downside before players commit.
 
-The Home screen now leads with a **Life Board** play surface instead of a stats-first dashboard: the current month, life-path timeline, compact vital HUD, and 2-3 playable choice cards sit above deeper finance inspection. The full CPF, loan, MOP, ABSD, and portfolio detail remains available, but the first read is "what should I play this month?"
+The Home screen now leads with a **Life Board With Living Homes** play surface instead of a stats-first dashboard: a Singapore skyline board, current month, life chapter, compact vital HUD, living-home diorama, and 2-3 playable choice cards sit above deeper finance inspection. The full CPF, loan, MOP, ABSD, and portfolio detail remains available, but the first read is "what should I play this month?"
+
+The same visual language now extends across the core routes. Buy, Own, Market, Life, Learn, Bank, Save, Settings, Scenarios, Leaderboard, Game Over, How to Play, and New Game each open with a compact scene hero, while owned homes show visual state for tenants, MOP, condition, repairs, reserves, and renovations before the detailed numbers.
 
 The dashboard also includes a first-home mission rail and a plain-English rule glossary so players can understand CPF OA, ABSD, MOP, room rental, MSR, TDSR, and reserves without leaving the game flow. A dedicated Learn hub and inline glossary chips make the sim approachable for casual tycoon players with no prior Singapore property knowledge.
 
@@ -131,6 +133,7 @@ Property, development, tenant, and listing names are fictional/composite. The si
 - Contextual scenarios now key off what you actually own, whether it is rented, whether you are holding aging leasehold stock, and which life arc is guiding the run.
 - Guided-playability surfaces now translate complex mechanics into plain-English next moves, blocker labels, and expected effects so new players can keep momentum.
 - Property detail pages now support practice purchase readouts that show cash after CPF, available cash after reserves, projected monthly surplus, BTO/HFE milestones, and 55+ rightsizing warnings before a real buy mutates the save.
+- Owned homes now have a living-home diorama surface that changes messaging and badges around tenant satisfaction, rent, renovation, repairs, reserve cover, condition, and MOP context.
 
 ---
 

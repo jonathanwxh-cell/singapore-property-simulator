@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import PlaySurfacePanel from '../PlaySurfacePanel';
 import type { PlaySurfaceState } from '@/engine/playSurface';
+import type { LifeBoardVisualState } from '@/engine/visuals';
 
 const state: PlaySurfaceState = {
   label: 'Life Board',
@@ -49,10 +50,25 @@ const state: PlaySurfaceState = {
   financeModeDetail: 'Open the deeper numbers only when needed.',
 };
 
+const boardVisual: LifeBoardVisualState = {
+  chapterLabel: 'First-home search',
+  chapterDetail: 'Build runway and buy safely.',
+  avatarStageIndex: 1,
+  stages: [
+    { id: 'foundation', label: 'Foundation', detail: 'Build runway', status: 'past' },
+    { id: 'first-home', label: 'First Home', detail: 'Find a fit', status: 'current' },
+    { id: 'home-season', label: 'Home Season', detail: 'MOP and ownership', status: 'future' },
+    { id: 'upgrade-window', label: 'Upgrade Window', detail: 'Prepare', status: 'future' },
+    { id: 'legacy', label: 'Ending', detail: 'Legacy', status: 'future' },
+  ],
+};
+
 describe('PlaySurfacePanel', () => {
   it('renders the life board, timeline, and playable choice language', () => {
     const html = renderToStaticMarkup(createElement(PlaySurfacePanel, {
       state,
+      boardVisual,
+      homeVisual: null,
       compactMode: false,
       highlighted: false,
       advanceSlot: createElement('button', null, 'Next Month'),

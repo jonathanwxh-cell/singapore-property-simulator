@@ -4,6 +4,7 @@ import GlassCard from '@/components/GlassCard';
 import GlossaryTerm from '@/components/GlossaryTerm';
 import RuleGlossaryPanel from '@/components/RuleGlossaryPanel';
 import { useGameStore } from '@/game/useGameStore';
+import PageSceneHero, { HeroAction } from '@/components/visuals/PageSceneHero';
 
 const beginnerSteps = [
   {
@@ -86,6 +87,24 @@ export default function Learn() {
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space px-4 pb-10 pt-8">
       <div className="mx-auto max-w-6xl">
+        <PageSceneHero
+          variant="learn"
+          eyebrow="Casual player guide"
+          title="Learn the rules as game moves"
+          subtitle="CPF, MOP, ABSD, MSR, and TDSR stay realistic, but the screen now teaches them through a journey instead of a wall of finance copy."
+          className="mb-6"
+          stats={[
+            { label: 'First read', value: 'One move', tone: 'good' },
+            { label: 'Rule depth', value: 'On demand', tone: 'neutral' },
+            { label: 'Best run', value: 'Guided', tone: 'good' },
+          ]}
+          actions={(
+            <HeroAction onClick={isGameActive ? () => navigate('/dashboard') : startBeginnerRun}>
+              {isGameActive ? 'Back to board' : 'Start guided run'}
+            </HeroAction>
+          )}
+        />
+
         <div className="mb-6 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
           <GlassCard accentColor="#00F0FF" className="overflow-hidden">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">

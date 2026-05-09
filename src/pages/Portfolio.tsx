@@ -14,6 +14,9 @@ import { describeInvestorRoute, describePortfolioHoldingOperations } from '@/eng
 import { getListingCatalog } from '@/engine/listings';
 import { getLandlordOpsSummary, type LandlordOpsSummary } from '@/engine/propertyOperations';
 import { DEFAULT_CONDITION_SCORE } from '@/engine/constants';
+import { getPrimaryLivingHomeVisual } from '@/engine/visuals';
+import LivingHomeDiorama from '@/components/visuals/LivingHomeDiorama';
+import PageSceneHero, { HeroAction } from '@/components/visuals/PageSceneHero';
 
 export default function Portfolio() {
   const { player, toggleRental } = useGameStore();
@@ -26,6 +29,7 @@ export default function Portfolio() {
   const ownershipCosts = selectMonthlyOwnershipCosts(player);
   const investorRoute = describeInvestorRoute(player);
   const landlordOps = getLandlordOpsSummary(player);
+  const primaryHomeVisual = getPrimaryLivingHomeVisual(player);
   const activeRenovations = player.properties.filter((property) => property.activeRenovation).length;
   const showOperationsArc = player.runRouteId === 'heartland-landlord' || player.runRouteId === 'commercial-operator';
   const showGuidedFocus = player.turnCount <= 8 || player.properties.length <= 1;
@@ -41,12 +45,25 @@ export default function Portfolio() {
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4 game-screen">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-6">
-          <h1 className="page-title text-white">Own Portfolio</h1>
-          <p className="text-text-secondary mt-1 font-rajdhani">
-            Attention first, then deeper landlord operations, achievements, and long-term holdings.
-          </p>
-        </div>
+        <PageSceneHero
+          variant="portfolio"
+          eyebrow="Own portfolio"
+          title="Your homes should feel alive"
+          subtitle="See the home, tenant, repair, and reserve story first. The deeper landlord operations are still here when you need the exact numbers."
+          className="mb-6"
+          stats={[
+            { label: 'Net Worth', value: formatCompactCurrency(netWorth), tone: 'neutral' },
+            { label: 'Live Rent', value: `${formatCurrency(liveLeaseIncome)}/mo`, tone: liveLeaseIncome > 0 ? 'good' : 'warn' },
+            { label: 'Landlord Health', value: `${landlordOps.healthScore}/100`, tone: landlordOps.healthScore >= 65 ? 'good' : landlordOps.healthScore >= 45 ? 'warn' : 'bad' },
+          ]}
+          actions={(
+            <HeroAction onClick={() => player.properties[0] ? navigate(`/property/${player.properties[0].propertyId}`) : navigate('/properties')}>
+              {player.properties[0] ? 'Open living home' : 'Find first buy'}
+            </HeroAction>
+          )}
+        />
+
+        {primaryHomeVisual && <LivingHomeDiorama home={primaryHomeVisual} className="mb-6" />}
 
         <GlassCard accentColor={portfolioStatus.accentColor} className="mb-6">
           <div className="grid gap-4 lg:grid-cols-[1fr,220px]">

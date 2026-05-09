@@ -9,6 +9,7 @@ import { Sparkles, CheckCircle } from 'lucide-react';
 import type { ScenarioOption } from '@/data/scenarios';
 import { STARTER_SCENARIO_TURN } from '@/engine/constants';
 import { assessScenarioOption, type ScenarioOptionAssessment } from '@/engine/decisionCoach';
+import PageSceneHero, { HeroAction } from '@/components/visuals/PageSceneHero';
 
 export default function Scenarios() {
   const { currentScenario, resolveScenario, player, setCurrentScenario } = useGameStore();
@@ -48,7 +49,18 @@ export default function Scenarios() {
     return (
       <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="page-title text-white mb-6">AI Scenarios</h1>
+          <PageSceneHero
+            variant="life"
+            eyebrow="Scenario deck"
+            title="Life events should feel like story cards"
+            subtitle="Scenarios are the moments where policy, family, market, and career pressure interrupt the plan."
+            className="mb-6"
+            stats={[
+              { label: 'Next card', value: `${nextIn} turn(s)`, tone: nextIn <= 1 ? 'warn' : 'neutral' },
+              { label: 'Deck size', value: String(scenarios.length), tone: 'neutral' },
+            ]}
+            actions={<HeroAction onClick={() => navigate('/dashboard')}>Back to board</HeroAction>}
+          />
           {player.turnCount === 0 ? (
             <GlassCard className="text-center py-8">
               <Sparkles size={40} className="text-purple-glow mx-auto mb-3" />

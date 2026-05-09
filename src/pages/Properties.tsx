@@ -21,6 +21,7 @@ import {
 import { HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT } from '@/engine/constants';
 import PropertyListingCard from './property/PropertyListingCard';
 import { DealComparePanel, HeroFact, MarketFact } from './property/PropertiesPanels';
+import PageSceneHero, { HeroAction } from '@/components/visuals/PageSceneHero';
 
 type FilterPreset = 'starter' | 'yield' | 'upgrade' | 'advanced';
 
@@ -117,32 +118,38 @@ export default function Properties() {
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="page-title text-white">Buy Properties</h1>
-            {!settings.compactMode && (
-              <p className="text-text-secondary mt-1 font-rajdhani">
-                Start with the recommended deal, then open filters only when you want to browse like an expert.
-              </p>
-            )}
-            {districtFromQuery && (
-              <p className="mt-2 inline-flex rounded-full border border-cyan-glow/25 bg-cyan-glow/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-cyan-glow">
-                Viewing D{districtFromQuery.id} {districtFromQuery.name}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => updateSettings({ compactMode: !settings.compactMode })}
-            className={`self-start rounded-full border px-4 py-2 text-[10px] font-mono uppercase tracking-[0.18em] ${
-              settings.compactMode
-                ? 'border-success/35 bg-success/10 text-success'
-                : 'border-glass-border bg-white/[0.04] text-text-secondary'
-            }`}
-          >
-            {settings.compactMode ? 'Compact on' : 'Compact mode'}
-          </button>
-        </div>
+        <PageSceneHero
+          variant="buy"
+          eyebrow={districtFromQuery ? `Viewing D${districtFromQuery.id} ${districtFromQuery.name}` : 'Buy properties'}
+          title="Pick the next home like a board move"
+          subtitle="Start with the recommended deal, then open filters only when you want to browse like an expert."
+          className="mb-6"
+          stats={[
+            { label: 'Listings', value: String(summary.totalListings), tone: 'neutral' },
+            { label: 'Districts', value: `${summary.coveredDistrictCount}/28`, tone: 'good' },
+            { label: 'Visible now', value: String(visibleListings.length), tone: 'neutral' },
+          ]}
+          actions={(
+            <>
+              {bestNextBuy && (
+                <HeroAction onClick={() => navigate(`/property/${bestNextBuy.property.id}`)}>
+                  Review best deal
+                </HeroAction>
+              )}
+              <button
+                type="button"
+                onClick={() => updateSettings({ compactMode: !settings.compactMode })}
+                className={`rounded-lg border px-4 py-3 text-sm font-rajdhani font-semibold uppercase tracking-wider ${
+                  settings.compactMode
+                    ? 'border-success/35 bg-success/10 text-success'
+                    : 'border-cyan-glow/30 bg-cyan-glow/10 text-cyan-glow'
+                }`}
+              >
+                {settings.compactMode ? 'Compact on' : 'Compact mode'}
+              </button>
+            </>
+          )}
+        />
 
         {bestNextBuy && (
           <GlassCard accentColor="#00E676" className="mb-6 overflow-hidden" padding="none">
@@ -430,4 +437,3 @@ export default function Properties() {
     </div>
   );
 }
-

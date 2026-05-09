@@ -7,6 +7,7 @@ import GlassCard from '@/components/GlassCard';
 import GlossaryTerm from '@/components/GlossaryTerm';
 import { Landmark, Wallet, TrendingDown, Plus, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
+import PageSceneHero from '@/components/visuals/PageSceneHero';
 
 export default function Bank() {
   const { player, applyLoan, payLoan } = useGameStore();
@@ -27,7 +28,18 @@ export default function Bank() {
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space pb-8 px-4">
       <div className="max-w-6xl mx-auto">
-        <h1 className="page-title text-white mb-6">Bank & Loans</h1>
+        <PageSceneHero
+          variant="learn"
+          eyebrow="Bank and loans"
+          title="Debt is a rule gate, not just a number"
+          subtitle="See CPF balances, active loans, TDSR pressure, and borrowing room before making the next property move."
+          className="mb-6"
+          stats={[
+            { label: 'Outstanding', value: `S$${totalDebt.toLocaleString()}`, tone: totalDebt > 0 ? 'warn' : 'good' },
+            { label: 'Monthly Debt', value: `S$${monthlyPayments.toLocaleString()}`, tone: monthlyPayments > 0 ? 'warn' : 'good' },
+            { label: 'TDSR Test', value: `${(tdsr * 100).toFixed(1)}%`, tone: tdsr > TDSR_LIMIT ? 'bad' : 'good' },
+          ]}
+        />
 
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           <GlassCard accentColor="#00F0FF"><Wallet size={18} className="text-cyan-glow mb-2" /><p className="label-text text-text-dim text-[10px]"><GlossaryTerm termId="cpf-oa">CPF Ordinary</GlossaryTerm></p><p className="font-mono text-lg text-white">S${(player.cpfOrdinary / 1000).toFixed(1)}K</p><p className="text-text-dim text-[10px] mt-1">For housing & investment</p></GlassCard>

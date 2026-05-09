@@ -344,7 +344,7 @@ async function assertMobileRouteHasNoVisibleAdvance(page, routeLabel) {
 
 async function assertManualLoadPromotesAutosave(page) {
   await gotoRoute(page, `${page.url().split('/#/')[0]}/#/saveload`);
-  await expectVisible(page, 'text=Save / Load Game');
+  await expectVisible(page, 'text=Carry your property story across devices');
   page.once('dialog', (dialog) => dialog.accept('QA Checkpoint'));
   await page.getByRole('button', { name: /^Save$/ }).first().click();
   await expectVisible(page, 'text=QA Checkpoint');
@@ -438,7 +438,7 @@ async function run() {
     await expectVisible(page, 'text=This Month');
     await expectVisible(page, 'text=Life Board');
     await expectAnyVisible(page, ['text=Beginner focus mode', 'text=Guided mode primer', 'text=Beginner quest']);
-    await expectVisible(page, 'text=Life path');
+    await expectVisible(page, 'text=First-home search');
     await expectVisible(page, 'text=Make your move');
     await expectVisible(page, 'text=Do + Advance Month');
     await openAdvancedDashboardPanels(page);

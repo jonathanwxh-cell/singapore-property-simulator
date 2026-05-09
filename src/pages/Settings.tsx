@@ -3,6 +3,7 @@ import { useGameStore } from '@/game/useGameStore';
 import { difficultySettings } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
 import { ArrowLeft, Volume2, Zap, RotateCcw, Type, SunMedium } from 'lucide-react';
+import PageSceneHero from '@/components/visuals/PageSceneHero';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -16,7 +17,18 @@ export default function Settings() {
           <span className="font-rajdhani text-sm uppercase">Back</span>
         </button>
 
-        <h1 className="page-title text-white mb-6">Settings</h1>
+        <PageSceneHero
+          variant="learn"
+          eyebrow="Settings"
+          title="Tune the cockpit for your play style"
+          subtitle="Guidance, compact mode, accessibility, and animation settings help the same realistic sim feel readable for different players."
+          className="mb-6"
+          stats={[
+            { label: 'Guided', value: settings.guidedMode ? 'On' : 'Off', tone: settings.guidedMode ? 'good' : 'neutral' },
+            { label: 'Compact', value: settings.compactMode ? 'On' : 'Off', tone: settings.compactMode ? 'good' : 'neutral' },
+            { label: 'Large Text', value: settings.largeTextMode ? 'On' : 'Off', tone: settings.largeTextMode ? 'good' : 'neutral' },
+          ]}
+        />
 
         {/* Audio */}
         <GlassCard className="mb-4">

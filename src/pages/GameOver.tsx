@@ -12,6 +12,7 @@ import { runRoutesById } from '@/data/runRoutes';
 import { scoreRunRoute } from '@/engine/runDirector';
 import { detectLifetimeEnding, type LifetimeEndingResult } from '@/engine/lifetime/endings';
 import { getGameOverRedirectTarget } from './gameOverGuards';
+import PageSceneHero, { HeroAction } from '@/components/visuals/PageSceneHero';
 
 export default function GameOver() {
   const navigate = useNavigate();
@@ -58,6 +59,20 @@ export default function GameOver() {
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space flex items-center justify-center px-4">
       <div className="w-full max-w-5xl py-8">
+        <PageSceneHero
+          variant="portfolio"
+          eyebrow="Run ending"
+          title={lifetimeEnding.ending.label}
+          subtitle={lifetimeEnding.ending.summary}
+          className="mb-6"
+          stats={[
+            { label: 'Final Net Worth', value: `S$${(netWorth / 1000000).toFixed(2)}M`, tone: won ? 'good' : 'warn' },
+            { label: 'Score', value: score.toLocaleString(), tone: 'neutral' },
+            { label: 'Properties', value: String(player.properties.length), tone: player.properties.length > 0 ? 'good' : 'warn' },
+          ]}
+          actions={<HeroAction onClick={() => navigate('/newgame')}>Replay a different life</HeroAction>}
+        />
+
         <GlassCard className="text-center py-10" accentColor={won ? '#FFD700' : '#FF1744'}>
           <Trophy size={56} className={`mx-auto mb-4 ${won ? 'text-yellow-400' : 'text-text-dim'}`} />
 

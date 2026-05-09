@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BookOpen, Building2, Compass, Landmark, Sparkles, TrendingUp } from 'lucide-react';
 import GlassCard from '@/components/GlassCard';
 import GlossaryTerm from '@/components/GlossaryTerm';
+import PageSceneHero, { HeroAction } from '@/components/visuals/PageSceneHero';
 
 const sections = [
   {
@@ -45,12 +46,19 @@ export default function HowToPlay() {
           <span className="font-rajdhani text-sm uppercase tracking-wider">Back to Menu</span>
         </button>
 
-        <div className="mb-8">
-          <h1 className="page-title text-white mb-2">How to Play</h1>
-          <p className="text-text-secondary max-w-2xl">
-            Build a Singapore property empire by balancing cashflow, leverage, CPF, and timing. Every month can bring better grants, harsher rates, or a market swing you can exploit.
-          </p>
-        </div>
+        <PageSceneHero
+          variant="learn"
+          eyebrow="How to play"
+          title="Play the board, then read the rules"
+          subtitle="Build a Singapore property life by balancing cashflow, leverage, CPF, and timing. Every month can bring better grants, harsher rates, or a market swing you can exploit."
+          className="mb-8"
+          stats={[
+            { label: 'Loop', value: 'Earn Buy Own', tone: 'good' },
+            { label: 'Rules', value: 'Explained', tone: 'neutral' },
+            { label: 'First Run', value: 'Guided', tone: 'good' },
+          ]}
+          actions={<HeroAction onClick={() => navigate('/newgame')}>Start new game</HeroAction>}
+        />
 
         <GlassCard accentColor="#FFD740" className="mb-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">

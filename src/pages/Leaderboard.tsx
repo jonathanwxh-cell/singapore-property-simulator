@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { achievements, tierColors } from '@/data/achievements';
 import GlassCard from '@/components/GlassCard';
-import { Trophy, ArrowLeft, Award, Star, Crown, Medal } from 'lucide-react';
+import { ArrowLeft, Award, Star, Crown, Medal } from 'lucide-react';
+import PageSceneHero from '@/components/visuals/PageSceneHero';
 
 // Mock leaderboard data
 const leaderboardData = [
@@ -35,10 +36,18 @@ export default function Leaderboard() {
           <span className="font-rajdhani text-sm uppercase">Back</span>
         </button>
 
-        <h1 className="page-title text-white mb-6 text-center flex items-center justify-center gap-3">
-          <Trophy size={28} className="text-yellow-400" />
-          Leaderboard
-        </h1>
+        <PageSceneHero
+          variant="portfolio"
+          eyebrow="Leaderboard"
+          title="Collect better Singapore life runs"
+          subtitle="Scores, endings, achievements, and route identities should make repeat play feel collectible, not just finished."
+          className="mb-6"
+          stats={[
+            { label: 'Top Score', value: leaderboardData[0].score.toLocaleString(), tone: 'good' },
+            { label: 'Achievements', value: String(achievements.filter((a) => !a.secret).length), tone: 'neutral' },
+            { label: 'Routes', value: 'Replayable', tone: 'good' },
+          ]}
+        />
 
         {/* Top 3 Podium */}
         <div className="flex items-end justify-center gap-3 mb-8 h-40">

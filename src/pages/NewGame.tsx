@@ -10,6 +10,7 @@ import type { BuyerProfile, Difficulty, RunRouteId } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
 import GuidedFocusPanel from '@/components/GuidedFocusPanel';
 import GlossaryTerm from '@/components/GlossaryTerm';
+import PageSceneHero from '@/components/visuals/PageSceneHero';
 import { ArrowLeft, ArrowRight, User, GraduationCap, TrendingUp, Cpu, Rocket, Shield, Heart, Home, Users, Globe2, Compass } from 'lucide-react';
 
 const careerIcons: Record<string, React.ElementType> = {
@@ -103,6 +104,19 @@ export default function NewGame() {
               <div key={s} className={`h-1 rounded-full transition-all ${s === step ? 'w-8 bg-cyan-glow' : 'w-4 bg-text-dim/30'}`} />
             ))}
           </div>
+          {step === 0 && (
+            <PageSceneHero
+              variant="newgame"
+              eyebrow="Choose your Singapore story"
+              title="Start as a person, not a spreadsheet"
+              subtitle="Pick a guided route first. The game will reveal CPF, housing rules, and property tradeoffs only when they matter."
+              className="mt-4"
+              stats={[
+                { label: 'Best first run', value: 'Guided', tone: 'good' },
+                { label: 'Style', value: 'Life board', tone: 'neutral' },
+              ]}
+            />
+          )}
         </div>
 
         {/* Step 1: Name */}

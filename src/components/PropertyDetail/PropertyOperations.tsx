@@ -8,6 +8,8 @@ import type { OwnedProperty, Player, RentalMode, RenovationContractorTier, Tenan
 import type { TenantLeaseOption } from '@/engine/propertyOperations';
 import type { ListingProperty } from '@/engine/listings';
 import { DEFAULT_CONDITION_SCORE } from '@/engine/constants';
+import { getLivingHomeVisualForOwnedProperty } from '@/engine/visuals';
+import LivingHomeDiorama from '@/components/visuals/LivingHomeDiorama';
 
 type TenantPlan = {
   label: string;
@@ -60,6 +62,8 @@ export default function PropertyOperations({
   onRepair: (issueId: string, choiceId: RepairChoiceId) => void;
   onReserveTopUp: () => void;
 }) {
+  const homeVisual = getLivingHomeVisualForOwnedProperty(player, ownedProperty, property);
+
   return (
     <GlassCard accentColor="#00F0FF">
       <div className="flex items-start justify-between gap-3 mb-4">
@@ -72,6 +76,8 @@ export default function PropertyOperations({
           <p className="text-text-dim text-[10px]">condition</p>
         </div>
       </div>
+
+      <LivingHomeDiorama home={homeVisual} className="mb-5" />
 
       <div className="grid lg:grid-cols-[1fr,240px] gap-4 mb-5">
         <div className="rounded-xl border border-glass-border bg-white/[0.03] p-4">

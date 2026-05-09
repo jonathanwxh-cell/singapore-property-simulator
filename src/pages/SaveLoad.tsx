@@ -5,6 +5,7 @@ import { useGameStore } from '@/game/useGameStore';
 import GlassCard from '@/components/GlassCard';
 import { Save, Download, Upload, Trash2, ArrowLeft, Clock, User, Users, Smartphone, Clipboard, Cloud, UserPlus } from 'lucide-react';
 import type { SaveProfile, SaveSlot } from '@/game/types';
+import PageSceneHero, { HeroAction } from '@/components/visuals/PageSceneHero';
 
 export default function SaveLoad() {
   const navigate = useNavigate();
@@ -154,7 +155,19 @@ export default function SaveLoad() {
           <span className="font-rajdhani text-sm uppercase">Back</span>
         </button>
 
-        <h1 className="page-title text-white mb-6">Save / Load Game</h1>
+        <PageSceneHero
+          variant="portfolio"
+          eyebrow="Save and transfer"
+          title="Carry your property story across devices"
+          subtitle="Profiles, local saves, downloads, and transfer codes make different playthroughs feel like separate runs."
+          className="mb-6"
+          stats={[
+            { label: 'Active Profile', value: activeProfile?.name ?? 'Guest', tone: 'neutral' },
+            { label: 'Profiles', value: String(profiles.length), tone: 'neutral' },
+            { label: 'Saved Slots', value: String(slots.length), tone: slots.length > 0 ? 'good' : 'warn' },
+          ]}
+          actions={isGameActive ? <HeroAction onClick={() => navigate('/dashboard')}>Back to board</HeroAction> : undefined}
+        />
 
         {statusMessage && (
           <GlassCard className="mb-6" accentColor="#00F0FF">

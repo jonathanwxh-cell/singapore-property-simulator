@@ -14,6 +14,7 @@ import { getOwnershipTargetRace } from '@/engine/ownershipTargets';
 import { getOwnershipCampaign } from '@/engine/ownershipCampaign';
 import { getNextHomeShortlist, getOwnershipForkOptions, type OwnershipForkOption } from '@/engine/ownershipForks';
 import { getPlaySurfaceState, type PlaySurfaceChoice } from '@/engine/playSurface';
+import { getLifeBoardVisualState, getPrimaryLivingHomeVisual } from '@/engine/visuals';
 import { deriveEligibilityFlags } from '@/engine/eligibility';
 import { getFirstHomeMissions } from '@/engine/firstHomeMissions';
 import { getLastTurnRecap } from '@/engine/turnRecap';
@@ -73,6 +74,8 @@ export default function Dashboard() {
   const monthlyNetCashflow = selectMonthlyNetCashflow(player, TAKE_HOME_RATIO);
   const commandState = useMemo(() => getCommandCenterState(player, currentScenario), [player, currentScenario]);
   const playSurface = useMemo(() => getPlaySurfaceState({ player, currentScenario }), [player, currentScenario]);
+  const lifeBoardVisual = useMemo(() => getLifeBoardVisualState(player), [player]);
+  const livingHomeVisual = useMemo(() => getPrimaryLivingHomeVisual(player), [player]);
   const selectedPrimaryAction = lifeActions.find((action) => action.id === (player.life.selectedPrimaryActionId ?? 'focus-at-work'))
     ?? lifeActionsById['focus-at-work'];
   const selectedSecondaryAction = player.life.selectedSecondaryActionId
@@ -176,6 +179,8 @@ export default function Dashboard() {
         <motion.div ref={playSurfaceRef} variants={dashboardItemVariants} className="scroll-mt-24">
           <PlaySurfacePanel
             state={playSurface}
+            boardVisual={lifeBoardVisual}
+            homeVisual={livingHomeVisual}
             compactMode={settings.compactMode}
             highlighted={highlightMonthlyIntent}
             advanceSlot={<NextMonthCTA variant="inline" />}
