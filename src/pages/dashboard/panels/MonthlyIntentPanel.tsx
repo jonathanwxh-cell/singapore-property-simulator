@@ -30,13 +30,15 @@ export default function MonthlyIntentPanel({
           <button
             type="button"
             onClick={onToggleCompact}
+            aria-pressed={compactMode}
+            aria-label={compactMode ? 'Show full guide text for monthly plans' : 'Use less text view for monthly plans'}
             className={`rounded-full border px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] ${
               compactMode
                 ? 'border-success/35 bg-success/10 text-success'
                 : 'border-cyan-glow/25 bg-cyan-glow/10 text-cyan-glow'
             }`}
           >
-            {compactMode ? 'Compact on' : 'Compact off'}
+            {compactMode ? 'Show full guide' : 'Less text view'}
           </button>
           <span className="rounded-full border border-cyan-glow/25 bg-cyan-glow/10 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-cyan-glow">
             1 click plan

@@ -139,13 +139,15 @@ export default function Properties() {
               <button
                 type="button"
                 onClick={() => updateSettings({ compactMode: !settings.compactMode })}
+                aria-pressed={settings.compactMode}
+                aria-label={settings.compactMode ? 'Show full guide text on listings' : 'Use less text view on listings'}
                 className={`rounded-lg border px-4 py-3 text-sm font-rajdhani font-semibold uppercase tracking-wider ${
                   settings.compactMode
                     ? 'border-success/35 bg-success/10 text-success'
                     : 'border-cyan-glow/30 bg-cyan-glow/10 text-cyan-glow'
                 }`}
               >
-                {settings.compactMode ? 'Compact on' : 'Compact mode'}
+                {settings.compactMode ? 'Show full guide' : 'Less text view'}
               </button>
             </>
           )}

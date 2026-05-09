@@ -190,6 +190,21 @@ export default function Dashboard() {
               </span>
             </button>
           )}
+          {settings.compactMode && (
+            <button
+              type="button"
+              onClick={() => updateSettings({ compactMode: false })}
+              className="mt-3 inline-flex min-h-11 items-center gap-3 rounded-2xl border border-success/30 bg-success/10 px-4 py-2 text-left text-success shadow-[0_0_22px_rgba(0,230,118,0.08)] transition-colors hover:border-success/55 hover:bg-success/15"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-success/35 bg-success/15">
+                <Sparkles size={16} />
+              </span>
+              <span>
+                <span className="label-text block text-[10px] text-success">Less Text View is on</span>
+                <span className="block text-xs text-text-secondary">Show full guide text again</span>
+              </span>
+            </button>
+          )}
         </motion.div>
 
         <motion.div ref={playSurfaceRef} variants={dashboardItemVariants} className="scroll-mt-24">

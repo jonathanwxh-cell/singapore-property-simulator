@@ -67,6 +67,7 @@ describe('visual components', () => {
     expect(html).toContain('Home Season');
     expect(html).toContain('Northstar Grove 3-Room');
     expect(html).toContain('Spendable');
+    expect(html).toContain('Less text view');
   });
 
   it('renders page scene heroes for non-dashboard routes', () => {

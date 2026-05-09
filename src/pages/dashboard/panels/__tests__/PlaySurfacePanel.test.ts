@@ -83,5 +83,22 @@ describe('PlaySurfacePanel', () => {
     expect(html).toContain('Do + Advance Month');
     expect(html).toContain('Inspect finances');
     expect(html).toContain('Next Month');
+    expect(html).toContain('Less text view');
+  });
+
+  it('keeps an obvious full-guide restore control when less text view is on', () => {
+    const html = renderToStaticMarkup(createElement(PlaySurfacePanel, {
+      state,
+      boardVisual,
+      homeVisual: null,
+      compactMode: true,
+      highlighted: false,
+      onPlayChoice: () => undefined,
+      onInspectChoice: () => undefined,
+      onToggleCompact: () => undefined,
+    }));
+
+    expect(html).toContain('Less Text View is on');
+    expect(html).toContain('Show full guide');
   });
 });

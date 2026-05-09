@@ -21,11 +21,11 @@ export default function Settings() {
           variant="learn"
           eyebrow="Settings"
           title="Tune the cockpit for your play style"
-          subtitle="Guidance, compact mode, accessibility, and animation settings help the same realistic sim feel readable for different players."
+          subtitle="Guidance, Less Text View, accessibility, and animation settings help the same realistic sim feel readable for different players."
           className="mb-6"
           stats={[
             { label: 'Guided', value: settings.guidedMode ? 'On' : 'Off', tone: settings.guidedMode ? 'good' : 'neutral' },
-            { label: 'Compact', value: settings.compactMode ? 'On' : 'Off', tone: settings.compactMode ? 'good' : 'neutral' },
+            { label: 'Less Text', value: settings.compactMode ? 'On' : 'Off', tone: settings.compactMode ? 'good' : 'neutral' },
             { label: 'Large Text', value: settings.largeTextMode ? 'On' : 'Off', tone: settings.largeTextMode ? 'good' : 'neutral' },
           ]}
         />
@@ -128,16 +128,31 @@ export default function Settings() {
             )}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white text-sm">Compact Mode</p>
-                <p className="text-text-dim text-xs">Hide helper text for faster repeat runs</p>
+                <p className="text-white text-sm">Less Text View</p>
+                <p className="text-text-dim text-xs">Hide explanations for faster repeat runs. Keep this off while learning.</p>
               </div>
               <button
                 onClick={() => updateSettings({ compactMode: !settings.compactMode })}
+                aria-pressed={settings.compactMode}
+                aria-label={settings.compactMode ? 'Turn off Less Text View and show full guide text' : 'Turn on Less Text View'}
                 className={`w-12 h-6 rounded-full transition-all ${settings.compactMode ? 'bg-cyan-glow' : 'bg-white/10'}`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.compactMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
               </button>
             </div>
+            {settings.compactMode && (
+              <button
+                type="button"
+                onClick={() => updateSettings({ compactMode: false })}
+                className="flex w-full items-center gap-3 rounded-2xl border border-success/25 bg-success/10 p-3 text-left transition-colors hover:border-success/50 hover:bg-success/15"
+              >
+                <Sparkles size={17} className="shrink-0 text-success" />
+                <span>
+                  <span className="block text-sm font-rajdhani font-semibold uppercase tracking-wider text-white">Show full guide text</span>
+                  <span className="block text-xs text-text-secondary">Restore card explanations and beginner copy immediately.</span>
+                </span>
+              </button>
+            )}
           </div>
         </GlassCard>
 

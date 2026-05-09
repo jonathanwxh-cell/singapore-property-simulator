@@ -71,12 +71,14 @@ export default function SingaporeLifeBoardScene({
               <button
                 type="button"
                 onClick={onToggleCompact}
+                aria-pressed={compactMode}
+                aria-label={compactMode ? 'Show full guidance text' : 'Use less text view'}
                 className={cn(
                   'w-fit rounded-full border px-3 py-1 text-[10px] font-mono uppercase tracking-[0.18em]',
                   compactMode ? 'border-success/35 bg-success/10 text-success' : 'border-cyan-glow/25 bg-cyan-glow/10 text-cyan-glow',
                 )}
               >
-                {compactMode ? 'Compact play on' : 'Compact play off'}
+                {compactMode ? 'Show full guide' : 'Less text view'}
               </button>
             </div>
 

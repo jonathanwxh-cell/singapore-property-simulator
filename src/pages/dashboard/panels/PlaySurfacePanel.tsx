@@ -85,6 +85,21 @@ export default function PlaySurfacePanel({
               <p className="text-xs leading-relaxed text-text-secondary">{state.financeModeDetail}</p>
             </div>
 
+            {compactMode && (
+              <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-success/25 bg-success/10 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs leading-relaxed text-text-secondary">
+                  Less Text View is on. If the cards feel too terse, bring back the explanations without restarting.
+                </p>
+                <button
+                  type="button"
+                  onClick={onToggleCompact}
+                  className="min-h-10 shrink-0 rounded-lg border border-success/35 bg-success/10 px-3 py-2 font-rajdhani text-xs font-semibold uppercase tracking-wider text-success transition-colors hover:bg-success/20"
+                >
+                  Show full guide
+                </button>
+              </div>
+            )}
+
             <div className="grid gap-3 lg:grid-cols-3">
               {state.choices.map((choice) => (
                 <ChoiceCard
