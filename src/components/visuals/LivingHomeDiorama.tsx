@@ -43,7 +43,7 @@ export default function LivingHomeDiorama({
       <div className={cn('relative overflow-hidden bg-gradient-to-br p-4', moodClasses[home.mood])}>
         <div className={cn('relative overflow-hidden rounded-2xl border border-white/15 bg-[linear-gradient(180deg,#26384c,#111827)]', compact ? 'h-36' : 'h-52')}>
           <div className="absolute inset-x-8 bottom-5 h-24 -skew-y-6 rounded-2xl border-2 border-white/20 bg-[linear-gradient(135deg,#c99a6d,#74513d)] shadow-2xl" />
-          <div className="absolute bottom-12 left-14 h-8 w-24 rounded-t-2xl rounded-b-lg bg-cyan-glow shadow-[92px_-22px_0_-6px_#FFD740]" />
+          <div className="absolute bottom-12 left-14 h-8 w-24 rounded-t-2xl rounded-b-lg bg-cyan-glow shadow-[92px_-22px_0_-6px_#D7B95B]" />
           <div className="absolute bottom-11 right-16 h-10 w-7 rounded-lg bg-danger/80 shadow-[18px_6px_0_-2px_rgba(255,255,255,0.22)]" />
           <div className="absolute left-8 top-8 h-12 w-16 rounded-lg border border-white/15 bg-black/30">
             <div className="m-2 h-2 rounded-full bg-cyan-glow/70" />

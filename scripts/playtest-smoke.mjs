@@ -467,6 +467,9 @@ async function run() {
     await expectVisible(page, 'text=First-home search');
     await expectVisible(page, 'text=Make your move');
     await expectVisible(page, 'text=Do + Advance Month');
+    await expectVisible(page, 'text=Guidance is off');
+    await page.getByRole('button', { name: /Turn guided help back on/i }).click();
+    await expectVisible(page, 'text=Guided mode primer');
     await openAdvancedDashboardPanels(page);
     await expectVisible(page, 'text=Life Arc');
     await assertVisibleAdvanceExists(page, 'dashboard');

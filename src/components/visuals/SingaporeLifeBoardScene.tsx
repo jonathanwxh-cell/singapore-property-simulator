@@ -84,7 +84,7 @@ export default function SingaporeLifeBoardScene({
               {board.stages.map((stage, index) => (
                 <div key={stage.id} className="relative">
                   {index === board.avatarStageIndex && (
-                    <div className="absolute -top-4 left-4 z-10 h-9 w-9 rounded-full border-4 border-white bg-[linear-gradient(135deg,#FFD740,#FF1744)] shadow-[0_12px_26px_rgba(0,0,0,0.38)]" />
+                    <div className="absolute -top-4 left-4 z-10 h-9 w-9 rounded-full border-4 border-white bg-[radial-gradient(circle_at_35%_28%,#FFFFFF_0_16%,#00F0FF_34%,#2979FF_78%)] shadow-[0_12px_28px_rgba(0,240,255,0.24)]" />
                   )}
                   <div className={cn(
                     'min-h-[5.5rem] rounded-2xl border p-3 pt-5',

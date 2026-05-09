@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/game/useGameStore';
 import { difficultySettings } from '@/game/types';
 import GlassCard from '@/components/GlassCard';
-import { ArrowLeft, Volume2, Zap, RotateCcw, Type, SunMedium } from 'lucide-react';
+import { ArrowLeft, Volume2, Zap, RotateCcw, Type, SunMedium, Sparkles } from 'lucide-react';
 import PageSceneHero from '@/components/visuals/PageSceneHero';
 
 export default function Settings() {
@@ -113,6 +113,19 @@ export default function Settings() {
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${settings.guidedMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
               </button>
             </div>
+            {!settings.guidedMode && (
+              <button
+                type="button"
+                onClick={() => updateSettings({ guidedMode: true })}
+                className="flex w-full items-center gap-3 rounded-2xl border border-cyan-glow/25 bg-cyan-glow/10 p-3 text-left transition-colors hover:border-cyan-glow/50 hover:bg-cyan-glow/15"
+              >
+                <Sparkles size={17} className="shrink-0 text-cyan-glow" />
+                <span>
+                  <span className="block text-sm font-rajdhani font-semibold uppercase tracking-wider text-white">Restore guided help</span>
+                  <span className="block text-xs text-text-secondary">Bring back beginner prompts on the dashboard without restarting the run.</span>
+                </span>
+              </button>
+            )}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white text-sm">Compact Mode</p>

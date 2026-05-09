@@ -100,7 +100,7 @@ function PostcardCity() {
       <div className="absolute bottom-0 left-6 h-20 w-10 rounded-t-xl bg-cyan-glow/25 shadow-[52px_-30px_0_8px_rgba(255,255,255,0.1),116px_-8px_0_2px_rgba(255,215,64,0.22),188px_-40px_0_10px_rgba(0,230,118,0.16)]" />
       <div className="absolute bottom-8 left-0 right-0 h-1 rotate-[-4deg] bg-cyan-glow/50 shadow-[0_0_18px_rgba(0,240,255,0.4)]" />
       <div className="absolute bottom-12 left-10 h-8 w-20 rounded-full border border-white/20 bg-white/10" />
-      <div className="absolute bottom-11 left-16 h-1.5 w-1.5 rounded-full bg-warning shadow-[18px_0_0_#FFD740,36px_0_0_#FFD740]" />
+      <div className="absolute bottom-11 left-16 h-1.5 w-1.5 rounded-full bg-warning shadow-[18px_0_0_#D7B95B,36px_0_0_#D7B95B]" />
     </div>
   );
 }
@@ -113,7 +113,7 @@ function PostcardMap() {
       <div className="absolute right-28 top-9 h-12 w-12 rounded-2xl border border-warning/35 bg-warning/15" />
       <div className="absolute left-16 top-24 h-1 w-52 rotate-[-18deg] rounded-full bg-cyan-glow/50" />
       <div className="absolute right-14 top-20 h-1 w-40 rotate-[28deg] rounded-full bg-success/45" />
-      <div className="absolute left-24 bottom-8 h-4 w-4 rounded-full border-4 border-white bg-[linear-gradient(135deg,#00F0FF,#2979FF)] shadow-[92px_-28px_0_-1px_#FFD740,154px_12px_0_-2px_#00E676]" />
+      <div className="absolute left-24 bottom-8 h-4 w-4 rounded-full border-4 border-white bg-[linear-gradient(135deg,#00F0FF,#2979FF)] shadow-[92px_-28px_0_-1px_#D7B95B,154px_12px_0_-2px_#00E676]" />
     </div>
   );
 }
@@ -122,7 +122,7 @@ function PostcardHome() {
   return (
     <div className="absolute inset-0">
       <div className="absolute inset-x-5 bottom-5 h-20 -skew-y-6 rounded-3xl border-2 border-white/20 bg-[linear-gradient(135deg,#c99a6d,#7c563d)] shadow-2xl" />
-      <div className="absolute bottom-16 left-12 h-8 w-24 rounded-t-2xl rounded-b-lg bg-cyan-glow shadow-[90px_-18px_0_-5px_#FFD740]" />
+      <div className="absolute bottom-16 left-12 h-8 w-24 rounded-t-2xl rounded-b-lg bg-cyan-glow shadow-[90px_-18px_0_-5px_#D7B95B]" />
       <div className="absolute bottom-14 right-12 h-10 w-7 rounded-lg bg-danger/75 shadow-[18px_6px_0_-2px_rgba(255,255,255,0.22)]" />
       <div className="absolute left-10 top-10 h-11 w-16 rounded-xl border border-white/15 bg-black/30">
         <div className="m-2 h-2 rounded-full bg-cyan-glow/70" />
@@ -148,7 +148,7 @@ function PostcardBoard() {
           </div>
         ))}
       </div>
-      <div className="absolute bottom-24 left-[45%] h-11 w-11 rounded-full border-4 border-white bg-[linear-gradient(135deg,#FFD740,#FF1744)] shadow-[0_12px_30px_rgba(0,0,0,0.35)]" />
+      <div className="absolute bottom-24 left-[45%] h-11 w-11 rounded-full border-4 border-white bg-[radial-gradient(circle_at_35%_28%,#FFFFFF_0_16%,#00F0FF_34%,#2979FF_78%)] shadow-[0_12px_30px_rgba(0,240,255,0.22)]" />
       <div className="absolute bottom-8 left-8 right-8 h-1 rounded-full bg-white/15" />
     </div>
   );
@@ -236,7 +236,7 @@ function LifeIllustration() {
           </div>
         ))}
       </div>
-      <div className="absolute bottom-28 right-44 h-12 w-12 rounded-full border-4 border-white bg-[linear-gradient(135deg,#FFD740,#FF1744)]" />
+      <div className="absolute bottom-28 right-44 h-12 w-12 rounded-full border-4 border-white bg-[radial-gradient(circle_at_35%_28%,#FFFFFF_0_16%,#00F0FF_34%,#2979FF_78%)]" />
     </div>
   );
 }

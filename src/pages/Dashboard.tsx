@@ -46,6 +46,7 @@ import {
   BookOpen,
   PieChart,
   ShoppingBag,
+  Sparkles,
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -174,6 +175,21 @@ export default function Dashboard() {
           <p className="mt-1 font-rajdhani text-text-secondary">
             {monthNames[player.month - 1]} {player.year} | Age {player.age} | {player.name}'s Singapore life
           </p>
+          {!settings.guidedMode && (
+            <button
+              type="button"
+              onClick={() => updateSettings({ guidedMode: true })}
+              className="mt-3 inline-flex min-h-11 items-center gap-3 rounded-2xl border border-cyan-glow/30 bg-cyan-glow/10 px-4 py-2 text-left text-cyan-glow shadow-[0_0_22px_rgba(0,240,255,0.08)] transition-colors hover:border-cyan-glow/55 hover:bg-cyan-glow/15"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-cyan-glow/35 bg-cyan-glow/15">
+                <Sparkles size={16} />
+              </span>
+              <span>
+                <span className="label-text block text-[10px] text-cyan-glow">Guidance is off</span>
+                <span className="block text-xs text-text-secondary">Turn guided help back on</span>
+              </span>
+            </button>
+          )}
         </motion.div>
 
         <motion.div ref={playSurfaceRef} variants={dashboardItemVariants} className="scroll-mt-24">
