@@ -10,6 +10,7 @@ import { resolveMonthlyCareerIncome } from './income';
 import { selectNetWorth, selectMonthlyRentalIncome } from './selectors';
 import { advancePortfolioMonth } from './portfolio';
 import { resolveLifeMonth } from './life';
+import { appendLifeMemory } from './lifetime/memories';
 import { getOwnershipPayoffTransitions } from './ownershipPayoffs';
 import { getRouteWeightedScenarios } from './scenarioContext';
 import {
@@ -208,7 +209,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     }
   }
 
-  const newPlayer: Player = {
+  let newPlayer: Player = {
     ...player,
     age: newAge,
     salary: newSalary,
@@ -251,6 +252,16 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
         ],
       },
     };
+  }
+
+  if (newPlayer.life.stress >= 85) {
+    newPlayer = appendLifeMemory(newPlayer, {
+      category: 'setback',
+      title: 'Burnout warning',
+      detail: 'The month ended with stress near breaking point.',
+      tags: ['burnout-warning', 'stress'],
+      scoreImpact: -6,
+    });
   }
 
   // Game-over detection — measure insolvency against the same cashflow used above

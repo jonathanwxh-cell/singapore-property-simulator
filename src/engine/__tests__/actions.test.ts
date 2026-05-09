@@ -84,6 +84,7 @@ describe('buyPropertyPure', () => {
     expect(result.value.player.properties[0].vacancyMonths).toBe(0);
     expect(result.value.player.properties[0].maintenanceCost).toBeGreaterThan(0);
     expect(result.value.player.properties[0].propertyTax).toBeGreaterThan(0);
+    expect(result.value.player.lifeMemories?.some((memory) => memory.tags.includes('first-home'))).toBe(true);
   });
 
   it('supports an HDB concessionary loan path with 25% down and 2.6% interest', () => {
@@ -154,6 +155,7 @@ describe('buyPropertyPure', () => {
       status: 'pending',
       expectedRefundAmount: validation.absd,
     });
+    expect(result.value.player.lifeMemories?.some((memory) => memory.tags.includes('absd-paid'))).toBe(true);
   });
 
   it('creates a pending single-senior ABSD refund claim only for a real downsizing path', () => {
@@ -396,6 +398,7 @@ describe('sellPropertyPure', () => {
       expect(result.value.player.cash).toBe(600_000);
       expect(result.value.player.properties).toHaveLength(0);
       expect(result.value.player.loans[0].isPaid).toBe(true);
+      expect(result.value.player.lifeMemories?.some((memory) => memory.tags.includes('property-sale'))).toBe(true);
     }
   });
 
@@ -420,6 +423,7 @@ describe('sellPropertyPure', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.player.cash).toBe(1_008_000);
+    expect(result.value.player.lifeMemories?.some((memory) => memory.tags.includes('ssd-paid'))).toBe(true);
   });
 
   it('pays the pending spouse refund after the first home is sold within 6 months', () => {
@@ -471,6 +475,7 @@ describe('sellPropertyPure', () => {
     if (!result.ok) return;
     expect(result.value.player.cash).toBe(1_276_000);
     expect((result.value.player as { pendingTaxReliefs?: PendingTaxRelief[] }).pendingTaxReliefs?.[0].status).toBe('earned');
+    expect(result.value.player.lifeMemories?.some((memory) => memory.tags.includes('absd-refund'))).toBe(true);
   });
 
   it('expires the pending spouse refund if the first home is sold after the 6-month window', () => {

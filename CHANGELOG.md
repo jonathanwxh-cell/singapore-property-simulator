@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added **Lifetime Shell v1**: named endings, life memories from home/career/landlord/tax/setback moments, local ending collection, and a life-summary Game Over screen so runs end as a Singapore life story instead of only a net-worth result.
 - Added **Play Surface v1** on the Home screen: a Life Board hero, life-path timeline, compact vital HUD, and large playable monthly choice cards that keep the real finance engine available behind optional inspection instead of leading with dashboard stats.
 - Added a structured **Singapore: A Lifetime** roadmap and `Lifetime Shell v1` implementation handoff so the next product direction is documented around named endings, life memories, causal scenarios, cultural texture, and gradual README updates without discarding the current property engine.
 

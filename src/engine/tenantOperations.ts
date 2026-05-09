@@ -14,6 +14,7 @@ import { fail, ok } from './results';
 import { roundMoney } from '@/lib/format';
 import { clamp, getListing, normalizeOperationProperty, withOperationLog } from './operationsShared';
 import { DEFAULT_CONDITION_SCORE, TENANT_LEASE_TERM_MONTHS, TENANT_RENT_RAISE_PCT } from './constants';
+import { appendLifeMemory } from './lifetime/memories';
 
 const RENT_RAISE_LABEL = `Raise Rent ${Math.round(TENANT_RENT_RAISE_PCT * 100)}%`;
 
@@ -101,7 +102,7 @@ export function setTenantStrategyPure(
     vacancyMonths: 0,
   };
 
-  const updatedPlayer = withOperationLog({
+  let updatedPlayer = withOperationLog({
     ...player,
     properties: updatedProperties,
   }, {
@@ -109,6 +110,13 @@ export function setTenantStrategyPure(
     title: `${profile.label} lease signed`,
     detail: `${mode.label} at S$${askingRent.toLocaleString()}/mo using a ${strategy.label.toLowerCase()} rent strategy.`,
     tone: input.rentStrategy === 'aggressive' ? 'warn' : 'good',
+  });
+  updatedPlayer = appendLifeMemory(updatedPlayer, {
+    category: 'landlord',
+    title: `${profile.label} lease signed`,
+    detail: `${mode.label} started at S$${askingRent.toLocaleString()}/mo.`,
+    tags: ['tenant-signed', input.mode, input.rentStrategy],
+    scoreImpact: input.rentStrategy === 'aggressive' ? 2 : 5,
   });
 
   return ok({ player: updatedPlayer });
@@ -217,16 +225,24 @@ export function applyTenantLeaseDecisionPure(
       rentStrategy: tenant.rentStrategy,
     };
 
+    const updatedPlayer = appendLifeMemory(withOperationLog({
+      ...player,
+      properties: updatedProperties,
+    }, {
+      propertyId: property.propertyId,
+      title: 'Tenant released',
+      detail: 'The lease was ended intentionally. Reposition the unit before vacancy drags too long.',
+      tone: 'neutral',
+    }), {
+      category: 'landlord',
+      title: 'Tenant released',
+      detail: 'You ended the lease intentionally to reposition the unit.',
+      tags: ['tenant-released', tenant.rentalMode],
+      scoreImpact: -1,
+    });
+
     return ok({
-      player: withOperationLog({
-        ...player,
-        properties: updatedProperties,
-      }, {
-        propertyId: property.propertyId,
-        title: 'Tenant released',
-        detail: 'The lease was ended intentionally. Reposition the unit before vacancy drags too long.',
-        tone: 'neutral',
-      }),
+      player: updatedPlayer,
     });
   }
 
@@ -244,16 +260,24 @@ export function applyTenantLeaseDecisionPure(
       rentStrategy: 'aggressive',
     };
 
+    const updatedPlayer = appendLifeMemory(withOperationLog({
+      ...player,
+      properties: updatedProperties,
+    }, {
+      propertyId: property.propertyId,
+      title: 'Rent push caused vacancy',
+      detail: `The proposed ${option.label.toLowerCase()} broke renewal intent. Re-list or renovate before the next tenant.`,
+      tone: 'warn',
+    }), {
+      category: 'landlord',
+      title: 'Rent push caused vacancy',
+      detail: 'A higher-rent push backfired and the unit became vacant.',
+      tags: ['rent-push-vacancy', 'tenant-risk'],
+      scoreImpact: -6,
+    });
+
     return ok({
-      player: withOperationLog({
-        ...player,
-        properties: updatedProperties,
-      }, {
-        propertyId: property.propertyId,
-        title: 'Rent push caused vacancy',
-        detail: `The proposed ${option.label.toLowerCase()} broke renewal intent. Re-list or renovate before the next tenant.`,
-        tone: 'warn',
-      }),
+      player: updatedPlayer,
     });
   }
 
@@ -283,17 +307,23 @@ export function applyTenantLeaseDecisionPure(
     vacancyMonths: 0,
   };
 
-  return ok({
-    player: withOperationLog({
-      ...player,
-      properties: updatedProperties,
-    }, {
-      propertyId: property.propertyId,
-      title: decisionId === 'renew' ? 'Lease renewed' : decisionId === 'raise-rent' ? 'Lease renewed at higher rent' : 'Lease reset to market',
-      detail: `${option.label}: rent ${option.rentDelta >= 0 ? '+' : '-'}S$${Math.abs(option.rentDelta).toLocaleString()}/mo, satisfaction ${option.satisfactionDelta >= 0 ? '+' : ''}${option.satisfactionDelta}.`,
-      tone: option.tone,
-    }),
+  const updatedPlayer = appendLifeMemory(withOperationLog({
+    ...player,
+    properties: updatedProperties,
+  }, {
+    propertyId: property.propertyId,
+    title: decisionId === 'renew' ? 'Lease renewed' : decisionId === 'raise-rent' ? 'Lease renewed at higher rent' : 'Lease reset to market',
+    detail: `${option.label}: rent ${option.rentDelta >= 0 ? '+' : '-'}S$${Math.abs(option.rentDelta).toLocaleString()}/mo, satisfaction ${option.satisfactionDelta >= 0 ? '+' : ''}${option.satisfactionDelta}.`,
+    tone: option.tone,
+  }), {
+    category: 'landlord',
+    title: decisionId === 'renew' ? 'Lease renewed' : decisionId === 'raise-rent' ? 'Lease renewed at higher rent' : 'Lease reset to market',
+    detail: `${option.label} changed rent by ${option.rentDelta >= 0 ? '+' : '-'}S$${Math.abs(option.rentDelta).toLocaleString()}/mo.`,
+    tags: [decisionId === 'renew' ? 'lease-renewed' : decisionId === 'raise-rent' ? 'lease-rent-raised' : 'lease-reset-market', tenant.rentalMode],
+    scoreImpact: decisionId === 'renew' ? 5 : decisionId === 'raise-rent' ? 2 : 1,
   });
+
+  return ok({ player: updatedPlayer });
 }
 
 export function applyTenantMonthlyEvent(

@@ -83,8 +83,14 @@ async function expectAnyVisible(page, selectors, timeout = 15000) {
   throw new Error(`Expected one of these selectors visible: ${selectors.join(' | ')}`);
 }
 
+async function gotoRoute(page, url) {
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('body');
+  await delay(200);
+}
+
 async function startDefaultGame(page, baseUrl) {
-  await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
+  await gotoRoute(page, `${baseUrl}/#/`);
   await page.getByRole('button', { name: 'New Game' }).click();
   await page.getByPlaceholder('Enter your name...').fill('Scroll QA');
   await page.getByRole('button', { name: 'Customize Run' }).click();
@@ -114,7 +120,7 @@ async function run() {
     const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
     await startDefaultGame(page, baseUrl);
 
-    await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/property/hdb-bto-0`);
     await expectVisible(page, 'text=Property Details');
     const main = page.locator('main');
     await main.evaluate((element) => {

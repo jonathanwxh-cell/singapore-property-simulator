@@ -83,6 +83,8 @@ Repeat runs should invite experimentation:
 
 ### Phase 1: Lifetime Shell v1
 
+**Status:** Shipped in the current `main` line. The game now has named ending definitions/detection, life memories from existing gameplay events, local ending collection/run history, a life-summary Game Over screen, and Dashboard copy that frames each route as a Singapore life goal.
+
 **Purpose:** Make the existing game feel like a life story before adding large new domains.
 
 **Build:**
@@ -250,14 +252,14 @@ As each phase ships:
 
 ## Immediate Next Build
 
-The next recommended build is **Lifetime Shell v1**.
+The next recommended build is **Phase 2: Causal Scenarios**.
 
-It has the best effort-to-impact ratio because it directly fixes the current "not a 9" problems:
+It has the best effort-to-impact ratio after Lifetime Shell v1 because it makes events feel earned instead of detached from player choices:
 
-- No named endings.
-- No emotional narrative arc.
-- Net-worth-only victory.
-- Thin memory of what happened during a run.
+- Landlord behavior should affect tenant-crisis odds.
+- High leverage and weak reserves should increase financial-stress event risk.
+- Family pressure, burnout, district choice, and ownership route should explain why specific life events appear.
+- Scenario results should create stronger memories and ending signals.
 - Weak replay identity.
 
 This phase should be implemented before large new domains such as full childhood, true multi-generation, backend leaderboards, or a broad investment sandbox.

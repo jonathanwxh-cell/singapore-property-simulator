@@ -3,6 +3,7 @@ import type { ActionResult } from './results';
 import { fail, ok } from './results';
 import { roundMoney } from '@/lib/format';
 import { withOperationLog } from './operationsShared';
+import { appendLifeMemory } from './lifetime/memories';
 
 export interface ReservePlanInput {
   targetMonths: number;
@@ -33,7 +34,7 @@ export function setReservePlanPure(
     return fail('insufficient_cash', 'Reserve allocation cannot exceed available cash.');
   }
 
-  const updatedPlayer = withOperationLog({
+  let updatedPlayer = withOperationLog({
     ...player,
     reserve: {
       targetMonths,
@@ -45,6 +46,13 @@ export function setReservePlanPure(
     title: 'Emergency reserve updated',
     detail: `S$${allocatedCash.toLocaleString()} marked as protected runway for property surprises.`,
     tone: allocatedCash > 0 ? 'good' : 'warn',
+  });
+  updatedPlayer = appendLifeMemory(updatedPlayer, {
+    category: 'money',
+    title: 'Emergency reserve updated',
+    detail: `S$${allocatedCash.toLocaleString()} is now earmarked as protected runway for property surprises.`,
+    tags: ['reserve-plan', allocatedCash > 0 ? 'protected-cash' : 'reserve-empty'],
+    scoreImpact: allocatedCash > 0 ? 4 : -2,
   });
 
   return ok({ player: updatedPlayer });

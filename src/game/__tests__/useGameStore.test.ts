@@ -97,6 +97,21 @@ describe('useGameStore', () => {
     });
   });
 
+  it('initializes lifetime memories and ending collection for a new run', () => {
+    useGameStore.getState().newGame('Lifetime Tester', 'graduate', 'normal', {
+      residencyStatus: 'sc',
+      householdProfile: 'couple-family',
+      age: 30,
+    }, 'bto-upgrader');
+
+    const player = useGameStore.getState().player;
+    expect(player.lifeMemories).toEqual([]);
+    expect(player.endingCollection).toEqual({
+      unlockedEndingIds: [],
+      runHistory: [],
+    });
+  });
+
   it('supports compact mode as a saved frictionless-play setting', () => {
     expect(useGameStore.getState().settings.compactMode).toBe(false);
 
@@ -307,6 +322,23 @@ describe('useGameStore', () => {
     expect(state.player.turnCount).toBe(4);
     expect(state.player.month).toBe(5);
     expect(state.currentScenario).toBe('scenario-market-crash');
+  });
+
+  it('records a lifetime ending when a run ends through the store', () => {
+    resetStore({
+      player: makePlayer({ cash: 16_000_000, totalNetWorth: 16_000_000 }),
+      settings: {
+        ...makeState().settings,
+        autoSave: false,
+      },
+    });
+
+    useGameStore.getState().nextTurn();
+
+    const state = useGameStore.getState();
+    expect(state.isGameActive).toBe(false);
+    expect(state.player.endingCollection?.runHistory).toHaveLength(1);
+    expect(state.player.endingCollection?.unlockedEndingIds.length).toBeGreaterThan(0);
   });
 
   it('warns when autosave cannot write to localStorage', () => {

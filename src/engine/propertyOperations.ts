@@ -32,6 +32,7 @@ import {
 import { createMaintenanceIssue } from './maintenanceOperations';
 import { applyTenantMonthlyEvent } from './tenantOperations';
 import { DEFAULT_CONDITION_SCORE } from './constants';
+import { appendLifeMemory } from './lifetime/memories';
 
 // Re-exports — keeps the existing `import { ... } from './propertyOperations'`
 // surface intact for `useGameStore`, `portfolio.ts`, `Portfolio.tsx`,
@@ -135,7 +136,7 @@ export function startRenovationPure(
     occupancyStatus: template.disruptive ? 'renovating' : property.occupancyStatus,
   };
 
-  const updatedPlayer = withOperationLog({
+  let updatedPlayer = withOperationLog({
     ...player,
     cash: roundMoney(player.cash - quote.cost),
     properties: updatedProperties,
@@ -144,6 +145,13 @@ export function startRenovationPure(
     title: `${template.label} started`,
     detail: `${quote.durationMonths} month ${quote.contractor.label.toLowerCase()} job begun at S$${quote.cost.toLocaleString()}. Tenants paused: ${template.disruptive ? 'yes' : 'no'}.`,
     tone: template.disruptive || contractorTier === 'budget' ? 'warn' : 'good',
+  });
+  updatedPlayer = appendLifeMemory(updatedPlayer, {
+    category: 'home',
+    title: `${template.label} started`,
+    detail: `You committed S$${quote.cost.toLocaleString()} to a ${quote.contractor.label.toLowerCase()} renovation route.`,
+    tags: ['renovation-started', template.category, contractorTier],
+    scoreImpact: contractorTier === 'premium' ? 4 : 2,
   });
 
   return ok({ player: updatedPlayer });

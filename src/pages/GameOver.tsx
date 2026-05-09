@@ -9,6 +9,7 @@ import { deriveEligibilityFlags } from '@/engine/eligibility';
 import EligibilityBadge from '@/components/EligibilityBadge';
 import { runRoutesById } from '@/data/runRoutes';
 import { scoreRunRoute } from '@/engine/runDirector';
+import { detectLifetimeEnding, type LifetimeEndingResult } from '@/engine/lifetime/endings';
 
 export default function GameOver() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function GameOver() {
   const target = difficultySettings[player.difficulty].targetNetWorth;
   const won = netWorth >= target;
   const score = Math.round((netWorth / target) * 1000) + player.achievements.length * 100 + player.turnCount * 10;
+  const lifetimeEnding = detectLifetimeEnding(player, won ? 'won' : 'lost');
   const career = careers.find((candidate) => candidate.id === player.careerId) ?? careers[0];
   const startingSalary = Math.round(career.startingSalary * difficultySettings[player.difficulty].salaryModifier);
   const salaryGrowth = player.salary - startingSalary;
@@ -34,20 +36,18 @@ export default function GameOver() {
 
   return (
     <div className="min-h-[calc(100dvh-64px)] bg-deep-space flex items-center justify-center px-4">
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-5xl py-8">
         <GlassCard className="text-center py-10" accentColor={won ? '#FFD700' : '#FF1744'}>
           <Trophy size={56} className={`mx-auto mb-4 ${won ? 'text-yellow-400' : 'text-text-dim'}`} />
 
-          <h1 className="page-title text-3xl text-white mb-2">
-            {won ? 'Congratulations!' : 'Game Over'}
-          </h1>
-          <p className="text-text-secondary mb-6">
+          <LifetimeEndingSummary result={lifetimeEnding} />
+          <p className="text-text-dim mt-3 mb-6">
             {won
               ? `You reached your target of S$${(target / 1000000).toFixed(0)}M!`
               : `You did not reach the target of S$${(target / 1000000).toFixed(0)}M.`}
           </p>
 
-          <div className="grid grid-cols-2 gap-4 mb-6 max-w-xs mx-auto">
+          <div className="grid grid-cols-2 gap-4 mb-6 max-w-2xl mx-auto md:grid-cols-4">
             <div className="bg-white/5 rounded-lg p-3">
               <p className="text-text-dim text-[10px] uppercase">Final Net Worth</p>
               <p className="font-mono text-cyan-glow text-lg">S${(netWorth / 1000000).toFixed(2)}M</p>
@@ -104,7 +104,7 @@ export default function GameOver() {
           <div className="space-y-2">
             <button onClick={() => navigate('/newgame')} className="btn-primary w-full flex items-center justify-center gap-2">
               <RotateCcw size={16} />
-              New Game
+              Replay A Different Life
             </button>
             <button onClick={() => navigate('/')} className="btn-secondary w-full flex items-center justify-center gap-2">
               <Home size={16} />
@@ -112,6 +112,48 @@ export default function GameOver() {
             </button>
           </div>
         </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+export function LifetimeEndingSummary({ result }: { result: LifetimeEndingResult }) {
+  return (
+    <div className="mb-6">
+      <p className="label-text text-[11px] text-cyan-glow">This was your Singapore life</p>
+      <h1 className="page-title mt-2 text-4xl text-white">{result.ending.label}</h1>
+      <p className="mx-auto mt-3 max-w-2xl text-sm text-text-secondary">{result.ending.summary}</p>
+
+      <div className="mt-6 grid gap-4 text-left lg:grid-cols-[0.85fr,1.15fr]">
+        <div className="rounded-xl border border-glass-border bg-white/5 p-4">
+          <p className="label-text text-text-dim text-[10px] mb-2">Why you got this ending</p>
+          <ul className="space-y-2 text-sm text-text-secondary">
+            {result.reasons.map((reason) => (
+              <li key={reason} className="rounded-lg bg-black/20 p-3">{reason}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-xl border border-glass-border bg-white/5 p-4">
+          <p className="label-text text-text-dim text-[10px] mb-2">Recent life memories</p>
+          {result.memories.length > 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {result.memories.map((memory) => (
+                <article key={memory.id} className="rounded-lg bg-black/20 p-3">
+                  <p className="label-text text-[10px] text-text-dim">
+                    {memory.year}.{String(memory.month).padStart(2, '0')}
+                  </p>
+                  <h3 className="mt-1 text-sm font-semibold text-white">{memory.title}</h3>
+                  <p className="mt-1 text-xs text-text-secondary">{memory.detail}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-lg bg-black/20 p-3 text-sm text-text-secondary">
+              No major life memories were logged yet. Future runs will collect home, career, family, landlord, and setback beats as you play.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

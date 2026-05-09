@@ -115,6 +115,7 @@ describe('Landlord Ops 2.0', () => {
     expect(tenant?.satisfaction).toBeGreaterThan(72);
     expect(tenant?.leaseEndTurn).toBe(77);
     expect(result.value.player.operationHistory?.[0].title).toContain('Lease renewed');
+    expect(result.value.player.lifeMemories?.some((memory) => memory.tags.includes('lease-renewed'))).toBe(true);
   });
 
   it('blocks repeated lease decisions in the same turn', () => {
@@ -188,6 +189,7 @@ describe('Landlord Ops 2.0', () => {
     expect(result.value.player.properties[0].occupancyStatus).toBe('vacant');
     expect(result.value.player.properties[0].vacancyMonths).toBe(1);
     expect(result.value.player.operationHistory?.[0].tone).toBe('warn');
+    expect(result.value.player.lifeMemories?.some((memory) => memory.tags.includes('rent-push-vacancy'))).toBe(true);
   });
 
   it('keeps reset-to-market rent scoped to the current room-rental mode', () => {

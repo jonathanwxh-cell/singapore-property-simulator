@@ -6,6 +6,7 @@ import { roundMoney } from '@/lib/format';
 import { clamp, normalizeOperationProperty, withOperationLog } from './operationsShared';
 import { createDefaultReserve } from './reserveOperations';
 import { DEFAULT_CONDITION_SCORE } from './constants';
+import { appendLifeMemory } from './lifetime/memories';
 
 export function resolveMaintenanceIssuePure(
   player: Player,
@@ -44,7 +45,7 @@ export function resolveMaintenanceIssuePure(
     openMaintenanceIssues: (property.openMaintenanceIssues ?? []).filter((candidate) => candidate.id !== issueId),
   };
 
-  const updatedPlayer = withOperationLog({
+  let updatedPlayer = withOperationLog({
     ...player,
     cash: roundMoney(player.cash - cost),
     reserve: {
@@ -58,8 +59,17 @@ export function resolveMaintenanceIssuePure(
     title: `${choice.label} completed`,
     detail: reserveDraw > 0
       ? `S$${cost.toLocaleString()} repair paid, with S$${reserveDraw.toLocaleString()} covered by reserve.`
-      : `S$${cost.toLocaleString()} repair paid from cash.`,
+    : `S$${cost.toLocaleString()} repair paid from cash.`,
     tone: choiceId === 'cheap-fix' ? 'warn' : 'good',
+  });
+  updatedPlayer = appendLifeMemory(updatedPlayer, {
+    category: 'landlord',
+    title: `${choice.label} completed`,
+    detail: reserveDraw > 0
+      ? `A S$${cost.toLocaleString()} repair used S$${reserveDraw.toLocaleString()} from reserve.`
+      : `A S$${cost.toLocaleString()} repair was paid fully from cash.`,
+    tags: ['repair-completed', issue.category, choiceId],
+    scoreImpact: choiceId === 'cheap-fix' ? -2 : 4,
   });
 
   return ok({ player: updatedPlayer });

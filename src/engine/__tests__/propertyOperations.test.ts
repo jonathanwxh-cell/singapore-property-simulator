@@ -69,6 +69,7 @@ describe('property operations', () => {
     expect(started.value.player.cash).toBe(82_000);
     expect(started.value.player.properties[0].occupancyStatus).toBe('renovating');
     expect(started.value.player.properties[0].activeRenovation?.remainingMonths).toBe(2);
+    expect(started.value.player.lifeMemories?.some((memory) => memory.tags.includes('renovation-started'))).toBe(true);
 
     const monthOne = advancePortfolioMonth(started.value.player);
     expect(monthOne.updatedProperties[0].activeRenovation?.remainingMonths).toBe(1);
@@ -186,6 +187,7 @@ describe('property operations', () => {
     expect(roomRental.value.player.properties[0].occupancyStatus).toBe('owner-occupied');
     expect(selectMonthlyRentalIncome(roomRental.value.player)).toBeLessThan(1_700);
     expect(selectMonthlyRentalIncome(roomRental.value.player)).toBeGreaterThan(600);
+    expect(roomRental.value.player.lifeMemories?.some((memory) => memory.tags.includes('tenant-signed'))).toBe(true);
   });
 
   it('unlocks whole-unit HDB rental after MOP reaches zero', () => {
@@ -291,6 +293,7 @@ describe('property operations', () => {
     expect(result.value.player.properties[0].openMaintenanceIssues).toHaveLength(0);
     expect(result.value.player.properties[0].conditionScore).toBeGreaterThan(55);
     expect(result.value.player.properties[0].tenant?.satisfaction).toBeGreaterThan(68);
+    expect(result.value.player.lifeMemories?.some((memory) => memory.tags.includes('repair-completed'))).toBe(true);
   });
 
   it('allocates an emergency reserve without changing total cash', () => {
@@ -310,5 +313,6 @@ describe('property operations', () => {
       allocatedCash: 12_000,
       autoTopUpPct: 15,
     });
+    expect(result.value.player.lifeMemories?.some((memory) => memory.tags.includes('reserve-plan'))).toBe(true);
   });
 });

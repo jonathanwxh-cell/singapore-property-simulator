@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { lifeActions, lifeActionsById } from '@/data/lifeActions';
+import { runRoutesById } from '@/data/runRoutes';
 import { TAKE_HOME_RATIO } from '@/engine/constants';
 import { getCommandCenterState } from '@/engine/commandCenter';
 import { getNextBestMoves } from '@/engine/decisionCoach';
@@ -34,6 +35,7 @@ import BeginnerAdvancedGate from './dashboard/panels/BeginnerAdvancedGate';
 import BeginnerPrimerPanel from './dashboard/panels/BeginnerPrimerPanel';
 import FirstRunQuestPanel from './dashboard/panels/FirstRunQuestPanel';
 import LastMonthRecapPanel from './dashboard/panels/LastMonthRecapPanel';
+import LifeGoalPanel from './dashboard/panels/LifeGoalPanel';
 import NextHomeGatewayPanel from './dashboard/panels/NextHomeGatewayPanel';
 import OwnershipForksPanel from './dashboard/panels/OwnershipForksPanel';
 import PlaySurfacePanel from './dashboard/panels/PlaySurfacePanel';
@@ -103,6 +105,7 @@ export default function Dashboard() {
   const firstHomeMissions = useMemo(() => getFirstHomeMissions(player), [player]);
   const lastTurnRecap = useMemo(() => getLastTurnRecap({ player, market, currentScenario }), [player, market, currentScenario]);
   const firstRunQuest = useMemo(() => getFirstRunQuest(player, currentScenario), [player, currentScenario]);
+  const activeRunRoute = runRoutesById[player.runRouteId ?? 'bto-upgrader'] ?? runRoutesById['bto-upgrader'];
   const beginnerDashboardFocus = settings.guidedMode && player.turnCount <= 6 && player.properties.length === 0 && !settings.compactMode;
   const hideAdvancedPanels = beginnerDashboardFocus && !showAdvancedPanels;
   const hasPropertyAttention = openIssues.length > 0 || activeRenovations.length > 0 || Boolean(weakTenant);
@@ -172,6 +175,10 @@ export default function Dashboard() {
             onInspectChoice={handleInspectSurfaceChoice}
             onToggleCompact={() => updateSettings({ compactMode: !settings.compactMode })}
           />
+        </motion.div>
+
+        <motion.div variants={dashboardItemVariants} className="mb-6">
+          <LifeGoalPanel routeLabel={activeRunRoute.label} routeTagline={activeRunRoute.tagline} />
         </motion.div>
 
         <motion.div variants={dashboardItemVariants} className="mb-6 grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">

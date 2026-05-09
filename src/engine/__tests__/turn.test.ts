@@ -244,6 +244,19 @@ describe('advanceTurn', () => {
     expect(result.player.life.lastMonthSummary?.notes.some((note) => note.includes('Self-employed income'))).toBe(true);
   });
 
+  it('records a burnout-warning memory after a high-stress month', () => {
+    const result = advanceTurn({
+      player: makePlayer({
+        life: createInitialLifeState({ stress: 88 }),
+      }),
+      market: baseMarket,
+      settings: baseSettings,
+      rng: createRng(42),
+    });
+
+    expect(result.player.lifeMemories?.some((memory) => memory.tags.includes('burnout-warning'))).toBe(true);
+  });
+
   it('grows all three CPF buckets each turn', () => {
     const player = makePlayer({ salary: 5000, cpfOrdinary: 50_000, cpfSpecial: 20_000, cpfMedisave: 25_000 });
     const result = advanceTurn({ player, market: baseMarket, settings: baseSettings, rng: createRng(1) });

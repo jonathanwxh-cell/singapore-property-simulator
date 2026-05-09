@@ -150,6 +150,47 @@ describe('save persistence', () => {
     }]);
   });
 
+  it('round-trips lifetime memories and ending collection through autosave persistence', () => {
+    const state = makeState({
+      player: {
+        ...makeState().player,
+        lifeMemories: [{
+          id: 'memory-1-first-home',
+          turn: 1,
+          year: 2026,
+          month: 5,
+          category: 'home',
+          title: 'First keys collected',
+          detail: 'The starter home became real.',
+          tags: ['first-home'],
+        }],
+        endingCollection: {
+          unlockedEndingIds: ['heartland-hero'],
+          runHistory: [{
+            id: 'run-2026-5-1-heartland-hero',
+            endingId: 'heartland-hero',
+            endingLabel: 'Heartland Hero',
+            playerName: 'Saved Player',
+            completedAt: '2026-05-09T00:00:00.000Z',
+            finalYear: 2026,
+            finalMonth: 5,
+            finalAge: 29,
+            netWorth: 500_000,
+            memories: [],
+          }],
+        },
+      },
+    });
+
+    writeAutoSave(state);
+    const parsed = readAutoSave();
+
+    expect(parsed?.player.lifeMemories).toHaveLength(1);
+    expect(parsed?.player.lifeMemories?.[0].tags).toContain('first-home');
+    expect(parsed?.player.endingCollection?.unlockedEndingIds).toContain('heartland-hero');
+    expect(parsed?.player.endingCollection?.runHistory[0].endingLabel).toBe('Heartland Hero');
+  });
+
   it('rejects malformed or version-mismatched save payloads', () => {
     expect(parseStoredGameState('not-json')).toBeNull();
     expect(parseStoredGameState(JSON.stringify({ ...makeState(), version: SAVE_VERSION + 1 }))).toBeNull();

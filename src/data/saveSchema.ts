@@ -9,6 +9,23 @@ const tenantProfileSchema = z.enum(['local-family', 'expat-pmet', 'student-tenan
 const mortgageFinancingModeSchema = z.enum(['bank', 'hdb-concessionary']);
 const pendingTaxReliefTypeSchema = z.enum(['absd-spouse-refund', 'absd-single-senior-refund']);
 const pendingTaxReliefStatusSchema = z.enum(['pending', 'earned', 'expired']);
+const lifeMemoryCategorySchema = z.enum(['home', 'career', 'family', 'money', 'landlord', 'market', 'culture', 'setback', 'milestone']);
+const endingIdSchema = z.enum([
+  'heartland-hero',
+  'kiasu-king',
+  'fire-at-45',
+  'property-tycoon',
+  'sandwich-generation',
+  'retire-in-jb',
+  'cash-king',
+  'en-bloc-millionaire',
+  'negative-equity',
+  'quiet-achiever',
+  'kena-scam',
+  'migration-story',
+  'paper-general',
+  'ah-beng-made-good',
+]);
 const runRouteSchema = z.enum([
   'bto-upgrader',
   'single-resale',
@@ -133,6 +150,31 @@ const pendingTaxReliefSchema = z.object({
   qualifyingSoldPropertyIds: z.array(z.string()),
   status: pendingTaxReliefStatusSchema,
   replacementPurchasePrice: z.number().finite().nonnegative().optional(),
+});
+
+const lifeMemorySchema = z.object({
+  id: z.string(),
+  turn: z.number().int().nonnegative(),
+  year: z.number().int().min(2000).max(2100),
+  month: z.number().int().min(1).max(12),
+  category: lifeMemoryCategorySchema,
+  title: z.string(),
+  detail: z.string(),
+  tags: z.array(z.string()),
+  scoreImpact: z.number().finite().optional(),
+});
+
+const lifetimeRunRecordSchema = z.object({
+  id: z.string(),
+  endingId: endingIdSchema,
+  endingLabel: z.string(),
+  playerName: z.string(),
+  completedAt: z.string(),
+  finalYear: z.number().int().min(2000).max(2100),
+  finalMonth: z.number().int().min(1).max(12),
+  finalAge: z.number().int().min(18).max(100),
+  netWorth: z.number().finite(),
+  memories: z.array(lifeMemorySchema),
 });
 
 const playerSchema = z.object({
@@ -261,6 +303,11 @@ const playerSchema = z.object({
   })).optional(),
   pendingTaxReliefs: z.array(pendingTaxReliefSchema).optional(),
   nextHomeShortlistIds: z.array(z.string()).max(3).optional(),
+  lifeMemories: z.array(lifeMemorySchema).optional(),
+  endingCollection: z.object({
+    unlockedEndingIds: z.array(endingIdSchema),
+    runHistory: z.array(lifetimeRunRecordSchema),
+  }).optional(),
 });
 
 export const saveSchema = z.object({

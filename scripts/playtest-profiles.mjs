@@ -83,12 +83,18 @@ async function expectAnyVisible(page, selectors, timeout = 15000) {
   throw new Error(`Expected one of these selectors visible: ${selectors.join(' | ')}`);
 }
 
+async function gotoRoute(page, url) {
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('body');
+  await delay(200);
+}
+
 async function startProfile(page, baseUrl, {
   name,
   householdLabel,
   residencyLabel,
 }) {
-  await page.goto(`${baseUrl}/#/`, { waitUntil: 'networkidle' });
+  await gotoRoute(page, `${baseUrl}/#/`);
   await page.getByRole('button', { name: 'New Game' }).click();
   await expectVisible(page, 'text=Enter Your Name');
   await page.getByPlaceholder('Enter your name...').fill(name);
@@ -151,7 +157,7 @@ async function run() {
       householdLabel: 'Couple / Family',
       residencyLabel: 'Singapore Citizen',
     });
-    await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/property/hdb-bto-0`);
     await expectVisible(page, 'text=First-Timer Friendly');
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');
 
@@ -160,7 +166,7 @@ async function run() {
       householdLabel: 'Single Under 35',
       residencyLabel: 'Singapore Citizen',
     });
-    await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/property/hdb-bto-0`);
     await expectVisible(page, 'text=Single buyers under 35 cannot use the solo HDB path yet');
     await expectVisible(page, 'text=wait until 35');
 
@@ -169,9 +175,9 @@ async function run() {
       householdLabel: 'Foreign Investor',
       residencyLabel: 'Foreigner',
     });
-    await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/property/hdb-bto-0`);
     await expectVisible(page, 'text=Foreigners cannot buy HDB flats or executive condos');
-    await page.goto(`${baseUrl}/#/property/condo-4`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/property/condo-4`);
     await expectVisible(page, 'text=ABSD 60%');
 
     await startProfile(page, baseUrl, {
@@ -179,9 +185,9 @@ async function run() {
       householdLabel: 'Couple / Family',
       residencyLabel: 'Singapore PR',
     });
-    await page.goto(`${baseUrl}/#/property/hdb-bto-0`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/property/hdb-bto-0`);
     await expectVisible(page, 'text=SPR households cannot buy new HDB BTO flats');
-    await page.goto(`${baseUrl}/#/property/condo-4`, { waitUntil: 'networkidle' });
+    await gotoRoute(page, `${baseUrl}/#/property/condo-4`);
     await expectVisible(page, 'text=ABSD 5%');
 
     await browser.close();

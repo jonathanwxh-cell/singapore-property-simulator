@@ -48,6 +48,31 @@ export type IncomeTrackId = 'sideGig' | 'propertyHustle';
 export type MonthlyIntentTrack = 'income' | 'market' | 'home-project' | 'tenant' | 'career' | 'recovery';
 export type OwnershipChapterId = 'settle-in' | 'stabilise-income' | 'prepare-upgrade' | 'line-up-exit';
 export type OwnershipCampaignTrackId = 'income-runway' | 'home-readiness' | 'exit-intel';
+export type LifeMemoryCategory =
+  | 'home'
+  | 'career'
+  | 'family'
+  | 'money'
+  | 'landlord'
+  | 'market'
+  | 'culture'
+  | 'setback'
+  | 'milestone';
+export type EndingId =
+  | 'heartland-hero'
+  | 'kiasu-king'
+  | 'fire-at-45'
+  | 'property-tycoon'
+  | 'sandwich-generation'
+  | 'retire-in-jb'
+  | 'cash-king'
+  | 'en-bloc-millionaire'
+  | 'negative-equity'
+  | 'quiet-achiever'
+  | 'kena-scam'
+  | 'migration-story'
+  | 'paper-general'
+  | 'ah-beng-made-good';
 export type LifeActionId =
   | 'focus-at-work'
   | 'take-side-gig'
@@ -126,6 +151,36 @@ export interface PlayerLifeState {
   };
   incomeProgress: IncomeProgressState;
   lastMonthSummary: LifeMonthSummary | null;
+}
+
+export interface LifeMemory {
+  id: string;
+  turn: number;
+  year: number;
+  month: number;
+  category: LifeMemoryCategory;
+  title: string;
+  detail: string;
+  tags: string[];
+  scoreImpact?: number;
+}
+
+export interface LifetimeRunRecord {
+  id: string;
+  endingId: EndingId;
+  endingLabel: string;
+  playerName: string;
+  completedAt: string;
+  finalYear: number;
+  finalMonth: number;
+  finalAge: number;
+  netWorth: number;
+  memories: LifeMemory[];
+}
+
+export interface EndingCollectionState {
+  unlockedEndingIds: EndingId[];
+  runHistory: LifetimeRunRecord[];
 }
 
 export interface BuyerProfile {
@@ -374,6 +429,8 @@ export interface Player {
   operationHistory?: PropertyOperationLogEntry[];
   pendingTaxReliefs?: PendingTaxRelief[];
   nextHomeShortlistIds?: string[];
+  lifeMemories?: LifeMemory[];
+  endingCollection?: EndingCollectionState;
 }
 
 export interface MarketState {

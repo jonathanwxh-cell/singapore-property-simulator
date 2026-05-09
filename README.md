@@ -16,7 +16,7 @@ You start with a career, modest savings, a selectable buyer profile, and a guide
 
 ### Product Direction
 
-The long-term direction is **Singapore: A Lifetime**: a realistic Singapore life tycoon built on top of the current property and finance engine. The simulator is not being rewritten; CPF, loans, stamp duties, MOP, buyer profiles, landlord operations, and market cycles remain the foundation while future phases add named endings, life memories, cultural texture, and replay identity.
+The long-term direction is **Singapore: A Lifetime**: a realistic Singapore life tycoon built on top of the current property and finance engine. The simulator is not being rewritten; CPF, loans, stamp duties, MOP, buyer profiles, landlord operations, and market cycles remain the foundation. Current shipped lifetime features include named endings, life memories, local run history, and a life-summary finish screen; future phases add deeper causal scenarios, cultural texture, and replay identity.
 
 The detailed roadmap lives in [docs/roadmap/singapore-a-lifetime-roadmap.md](docs/roadmap/singapore-a-lifetime-roadmap.md), and the first implementation handoff is [docs/superpowers/plans/2026-05-08-lifetime-shell-v1.md](docs/superpowers/plans/2026-05-08-lifetime-shell-v1.md). README gameplay sections should continue to describe only shipped behavior as each phase lands.
 
@@ -35,6 +35,8 @@ The latest MOP 2.2 pass adds chapter-specific ownership forks and a concrete nex
 The latest MOP 2.3 pass adds visible chapter beats on top of that flow. Active-MOP owners now see what pressure is building, what upside is opening, how many months remain until the next beat rotates, and a third signal-driven fork such as `Reserve Catch-Up`, `Shortlist Sprint`, or `School Zone Commit` so the first 60 months feel more alive even when no giant scenario fires.
 
 The latest MOP 2.4 pass turns that into a clearer chase. The dashboard now frames a `lead target` versus a `challenger`, marks urgency states such as `Window Open` or `Watch Closely`, and celebrates realistic payoff moments like `Reserve secured`, `Shortlist locked`, and `Lead target reachable` so MOP progress feels more satisfying without abandoning Singapore-flavoured realism.
+
+The latest **Lifetime Shell v1** pass adds named endings such as `Heartland Hero`, `Cash King`, `Property Tycoon`, and `Negative Equity`. Purchases, sales, ABSD/SSD moments, renovations, tenants, repairs, reserves, burnout months, and run completion now create life memories that feed the Game Over life-summary screen and local ending collection.
 
 1. **Earn** — Monthly salary (career-dependent) flows in after CPF deductions
 2. **Buy** — Browse 120+ fictional live listings across 9 property types, 28 districts, and 6 listing channels
@@ -69,6 +71,8 @@ Beginner-friendly routes include `BTO-to-Condo Upgrader`, `Single 35 Resale Buye
 |-----------|--------|
 | Net worth ≥ difficulty target | **Win** |
 | Cash negative + income < debt for 3 consecutive turns | **Bankrupt** |
+
+Every completed run also earns a named lifetime ending and summary, so the finish asks what kind of Singapore life you built before showing the score.
 
 ---
 

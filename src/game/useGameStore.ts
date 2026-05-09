@@ -42,6 +42,7 @@ import {
   toggleShortlistIds,
   type OwnershipForkOption,
 } from '@/engine/ownershipForks';
+import { recordLifetimeRun } from '@/engine/lifetime/endings';
 
 // RNG ownership: the deterministic RNG state lives in the store as
 // `rngSeed` / `rngState`. Each action that consumes randomness rebuilds the
@@ -155,8 +156,21 @@ function withRunRouteDefaults(player: Player): Player {
   };
 }
 
+function withLifetimeDefaults(player: Player): Player {
+  return {
+    ...player,
+    lifeMemories: player.lifeMemories ?? [],
+    endingCollection: player.endingCollection ?? {
+      unlockedEndingIds: [],
+      runHistory: [],
+    },
+  };
+}
+
 function finalizePlayer(player: Player): Player {
-  const hydrated = withRunRouteDefaults(withBuyerProfileDefaults(withLifeDefaults(withPortfolioDefaults(withCareerDefaults(player)))));
+  const hydrated = withLifetimeDefaults(
+    withRunRouteDefaults(withBuyerProfileDefaults(withLifeDefaults(withPortfolioDefaults(withCareerDefaults(player))))),
+  );
   return withEvaluatedAchievements(withNetWorth(hydrated));
 }
 
@@ -212,6 +226,11 @@ function createInitialPlayer(
     operationHistory: [],
     pendingTaxReliefs: [],
     nextHomeShortlistIds: [],
+    lifeMemories: [],
+    endingCollection: {
+      unlockedEndingIds: [],
+      runHistory: [],
+    },
   });
 }
 
@@ -517,8 +536,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (currentScenario) return;
     const rng = restoreRng(rngSeed, rngState);
     const result = advanceTurn({ player, market, settings, rng });
+    const playerAfterTurn = result.gameOver && result.outcome !== 'ongoing'
+      ? recordLifetimeRun(result.player, result.outcome)
+      : result.player;
     const nextState = {
-      player: finalizePlayer(result.player),
+      player: finalizePlayer(playerAfterTurn),
       market: result.market,
       settings,
       currentScenario: result.scenarioId,

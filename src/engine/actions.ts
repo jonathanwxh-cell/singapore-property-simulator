@@ -21,6 +21,7 @@ import { formatPercent, roundMoney } from '@/lib/format';
 import { validatePurchase } from './purchase';
 import { deriveMaintenanceCost, derivePropertyTax } from './portfolio';
 import { calculateSSD } from './stampDuty';
+import { appendLifeMemory } from './lifetime/memories';
 import {
   getSalaryCeilingForProperty,
   evaluatePropertyEligibility,
@@ -201,18 +202,39 @@ export function buyPropertyPure(
     : null;
   const nextPendingTaxReliefs = getPendingTaxReliefsAfterPurchase(player, property.id, validation.pendingTaxRelief, property.type);
 
+  let nextPlayer: Player = {
+    ...player,
+    cash: roundMoney(player.cash - cashRequired),
+    cpfOrdinary: roundMoney(player.cpfOrdinary - cpfToUse),
+    properties: [...player.properties, owned],
+    loans: newLoan ? [...player.loans, newLoan] : player.loans,
+    firstHomePurchased: isResidentialPropertyType(property.type) ? true : player.firstHomePurchased,
+    ownedPrivateHome: isPrivateResidentialPropertyType(property.type) ? true : player.ownedPrivateHome,
+    usedSubsidizedHousing: player.usedSubsidizedHousing || property.type === 'HDB BTO' || property.type === 'Executive Condo',
+    pendingTaxReliefs: nextPendingTaxReliefs,
+  };
+
+  if (isResidentialPropertyType(property.type) && !player.firstHomePurchased) {
+    nextPlayer = appendLifeMemory(nextPlayer, {
+      category: 'home',
+      title: 'First keys collected',
+      detail: `${property.name} became the first home in this Singapore life.`,
+      tags: ['first-home', property.type.toLowerCase().replace(/\s+/g, '-')],
+      scoreImpact: 12,
+    });
+  }
+  if (validation.absd > 0) {
+    nextPlayer = appendLifeMemory(nextPlayer, {
+      category: 'money',
+      title: 'ABSD paid',
+      detail: `S$${Math.round(validation.absd).toLocaleString()} in Additional Buyer's Stamp Duty was paid upfront.`,
+      tags: ['absd-paid', 'tax', 'stamp-duty'],
+      scoreImpact: -8,
+    });
+  }
+
   return ok({
-    player: {
-      ...player,
-      cash: roundMoney(player.cash - cashRequired),
-      cpfOrdinary: roundMoney(player.cpfOrdinary - cpfToUse),
-      properties: [...player.properties, owned],
-      loans: newLoan ? [...player.loans, newLoan] : player.loans,
-      firstHomePurchased: isResidentialPropertyType(property.type) ? true : player.firstHomePurchased,
-      ownedPrivateHome: isPrivateResidentialPropertyType(property.type) ? true : player.ownedPrivateHome,
-      usedSubsidizedHousing: player.usedSubsidizedHousing || property.type === 'HDB BTO' || property.type === 'Executive Condo',
-      pendingTaxReliefs: nextPendingTaxReliefs,
-    },
+    player: nextPlayer,
   });
 }
 
@@ -289,17 +311,45 @@ export function sellPropertyPure(player: Player, propertyIndex: number): ActionR
     });
   }
 
-  return ok({
-    player: {
-      ...player,
-      cash: roundMoney(player.cash + netProceeds),
-      properties: newProperties,
-      loans: updatedLoans,
-      totalPropertySalesProfit: player.totalPropertySalesProfit + profit,
-      pendingTaxReliefs: pendingTaxReliefResolution.pendingTaxReliefs,
-      operationHistory,
-    },
+  let nextPlayer: Player = {
+    ...player,
+    cash: roundMoney(player.cash + netProceeds),
+    properties: newProperties,
+    loans: updatedLoans,
+    totalPropertySalesProfit: player.totalPropertySalesProfit + profit,
+    pendingTaxReliefs: pendingTaxReliefResolution.pendingTaxReliefs,
+    operationHistory,
+  };
+
+  nextPlayer = appendLifeMemory(nextPlayer, {
+    category: profit >= 0 ? 'money' : 'setback',
+    title: 'Property sold',
+    detail: `${listing?.name ?? property.propertyId} closed at S$${saleValue.toLocaleString()}, ${profit >= 0 ? 'locking in' : 'realising'} ${profit >= 0 ? 'a gain' : 'a loss'} of S$${Math.abs(profit).toLocaleString()}.`,
+    tags: ['property-sale', profit >= 0 ? 'capital-gain' : 'capital-loss'],
+    scoreImpact: profit >= 0 ? 8 : -8,
   });
+
+  if (ssd > 0) {
+    nextPlayer = appendLifeMemory(nextPlayer, {
+      category: 'money',
+      title: 'SSD paid on sale',
+      detail: `Seller's Stamp Duty reduced the sale proceeds by S$${Math.round(ssd).toLocaleString()}.`,
+      tags: ['ssd-paid', 'tax', 'stamp-duty'],
+      scoreImpact: -6,
+    });
+  }
+
+  if (pendingTaxReliefResolution.refundCashDelta > 0) {
+    nextPlayer = appendLifeMemory(nextPlayer, {
+      category: 'money',
+      title: 'ABSD refund received',
+      detail: `A qualifying sale unlocked S$${Math.round(pendingTaxReliefResolution.refundCashDelta).toLocaleString()} of ABSD relief.`,
+      tags: ['absd-refund', 'tax', 'stamp-duty'],
+      scoreImpact: 8,
+    });
+  }
+
+  return ok({ player: nextPlayer });
 }
 
 export function applyLoanPure(
@@ -453,4 +503,3 @@ function parsePurchaseDate(raw: string): { year: number; month: number } | null 
     month: Number(match[2]),
   };
 }
-
