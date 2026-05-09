@@ -299,6 +299,37 @@ async function assertMobileBuyCtaIsInFlow(page) {
   await page.setViewportSize({ width: 1440, height: 1100 });
 }
 
+async function assertQuickPurchaseJumpReachesBuyPanel(page) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await delay(150);
+
+  const main = page.locator('main');
+  await main.evaluate((element) => {
+    element.scrollTop = 0;
+  });
+  await delay(100);
+
+  await page.getByRole('button', { name: 'Jump To Buy Panel' }).click();
+  const buyButton = page.getByRole('button', { name: 'Buy Property' }).first();
+  await buyButton.waitFor({ state: 'visible', timeout: 5000 });
+  await delay(900);
+
+  const buyButtonBox = await buyButton.boundingBox();
+  const navBox = await page.locator('nav.fixed.bottom-0').boundingBox();
+  const viewport = page.viewportSize();
+  if (
+    !buyButtonBox
+    || !viewport
+    || buyButtonBox.y < 0
+    || buyButtonBox.y + buyButtonBox.height > viewport.height
+    || boxesOverlap(navBox, buyButtonBox)
+  ) {
+    throw new Error('Mobile Jump To Buy Panel should bring the real Buy Property button fully into view above bottom nav.');
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+}
+
 async function assertMobileRouteHasNoVisibleAdvance(page, routeLabel) {
   await page.setViewportSize({ width: 390, height: 844 });
   await delay(150);
@@ -453,6 +484,7 @@ async function run() {
     await page.getByRole('button', { name: 'Review Deal' }).click();
     await expectVisible(page, 'text=Use CPF OA toward eligible upfront costs');
     await page.locator('span').filter({ hasText: 'Cash Required' }).last().waitFor({ state: 'visible', timeout: 15000 });
+    await assertQuickPurchaseJumpReachesBuyPanel(page);
 
     const buyButton = page.getByRole('button', { name: 'Buy Property' }).first();
     await page.locator('h1').filter({ hasText: 'Northstar Grove 3-Room' }).waitFor({ state: 'attached', timeout: 15000 });

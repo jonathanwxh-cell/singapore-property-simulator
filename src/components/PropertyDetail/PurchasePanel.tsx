@@ -519,7 +519,10 @@ export default function PurchasePanel({
           </div>
         </div>
 
-        <div className="mt-4 rounded-card border border-divider bg-glass-fill/95 p-4 backdrop-blur-xl lg:sticky lg:bottom-0 lg:-mx-4 lg:-mb-4 lg:rounded-b-card lg:border-x-0 lg:border-b-0">
+        <div
+          data-purchase-action="primary"
+          className="mt-4 rounded-card border border-divider bg-glass-fill/95 p-4 backdrop-blur-xl lg:sticky lg:bottom-0 lg:-mx-4 lg:-mb-4 lg:rounded-b-card lg:border-x-0 lg:border-b-0"
+        >
           <button
             onClick={onBuy}
             disabled={!canAfford}

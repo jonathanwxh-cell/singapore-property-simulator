@@ -139,7 +139,28 @@ export default function PropertyDetail() {
   };
 
   const handleReviewPurchase = () => {
-    purchasePanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const panel = purchasePanelRef.current;
+    if (!panel) return;
+
+    const target = panel.querySelector<HTMLElement>('[data-purchase-action="primary"]') ?? panel;
+
+    let scrollParent = target.parentElement;
+    while (scrollParent) {
+      const style = window.getComputedStyle(scrollParent);
+      const canScroll = ['auto', 'scroll'].includes(style.overflowY) && scrollParent.scrollHeight > scrollParent.clientHeight;
+      if (canScroll) {
+        const parentBox = scrollParent.getBoundingClientRect();
+        const targetBox = target.getBoundingClientRect();
+        scrollParent.scrollTo({
+          top: scrollParent.scrollTop + targetBox.top - parentBox.top - 96,
+          behavior: 'auto',
+        });
+        return;
+      }
+      scrollParent = scrollParent.parentElement;
+    }
+
+    target.scrollIntoView({ behavior: 'auto', block: 'start' });
   };
 
   const handleToggleShortlist = () => {
@@ -154,7 +175,7 @@ export default function PropertyDetail() {
   };
 
   return (
-    <div className="min-h-[calc(100dvh-64px)] bg-deep-space px-4 pb-8 game-screen">
+    <div className="min-h-[calc(100dvh-64px)] bg-deep-space px-4 pb-28 md:pb-8 game-screen">
       <div className="max-w-5xl mx-auto">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-text-secondary hover:text-cyan-glow transition-colors mb-4">
           <ArrowLeft size={18} />
