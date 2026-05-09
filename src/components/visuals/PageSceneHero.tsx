@@ -148,7 +148,9 @@ function PostcardBoard() {
           </div>
         ))}
       </div>
-      <div className="absolute bottom-24 left-[45%] h-11 w-11 rounded-full border-4 border-white bg-[radial-gradient(circle_at_35%_28%,#FFFFFF_0_16%,#00F0FF_34%,#2979FF_78%)] shadow-[0_12px_30px_rgba(0,240,255,0.22)]" />
+      <div className="absolute bottom-[5.7rem] left-[44%] rounded-full border border-cyan-glow/50 bg-cyan-glow/20 px-3 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-cyan-glow shadow-[0_10px_28px_rgba(0,240,255,0.2)]">
+        Now
+      </div>
       <div className="absolute bottom-8 left-8 right-8 h-1 rounded-full bg-white/15" />
     </div>
   );
@@ -236,7 +238,9 @@ function LifeIllustration() {
           </div>
         ))}
       </div>
-      <div className="absolute bottom-28 right-44 h-12 w-12 rounded-full border-4 border-white bg-[radial-gradient(circle_at_35%_28%,#FFFFFF_0_16%,#00F0FF_34%,#2979FF_78%)]" />
+      <div className="absolute bottom-28 right-44 rounded-full border border-cyan-glow/50 bg-cyan-glow/20 px-3 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-cyan-glow">
+        Now
+      </div>
     </div>
   );
 }

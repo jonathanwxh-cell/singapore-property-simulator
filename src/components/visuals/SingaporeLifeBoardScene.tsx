@@ -83,23 +83,26 @@ export default function SingaporeLifeBoardScene({
             <div className="relative grid gap-2 md:grid-cols-5">
               {board.stages.map((stage, index) => (
                 <div key={stage.id} className="relative">
-                  {index === board.avatarStageIndex && (
-                    <div className="absolute -top-4 left-4 z-10 h-9 w-9 rounded-full border-4 border-white bg-[radial-gradient(circle_at_35%_28%,#FFFFFF_0_16%,#00F0FF_34%,#2979FF_78%)] shadow-[0_12px_28px_rgba(0,240,255,0.24)]" />
-                  )}
-                  <div className={cn(
-                    'min-h-[5.5rem] rounded-2xl border p-3 pt-5',
-                    stage.status === 'current'
-                      ? 'border-cyan-glow/50 bg-cyan-glow/15'
-                      : stage.status === 'past'
-                        ? 'border-success/25 bg-success/10'
-                        : 'border-white/10 bg-white/[0.04]',
-                  )}>
+                  <div
+                    aria-current={index === board.avatarStageIndex ? 'step' : undefined}
+                    className={cn(
+                      'relative min-h-[5.5rem] overflow-hidden rounded-2xl border p-3 pt-5',
+                      stage.status === 'current'
+                        ? 'border-cyan-glow/50 bg-cyan-glow/15'
+                        : stage.status === 'past'
+                          ? 'border-success/25 bg-success/10'
+                          : 'border-white/10 bg-white/[0.04]',
+                    )}
+                  >
+                    {stage.status === 'current' && (
+                      <div className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-cyan-glow shadow-[0_0_18px_rgba(0,240,255,0.45)]" />
+                    )}
                     <div className="mb-1 flex items-center justify-between">
                       <p className={cn(
                         'text-[9px] font-mono uppercase tracking-[0.16em]',
                         stage.status === 'current' ? 'text-cyan-glow' : stage.status === 'past' ? 'text-success' : 'text-text-dim',
                       )}>
-                        {stage.status}
+                        {stage.status === 'current' ? 'Now' : stage.status}
                       </p>
                       {stage.status === 'current' && <ChevronRight size={13} className="text-cyan-glow" />}
                     </div>
