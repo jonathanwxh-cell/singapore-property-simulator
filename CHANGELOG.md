@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Strengthened multi-agent repository workflow docs, templates, labels, and branch-protection guidance so Codex, Claude, humans, and future agents can coordinate parallel work safely.
+
 ## [0.6.1] - 2026-05-09
 
 ### Added

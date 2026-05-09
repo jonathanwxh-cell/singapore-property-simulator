@@ -2,3 +2,6 @@
 # default for matching paths. Format reference:
 # https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
 *       @jonathanwxh-cell
+/.github/ @jonathanwxh-cell
+/AGENTS.md @jonathanwxh-cell
+/docs/agent-collaboration-template.md @jonathanwxh-cell
