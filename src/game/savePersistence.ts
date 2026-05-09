@@ -67,12 +67,25 @@ export function parseStoredGameState(rawData: string | null): GameState | null {
     if (!migrated) return null;
 
     const parsed = saveSchema.safeParse(migrated);
-    if (!parsed.success) return null;
+    if (!parsed.success) {
+      if (import.meta.env.DEV) {
+        console.error('[save] schema validation failed:', parsed.error.issues);
+      }
+      return null;
+    }
 
+    // The schema is intentionally a superset of GameState (e.g. careerId is
+    // optional to accept v1 saves missing the field). Downstream hydration
+    // (withCareerDefaults, withLifetimeDefaults, ...) finishes the shape
+    // mapping, so the cast through unknown is the honest expression of that
+    // schema/runtime gap.
     const state = { ...parsed.data };
     delete (state as { version?: number }).version;
     return state as unknown as GameState;
-  } catch {
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error('[save] parse failed:', error);
+    }
     return null;
   }
 }

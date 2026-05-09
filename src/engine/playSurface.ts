@@ -143,6 +143,7 @@ function getSubtitle(player: Player, storyBeatDetail: string, mopMonthsRemaining
 function getTimeline(player: Player, mopMonthsRemaining: number | null, chapterProgressPct: number): PlaySurfaceStage[] {
   const hasHome = player.properties.length > 0;
   const activeMop = mopMonthsRemaining !== null && mopMonthsRemaining > 0;
+  // No MOP applies (private home or no home yet) -> render as 0%, not "complete".
   const mopProgress = mopMonthsRemaining === null
     ? 0
     : Math.min(100, Math.max(0, Math.round(((HDB_MOP_MONTHS - mopMonthsRemaining) / HDB_MOP_MONTHS) * 100)));
