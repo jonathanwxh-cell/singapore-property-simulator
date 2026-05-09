@@ -1,7 +1,7 @@
 {
   "name": "singapore-property-simulator",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "A single-player turn-based property investment game set in Singapore — CPF, stamp duty, LTV/MSR/TDSR, mortgage underwriting, market cycles.",
   "license": "UNLICENSED",
   "author": "jonathanwxh-cell",

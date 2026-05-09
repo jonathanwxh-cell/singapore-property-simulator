@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-05-09
+
 ### Added
 - Added **Life Board With Living Homes v1**: reusable skyline/board/home-diorama visual components, page scene heroes across major routes, and ownership-state visuals that reflect tenants, MOP, renovations, repairs, reserves, and condition before deeper finance panels.
 - Added **Lifetime Shell v1**: named endings, life memories from home/career/landlord/tax/setback moments, local ending collection, and a life-summary Game Over screen so runs end as a Singapore life story instead of only a net-worth result.
