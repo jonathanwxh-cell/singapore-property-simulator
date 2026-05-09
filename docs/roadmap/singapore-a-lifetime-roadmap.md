@@ -103,7 +103,28 @@ Repeat runs should invite experimentation:
 - At least 5 endings are achievable using existing systems.
 - At least 6 memory types can be created without adding full family or dynasty systems.
 
-### Phase 2: Causal Scenarios
+### Phase 1.5: Life Board And Living Homes
+
+**Status:** Shipped in the current `main` line. The game now has a visual life-board surface, living-home dioramas, calmer navigation/CTA treatment, restored guided-mode entry points, mobile-safe advance-month placement, and route-specific visual postcards.
+
+**Purpose:** Make the existing simulation feel less like an Excel/dashboard surface and more like a serious Singapore life game, without hiding the real CPF, loan, duty, MOP, rental, and maintenance mechanics underneath.
+
+**Build:**
+
+- Life Board framing for Foundation, First Home, Home Season, Upgrade Window, and Ending.
+- Living-home diorama states for owned property, tenant status, condition, reserve pressure, and monthly income.
+- Visual page postcards for Dashboard, Buy, Own, Bank, Market, Life, Learn, and New Game surfaces.
+- Mobile UX cleanup so the advance-month action stays reachable without covering key stats.
+- Guided-mode recovery so players can turn help back on after disabling it.
+
+**Success criteria:**
+
+- The first visible screen communicates "this is a life/property game" before detailed numbers appear.
+- Players can advance time from the main flow without hunting for the control.
+- Route switches land at the top of the destination screen.
+- The UI keeps serious finance credibility while feeling more visual and playable.
+
+### Phase 2: Causal Story Events v1
 
 **Purpose:** Make randomness feel earned.
 
@@ -112,6 +133,8 @@ Repeat runs should invite experimentation:
 - Scenario weighting inputs from landlord behavior, stress, leverage, reserves, ownership status, district type, and route.
 - Visible "why this event happened" copy.
 - Event cooldowns to prevent repeated similar beats.
+- Scenario outcomes that create stronger life memories and ending signals.
+- A first content pack focused on high-impact, Singapore-specific everyday beats: tenant trust, neighbour friction, family pressure, kopi talk, school-zone anxiety, renovation delays, and market chatter.
 - Tests proving good landlord behavior reduces tenant-crisis likelihood and high leverage increases finance-stress likelihood.
 
 **Success criteria:**
@@ -119,6 +142,7 @@ Repeat runs should invite experimentation:
 - Scenario logs can explain the strongest trigger.
 - At least 8 scenario families respond to player state.
 - Players can infer how their choices affected event risk.
+- Two runs with different life/property behavior should produce noticeably different story texture before reaching the same net-worth range.
 
 ### Phase 3: Life Actions 2.0
 
@@ -252,14 +276,15 @@ As each phase ships:
 
 ## Immediate Next Build
 
-The next recommended build is **Phase 2: Causal Scenarios**.
+The next recommended build is **Phase 2: Causal Story Events v1**.
 
-It has the best effort-to-impact ratio after Lifetime Shell v1 because it makes events feel earned instead of detached from player choices:
+It has the best effort-to-impact ratio after the Lifetime Shell and Life Board work because it makes the next layer of fun come from consequences, not more panels:
 
 - Landlord behavior should affect tenant-crisis odds.
 - High leverage and weak reserves should increase financial-stress event risk.
-- Family pressure, burnout, district choice, and ownership route should explain why specific life events appear.
+- Burnout, district choice, ownership route, tenant satisfaction, renovation state, and reserve discipline should explain why specific life events appear.
 - Scenario results should create stronger memories and ending signals.
-- Weak replay identity.
+- Monthly recaps should say why this beat happened and what it says about the player.
+- The first scenario pack should add Singapore cultural texture without requiring a full family or multi-generation system yet.
 
 This phase should be implemented before large new domains such as full childhood, true multi-generation, backend leaderboards, or a broad investment sandbox.
