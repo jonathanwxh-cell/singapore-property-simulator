@@ -8,6 +8,22 @@ Goal: make it genuinely fun while keeping all SG financial realism. Yardstick: 2
 
 ## Checkpoint log
 
+### 2026-06-05 — C3: First 20-persona eval (6.2/10) + depth/pacing fixes
+**Eval round 1** (20 diverse persona subagents, structured 1–10 rubric): **overall 6.2/10**, 11/20 would replay.
+- Strongest: SG flavor 8.1, clarity 7.7, UX 7.3, juice 7.2.
+- Weakest: **choice 6.1, one-more-turn 6.1, tension 6.2, identity 6.3.**
+- Unanimous diagnosis: *"a tapper with a great calculator"* — **empty turns** (tap Next Month, number goes up, no decision between events) and **no near-term goals** ($15M is far, "1%" is demoralising). Plus: one-card swipe browser (want a scannable list), 4-step setup, no fast-forward, density/emoji noise, accessibility gaps.
+
+**Fixes shipped this round (all on top of the untouched engine):**
+- **Near-term goal ladder** (`game-ui/goals.ts`): first home → first rent → $250k → 2 places → $500k → millionaire → 4 places → … → freedom. Shown as a "🎯 Your next goal" card with a live progress bar; completing a rung fires confetti + a "Goal complete!" toast. Micro-wins replace the lonely 1%.
+- **"On your plate" decisions** (`game-ui/actionsThisMonth.ts`): the hub now surfaces real per-turn choices — rent a vacant unit, fix a maintenance issue, decide an expiring lease, renovate to lift yield, deploy idle cash. Empty months become decision moments.
+- **Real levers in the unit sheet**: **renovate** (pick an upgrade → +rent/+value, via the engine's renovation templates), **lease decisions** (renew/raise/reset/end), **maintenance repairs**. The "great calculator" now has things to *do*.
+- **Pacing**: **⚡ Quick start** on the title (skip setup, sensible defaults) + **⏩ Skip ahead** button (fast-forwards quiet months to the next notable event via `advanceToNextNotableMonth`).
+- **Scannable market**: Buy is now a sortable list (Best fit / Yield / Cheapest / Least cash) + "Can afford" filter, with verdict + cash-needed + a one-tap **Buy** on every card face (no more one-at-a-time swipe). Inline "Details" for the cost story.
+- **Density/a11y**: collapsed the "Your month" cashflow by default, lazy-loaded listing images, consolidated juice so confetti is reserved for earned beats.
+- **Teardown**: physically deleted the dead dashboard `src/pages/**` + legacy components (engine/data/game untouched; tests green).
+- **Next**: re-run the 20-persona eval against the updated build → target 8/10.
+
 ### 2026-06-05 — C2: Tension & identity layer + onboarding
 - **Kiasu rivals** (`game-ui/rivals.ts`, pure/derived — no engine touch): 3 SG archetypes (Wei Liang the kiasu classmate, Auntie Tan the neighbour, Priya the flipping agent) whose net worth grows with time. Surfaced as a "How you compare 👀" leaderboard in the You sheet, an "🏎️ You overtook X!" toast when you pass one on a month-tick, and a final standing on the ending screen. Pure social-comparison stakes + humour.
 - **Onboarding**: "How to play" sheet on the title (4 steps, 60s) instead of dumping new players straight in.

@@ -24,6 +24,8 @@ export default function PropertyImage({ src, alt, className }: { src: string; al
     <img
       src={src}
       alt={alt}
+      loading="lazy"
+      decoding="async"
       className={className}
       onError={(e) => {
         const img = e.target as HTMLImageElement;

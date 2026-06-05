@@ -46,6 +46,7 @@ function Skyline() {
 export default function Title() {
   const navigate = useNavigate();
   const loadGame = useGameStore((s) => s.loadGame);
+  const newGame = useGameStore((s) => s.newGame);
   const saved = useMemo(() => readAutoSave(), []);
   const [showHow, setShowHow] = useState(false);
 
@@ -54,6 +55,11 @@ export default function Title() {
       loadGame(saved);
       navigate('/play');
     }
+  };
+
+  const quickStart = () => {
+    newGame('You', 'tech', 'normal', { householdProfile: 'couple-family', residencyStatus: 'sc', age: 30 }, undefined, { guidedMode: true });
+    navigate('/play');
   };
 
   return (
@@ -130,9 +136,10 @@ export default function Title() {
           Start your story
         </BigButton>
 
-        <Btn tone="ghost" full size="sm" onClick={() => setShowHow(true)}>
-          How it works — learn as you play
-        </Btn>
+        <div className="flex gap-2">
+          <Btn tone="soft" size="sm" className="flex-1" onClick={quickStart}>⚡ Quick start</Btn>
+          <Btn tone="ghost" size="sm" className="flex-1" onClick={() => setShowHow(true)}>How it works</Btn>
+        </div>
       </motion.div>
 
       <Sheet open={showHow} onClose={() => setShowHow(false)} title="How to play" subtitle="60 seconds and you're ready">

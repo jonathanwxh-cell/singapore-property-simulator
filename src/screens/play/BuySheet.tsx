@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import { useGameStore } from '@/game/useGameStore';
 import { getListingCatalog } from '@/engine/listings';
 import { assessDealReadiness } from '@/engine/decisionCoach';
@@ -14,13 +13,12 @@ import { useToast } from '@/ui/Toast';
 import { fireConfetti } from '@/ui/confetti';
 import { playKeys, playFail, playPop } from '@/ui/sound';
 import PropertyImage from '@/components/PropertyImage';
-import { typeMeta, districtName, districtRegion, verdictFor } from '@/game-ui/property';
-import { formatCurrency, formatPercent, formatCompactCurrency } from '@/lib/format';
+import { typeMeta, districtName, verdictFor } from '@/game-ui/property';
+import { formatCurrency, formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-function downPaymentPct(isHdb: boolean) {
-  return isHdb ? HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT : 25;
-}
+const pct = (isHdb: boolean) => (isHdb ? HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT : 25);
+type SortKey = 'match' | 'yield' | 'price' | 'cash';
 
 export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const player = useGameStore((s) => s.player);
@@ -28,153 +26,152 @@ export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void
   const toast = useToast();
 
   const ownedIds = useMemo(() => new Set(player.properties.map((p) => p.propertyId)), [player.properties]);
-  const catalog = useMemo(
-    () => getListingCatalog().filter((p) => p.isAvailable && !ownedIds.has(p.id)),
-    [ownedIds],
-  );
 
-  const [idx, setIdx] = useState(0);
-  const [detail, setDetail] = useState(false);
+  const rows = useMemo(() => {
+    return getListingCatalog()
+      .filter((p) => p.isAvailable && !ownedIds.has(p.id))
+      .map((p) => {
+        const mode = p.isHdb ? ('hdb-concessionary' as const) : ('bank' as const);
+        const readiness = assessDealReadiness({ player, property: p, downPaymentPercent: pct(p.isHdb), useCpfOrdinary: true, financingMode: mode });
+        return { p, readiness, v: verdictFor(readiness, p.rentalYield) };
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [player, ownedIds]);
+
+  const [sort, setSort] = useState<SortKey>('match');
+  const [affordableOnly, setAffordableOnly] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [bought, setBought] = useState<string | null>(null);
 
-  const property = catalog[idx % Math.max(1, catalog.length)];
-
-  const readiness = useMemo(() => {
-    if (!property) return null;
-    const mode = property.isHdb ? ('hdb-concessionary' as const) : ('bank' as const);
-    return assessDealReadiness({
-      player,
-      property,
-      downPaymentPercent: downPaymentPct(property.isHdb),
-      useCpfOrdinary: true,
-      financingMode: mode,
+  const sorted = useMemo(() => {
+    const score = { steal: 0, comfortable: 1, stretch: 2, blocked: 3 };
+    let list = rows;
+    if (affordableOnly) list = list.filter((r) => r.readiness.verdict !== 'blocked');
+    const arr = [...list];
+    arr.sort((a, b) => {
+      if (sort === 'yield') return b.p.rentalYield - a.p.rentalYield;
+      if (sort === 'price') return a.p.price - b.p.price;
+      if (sort === 'cash') return a.readiness.cashRequired - b.readiness.cashRequired;
+      return score[a.v.kind] - score[b.v.kind] || a.readiness.cashRequired - b.readiness.cashRequired;
     });
-  }, [player, property]);
+    return arr.slice(0, 40);
+  }, [rows, sort, affordableOnly]);
 
-  const next = () => { playPop(); setDetail(false); setIdx((i) => (i + 1) % catalog.length); };
-  const prev = () => { playPop(); setDetail(false); setIdx((i) => (i - 1 + catalog.length) % catalog.length); };
-
-  const doBuy = () => {
-    if (!property || !readiness) return;
-    const mode = property.isHdb ? ('hdb-concessionary' as const) : ('bank' as const);
-    const downPayment = getDownPaymentAmount(property.price, downPaymentPct(property.isHdb));
-    const res = buyProperty(property.id, downPayment, readiness.cpfApplied, mode);
+  const doBuy = (propertyId: string) => {
+    const row = rows.find((r) => r.p.id === propertyId);
+    if (!row) return;
+    const mode = row.p.isHdb ? ('hdb-concessionary' as const) : ('bank' as const);
+    const downPayment = getDownPaymentAmount(row.p.price, pct(row.p.isHdb));
+    const res = buyProperty(row.p.id, downPayment, row.readiness.cpfApplied, mode);
     if (res.ok) {
       playKeys();
       fireConfetti({ count: 130, power: 1.15 });
-      setBought(property.name);
-      toast({ emoji: '🔑', tone: 'good', title: 'Keys in hand!', body: `${property.name} is yours.` });
+      setBought(row.p.name);
+      toast({ emoji: '🔑', tone: 'good', title: 'Keys in hand!', body: `${row.p.name} is yours.` });
     } else {
       playFail();
       toast({ emoji: '🚫', tone: 'bad', title: 'Deal fell through', body: res.message });
     }
   };
 
-  if (!property || !readiness) {
-    return (
-      <Sheet open={open} onClose={onClose} title="The market">
-        <div className="py-10 text-center text-ink-soft">No more listings to browse right now.</div>
-      </Sheet>
-    );
-  }
-
-  const tm = typeMeta(property.type);
-  const v = verdictFor(readiness, property.rentalYield);
-  const monthlyRentEst = Math.round((property.price * (property.rentalYield / 100)) / 12);
+  const SortChip = ({ k, label }: { k: SortKey; label: string }) => (
+    <button
+      onClick={() => { playPop(); setSort(k); }}
+      aria-pressed={sort === k}
+      className={cn('pl-press rounded-full px-3 py-1.5 text-[12px] font-bold', sort === k ? 'bg-ink text-white' : 'bg-paper-2 text-ink-soft')}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <Sheet
       open={open}
-      onClose={() => { setBought(null); onClose(); }}
+      onClose={() => { setBought(null); setExpanded(null); onClose(); }}
       title="The market"
-      subtitle={`${catalog.length} places for sale · swipe to browse`}
+      subtitle={bought ? undefined : `${rows.length} places for sale`}
     >
       <AnimatePresence mode="wait">
         {bought ? (
-          <motion.div
-            key="bought"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="py-8 text-center"
-          >
+          <motion.div key="bought" initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} className="py-8 text-center">
             <div className="text-[64px]">🔑</div>
             <div className="font-display text-2xl font-bold text-ink">It's yours!</div>
-            <p className="mx-auto mt-1 max-w-[16rem] text-sm text-ink-soft">
-              You're now the proud owner of <b className="text-ink">{bought}</b>. Rent it out from “Your places” to start earning.
-            </p>
+            <p className="mx-auto mt-1 max-w-[16rem] text-sm text-ink-soft">You now own <b className="text-ink">{bought}</b>. Rent it out from “Your places” to start earning.</p>
             <div className="mt-6 space-y-2.5">
-              <BigButton tone="coral" onClick={() => { setBought(null); if (catalog.length) setIdx((i) => i % catalog.length); }}>
-                Keep browsing
-              </BigButton>
+              <BigButton tone="coral" onClick={() => setBought(null)}>Keep browsing</BigButton>
               <Btn tone="ghost" full onClick={() => { setBought(null); onClose(); }}>Done</Btn>
             </div>
           </motion.div>
         ) : (
-          <motion.div key={property.id + String(detail)} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            {/* Card */}
-            <div className="overflow-hidden rounded-2xl border border-line-2 bg-white">
-              <div className="relative h-40 w-full overflow-hidden">
-                <PropertyImage src={property.image} alt={property.name} className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
-                <span className={cn('pl-chip absolute left-3 top-3', tm.cls)}>{tm.emoji} {tm.short}</span>
-                <div className="absolute right-3 top-3"><Verdict kind={v.kind} label={v.label} /></div>
-                <div className="absolute bottom-2 left-3 right-3 text-white">
-                  <div className="font-display text-xl font-bold leading-tight drop-shadow">{property.name}</div>
-                  <div className="text-[12px] font-semibold opacity-90">📍 {districtName(property.districtId)} · {districtRegion(property.districtId)}</div>
-                </div>
-              </div>
-
-              <div className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-ink-faint">Asking price</div>
-                    <div className="text-2xl font-extrabold text-ink"><Money value={property.price} compact /></div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-ink-faint">Rental yield</div>
-                    <div className="tabnums text-lg font-extrabold text-money">{formatPercent(property.rentalYield, 1)}</div>
-                    <div className="text-[11px] text-ink-soft">≈ {formatCompactCurrency(monthlyRentEst)}/mo</div>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-1.5 text-[12px] text-ink-soft">
-                  <span className="pl-chip bg-paper-2">🛏 {property.bedrooms} bd</span>
-                  <span className="pl-chip bg-paper-2">📐 {property.size} sqft</span>
-                  <span className="pl-chip bg-paper-2">🚇 {property.nearestMrt}</span>
-                  {property.leaseYears < 999 && <span className="pl-chip bg-paper-2">📜 {property.leaseYears}y lease</span>}
-                </div>
-
-                {!detail ? (
-                  <p className="mt-3 line-clamp-2 text-[13px] leading-snug text-ink-soft">{property.description}</p>
-                ) : (
-                  <DealStory readiness={readiness} />
-                )}
-              </div>
+          <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {/* Sort / filter controls */}
+            <div className="sticky top-0 z-10 -mx-1 mb-2 flex flex-wrap items-center gap-1.5 bg-paper/95 px-1 py-1 backdrop-blur">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-ink-faint">Sort</span>
+              <SortChip k="match" label="Best fit" />
+              <SortChip k="yield" label="Yield" />
+              <SortChip k="price" label="Cheapest" />
+              <SortChip k="cash" label="Least cash" />
+              <button
+                onClick={() => { playPop(); setAffordableOnly((x) => !x); }}
+                aria-pressed={affordableOnly}
+                className={cn('pl-press ml-auto rounded-full px-3 py-1.5 text-[12px] font-bold', affordableOnly ? 'bg-money text-white' : 'bg-paper-2 text-ink-soft')}
+              >
+                {affordableOnly ? '✓ Can afford' : 'Can afford'}
+              </button>
             </div>
 
-            {/* Actions */}
-            {!detail ? (
-              <div className="mt-3 flex items-center gap-2.5">
-                <button onClick={prev} className="pl-press grid h-12 w-12 shrink-0 place-items-center rounded-full border border-line-2 bg-white text-ink-soft"><ChevronLeft /></button>
-                <Btn tone="ink" className="flex-1" size="lg" onClick={() => { playPop(); setDetail(true); }} icon={<Info size={18} />}>
-                  See the numbers
-                </Btn>
-                <button onClick={next} className="pl-press grid h-12 w-12 shrink-0 place-items-center rounded-full border border-line-2 bg-white text-ink-soft"><ChevronRight /></button>
-              </div>
-            ) : (
-              <div className="mt-3 space-y-2.5">
-                {readiness.verdict === 'blocked' ? (
-                  <div className="rounded-2xl bg-loss-soft px-4 py-3 text-[13px] font-semibold text-loss">
-                    🚫 {readiness.headline}
+            <div className="space-y-2.5">
+              {sorted.map((row) => {
+                const { p, readiness, v } = row;
+                const tm = typeMeta(p.type);
+                const isOpen = expanded === p.id;
+                const blocked = readiness.verdict === 'blocked';
+                return (
+                  <div key={p.id} className="overflow-hidden rounded-2xl border border-line-2 bg-white">
+                    <div className="flex gap-3 p-2.5">
+                      <PropertyImage src={p.image} alt={p.name} className="h-[64px] w-[64px] shrink-0 rounded-xl object-cover" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="truncate font-jakarta text-[14px] font-bold text-ink">{p.name}</div>
+                            <div className="truncate text-[11.5px] text-ink-soft">📍 {districtName(p.districtId)}</div>
+                          </div>
+                          <Verdict kind={v.kind} label={v.label} />
+                        </div>
+                        <div className="mt-1 flex items-center justify-between">
+                          <span className="tabnums text-[13px] font-extrabold text-ink"><Money value={p.price} compact /></span>
+                          <span className="tabnums text-[12px] font-bold text-money">{formatPercent(p.rentalYield, 1)} yield</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 border-t border-line px-2.5 py-2">
+                      <span className={cn('pl-chip !px-2 !py-0.5 text-[10.5px]', tm.cls)}>{tm.short}</span>
+                      {!blocked && <span className="text-[12px] font-semibold text-ink-soft">Cash now <b className="text-ink"><Money value={readiness.cashRequired} compact /></b></span>}
+                      <div className="ml-auto flex items-center gap-2">
+                        <button onClick={() => { playPop(); setExpanded(isOpen ? null : p.id); }} className="pl-press text-[12px] font-bold text-grape">
+                          {isOpen ? 'Hide' : 'Details'}
+                        </button>
+                        {!blocked && <Btn tone="coral" size="sm" onClick={() => doBuy(p.id)}>Buy</Btn>}
+                      </div>
+                    </div>
+                    {isOpen && (
+                      <div className="border-t border-line px-3 py-3">
+                        {blocked && <div className="mb-2 rounded-xl bg-loss-soft px-3 py-2 text-[12.5px] font-semibold text-loss">🚫 {readiness.headline}</div>}
+                        <DealStory readiness={readiness} property={p} />
+                        {!blocked && (
+                          <div className="mt-3">
+                            <BigButton tone="coral" onClick={() => doBuy(p.id)} sub={`${formatCurrency(readiness.cashRequired)} cash needed now`} icon={<span>🔑</span>}>
+                              Buy {p.name.split(' ').slice(0, 2).join(' ')}
+                            </BigButton>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <BigButton tone="coral" onClick={doBuy} sub={`${formatCurrency(readiness.cashRequired)} cash needed now`} icon={<span>🔑</span>}>
-                    Buy {property.name.split(' ').slice(0, 2).join(' ')}
-                  </BigButton>
-                )}
-                <Btn tone="ghost" full onClick={() => setDetail(false)}>Back to listing</Btn>
-              </div>
-            )}
+                );
+              })}
+              {rows.length > 40 && <div className="py-2 text-center text-[12px] text-ink-faint">Showing the top 40 — use sort to find more.</div>}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -182,44 +179,27 @@ export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void
   );
 }
 
-/** The cost-as-a-story panel + a "why these rules?" expander. */
-function DealStory({ readiness }: { readiness: ReturnType<typeof assessDealReadiness> }) {
+function DealStory({ readiness, property }: { readiness: ReturnType<typeof assessDealReadiness>; property: { bedrooms: number; size: number; nearestMrt: string } }) {
   const [why, setWhy] = useState(false);
   return (
-    <div className="mt-3 rounded-2xl bg-paper-2 p-3.5">
-      <div className="grid grid-cols-2 gap-y-2 text-[13px]">
-        <span className="text-ink-soft">Cash needed now</span>
-        <span className="text-right font-bold text-ink"><Money value={readiness.cashRequired} /></span>
-        {readiness.cpfApplied > 0 && (<>
-          <span className="text-ink-soft">CPF chips in</span>
-          <span className="text-right font-bold text-ink"><Money value={readiness.cpfApplied} /></span>
-        </>)}
-        <span className="text-ink-soft">Monthly mortgage</span>
-        <span className="text-right font-bold text-ink"><Money value={readiness.monthlyPayment} />/mo</span>
-        <span className="text-ink-soft">Left over each month</span>
-        <span className={cn('text-right font-bold', readiness.monthlySurplusAfterDebt >= 0 ? 'text-money' : 'text-loss')}>
-          <Money value={readiness.monthlySurplusAfterDebt} />/mo
-        </span>
+    <div className="rounded-2xl bg-paper-2 p-3.5">
+      <div className="mb-2 flex flex-wrap gap-1.5 text-[11.5px] text-ink-soft">
+        <span className="pl-chip bg-white">🛏 {property.bedrooms} bd</span>
+        <span className="pl-chip bg-white">📐 {property.size} sqft</span>
+        <span className="pl-chip bg-white">🚇 {property.nearestMrt}</span>
       </div>
-
+      <div className="grid grid-cols-2 gap-y-2 text-[13px]">
+        <span className="text-ink-soft">Cash needed now</span><span className="text-right font-bold text-ink"><Money value={readiness.cashRequired} /></span>
+        {readiness.cpfApplied > 0 && (<><span className="text-ink-soft">CPF chips in</span><span className="text-right font-bold text-ink"><Money value={readiness.cpfApplied} /></span></>)}
+        <span className="text-ink-soft">Monthly mortgage</span><span className="text-right font-bold text-ink"><Money value={readiness.monthlyPayment} />/mo</span>
+        <span className="text-ink-soft">Left over each month</span>
+        <span className={cn('text-right font-bold', readiness.monthlySurplusAfterDebt >= 0 ? 'text-money' : 'text-loss')}><Money value={readiness.monthlySurplusAfterDebt} />/mo</span>
+      </div>
       {readiness.warnings.length > 0 && (
-        <div className="mt-2.5 space-y-1">
-          {readiness.warnings.map((w, i) => (
-            <div key={i} className="text-[12px] font-medium text-[#8a5a16]">⚠️ {w}</div>
-          ))}
-        </div>
+        <div className="mt-2 space-y-1">{readiness.warnings.map((w, i) => <div key={i} className="text-[12px] font-medium text-[#8a5a16]">⚠️ {w}</div>)}</div>
       )}
-
-      <button onClick={() => setWhy((x) => !x)} className="mt-2.5 text-[12px] font-bold text-grape underline-offset-2 hover:underline">
-        {why ? 'Hide the rules' : 'Why these numbers? (the real rules)'}
-      </button>
-      {why && (
-        <ul className="mt-1.5 space-y-1">
-          {readiness.facts.map((f, i) => (
-            <li key={i} className="text-[12px] leading-snug text-ink-soft">• {f}</li>
-          ))}
-        </ul>
-      )}
+      <button onClick={() => setWhy((x) => !x)} className="mt-2.5 text-[12px] font-bold text-grape">{why ? 'Hide the rules' : 'Why these numbers? (the real rules)'}</button>
+      {why && <ul className="mt-1.5 space-y-1">{readiness.facts.map((f, i) => <li key={i} className="text-[12px] leading-snug text-ink-soft">• {f}</li>)}</ul>}
     </div>
   );
 }

@@ -17,6 +17,8 @@ import { fireConfetti } from '@/ui/confetti';
 import { formatCompactCurrency } from '@/lib/format';
 import { selectNetWorth } from '@/engine/selectors';
 import { rivalCrossing } from '@/game-ui/rivals';
+import { newlyCompletedGoals } from '@/game-ui/goals';
+import type { Player } from '@/game/types';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -28,12 +30,16 @@ export default function Play() {
   const isGameActive = useGameStore((s) => s.isGameActive);
   const soundEnabled = useGameStore((s) => s.settings.soundEnabled);
   const nextTurn = useGameStore((s) => s.nextTurn);
+  const advanceToNextNotableMonth = useGameStore((s) => s.advanceToNextNotableMonth);
   const loadGame = useGameStore((s) => s.loadGame);
   const toast = useToast();
 
   const [overlay, setOverlay] = useState<Overlay | null>(null);
+  const [focusIndex, setFocusIndex] = useState<number | undefined>(undefined);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
   const wasActive = useRef(isGameActive);
+
+  const openOverlay = (o: Overlay, idx?: number) => { setFocusIndex(idx); setOverlay(o); };
 
   // Keep sound in sync with settings.
   useEffect(() => { setSoundEnabled(soundEnabled); }, [soundEnabled]);
@@ -58,15 +64,30 @@ export default function Play() {
     wasActive.current = isGameActive;
   }, [isGameActive, navigate]);
 
+  // Shared celebration for crossing $1M, completing a goal rung, or overtaking
+  // a rival. Confetti is reserved for genuinely earned beats (goal / $1M).
+  const celebrate = (before: Player, after: Player) => {
+    const beforeNet = selectNetWorth(before);
+    const afterNet = selectNetWorth(after);
+    const goalsDone = newlyCompletedGoals(before, after).filter((g) => g.id !== 'freedom');
+    if (goalsDone.length > 0) {
+      const g = goalsDone[goalsDone.length - 1];
+      fireConfetti({ count: 80, y: 0.4 });
+      toast({ emoji: g.emoji, tone: 'gold', title: `Goal complete — ${g.label}!`, body: g.reward });
+    } else if (beforeNet < 1_000_000 && afterNet >= 1_000_000) {
+      fireConfetti({ count: 100 });
+      toast({ emoji: '💰', tone: 'gold', title: 'Millionaire!', body: 'Your net worth just crossed S$1,000,000.' });
+    }
+    const cross = rivalCrossing(beforeNet, afterNet, after);
+    if (cross) toast({ emoji: cross.emoji, tone: 'gold', title: cross.title, body: cross.body });
+  };
+
   const advance = () => {
     const before = useGameStore.getState().player;
-    const beforeNet = selectNetWorth(before);
-    const beforeProps = before.properties.length;
     nextTurn();
     const after = useGameStore.getState().player;
     const afterMarket = useGameStore.getState().market;
     playWoosh();
-
     const cashDelta = Math.round(after.cash - before.cash);
     const label = `${MONTHS[(after.month - 1) % 12]} ${after.year}`;
     toast({
@@ -75,28 +96,38 @@ export default function Play() {
       title: `${label} · ${cashDelta >= 0 ? '+' : '−'}${formatCompactCurrency(Math.abs(cashDelta))}`,
       body: afterMarket.lastHeadline ?? 'The month rolls on.',
     });
+    celebrate(before, after);
+  };
 
-    // Milestone juice: crossing $1M, first $100k.
-    const afterNet = selectNetWorth(after);
-    if (beforeNet < 1_000_000 && afterNet >= 1_000_000) {
-      fireConfetti({ count: 100 });
-      toast({ emoji: '💰', tone: 'gold', title: 'Millionaire!', body: 'Your net worth just crossed S$1,000,000.' });
-    }
-    const cross = rivalCrossing(beforeNet, afterNet, after);
-    if (cross) toast({ emoji: cross.emoji, tone: 'gold', title: cross.title, body: cross.body });
-
-    void beforeProps;
+  // Fast-forward through quiet months until something notable happens.
+  const skipAhead = () => {
+    const before = useGameStore.getState().player;
+    advanceToNextNotableMonth(6);
+    const after = useGameStore.getState().player;
+    const months = after.turnCount - before.turnCount;
+    if (months <= 0) { advance(); return; }
+    const afterMarket = useGameStore.getState().market;
+    playWoosh();
+    const cashDelta = Math.round(after.cash - before.cash);
+    const label = `${MONTHS[(after.month - 1) % 12]} ${after.year}`;
+    toast({
+      emoji: '⏩',
+      tone: cashDelta >= 0 ? 'good' : 'bad',
+      title: `Skipped ${months} mo → ${label}`,
+      body: afterMarket.lastHeadline ?? 'Time rolls on.',
+    });
+    celebrate(before, after);
   };
 
   return (
     <div className="flex min-h-[100dvh] flex-col">
-      <StatusStrip player={player} market={market} onOpenYou={() => setOverlay('you')} />
+      <StatusStrip player={player} market={market} onOpenYou={() => openOverlay('you')} />
 
-      <main className="mx-auto w-full max-w-[480px] flex-1 px-4 pb-32 pt-3">
+      <main className="mx-auto w-full max-w-[480px] flex-1 px-4 pb-36 pt-3">
         {activeScenario ? (
           <DecisionCard scenarioId={activeScenario} onResolved={() => setActiveScenario(null)} />
         ) : (
-          <QuietHub player={player} market={market} onOpen={setOverlay} />
+          <QuietHub player={player} market={market} onOpen={openOverlay} />
         )}
       </main>
 
@@ -111,14 +142,24 @@ export default function Play() {
             👆 Make your choice to continue
           </motion.div>
         ) : (
-          <BigButton tone="coral" onClick={advance} sub="Salary in · market moves · life happens" icon={<span className="text-lg">▶</span>}>
-            Next Month
-          </BigButton>
+          <div className="flex items-stretch gap-2">
+            <BigButton tone="coral" onClick={advance} sub="Salary in · market moves · life happens" icon={<span className="text-lg">▶</span>} className="flex-1">
+              Next Month
+            </BigButton>
+            <button
+              onClick={skipAhead}
+              aria-label="Skip ahead through quiet months"
+              className="pl-press grid w-16 shrink-0 place-items-center rounded-[20px] border border-line-2 bg-white text-ink-soft shadow-card"
+            >
+              <span className="text-lg">⏩</span>
+              <span className="text-[10px] font-bold">Skip</span>
+            </button>
+          </div>
         )}
       </div>
 
       <BuySheet open={overlay === 'buy'} onClose={() => setOverlay(null)} />
-      <PortfolioSheet open={overlay === 'portfolio'} onClose={() => setOverlay(null)} />
+      <PortfolioSheet open={overlay === 'portfolio'} onClose={() => setOverlay(null)} focusIndex={focusIndex} />
       <BankSheet open={overlay === 'bank'} onClose={() => setOverlay(null)} />
       <YouSheet open={overlay === 'you'} onClose={() => setOverlay(null)} />
     </div>
