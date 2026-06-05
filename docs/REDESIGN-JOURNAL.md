@@ -8,6 +8,13 @@ Goal: make it genuinely fun while keeping all SG financial realism. Yardstick: 2
 
 ## Checkpoint log
 
+### 2026-06-05 — C2: Tension & identity layer + onboarding
+- **Kiasu rivals** (`game-ui/rivals.ts`, pure/derived — no engine touch): 3 SG archetypes (Wei Liang the kiasu classmate, Auntie Tan the neighbour, Priya the flipping agent) whose net worth grows with time. Surfaced as a "How you compare 👀" leaderboard in the You sheet, an "🏎️ You overtook X!" toast when you pass one on a month-tick, and a final standing on the ending screen. Pure social-comparison stakes + humour.
+- **Onboarding**: "How to play" sheet on the title (4 steps, 60s) instead of dumping new players straight in.
+- **Endings**: ending screen now shows your final rank vs the rivals.
+- Build clean; verified live (how-to sheet, leaderboard render).
+- **Next**: capture a neutral playthrough walkthrough → run the 20-persona Workflow eval → iterate to 8/10.
+
 ### 2026-06-05 — C1: New game shell shipped & verified (P1+P2+much of P3)
 The dashboard is gone. Built a brand-new warm, playful, mobile-first game on top of the untouched engine:
 - **Theme**: replaced the deep-space/cyan/Orbitron HUD with a warm cream "Property Lah!" identity (Fredoka/Plus Jakarta), rounded cards, tactile buttons. New `src/ui` kit: Button, Card/Meter, Sheet (bottom-sheet overlays), Toast, Verdict, Money/CountUp, confetti, WebAudio sound.

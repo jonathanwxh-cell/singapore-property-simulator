@@ -17,6 +17,7 @@ import { setSoundEnabled } from '@/ui/sound';
 import { fireConfetti } from '@/ui/confetti';
 import { formatCompactCurrency } from '@/lib/format';
 import { selectNetWorth } from '@/engine/selectors';
+import { rivalCrossing } from '@/game-ui/rivals';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -82,9 +83,10 @@ export default function Play() {
       fireConfetti({ count: 100 });
       toast({ emoji: '💰', tone: 'gold', title: 'Millionaire!', body: 'Your net worth just crossed S$1,000,000.' });
     }
-    if (beforeProps === 0 && after.properties.length === 0 && after.turnCount % 24 === 0 && afterNet > beforeNet) {
-      // gentle long-haul encouragement handled elsewhere
-    }
+    const cross = rivalCrossing(beforeNet, afterNet, after);
+    if (cross) toast({ emoji: cross.emoji, tone: 'gold', title: cross.title, body: cross.body });
+
+    void beforeProps;
   };
 
   return (

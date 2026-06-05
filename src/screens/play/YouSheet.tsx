@@ -8,6 +8,7 @@ import { Sheet } from '@/ui/Sheet';
 import { Money } from '@/ui/Money';
 import { Meter } from '@/ui/Card';
 import { deriveView, lifeTitle } from '@/game-ui/derive';
+import { getLeaderboard } from '@/game-ui/rivals';
 import { cn } from '@/lib/utils';
 
 const RULES: { term: string; plain: string }[] = [
@@ -87,6 +88,30 @@ export function YouSheet({ open, onClose }: { open: boolean; onClose: () => void
           <Milestone done={netWorth >= 1_000_000} label="💰 Reach $1M net worth" />
           <Milestone done={player.properties.length >= 3} label="🏢 Build a 3-property portfolio" />
           <Milestone done={v.freedomPct >= 100} label="🏆 Reach financial freedom" />
+        </div>
+      </div>
+
+      {/* Kiasu leaderboard */}
+      <div className="mb-3">
+        <div className="mb-1.5 font-jakarta text-[14px] font-bold text-ink">How you compare 👀</div>
+        <div className="overflow-hidden rounded-2xl border border-line-2 bg-white">
+          {getLeaderboard(player).map((row, i) => (
+            <div
+              key={row.name + i}
+              className={cn(
+                'flex items-center gap-2.5 px-3 py-2.5',
+                i > 0 && 'border-t border-line',
+                row.you && 'bg-coral/5',
+              )}
+            >
+              <span className="tabnums w-5 text-center text-[13px] font-bold text-ink-faint">{i + 1}</span>
+              <span className="text-lg">{row.emoji}</span>
+              <span className={cn('flex-1 truncate text-[13.5px] font-bold', row.you ? 'text-coral' : 'text-ink')}>
+                {row.you ? `${row.name} (you)` : row.name}
+              </span>
+              <span className="tabnums text-[13px] font-extrabold text-ink"><Money value={row.netWorth} compact /></span>
+            </div>
+          ))}
         </div>
       </div>
 

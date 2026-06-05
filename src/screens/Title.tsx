@@ -1,10 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/game/useGameStore';
 import { readAutoSave } from '@/game/savePersistence';
 import { BigButton, Btn } from '@/ui/Button';
+import { Sheet } from '@/ui/Sheet';
 import { formatCompactCurrency } from '@/lib/format';
+
+const HOW_STEPS = [
+  { emoji: '📅', title: 'Every month is one turn', body: 'Tap “Next Month” to collect your salary, watch the market move, and let life throw curveballs.' },
+  { emoji: '🏠', title: 'Buy places, collect rent', body: 'Browse the market, snap up a home you can afford, then rent it out to build passive income.' },
+  { emoji: '🇸🇬', title: 'The real Singapore rules apply', body: 'CPF, stamp duties, loan limits — they all bite. Tap “why?” anywhere to see the real numbers.' },
+  { emoji: '🏆', title: 'Race to freedom', body: 'Grow your net worth to your freedom goal before you go broke — and beat your kiasu classmates.' },
+];
 
 /** Stylised HDB skyline built from CSS — no image dependency. */
 function Skyline() {
@@ -39,6 +47,7 @@ export default function Title() {
   const navigate = useNavigate();
   const loadGame = useGameStore((s) => s.loadGame);
   const saved = useMemo(() => readAutoSave(), []);
+  const [showHow, setShowHow] = useState(false);
 
   const handleContinue = () => {
     if (saved) {
@@ -121,10 +130,27 @@ export default function Title() {
           Start your story
         </BigButton>
 
-        <Btn tone="ghost" full size="sm" onClick={() => navigate('/new')}>
+        <Btn tone="ghost" full size="sm" onClick={() => setShowHow(true)}>
           How it works — learn as you play
         </Btn>
       </motion.div>
+
+      <Sheet open={showHow} onClose={() => setShowHow(false)} title="How to play" subtitle="60 seconds and you're ready">
+        <div className="space-y-2.5 pb-2">
+          {HOW_STEPS.map((s, i) => (
+            <div key={i} className="flex items-start gap-3 rounded-2xl border border-line-2 bg-white p-3.5">
+              <span className="text-2xl">{s.emoji}</span>
+              <div>
+                <div className="font-jakarta text-[14px] font-bold text-ink">{s.title}</div>
+                <div className="mt-0.5 text-[13px] leading-snug text-ink-soft">{s.body}</div>
+              </div>
+            </div>
+          ))}
+          <BigButton tone="coral" onClick={() => { setShowHow(false); navigate('/new'); }} icon={<span>▶</span>}>
+            Got it — start
+          </BigButton>
+        </div>
+      </Sheet>
     </div>
   );
 }
