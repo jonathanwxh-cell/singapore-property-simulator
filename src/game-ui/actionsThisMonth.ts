@@ -43,13 +43,10 @@ export function getMonthActions(player: Player): MonthAction[] {
       actions.push({ id: `rent-${i}`, emoji: '🔑', title: `Rent out ${shortName(listing.name)}`, hint: 'Turn a vacant unit into income', tone: 'good', kind: 'rent', propertyIndex: i });
     }
 
-    // MOP-safe room rental: whole-unit is locked, but a spare room can earn.
-    if (mopActive && !owned.tenant) {
-      actions.push({ id: `room-${i}`, emoji: '🛏️', title: `Rent a room in ${shortName(listing.name)}`, hint: 'MOP-safe — start earning during the wait', tone: 'good', kind: 'rent', propertyIndex: i });
-    }
-
-    if (!owned.activeRenovation && (owned.completedRenovations?.length ?? 0) < 2 && owned.isRented) {
-      actions.push({ id: `reno-${i}`, emoji: '🛠️', title: `Upgrade ${shortName(listing.name)}`, hint: 'Renovate to lift rent & value', tone: 'info', kind: 'renovate', propertyIndex: i });
+    // Renovation works whether you live in it or rent it out — a real thing to
+    // do during the MOP wait (lifts future rent + resale value).
+    if (!owned.activeRenovation && (owned.completedRenovations?.length ?? 0) < 2) {
+      actions.push({ id: `reno-${i}`, emoji: '🛠️', title: `Upgrade ${shortName(listing.name)}`, hint: mopActive ? 'Renovate while you wait out MOP' : 'Renovate to lift rent & value', tone: 'info', kind: 'renovate', propertyIndex: i });
     }
   });
 

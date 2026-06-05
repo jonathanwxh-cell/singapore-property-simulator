@@ -2,6 +2,7 @@ import type { Player, MarketState } from '@/game/types';
 import { Money } from '@/ui/Money';
 import { Meter } from '@/ui/Card';
 import { deriveView, lifeTitle } from '@/game-ui/derive';
+import { getCurrentGoal } from '@/game-ui/goals';
 import { cn } from '@/lib/utils';
 
 function marketMood(market: MarketState): { emoji: string; label: string; cls: string } {
@@ -22,6 +23,7 @@ export function StatusStrip({
 }) {
   const v = deriveView(player);
   const mood = marketMood(market);
+  const goal = getCurrentGoal(player);
 
   return (
     <div className="safe-top sticky top-0 z-30 bg-paper/85 px-4 pb-2 pt-2 backdrop-blur-md">
@@ -55,13 +57,28 @@ export function StatusStrip({
           </div>
         </div>
 
-        {/* Freedom bar */}
+        {/* Progress — track the near-term goal so it visibly moves */}
         <div className="mt-2">
-          <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-ink-soft">
-            <span>Journey to freedom</span>
-            <span className="tabnums">{Math.floor(v.freedomPct)}% · goal <Money value={v.target} compact /></span>
-          </div>
-          <Meter value={v.freedomPct} />
+          {goal ? (
+            <>
+              <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-ink-soft">
+                <span>🎯 {goal.label}</span>
+                <span className="tabnums">{Math.round(goal.progress * 100)}%</span>
+              </div>
+              <Meter value={goal.progress * 100} />
+              <div className="mt-1 text-right text-[10px] font-semibold text-ink-faint">
+                {v.freedomPct < 1 ? '<1' : Math.floor(v.freedomPct)}% to freedom · goal <Money value={v.target} compact />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-ink-soft">
+                <span>Journey to freedom</span>
+                <span className="tabnums">{Math.floor(v.freedomPct)}%</span>
+              </div>
+              <Meter value={v.freedomPct} />
+            </>
+          )}
         </div>
       </div>
     </div>

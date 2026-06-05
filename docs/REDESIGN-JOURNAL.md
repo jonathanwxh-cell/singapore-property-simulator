@@ -8,6 +8,17 @@ Goal: make it genuinely fun while keeping all SG financial realism. Yardstick: 2
 
 ## Checkpoint log
 
+### 2026-06-05 — C5: Third eval (7.4/10) + life-moments, bug fixes, goal reframe
+**Eval round 4** (after C4): **overall 7.4/10** (flat vs 7.5 within noise), 18/20 replay; **Finance enthusiast & Educator gave 9s**. Two real bugs surfaced + the universal "quiet months need a choice" ask persisted.
+**Fixes shipped:**
+- **Life moments** (`game-ui/moments.ts` + store `applyMoment`): ~every other quiet month, a small SG-flavoured micro-decision appears in the hub (angbao season, surprise bonus, aircon dripping, wedding angbao, kopitiam tip, family ask, burnout staycation…), each with 2 quick choices and a small cash/stress effect. Most turns now pose a real choice. Effects touch only soft stats (cash/stress) — the financial RULES stay engine-owned.
+- **Bug: first-home goal showed 100% before owning** → capped pre-purchase progress at 90% ("you have enough — go buy").
+- **Bug: MOP "room rental" was cosmetic** (engine correctly forces `isRented=false` during MOP) → removed it; instead the MOP-locked owner is offered **renovate** (a real value-building action during the wait).
+- **Goal ladder reordered** so a MOP-locked first home doesn't stall on "collect first rent" (now after "own 2 properties").
+- **Freedom bar reframed**: the status strip now tracks the **near-term goal** (visibly moves each month) with "<1% to freedom · goal $15M" demoted to a caption — fixes the demoralising "1%".
+- Verified live: moment fires, choice applies (+$1.5k cash), dismisses; renovate-during-MOP prompt shows; goal bar at 88% moving.
+- **Next**: final eval (v5).
+
 ### 2026-06-05 — C4: Second eval (7.5/10, 20/20 replay) + stakes & polish pass
 **Eval round 3** (reliable, all 20): **overall 7.5/10** (from 6.2), **wouldPlayAgain 20/20** (from 11/20). Distribution: eleven 8s, eight 7s, one 6. Top: SG flavor 8.6, clarity 8.4, UX 8.3. **Lowest: tension 6.9**, identity 7.2.
 Below-8 personas converged on: mid-game lacks **felt stakes** (an "optimization glide"); plus first-timer grants, in-context jargon, resume banner, route-aware endings.

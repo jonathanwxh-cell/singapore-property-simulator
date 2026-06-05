@@ -30,13 +30,8 @@ export function getGoalLadder(player: Player): GoalSpec[] {
     {
       id: 'first-home', emoji: '🔑', label: 'Buy your first home', reward: 'Homeowner status',
       done: (p) => p.properties.length >= 1,
-      // before you buy, show how close your cash is to a typical starter deposit
-      progress: (p) => (p.properties.length >= 1 ? 1 : clamp01(p.cash / 18_000)),
-    },
-    {
-      id: 'first-rent', emoji: '🏠', label: 'Collect your first rent', reward: 'Passive income unlocked',
-      done: (p) => p.totalRentalIncome > 0,
-      progress: (p) => (p.totalRentalIncome > 0 ? 1 : selectMonthlyRentalIncome(p) > 0 ? 0.6 : p.properties.length ? 0.3 : 0),
+      // never read 100% before you actually own — cap pre-purchase at 90%
+      progress: (p) => (p.properties.length >= 1 ? 1 : Math.min(0.9, clamp01(p.cash / 25_000))),
     },
     {
       id: 'nw-250k', emoji: '💵', label: 'Reach $250k net worth', reward: 'On the ladder',
@@ -47,6 +42,11 @@ export function getGoalLadder(player: Player): GoalSpec[] {
       id: 'two-places', emoji: '🏘️', label: 'Own 2 properties', reward: 'Mini-landlord',
       done: (p) => p.properties.length >= 2,
       progress: (p) => clamp01(p.properties.length / 2),
+    },
+    {
+      id: 'first-rent', emoji: '🏠', label: 'Collect your first rent', reward: 'Passive income unlocked',
+      done: (p) => p.totalRentalIncome > 0,
+      progress: (p) => (p.totalRentalIncome > 0 ? 1 : selectMonthlyRentalIncome(p) > 0 ? 0.6 : p.properties.length ? 0.3 : 0),
     },
     {
       id: 'nw-500k', emoji: '📈', label: 'Reach $500k net worth', reward: 'Halfway to a million',

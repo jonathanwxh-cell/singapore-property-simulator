@@ -463,6 +463,7 @@ interface GameStore extends GameState {
   nextTurn: () => void;
   advanceMonths: (months: number) => void;
   advanceToNextNotableMonth: (maxMonths?: number) => void;
+  applyMoment: (cashDelta: number, stressDelta?: number) => void;
   setPrimaryLifeAction: (actionId: LifeActionId | null) => void;
   setSecondaryLifeAction: (actionId: LifeActionId | null) => void;
   applyMonthlyIntent: (intent: MonthlyIntentOption) => void;
@@ -718,6 +719,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   setReservePlan: (input) =>
     runPlayerAction(set, get, setReservePlanPure(get().player, input)),
+
+  // Light "life moment" effect — adjusts soft stats only (cash + stress), never
+  // the financial rules. Equivalent in spirit to a tiny scenario resolution.
+  applyMoment: (cashDelta, stressDelta = 0) => {
+    set((state) => ({
+      player: finalizePlayer({
+        ...state.player,
+        cash: state.player.cash + cashDelta,
+        life: {
+          ...state.player.life,
+          stress: Math.max(0, Math.min(100, state.player.life.stress + stressDelta)),
+        },
+      }),
+    }));
+    const state = get();
+    if (state.settings.autoSave) saveTurn(pickGameState(state));
+  },
 
   toggleRental: (propertyIndex) => {
     const { player } = get();

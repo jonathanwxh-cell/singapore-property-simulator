@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import type { Player, MarketState } from '@/game/types';
+import { useGameStore } from '@/game/useGameStore';
 import { Money, Delta } from '@/ui/Money';
 import { Meter } from '@/ui/Card';
+import { useToast } from '@/ui/Toast';
 import { deriveView } from '@/game-ui/derive';
 import { getCurrentGoal } from '@/game-ui/goals';
 import { getMonthActions, type MonthAction } from '@/game-ui/actionsThisMonth';
-import { playPop } from '@/ui/sound';
+import { getMoment, type MomentChoice } from '@/game-ui/moments';
+import { playPop, playCoin } from '@/ui/sound';
 import { cn } from '@/lib/utils';
 
 export type Overlay = 'buy' | 'portfolio' | 'bank' | 'you';
@@ -30,7 +33,20 @@ export function QuietHub({
   const v = deriveView(player);
   const goal = getCurrentGoal(player);
   const actions = getMonthActions(player);
+  const applyMoment = useGameStore((s) => s.applyMoment);
+  const toast = useToast();
   const [showMonth, setShowMonth] = useState(false);
+  const [resolvedMomentTurn, setResolvedMomentTurn] = useState<number | null>(null);
+
+  const moment = getMoment(player);
+  const showMoment = moment && resolvedMomentTurn !== player.turnCount;
+
+  const chooseMoment = (m: { emoji: string; title: string }, c: MomentChoice) => {
+    if (c.cashDelta > 0) playCoin(); else playPop();
+    applyMoment(c.cashDelta, c.stressDelta);
+    toast({ emoji: m.emoji, tone: c.cashDelta >= 0 ? 'good' : 'neutral', title: m.title, body: c.note });
+    setResolvedMomentTurn(player.turnCount);
+  };
 
   const routeAction = (a: MonthAction) => {
     playPop();
@@ -74,6 +90,29 @@ export function QuietHub({
           </div>
           <div className="mt-2"><Meter value={goal.progress * 100} /></div>
         </div>
+      )}
+
+      {/* A light life moment — a quick choice most months */}
+      {showMoment && moment && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="pl-card p-4">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">{moment.emoji}</span>
+            <div className="font-display text-[19px] font-bold leading-tight text-ink">{moment.title}</div>
+          </div>
+          <p className="mt-1 text-[13.5px] leading-snug text-ink-soft">{moment.text}</p>
+          <div className={cn('mt-3 grid gap-2', moment.choices.length > 1 ? 'grid-cols-2' : 'grid-cols-1')}>
+            {moment.choices.map((c, i) => (
+              <button key={i} onClick={() => chooseMoment(moment, c)} className="pl-press rounded-2xl border border-line-2 bg-white p-3 text-left hover:border-coral">
+                <div className="text-[13.5px] font-bold text-ink">{c.label}</div>
+                {c.cashDelta !== 0 && (
+                  <div className={cn('tabnums text-[12px] font-bold', c.cashDelta > 0 ? 'text-money' : 'text-loss')}>
+                    {c.cashDelta > 0 ? '+' : '−'}<Money value={Math.abs(c.cashDelta)} />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </motion.div>
       )}
 
       {/* On your plate — real decisions this month */}
