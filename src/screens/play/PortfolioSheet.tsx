@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 import { useGameStore } from '@/game/useGameStore';
 import { properties as catalog } from '@/data/properties';
 import { getTenantLeaseOptions } from '@/engine/propertyOperations';
@@ -75,6 +76,7 @@ export function PortfolioSheet({ open, onClose, focusIndex }: { open: boolean; o
             <div className="pl-card p-3"><div className="text-[11px] font-bold uppercase tracking-wide text-ink-faint">Rent / month</div><div className="text-xl font-extrabold text-money"><Money value={monthlyRent} /></div></div>
           </div>
 
+          <div className="mb-2 text-center text-[12px] font-semibold text-ink-soft">👇 Tap a place to rent it out, renovate, or sell</div>
           <div className="space-y-2.5">
             {player.properties.map((owned, i) => {
               const listing = catalog.find((p) => p.id === owned.propertyId);
@@ -104,10 +106,20 @@ export function PortfolioSheet({ open, onClose, focusIndex }: { open: boolean; o
                       </div>
                       <div className="mt-0.5 truncate font-jakarta text-[14px] font-bold text-ink">{listing.name}</div>
                       <div className="text-[11.5px] text-ink-soft">📍 {districtName(listing.districtId)}</div>
+                      {mopActive
+                        ? <div className="mt-0.5 text-[11px] font-semibold text-[#B9791E]">🔒 Renting locked during MOP · tap to renovate</div>
+                        : owned.activeRenovation
+                          ? null
+                          : !owned.isRented
+                            ? <div className="mt-0.5 text-[11px] font-semibold text-money">💤 Vacant · tap to rent it out</div>
+                            : null}
                     </div>
-                    <div className="text-right">
-                      <div className="tabnums font-extrabold text-ink"><Money value={owned.currentValue} compact /></div>
-                      <div className="text-[11px]"><Delta value={gain} /></div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="text-right">
+                        <div className="tabnums font-extrabold text-ink"><Money value={owned.currentValue} compact /></div>
+                        <div className="text-[11px]"><Delta value={gain} /></div>
+                      </div>
+                      <ChevronDown size={18} className={cn('shrink-0 text-ink-faint transition-transform', isOpen && 'rotate-180')} />
                     </div>
                   </button>
 
