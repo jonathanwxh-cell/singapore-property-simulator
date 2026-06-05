@@ -67,6 +67,19 @@ const MOMENTS: Moment[] = [
     { label: 'Sign up', cashDelta: -120, stressDelta: 3, note: 'Invested in yourself. Future-you approves.' },
     { label: 'Maybe later', cashDelta: 0, note: 'Filed under “someday”.' },
   ] },
+  // Recurring cast — Wei Liang (your kiasu classmate) and the kopitiam uncle keep showing up.
+  { id: 'weiliang-flex', emoji: '🤓', title: 'Wei Liang humble-brags', text: 'Wei Liang “casually” mentions his condo might go en-bloc. He wants you to be impressed.', choices: [
+    { label: 'Congratulate him', cashDelta: 0, stressDelta: 1, note: 'You smiled and filed away which estate he meant. Intel is intel.' },
+    { label: 'Change the subject', cashDelta: 0, stressDelta: -2, note: 'You steered the chat to football. Petty? Maybe. Satisfying? Yes.' },
+  ] },
+  { id: 'uncle-again', emoji: '☕', title: 'The uncle is back', text: 'Your kopitiam uncle has ANOTHER “confirm sure-win” estate tip. Same energy as last time.', choices: [
+    { label: 'Buy him kopi, hear him out', cashDelta: -20, stressDelta: -2, note: 'Another $1.40 well spent on neighbourhood theatre.' },
+    { label: 'Nod and finish your toast', cashDelta: 0, note: 'You let the “hot tip” cool with your kaya toast.' },
+  ] },
+  { id: 'weiliang-help', emoji: '🤝', title: "Wei Liang's favour", text: 'Wei Liang asks to borrow a little to cover a “temporary cashflow thing”. Classic.', choices: [
+    { label: 'Lend him a bit', cashDelta: -400, stressDelta: 2, note: 'You spotted him $400. He swears he’ll pay back. He’s Wei Liang, so… maybe.' },
+    { label: 'Politely decline', cashDelta: 0, stressDelta: 1, note: 'You kept your money and a clear conscience. Mostly.' },
+  ] },
 ];
 
 /**

@@ -16,6 +16,7 @@ import { playWoosh, setSoundEnabled } from '@/ui/sound';
 import { fireConfetti } from '@/ui/confetti';
 import { formatCompactCurrency } from '@/lib/format';
 import { selectNetWorth } from '@/engine/selectors';
+import { deriveView } from '@/game-ui/derive';
 import { rivalCrossing } from '@/game-ui/rivals';
 import { newlyCompletedGoals, getCurrentGoal } from '@/game-ui/goals';
 import type { Player, MarketState } from '@/game/types';
@@ -38,6 +39,7 @@ export default function Play() {
   const [focusIndex, setFocusIndex] = useState<number | undefined>(undefined);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
   const wasActive = useRef(isGameActive);
+  const streakRef = useRef(0);
 
   const openOverlay = (o: Overlay, idx?: number) => { setFocusIndex(idx); setOverlay(o); };
 
@@ -74,15 +76,27 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Market threats — make rate hikes & downturns bite (felt stakes).
+  // Market threats — make rate hikes & downturns bite (felt stakes), harder when
+  // you're over-leveraged.
   const pressure = (after: Player, m: MarketState) => {
     const rateUp = m.monthlyInterestRateChangePct ?? 0;
     const priceDown = m.monthlyPriceChangePct ?? 0;
     const hasLoan = after.loans.some((l) => !l.isPaid && l.remainingBalance > 0);
+    const debt = after.loans.filter((l) => !l.isPaid).reduce((s, l) => s + l.remainingBalance, 0);
+    const propVal = after.properties.reduce((s, p) => s + p.currentValue, 0);
+    const overLeveraged = propVal > 0 && debt > propVal * 0.7;
     if (hasLoan && rateUp > 0.08) {
-      toast({ emoji: '⚠️', tone: 'bad', title: 'Interest rates rose', body: 'Your mortgage just got pricier — watch your runway.' });
+      toast({ emoji: '⚠️', tone: 'bad', title: 'Interest rates rose', body: overLeveraged ? "Mortgages got pricier — and you're stretched thin. One bad month could squeeze you." : 'Your mortgage just got pricier — watch your runway.' });
     } else if (priceDown < -1.2 && after.properties.length > 0) {
-      toast({ emoji: '📉', tone: 'bad', title: 'Market downturn', body: 'Property values slipped this month.' });
+      toast({ emoji: '📉', tone: 'bad', title: 'Market downturn', body: overLeveraged ? 'Values slipped — your equity is thin against your loans.' : 'Property values slipped this month.' });
+    }
+  };
+
+  // Positive-cashflow streak — a little escalating dopamine.
+  const trackStreak = (after: Player) => {
+    if (deriveView(after).cashflow >= 0) streakRef.current += 1; else streakRef.current = 0;
+    if ([3, 6, 12, 24, 48].includes(streakRef.current)) {
+      toast({ emoji: '🔥', tone: 'gold', title: `${streakRef.current}-month streak!`, body: 'Cashflow-positive and climbing. Keep it rolling.' });
     }
   };
 
@@ -120,6 +134,7 @@ export default function Play() {
     });
     pressure(after, afterMarket);
     celebrate(before, after);
+    trackStreak(after);
   };
 
   // Fast-forward through quiet months until something notable happens.

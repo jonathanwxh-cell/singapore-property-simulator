@@ -58,6 +58,11 @@ export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void
     return arr.slice(0, 40);
   }, [rows, sort, affordableOnly]);
 
+  // For a brand-new player, gently spotlight the single best first move.
+  const recId = player.properties.length === 0
+    ? sorted.find((r) => r.readiness.verdict !== 'blocked')?.p.id
+    : undefined;
+
   const doBuy = (propertyId: string) => {
     const row = rows.find((r) => r.p.id === propertyId);
     if (!row) return;
@@ -127,8 +132,12 @@ export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void
                 const tm = typeMeta(p.type);
                 const isOpen = expanded === p.id;
                 const blocked = readiness.verdict === 'blocked';
+                const recommended = p.id === recId;
                 return (
-                  <div key={p.id} className="overflow-hidden rounded-2xl border border-line-2 bg-white">
+                  <div key={p.id} className={cn('overflow-hidden rounded-2xl border bg-white', recommended ? 'border-coral ring-2 ring-coral/40' : 'border-line-2')}>
+                    {recommended && (
+                      <div className="bg-coral px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">⭐ Your best first move</div>
+                    )}
                     <div className="flex gap-3 p-2.5">
                       <PropertyImage src={p.image} alt={p.name} className="h-[64px] w-[64px] shrink-0 rounded-xl object-cover" />
                       <div className="min-w-0 flex-1">

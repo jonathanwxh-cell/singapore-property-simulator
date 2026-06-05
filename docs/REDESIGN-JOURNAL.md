@@ -8,6 +8,17 @@ Goal: make it genuinely fun while keeping all SG financial realism. Yardstick: 2
 
 ## Checkpoint log
 
+### 2026-06-05 — C7: Fifth eval (7.7/10, 20/20 replay, two 9s) + conversion polish
+**Eval round 6** (after C6): **overall 7.7/10** (up from 7.3), **20/20 would-play-again**, no hallucinations. Distribution: two 9s (busy parent, accessibility), ten 8s, seven 7s, one 6. Every pillar rose (UX 8.8, clarity 8.7, SG-flavor 8.7). The remaining 7s cluster on **structural genre wants** (idle automation, backend leaderboard, narrative branching, hardcore downside-cascade, cozy no-fail) — a single realism-first property game can't be all of those at once.
+**Cheap conversion polish (no new genre, engine untouched):**
+- **On-rails first buy**: a brand-new player sees "⭐ Your best first move" spotlighted on the best affordable listing (casual / foreigner / Gen-Z onboarding).
+- **Felt over-leverage**: rate-hike / downturn warnings hit harder and say so when debt > 70% of property value (hardcore / skeptic stakes).
+- **Streak juice**: a "🔥 N-month streak" reward for staying cashflow-positive (Gen-Z dopamine).
+- **Recurring cast**: Wei Liang (en-bloc humble-brag, asks to borrow) and the kopitiam uncle (more "sure-win" tips) reappear with callbacks (narrative texture).
+- Plus a full README rewrite for *Property Lah!*.
+- Build clean; 368 engine tests green.
+- **Result so far across 6 rounds: 6.2 → 7.5 → 7.4 → 7.3 → 7.7.** The game is genuinely fun for the clear majority (12–14 of 20 at ≥8, 20/20 replay); the strict-8.0-*average* ceiling is held by a handful of personas who want a fundamentally different genre. Final v7 re-score running.
+
 ### 2026-06-05 — C6: Fourth eval (7.3/10, eleven 8s) + cadence/dedup/a11y
 **Eval round 5** (after C5): **overall 7.3/10**, **eleven personas at 8/10**, 18/20 replay. One review was a hallucination (Cozy persona scored "3" describing a *wuxia visual novel* — not this game), which alone cost ~0.2. The genuine sub-8s are mostly structural genre-mismatches (idle wants a clicker; competitive wants a backend leaderboard; cozy wants a non-game). Two fixable 6s (Gen Z, Hardcore) wanted "a decision EVERY month."
 **Fixes shipped:**
