@@ -128,6 +128,9 @@ export function YouSheet({ open, onClose }: { open: boolean; onClose: () => void
               <div className="mt-0.5 text-[12.5px] leading-snug text-ink-soft">{r.plain}</div>
             </div>
           ))}
+          <div className="rounded-xl bg-paper-2 px-3 py-2 text-[11.5px] leading-snug text-ink-faint">
+            ℹ️ Simplified 2026 rule-set for play & learning — real CPF/stamp-duty/loan rules change often and have more nuance. This is a game, not financial advice.
+          </div>
         </div>
       )}
     </Sheet>

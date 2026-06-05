@@ -34,15 +34,16 @@ export function districtRegion(districtId: number): string {
 export function verdictFor(readiness: DealReadiness, rentalYield: number): { kind: VerdictKind; label?: string } {
   if (readiness.verdict === 'blocked') {
     const code = readiness.primaryBlocker?.code;
+    // Plain-English at the moment of friction — no bare acronyms on the chip.
     const short =
-      code === 'tdsr_exceeded' ? 'Bank says no — TDSR'
-      : code === 'msr_exceeded' ? 'Bank says no — MSR'
+      code === 'tdsr_exceeded' ? 'Bank says no — too much debt'
+      : code === 'msr_exceeded' ? 'Bank says no — loan too big'
       : code === 'insufficient_cash' ? 'Not enough cash'
-      : code === 'ltv_exceeded' ? 'Need bigger deposit'
-      : code === 'mop_restricted' ? 'Locked — MOP'
+      : code === 'ltv_exceeded' ? 'Bigger deposit needed'
+      : code === 'mop_restricted' ? 'Locked — 5-year rule'
       : code === 'credit_too_low' ? 'Credit too low'
       : code === 'already_owned' ? 'You own this'
-      : 'Blocked';
+      : 'Not eligible yet';
     return { kind: 'blocked', label: short };
   }
   if (readiness.verdict === 'ready' && rentalYield >= 4.4) return { kind: 'steal' };

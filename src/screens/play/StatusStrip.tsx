@@ -6,11 +6,9 @@ import { cn } from '@/lib/utils';
 
 function marketMood(market: MarketState): { emoji: string; label: string; cls: string } {
   const p = market.monthlyPriceChangePct ?? 0;
-  if (p > 0.8) return { emoji: '📈', label: 'Hot market', cls: 'text-money' };
-  if (p > 0.15) return { emoji: '🙂', label: 'Rising', cls: 'text-money' };
-  if (p < -0.8) return { emoji: '📉', label: 'Falling', cls: 'text-loss' };
-  if (p < -0.15) return { emoji: '😟', label: 'Cooling', cls: 'text-loss' };
-  return { emoji: '😐', label: 'Steady', cls: 'text-ink-soft' };
+  if (p > 0.3) return { emoji: '📈', label: 'Rising', cls: 'text-money' };
+  if (p < -0.3) return { emoji: '📉', label: 'Cooling', cls: 'text-loss' };
+  return { emoji: '➖', label: 'Steady', cls: 'text-ink-soft' };
 }
 
 export function StatusStrip({
