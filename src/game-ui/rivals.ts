@@ -77,7 +77,7 @@ export function rivalCrossing(beforeNet: number, afterNet: number, player: Playe
   if (!passed) return null;
   return {
     emoji: '🏎️',
-    title: `You overtook ${passed.name}!`,
-    body: `Your net worth just passed ${passed.name}'s. Kiasu satisfaction unlocked.`,
+    title: `You passed ${passed.name}`,
+    body: `Your net worth just edged ahead of ${passed.name}'s. Quietly satisfying.`,
   };
 }

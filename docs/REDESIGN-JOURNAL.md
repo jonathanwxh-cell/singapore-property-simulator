@@ -8,6 +8,18 @@ Goal: make it genuinely fun while keeping all SG financial realism. Yardstick: 2
 
 ## Checkpoint log
 
+### 2026-06-05 — C4: Second eval (7.5/10, 20/20 replay) + stakes & polish pass
+**Eval round 3** (reliable, all 20): **overall 7.5/10** (from 6.2), **wouldPlayAgain 20/20** (from 11/20). Distribution: eleven 8s, eight 7s, one 6. Top: SG flavor 8.6, clarity 8.4, UX 8.3. **Lowest: tension 6.9**, identity 7.2.
+Below-8 personas converged on: mid-game lacks **felt stakes** (an "optimization glide"); plus first-timer grants, in-context jargon, resume banner, route-aware endings.
+
+**Fixes shipped (all UI-layer; engine untouched):**
+- **Felt downside pressure** (tension): a **cash-runway danger banner** ("⚠️ Burning money — ~N months of cash left") when cashflow is negative; **rate-hike / downturn threat toasts** on month advance when the market actually moves against you (mortgage gets pricier / equity dips). Insolvency now feels one bad cycle away.
+- **First-timer grant line** (🎁 up to $X) in the buy cost story; **tap-to-learn jargon chips** (CPF/ABSD/TDSR/MOP → one-line plain definition) — in-context, at the point of curiosity.
+- **Resume banner**: "👋 Welcome back — Next goal: …" when you continue an in-progress run.
+- **Route-aware endings**: archetype titles (The Heartland Hero / Commercial Baron / Landed Gentry / Portfolio Mogul / One-Home Wonder / Self-Made), a **score breakdown** (net worth + speed bonus), and a saved **Personal Best** with a "new best! 🥇" badge — replayability + a real ladder to chase.
+- Toned down a caricatured rival line.
+- **Next**: re-eval (v4) → target 8/10.
+
 ### 2026-06-05 — C3: First 20-persona eval (6.2/10) + depth/pacing fixes
 **Eval round 1** (20 diverse persona subagents, structured 1–10 rubric): **overall 6.2/10**, 11/20 would replay.
 - Strongest: SG flavor 8.1, clarity 7.7, UX 7.3, juice 7.2.

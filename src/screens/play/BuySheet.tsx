@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '@/game/useGameStore';
 import { getListingCatalog } from '@/engine/listings';
 import { assessDealReadiness } from '@/engine/decisionCoach';
+import { selectPotentialHousingGrant } from '@/engine/selectors';
 import { getDownPaymentAmount } from '@/engine/purchase';
 import { HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT } from '@/engine/constants';
 import { Sheet } from '@/ui/Sheet';
@@ -157,7 +158,7 @@ export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void
                     {isOpen && (
                       <div className="border-t border-line px-3 py-3">
                         {blocked && <div className="mb-2 rounded-xl bg-loss-soft px-3 py-2 text-[12.5px] font-semibold text-loss">🚫 {readiness.headline}</div>}
-                        <DealStory readiness={readiness} property={p} />
+                        <DealStory readiness={readiness} property={p} grant={p.isHdb ? selectPotentialHousingGrant(player) : 0} />
                         {!blocked && (
                           <div className="mt-3">
                             <BigButton tone="coral" onClick={() => doBuy(p.id)} sub={`${formatCurrency(readiness.cashRequired)} cash needed now`} icon={<span>🔑</span>}>
@@ -179,8 +180,17 @@ export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void
   );
 }
 
-function DealStory({ readiness, property }: { readiness: ReturnType<typeof assessDealReadiness>; property: { bedrooms: number; size: number; nearestMrt: string } }) {
+const JARGON: Record<string, string> = {
+  CPF: 'CPF: forced savings from your salary. Your Ordinary Account can help pay for a home and earns interest you keep.',
+  ABSD: "ABSD: extra stamp-duty tax on your 2nd, 3rd+ property — much higher for foreigners. It's what stops endless flipping.",
+  TDSR: "TDSR: the bank caps ALL your debt repayments at 55% of income. Borrow past it and the bank says no.",
+  MOP: 'MOP: you must live in a new HDB flat ~5 years before you can rent the whole unit or sell it.',
+};
+
+function DealStory({ readiness, property, grant }: { readiness: ReturnType<typeof assessDealReadiness>; property: { bedrooms: number; size: number; nearestMrt: string }; grant: number }) {
   const [why, setWhy] = useState(false);
+  const toast = useToast();
+  const explain = (term: string) => { playPop(); toast({ emoji: '📖', tone: 'neutral', title: term, body: JARGON[term] }); };
   return (
     <div className="rounded-2xl bg-paper-2 p-3.5">
       <div className="mb-2 flex flex-wrap gap-1.5 text-[11.5px] text-ink-soft">
@@ -191,6 +201,7 @@ function DealStory({ readiness, property }: { readiness: ReturnType<typeof asses
       <div className="grid grid-cols-2 gap-y-2 text-[13px]">
         <span className="text-ink-soft">Cash needed now</span><span className="text-right font-bold text-ink"><Money value={readiness.cashRequired} /></span>
         {readiness.cpfApplied > 0 && (<><span className="text-ink-soft">CPF chips in</span><span className="text-right font-bold text-ink"><Money value={readiness.cpfApplied} /></span></>)}
+        {grant > 0 && (<><span className="text-money">🎁 First-timer grant</span><span className="text-right font-bold text-money">up to <Money value={grant} /></span></>)}
         <span className="text-ink-soft">Monthly mortgage</span><span className="text-right font-bold text-ink"><Money value={readiness.monthlyPayment} />/mo</span>
         <span className="text-ink-soft">Left over each month</span>
         <span className={cn('text-right font-bold', readiness.monthlySurplusAfterDebt >= 0 ? 'text-money' : 'text-loss')}><Money value={readiness.monthlySurplusAfterDebt} />/mo</span>
@@ -198,7 +209,13 @@ function DealStory({ readiness, property }: { readiness: ReturnType<typeof asses
       {readiness.warnings.length > 0 && (
         <div className="mt-2 space-y-1">{readiness.warnings.map((w, i) => <div key={i} className="text-[12px] font-medium text-[#8a5a16]">⚠️ {w}</div>)}</div>
       )}
-      <button onClick={() => setWhy((x) => !x)} className="mt-2.5 text-[12px] font-bold text-grape">{why ? 'Hide the rules' : 'Why these numbers? (the real rules)'}</button>
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-semibold text-ink-faint">Tap to learn:</span>
+        {Object.keys(JARGON).map((t) => (
+          <button key={t} onClick={() => explain(t)} className="pl-press rounded-full bg-white px-2.5 py-1 text-[11px] font-bold text-grape">{t}</button>
+        ))}
+      </div>
+      <button onClick={() => setWhy((x) => !x)} className="mt-2 text-[12px] font-bold text-grape">{why ? 'Hide the rules' : 'Why these numbers? (the real rules)'}</button>
       {why && <ul className="mt-1.5 space-y-1">{readiness.facts.map((f, i) => <li key={i} className="text-[12px] leading-snug text-ink-soft">• {f}</li>)}</ul>}
     </div>
   );

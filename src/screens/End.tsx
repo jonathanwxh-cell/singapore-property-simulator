@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGameStore } from '@/game/useGameStore';
@@ -8,8 +8,8 @@ import { BigButton, Btn } from '@/ui/Button';
 import { Money } from '@/ui/Money';
 import { fireConfetti } from '@/ui/confetti';
 import { playKeys, playFail } from '@/ui/sound';
-import { lifeTitle } from '@/game-ui/derive';
 import { playerRank, getLeaderboard } from '@/game-ui/rivals';
+import { getEnding, commitScore } from '@/game-ui/ending';
 
 export default function End() {
   const navigate = useNavigate();
@@ -19,7 +19,9 @@ export default function End() {
   const won = netWorth >= target;
   const years = Math.floor(player.turnCount / 12);
   const months = player.turnCount % 12;
-  const score = Math.max(0, Math.round(netWorth / 1000 - player.turnCount * 8));
+  const ending = getEnding(player, won);
+  const score = ending.score;
+  const [best] = useState(() => commitScore(score));
   const { rank, of } = playerRank(player);
 
   useEffect(() => {
@@ -30,6 +32,7 @@ export default function End() {
       const t = setTimeout(() => fireConfetti({ x: 0.25, y: 0.4, count: 60 }), 450);
       return () => clearTimeout(t);
     }
+    if (best.isNewBest) { playKeys(); fireConfetti({ count: 70 }); return; }
     playFail();
   }, [won]);
 
@@ -53,10 +56,12 @@ export default function End() {
         {won ? 'Financial Freedom!' : 'The dream slips away'}
       </motion.h1>
 
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }} className="mt-2">
+        <span className="pl-chip bg-gold-soft text-[#B9791E]">🏷️ {ending.title}</span>
+      </motion.div>
+
       <p className="mt-2 max-w-[20rem] text-balance text-[15px] text-ink-soft">
-        {won
-          ? `${player.name} made it — from renting and dreaming to a ${lifeTitle(player).toLowerCase()} who never has to worry about money again.`
-          : `${player.name}'s portfolio couldn't carry its costs. Back to renting — but every mogul has a comeback story.`}
+        <b className="text-ink">{player.name}</b> — {ending.blurb}
       </p>
 
       <motion.div
@@ -79,11 +84,15 @@ export default function End() {
             <div className="tabnums text-2xl font-extrabold text-ink">{player.age}</div>
           </div>
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wide text-ink-faint">Score</div>
+            <div className="text-[11px] font-bold uppercase tracking-wide text-ink-faint">Score {best.isNewBest && <span className="text-money">· new best! 🥇</span>}</div>
             <div className="tabnums text-2xl font-extrabold text-gold">{score.toLocaleString()}</div>
           </div>
         </div>
-        <div className="mt-4 rounded-xl bg-paper-2 px-3 py-2 text-[13px] font-semibold text-ink-soft">
+        <div className="mt-3 flex items-center justify-between rounded-xl bg-paper-2 px-3 py-2 text-[12px] font-semibold text-ink-soft">
+          <span>Net worth {ending.baseScore.toLocaleString()}{ending.speedBonus > 0 ? ` + speed ${ending.speedBonus.toLocaleString()}` : ''}</span>
+          <span>Best: <span className="tabnums text-ink">{Math.max(best.prevBest, score).toLocaleString()}</span></span>
+        </div>
+        <div className="mt-2 rounded-xl bg-paper-2 px-3 py-2 text-[13px] font-semibold text-ink-soft">
           {won ? '🎉' : '💪'} “{won ? 'I keyed in freedom' : 'I’ll be back'} — {player.properties.length} properties, {difficultySettings[player.difficulty].label} mode.”
         </div>
       </motion.div>

@@ -17,8 +17,8 @@ import { fireConfetti } from '@/ui/confetti';
 import { formatCompactCurrency } from '@/lib/format';
 import { selectNetWorth } from '@/engine/selectors';
 import { rivalCrossing } from '@/game-ui/rivals';
-import { newlyCompletedGoals } from '@/game-ui/goals';
-import type { Player } from '@/game/types';
+import { newlyCompletedGoals, getCurrentGoal } from '@/game-ui/goals';
+import type { Player, MarketState } from '@/game/types';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -64,6 +64,28 @@ export default function Play() {
     wasActive.current = isGameActive;
   }, [isGameActive, navigate]);
 
+  // Resume banner: re-entering an in-progress run.
+  useEffect(() => {
+    const p = useGameStore.getState().player;
+    if (p.turnCount > 0) {
+      const g = getCurrentGoal(p);
+      toast({ emoji: '👋', tone: 'neutral', title: 'Welcome back', body: g ? `Next goal: ${g.label}` : undefined });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Market threats — make rate hikes & downturns bite (felt stakes).
+  const pressure = (after: Player, m: MarketState) => {
+    const rateUp = m.monthlyInterestRateChangePct ?? 0;
+    const priceDown = m.monthlyPriceChangePct ?? 0;
+    const hasLoan = after.loans.some((l) => !l.isPaid && l.remainingBalance > 0);
+    if (hasLoan && rateUp > 0.08) {
+      toast({ emoji: '⚠️', tone: 'bad', title: 'Interest rates rose', body: 'Your mortgage just got pricier — watch your runway.' });
+    } else if (priceDown < -1.2 && after.properties.length > 0) {
+      toast({ emoji: '📉', tone: 'bad', title: 'Market downturn', body: 'Property values slipped this month.' });
+    }
+  };
+
   // Shared celebration for crossing $1M, completing a goal rung, or overtaking
   // a rival. Confetti is reserved for genuinely earned beats (goal / $1M).
   const celebrate = (before: Player, after: Player) => {
@@ -96,6 +118,7 @@ export default function Play() {
       title: `${label} · ${cashDelta >= 0 ? '+' : '−'}${formatCompactCurrency(Math.abs(cashDelta))}`,
       body: afterMarket.lastHeadline ?? 'The month rolls on.',
     });
+    pressure(after, afterMarket);
     celebrate(before, after);
   };
 

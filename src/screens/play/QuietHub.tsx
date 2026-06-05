@@ -38,8 +38,29 @@ export function QuietHub({
     else onOpen('portfolio', a.propertyIndex);
   };
 
+  const burn = v.cashflow < 0 ? Math.abs(v.cashflow) : 0;
+  const runwayMonths = burn > 0 ? Math.floor(v.available / burn) : null;
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="space-y-3">
+      {/* Danger: cash runway — concrete stakes when bleeding money */}
+      {burn > 0 && (
+        <motion.div
+          initial={{ scale: 0.98 }} animate={{ scale: 1 }}
+          className="rounded-2xl border border-loss/40 bg-loss-soft p-3.5"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xl">⚠️</span>
+            <div className="font-jakarta text-[14px] font-bold text-loss">
+              {runwayMonths !== null && runwayMonths <= 0 ? 'Out of cash — sell or cut costs now!' : `Burning money — about ${runwayMonths} month${runwayMonths === 1 ? '' : 's'} of cash left`}
+            </div>
+          </div>
+          <div className="mt-1 pl-7 text-[12px] font-medium text-loss/90">
+            You're spending <Money value={burn} />/mo more than you earn. Rent out a place, sell, or pay down a loan before you go broke.
+          </div>
+        </motion.div>
+      )}
+
       {/* Next goal — the near-term hook */}
       {goal && (
         <div className="pl-card p-4">
