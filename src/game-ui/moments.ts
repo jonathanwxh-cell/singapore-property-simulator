@@ -70,12 +70,12 @@ const MOMENTS: Moment[] = [
 ];
 
 /**
- * Returns a light moment for ~half of the quiet months, chosen deterministically
- * from the turn so replays are stable and it never repeats the same month.
+ * A light moment for (almost) every quiet month — so most turns pose a quick
+ * choice rather than an empty "Next Month" tap. `seed` (the run's RNG seed)
+ * varies the sequence between playthroughs so run 2 differs from run 1.
  */
-export function getMoment(player: Player): Moment | null {
+export function getMoment(player: Player, seed = 0): Moment | null {
   if (player.turnCount <= 1) return null;
-  if (player.turnCount % 2 !== 0) return null; // roughly every other quiet month
-  const seed = player.turnCount * 7 + (player.name?.length ?? 0) * 3 + player.month;
-  return MOMENTS[seed % MOMENTS.length];
+  const idx = (player.turnCount * 7 + player.month * 3 + (player.name?.length ?? 0) + Math.abs(seed)) % MOMENTS.length;
+  return MOMENTS[idx];
 }

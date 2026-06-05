@@ -43,6 +43,13 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* Visible keyboard/switch focus on every interactive element */
+  :focus-visible {
+    outline: 3px solid var(--coral);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
   html, body, #root {
     min-height: 100dvh;
   }

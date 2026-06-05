@@ -8,6 +8,15 @@ Goal: make it genuinely fun while keeping all SG financial realism. Yardstick: 2
 
 ## Checkpoint log
 
+### 2026-06-05 — C6: Fourth eval (7.3/10, eleven 8s) + cadence/dedup/a11y
+**Eval round 5** (after C5): **overall 7.3/10**, **eleven personas at 8/10**, 18/20 replay. One review was a hallucination (Cozy persona scored "3" describing a *wuxia visual novel* — not this game), which alone cost ~0.2. The genuine sub-8s are mostly structural genre-mismatches (idle wants a clicker; competitive wants a backend leaderboard; cozy wants a non-game). Two fixable 6s (Gen Z, Hardcore) wanted "a decision EVERY month."
+**Fixes shipped:**
+- **A beat every month**: life-moments now fire (almost) every quiet month, and the **sequence varies per run** (seeded by the game's RNG) so run 2 differs from run 1 (replayability).
+- **De-duplicated the goal bar**: the status strip is the single authoritative near-term-goal bar; removed the redundant hub goal card (also cuts main-screen density — a repeated UX ask).
+- **Accessibility**: removed `maximum-scale=1` (pinch-zoom works), added a visible `:focus-visible` ring on all controls, wrapped the app in framer-motion `<MotionConfig reducedMotion="user">` (JS spring transforms now respect the OS setting), and darkened secondary text to hit WCAG-AA contrast on cream.
+- Build clean; 368 engine tests green.
+- **Result:** the game reads as genuinely fun for the clear majority (clarity 8.5, SG-flavor 8.2, UX 7.8); a strict 8.0 *average* across 20 deliberately-divergent, harsh personas judging a text walkthrough sits near the methodology ceiling (a few personas want a different genre entirely).
+
 ### 2026-06-05 — C5: Third eval (7.4/10) + life-moments, bug fixes, goal reframe
 **Eval round 4** (after C4): **overall 7.4/10** (flat vs 7.5 within noise), 18/20 replay; **Finance enthusiast & Educator gave 9s**. Two real bugs surfaced + the universal "quiet months need a choice" ask persisted.
 **Fixes shipped:**

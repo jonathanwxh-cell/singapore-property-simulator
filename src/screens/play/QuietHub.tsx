@@ -4,10 +4,8 @@ import { ChevronDown } from 'lucide-react';
 import type { Player, MarketState } from '@/game/types';
 import { useGameStore } from '@/game/useGameStore';
 import { Money, Delta } from '@/ui/Money';
-import { Meter } from '@/ui/Card';
 import { useToast } from '@/ui/Toast';
 import { deriveView } from '@/game-ui/derive';
-import { getCurrentGoal } from '@/game-ui/goals';
 import { getMonthActions, type MonthAction } from '@/game-ui/actionsThisMonth';
 import { getMoment, type MomentChoice } from '@/game-ui/moments';
 import { playPop, playCoin } from '@/ui/sound';
@@ -31,14 +29,14 @@ export function QuietHub({
   onOpen: (o: Overlay, focusIndex?: number) => void;
 }) {
   const v = deriveView(player);
-  const goal = getCurrentGoal(player);
   const actions = getMonthActions(player);
   const applyMoment = useGameStore((s) => s.applyMoment);
+  const rngSeed = useGameStore((s) => s.rngSeed);
   const toast = useToast();
   const [showMonth, setShowMonth] = useState(false);
   const [resolvedMomentTurn, setResolvedMomentTurn] = useState<number | null>(null);
 
-  const moment = getMoment(player);
+  const moment = getMoment(player, rngSeed);
   const showMoment = moment && resolvedMomentTurn !== player.turnCount;
 
   const chooseMoment = (m: { emoji: string; title: string }, c: MomentChoice) => {
@@ -75,21 +73,6 @@ export function QuietHub({
             You're spending <Money value={burn} />/mo more than you earn. Rent out a place, sell, or pay down a loan before you go broke.
           </div>
         </motion.div>
-      )}
-
-      {/* Next goal — the near-term hook */}
-      {goal && (
-        <div className="pl-card p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-ink-faint">🎯 Your next goal</span>
-            <span className="tabnums text-[12px] font-bold text-coral">{Math.round(goal.progress * 100)}%</span>
-          </div>
-          <div className="mt-0.5 flex items-center gap-2">
-            <span className="text-2xl">{goal.emoji}</span>
-            <div className="font-display text-lg font-bold leading-tight text-ink">{goal.label}</div>
-          </div>
-          <div className="mt-2"><Meter value={goal.progress * 100} /></div>
-        </div>
       )}
 
       {/* A light life moment — a quick choice most months */}

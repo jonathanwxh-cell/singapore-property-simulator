@@ -44,8 +44,8 @@ module.exports = {
         "paper-2": "#FFE9D6",    // deeper cream for gradients
         cloud: "#FFFFFF",        // card surface
         ink: "#211D33",          // primary text (deep plum)
-        "ink-soft": "#6A6480",   // secondary text
-        "ink-faint": "#A8A2B8",  // tertiary text
+        "ink-soft": "#585074",   // secondary text (WCAG-AA on cream)
+        "ink-faint": "#8C86A0",  // tertiary text
         line: "#EFE7DC",         // hairline border on cream
         "line-2": "#E4DACB",
         coral: "#FF5B5B",        // brand / primary action

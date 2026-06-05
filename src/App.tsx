@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { ToastProvider } from '@/ui/Toast';
 import Title from '@/screens/Title';
 
@@ -17,18 +18,20 @@ function Loading() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <HashRouter>
-        <Suspense fallback={<Loading />}>
-          <Routes>
-            <Route path="/" element={<Title />} />
-            <Route path="/new" element={<NewGame />} />
-            <Route path="/play" element={<Play />} />
-            <Route path="/end" element={<End />} />
-            <Route path="*" element={<Title />} />
-          </Routes>
-        </Suspense>
-      </HashRouter>
-    </ToastProvider>
+    <MotionConfig reducedMotion="user">
+      <ToastProvider>
+        <HashRouter>
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              <Route path="/" element={<Title />} />
+              <Route path="/new" element={<NewGame />} />
+              <Route path="/play" element={<Play />} />
+              <Route path="/end" element={<End />} />
+              <Route path="*" element={<Title />} />
+            </Routes>
+          </Suspense>
+        </HashRouter>
+      </ToastProvider>
+    </MotionConfig>
   );
 }
