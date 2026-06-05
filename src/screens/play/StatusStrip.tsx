@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import type { Player, MarketState } from '@/game/types';
 import { Money } from '@/ui/Money';
 import { Meter } from '@/ui/Card';
@@ -65,12 +64,6 @@ export function StatusStrip({
             <span className="tabnums">{Math.floor(v.freedomPct)}% · goal <Money value={v.target} compact /></span>
           </div>
           <Meter value={v.freedomPct} />
-          <motion.div
-            key={Math.floor(v.freedomPct / 10)}
-            initial={{ scale: 1 }}
-            animate={{ scale: [1, 1.04, 1] }}
-            transition={{ duration: 0.4 }}
-          />
         </div>
       </div>
     </div>
