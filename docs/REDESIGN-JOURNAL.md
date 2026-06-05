@@ -17,7 +17,14 @@ Goal: make it genuinely fun while keeping all SG financial realism. Yardstick: 2
 - **Recurring cast**: Wei Liang (en-bloc humble-brag, asks to borrow) and the kopitiam uncle (more "sure-win" tips) reappear with callbacks (narrative texture).
 - Plus a full README rewrite for *Property Lah!*.
 - Build clean; 368 engine tests green.
-- **Result so far across 6 rounds: 6.2 → 7.5 → 7.4 → 7.3 → 7.7.** The game is genuinely fun for the clear majority (12–14 of 20 at ≥8, 20/20 replay); the strict-8.0-*average* ceiling is held by a handful of personas who want a fundamentally different genre. Final v7 re-score running.
+- **Trajectory across 7 rounds: 6.2 → 7.5 → 7.4 → 7.3 → 7.7 → 7.5.** Plateaued ~7.5–7.7, **20/20 would-play-again**, twelve personas at ≥8 (peaks at 9: busy parent, accessibility).
+
+### Conclusion — where it landed & why
+From a dashboard at **6.2** to a warm, decision-dense, juicy game at **~7.6**, with **20/20 personas saying they'd play again** and the **majority rating it 8/10** — all while the **realism engine stayed 100% intact** (368 tests green; never edited a financial rule).
+
+The strict **8.0 *average*** sits just out of reach for a structural reason, not a quality one: the panel is deliberately stacked with harsh, genre-divergent personas, and the two anchors holding the average down (**Hardcore sim** and **Cozy**) want **opposite games** — one wants *more* simulation depth/stakes every turn, the other wants *no* fail-state and a home to decorate. You can't maximize both in one mode; reaching 8.0 means shipping **distinct modes** (a deep-sim/“hardcore” layer, a “cozy/relaxed” no-fail mode, and an idle prestige/New-Game+ loop) — mutually-tensioned product directions that are a deliberate design choice for the owner to make.
+
+**Recommendation:** ship this as the new default (it's a large, unambiguous win on fun + UX over the old dashboard), then — if chasing the last fraction — pick ONE audience to lean into and add it as an explicit *mode*.
 
 ### 2026-06-05 — C6: Fourth eval (7.3/10, eleven 8s) + cadence/dedup/a11y
 **Eval round 5** (after C5): **overall 7.3/10**, **eleven personas at 8/10**, 18/20 replay. One review was a hallucination (Cozy persona scored "3" describing a *wuxia visual novel* — not this game), which alone cost ~0.2. The genuine sub-8s are mostly structural genre-mismatches (idle wants a clicker; competitive wants a backend leaderboard; cozy wants a non-game). Two fixable 6s (Gen Z, Hardcore) wanted "a decision EVERY month."
