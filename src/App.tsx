@@ -1,85 +1,34 @@
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { lazy, Suspense, useEffect } from 'react';
-import GameLayout from '@/components/GameLayout';
-import { useGameStore } from '@/game/useGameStore';
-import { readAutoSave, shouldHydrateAutoSaveForPath } from '@/game/savePersistence';
+import { HashRouter, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { ToastProvider } from '@/ui/Toast';
+import Title from '@/screens/Title';
 
-// Eagerly load title screen (first impression)
-import TitleScreen from '@/pages/TitleScreen';
-const HowToPlay = lazy(() => import('@/pages/HowToPlay'));
+const NewGame = lazy(() => import('@/screens/NewGame'));
+const Play = lazy(() => import('@/screens/Play'));
+const End = lazy(() => import('@/screens/End'));
 
-// Lazy load other pages for code splitting
-const NewGame = lazy(() => import('@/pages/NewGame'));
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
-const Life = lazy(() => import('@/pages/Life'));
-const Properties = lazy(() => import('@/pages/Properties'));
-const PropertyDetail = lazy(() => import('@/pages/PropertyDetail'));
-const Market = lazy(() => import('@/pages/Market'));
-const Learn = lazy(() => import('@/pages/Learn'));
-const Portfolio = lazy(() => import('@/pages/Portfolio'));
-const Bank = lazy(() => import('@/pages/Bank'));
-const Scenarios = lazy(() => import('@/pages/Scenarios'));
-const SaveLoad = lazy(() => import('@/pages/SaveLoad'));
-const Settings = lazy(() => import('@/pages/Settings'));
-const GameOver = lazy(() => import('@/pages/GameOver'));
-const Leaderboard = lazy(() => import('@/pages/Leaderboard'));
-
-function LoadingFallback() {
+function Loading() {
   return (
-    <div className="min-h-[100dvh] bg-deep-space flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-full border-2 border-cyan-glow border-t-transparent animate-spin" />
-        <p className="text-text-secondary font-rajdhani text-sm uppercase tracking-wider">Loading...</p>
-      </div>
+    <div className="flex min-h-[100dvh] items-center justify-center">
+      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-coral border-t-transparent" />
     </div>
   );
 }
 
-function AutoSaveHydrator() {
-  const location = useLocation();
-  const isGameActive = useGameStore((state) => state.isGameActive);
-  const loadGame = useGameStore((state) => state.loadGame);
-
-  useEffect(() => {
-    if (isGameActive || !shouldHydrateAutoSaveForPath(location.pathname)) return;
-
-    const savedState = readAutoSave();
-    if (savedState) loadGame(savedState);
-  }, [isGameActive, loadGame, location.pathname]);
-
-  return null;
-}
-
 export default function App() {
   return (
-    <HashRouter>
-      <AutoSaveHydrator />
-      <Suspense fallback={<LoadingFallback />}>
-        <Routes>
-          {/* Title Screen - no layout (no HUD/Sidebar) */}
-          <Route path="/" element={<TitleScreen />} />
-          <Route path="/how-to-play" element={<HowToPlay />} />
-
-          {/* Game screens with layout */}
-          <Route element={<GameLayout />}>
-            <Route path="/newgame" element={<NewGame />} />
-            <Route path="/new-game" element={<NewGame />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/life" element={<Life />} />
-            <Route path="/properties" element={<Properties />} />
-            <Route path="/property/:id" element={<PropertyDetail />} />
-            <Route path="/market" element={<Market />} />
-            <Route path="/learn" element={<Learn />} />
-            <Route path="/portfolio" element={<Portfolio />} />
-            <Route path="/bank" element={<Bank />} />
-            <Route path="/scenarios" element={<Scenarios />} />
-            <Route path="/saveload" element={<SaveLoad />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/gameover" element={<GameOver />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-          </Route>
-        </Routes>
-      </Suspense>
-    </HashRouter>
+    <ToastProvider>
+      <HashRouter>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="/" element={<Title />} />
+            <Route path="/new" element={<NewGame />} />
+            <Route path="/play" element={<Play />} />
+            <Route path="/end" element={<End />} />
+            <Route path="*" element={<Title />} />
+          </Routes>
+        </Suspense>
+      </HashRouter>
+    </ToastProvider>
   );
 }
