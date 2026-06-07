@@ -1,153 +1,31 @@
-import { spawn } from 'node:child_process';
-import net from 'node:net';
-import process from 'node:process';
-import { setTimeout as delay } from 'node:timers/promises';
-import { chromium } from 'playwright';
-import { createDevServerCommand, createWindowsKillCommand } from './playtest-platform.mjs';
-
-async function getAvailablePort() {
-  return await new Promise((resolve, reject) => {
-    const server = net.createServer();
-    server.on('error', reject);
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address();
-      if (!address || typeof address === 'string') {
-        reject(new Error('Could not determine an available port.'));
-        return;
-      }
-      const { port } = address;
-      server.close(() => resolve(port));
-    });
-  });
-}
-
-function startDevServer(port) {
-  const { command, args, options } = createDevServerCommand(port);
-  const child = spawn(command, args, options);
-
-  child.stdout.on('data', (chunk) => process.stdout.write(chunk));
-  child.stderr.on('data', (chunk) => process.stderr.write(chunk));
-
-  return child;
-}
-
-async function stopDevServer(child) {
-  if (!child?.pid) return;
-  if (process.platform !== 'win32') {
-    try {
-      process.kill(-child.pid, 'SIGTERM');
-    } catch {
-      child.kill('SIGTERM');
-    }
-    await delay(500);
-    return;
-  }
-
-  const { command, args } = createWindowsKillCommand(child.pid);
-  await new Promise((resolve) => {
-    const killer = spawn(command, args, {
-      stdio: 'ignore',
-      shell: false,
-    });
-    killer.on('exit', resolve);
-    killer.on('error', resolve);
-  });
-}
-
-async function waitForServer(baseUrl) {
-  for (let attempt = 0; attempt < 60; attempt += 1) {
-    try {
-      const response = await fetch(baseUrl);
-      if (response.ok) return;
-    } catch {
-      // keep waiting
-    }
-    await delay(1000);
-  }
-  throw new Error(`Timed out waiting for ${baseUrl}`);
-}
-
-async function expectVisible(page, selector, timeout = 15000) {
-  await page.waitForSelector(selector, { timeout });
-}
-
-async function expectAnyVisible(page, selectors, timeout = 15000) {
-  for (const selector of selectors) {
-    try {
-      await expectVisible(page, selector, timeout);
-      return;
-    } catch {
-      // try next
-    }
-  }
-  throw new Error(`Expected one of these selectors visible: ${selectors.join(' | ')}`);
-}
-
-async function gotoRoute(page, url) {
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.waitForSelector('body', { state: 'attached' });
-  await delay(200);
-}
-
-async function startDefaultGame(page, baseUrl) {
-  await gotoRoute(page, `${baseUrl}/#/`);
-  await page.getByRole('button', { name: 'New Game' }).click();
-  await page.getByPlaceholder('Enter your name...').fill('Scroll QA');
-  await page.getByRole('button', { name: 'Customize Run' }).click();
-  await expectVisible(page, 'text=Choose Your Career');
-  await page.getByRole('button', { name: /^Next$/ }).click();
-  await expectVisible(page, 'text=Choose Buyer Profile');
-  await page.getByRole('button', { name: /^Next$/ }).click();
-  await expectVisible(page, 'text=Choose Your Life Arc');
-  await page.getByRole('button', { name: /^Next$/ }).click();
-  await expectVisible(page, 'text=Select Difficulty');
-  await page.getByRole('button', { name: /Start Game/i }).click();
-  await expectVisible(page, 'text=This Month');
-  await expectVisible(page, 'text=Life Board');
-  await expectAnyVisible(page, ['text=Beginner focus mode', 'text=Guided mode primer', 'text=Beginner quest']);
-  await expectVisible(page, 'text=Make your move');
-}
+import { clickCompactNav, expectVisible, startQuickGame, withPlayPage } from './playtest-helpers.mjs';
 
 async function run() {
-  const port = await getAvailablePort();
-  const baseUrl = `http://127.0.0.1:${port}`;
-  const server = startDevServer(port);
-  let browser;
+  await withPlayPage(async (page, baseUrl) => {
+    await startQuickGame(page, baseUrl);
+    await clickCompactNav(page, 'Market');
+    await expectVisible(page, 'text=The market');
 
-  try {
-    await waitForServer(baseUrl);
-    browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
-    await startDefaultGame(page, baseUrl);
-
-    await gotoRoute(page, `${baseUrl}/#/property/hdb-bto-0`);
-    await expectVisible(page, 'text=Property Details');
-    const main = page.locator('main');
-    await main.evaluate((element) => {
+    const sheetScroller = page.locator('.overflow-y-auto').last();
+    await sheetScroller.evaluate((element) => {
       element.scrollTop = element.scrollHeight;
     });
-
-    const scrolledBeforeNavigation = await main.evaluate((element) => element.scrollTop);
-    if (scrolledBeforeNavigation < 200) {
-      throw new Error(`Setup failed: expected the property page to scroll deeply, got ${scrolledBeforeNavigation}.`);
+    const scrolledBeforeClose = await sheetScroller.evaluate((element) => element.scrollTop);
+    if (scrolledBeforeClose < 200) {
+      throw new Error(`Setup failed: market sheet did not scroll deeply, got ${scrolledBeforeClose}.`);
     }
 
-    await page.getByRole('button', { name: /^Learn$/ }).click();
-    await expectVisible(page, 'text=Learn Singapore Property Without Prereqs');
-    await delay(100);
-    const afterNavigation = await main.evaluate((element) => element.scrollTop);
-    if (afterNavigation !== 0) {
-      throw new Error(`Expected route navigation to reset main scroll to 0, got ${afterNavigation}.`);
-    }
+    await page.getByRole('button', { name: 'Close' }).click();
+    await expectVisible(page, 'text=Next Month');
+    await clickCompactNav(page, 'Market');
+    await expectVisible(page, 'text=Sort');
 
-    await browser.close();
-    browser = null;
-    await stopDevServer(server);
-  } catch (error) {
-    if (browser) await browser.close();
-    await stopDevServer(server);
-    throw error;
-  }
+    const reopenedScroller = page.locator('.overflow-y-auto').last();
+    const reopenedScrollTop = await reopenedScroller.evaluate((element) => element.scrollTop);
+    if (reopenedScrollTop > 2) {
+      throw new Error(`Expected market sheet to reopen at top, got ${reopenedScrollTop}.`);
+    }
+  }, { width: 360, height: 640 });
 }
 
 run().catch((error) => {

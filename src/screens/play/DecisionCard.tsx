@@ -18,7 +18,15 @@ const categoryStyle: Record<string, string> = {
   Rare: 'bg-coral/15 text-coral',
 };
 
-export function DecisionCard({ scenarioId, onResolved }: { scenarioId: string; onResolved: () => void }) {
+export function DecisionCard({
+  scenarioId,
+  onChoiceStarted,
+  onResolved,
+}: {
+  scenarioId: string;
+  onChoiceStarted: () => void;
+  onResolved: () => void;
+}) {
   const resolveScenario = useGameStore((s) => s.resolveScenario);
   const scenario = scenarios.find((sc) => sc.id === scenarioId);
   const [result, setResult] = useState<{ option: ScenarioOption; res: ScenarioResolution } | null>(null);
@@ -30,6 +38,7 @@ export function DecisionCard({ scenarioId, onResolved }: { scenarioId: string; o
   }
 
   const choose = (option: ScenarioOption) => {
+    onChoiceStarted();
     const res = resolveScenario(option);
     setResult({ option, res });
     const gain = res.cashDelta + (res.cpfOrdinaryDelta ?? 0);

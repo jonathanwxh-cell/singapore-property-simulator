@@ -8,7 +8,7 @@ import { getRenovationTemplatesForType, getRenovationQuote } from '@/data/renova
 import { Sheet } from '@/ui/Sheet';
 import { Btn } from '@/ui/Button';
 import { Money, Delta } from '@/ui/Money';
-import { useToast } from '@/ui/Toast';
+import { useToast } from '@/ui/toastContext';
 import { playCoin, playFail, playChime } from '@/ui/sound';
 import { fireConfetti } from '@/ui/confetti';
 import PropertyImage from '@/components/PropertyImage';
@@ -31,6 +31,8 @@ export function PortfolioSheet({ open, onClose, focusIndex }: { open: boolean; o
   const [renoOpen, setRenoOpen] = useState<number | null>(null);
 
   useEffect(() => {
+    // Focused opens come from the hub action list; sync internal sheet UI to it.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (open && typeof focusIndex === 'number') { setExpanded(focusIndex); setRenoOpen(null); setConfirmSell(null); }
   }, [open, focusIndex]);
 

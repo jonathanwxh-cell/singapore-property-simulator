@@ -112,10 +112,14 @@ src/
 
 ```bash
 npm install
-npm run dev       # http://localhost:3000
+npm run dev       # http://localhost:3000 (or -- --host 127.0.0.1 --port 3000)
 npm run build     # tsc -b && vite build
 npm test          # vitest — engine + data suites
 ```
+
+The current playable surface is compact: `/`, `/new`, `/play`, and `/end` are
+the only first-class routes. Market, places, bank, and player details open as
+bottom sheets inside `/play`; smoke tests should follow that model.
 
 ---
 

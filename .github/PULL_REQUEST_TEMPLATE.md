@@ -30,6 +30,7 @@
 - [ ] `npm run build` clean
 - [ ] If gameplay changed: at least one of `npm run test:smoke`, `npm run test:profiles`, `npm run test:scroll` exercised
 - [ ] If UI changed: browser route(s) tested and listed below
+- [ ] If UI routes or labels changed: compact `/`, `/new`, `/play`, `/end` smoke scripts were updated; no stale `/dashboard`-style selectors remain
 
 Browser routes tested:
 -

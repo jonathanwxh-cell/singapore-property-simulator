@@ -11,7 +11,7 @@ import { PortfolioSheet } from './play/PortfolioSheet';
 import { BankSheet } from './play/BankSheet';
 import { YouSheet } from './play/YouSheet';
 import { BigButton } from '@/ui/Button';
-import { useToast } from '@/ui/Toast';
+import { useToast } from '@/ui/toastContext';
 import { playWoosh, setSoundEnabled } from '@/ui/sound';
 import { fireConfetti } from '@/ui/confetti';
 import { formatCompactCurrency } from '@/lib/format';
@@ -56,9 +56,8 @@ export default function Play() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Latch the scenario locally so the outcome stays on screen even after the
-  // store clears `currentScenario` on resolve.
-  useEffect(() => { if (currentScenario) setActiveScenario(currentScenario); }, [currentScenario]);
+  // Keep the resolution card mounted after the store clears `currentScenario`.
+  const scenarioOnScreen = currentScenario ?? activeScenario;
 
   // Real game-over (active → inactive transition) → ending screen.
   useEffect(() => {
@@ -162,8 +161,12 @@ export default function Play() {
       <StatusStrip player={player} market={market} onOpenYou={() => openOverlay('you')} />
 
       <main className="mx-auto w-full max-w-[480px] flex-1 px-4 pb-36 pt-3">
-        {activeScenario ? (
-          <DecisionCard scenarioId={activeScenario} onResolved={() => setActiveScenario(null)} />
+        {scenarioOnScreen ? (
+          <DecisionCard
+            scenarioId={scenarioOnScreen}
+            onChoiceStarted={() => setActiveScenario(scenarioOnScreen)}
+            onResolved={() => setActiveScenario(null)}
+          />
         ) : (
           <QuietHub player={player} market={market} onOpen={openOverlay} />
         )}
@@ -171,7 +174,7 @@ export default function Play() {
 
       {/* Heartbeat */}
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[480px] safe-bottom bg-gradient-to-t from-paper via-paper/95 to-transparent px-4 pt-6">
-        {activeScenario ? (
+        {scenarioOnScreen ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

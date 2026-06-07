@@ -1,16 +1,7 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-
-export type ToastTone = 'neutral' | 'good' | 'bad' | 'gold';
-
-export interface ToastInput {
-  title: ReactNode;
-  body?: ReactNode;
-  emoji?: string;
-  tone?: ToastTone;
-  duration?: number;
-}
+import { ToastCtx, type ToastInput, type ToastTone } from './toastContext';
 
 interface ToastItem extends ToastInput {
   id: number;
@@ -22,12 +13,6 @@ const toneClass: Record<ToastTone, string> = {
   bad: 'bg-white text-ink border-loss/40',
   gold: 'bg-white text-ink border-gold/50',
 };
-
-const ToastCtx = createContext<(t: ToastInput) => void>(() => {});
-
-export function useToast() {
-  return useContext(ToastCtx);
-}
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);

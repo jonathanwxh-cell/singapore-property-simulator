@@ -34,7 +34,7 @@ export default function End() {
     }
     if (best.isNewBest) { playKeys(); fireConfetti({ count: 70 }); return; }
     playFail();
-  }, [won]);
+  }, [best.isNewBest, navigate, player.turnCount, won]);
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col items-center justify-center px-6 py-10 text-center">
