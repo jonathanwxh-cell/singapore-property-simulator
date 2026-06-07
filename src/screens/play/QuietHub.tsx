@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import type { Player, MarketState } from '@/game/types';
 import { useGameStore } from '@/game/useGameStore';
 import { Money, Delta } from '@/ui/Money';
-import { useToast } from '@/ui/Toast';
+import { useToast } from '@/ui/toastContext';
 import { deriveView } from '@/game-ui/derive';
 import { getMonthActions, type MonthAction } from '@/game-ui/actionsThisMonth';
 import { getMoment, type MomentChoice } from '@/game-ui/moments';

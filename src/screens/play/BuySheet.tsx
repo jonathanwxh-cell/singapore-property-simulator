@@ -10,7 +10,7 @@ import { Sheet } from '@/ui/Sheet';
 import { Verdict } from '@/ui/Verdict';
 import { BigButton, Btn } from '@/ui/Button';
 import { Money } from '@/ui/Money';
-import { useToast } from '@/ui/Toast';
+import { useToast } from '@/ui/toastContext';
 import { fireConfetti } from '@/ui/confetti';
 import { playKeys, playFail, playPop } from '@/ui/sound';
 import PropertyImage from '@/components/PropertyImage';
@@ -20,6 +20,28 @@ import { cn } from '@/lib/utils';
 
 const pct = (isHdb: boolean) => (isHdb ? HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT : 25);
 type SortKey = 'match' | 'yield' | 'price' | 'cash';
+
+function SortChip({
+  sortKey,
+  label,
+  active,
+  onSelect,
+}: {
+  sortKey: SortKey;
+  label: string;
+  active: boolean;
+  onSelect: (sortKey: SortKey) => void;
+}) {
+  return (
+    <button
+      onClick={() => { playPop(); onSelect(sortKey); }}
+      aria-pressed={active}
+      className={cn('pl-press rounded-full px-3 py-1.5 text-[12px] font-bold', active ? 'bg-ink text-white' : 'bg-paper-2 text-ink-soft')}
+    >
+      {label}
+    </button>
+  );
+}
 
 export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const player = useGameStore((s) => s.player);
@@ -36,7 +58,6 @@ export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void
         const readiness = assessDealReadiness({ player, property: p, downPaymentPercent: pct(p.isHdb), useCpfOrdinary: true, financingMode: mode });
         return { p, readiness, v: verdictFor(readiness, p.rentalYield) };
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [player, ownedIds]);
 
   const [sort, setSort] = useState<SortKey>('match');
@@ -80,16 +101,6 @@ export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void
     }
   };
 
-  const SortChip = ({ k, label }: { k: SortKey; label: string }) => (
-    <button
-      onClick={() => { playPop(); setSort(k); }}
-      aria-pressed={sort === k}
-      className={cn('pl-press rounded-full px-3 py-1.5 text-[12px] font-bold', sort === k ? 'bg-ink text-white' : 'bg-paper-2 text-ink-soft')}
-    >
-      {label}
-    </button>
-  );
-
   return (
     <Sheet
       open={open}
@@ -113,10 +124,10 @@ export function BuySheet({ open, onClose }: { open: boolean; onClose: () => void
             {/* Sort / filter controls */}
             <div className="sticky top-0 z-10 -mx-1 mb-2 flex flex-wrap items-center gap-1.5 bg-paper/95 px-1 py-1 backdrop-blur">
               <span className="text-[11px] font-bold uppercase tracking-wide text-ink-faint">Sort</span>
-              <SortChip k="match" label="Best fit" />
-              <SortChip k="yield" label="Yield" />
-              <SortChip k="price" label="Cheapest" />
-              <SortChip k="cash" label="Least cash" />
+              <SortChip sortKey="match" label="Best fit" active={sort === 'match'} onSelect={setSort} />
+              <SortChip sortKey="yield" label="Yield" active={sort === 'yield'} onSelect={setSort} />
+              <SortChip sortKey="price" label="Cheapest" active={sort === 'price'} onSelect={setSort} />
+              <SortChip sortKey="cash" label="Least cash" active={sort === 'cash'} onSelect={setSort} />
               <button
                 onClick={() => { playPop(); setAffordableOnly((x) => !x); }}
                 aria-pressed={affordableOnly}

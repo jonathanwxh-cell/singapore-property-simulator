@@ -49,6 +49,34 @@ git worktree add ../singapore-property-simulator-codex-<short-topic> codex/<shor
 
 ---
 
+## Current app surface
+
+The current shipped app is the compact **Property Lah!** shell, not the older
+dashboard/page-router UI. The only first-class React routes are:
+
+- `/` - title screen.
+- `/new` - single-page new game setup.
+- `/play` - the live game surface.
+- `/end` - run ending screen.
+
+Inside `/play`, "Market", "Places", "Bank", and "You" are bottom-sheet surfaces,
+not routes. Do not write new smoke tests, links, or docs that assume old routes
+such as `/dashboard`, `/properties`, `/property/:id`, `/market`, `/bank`,
+`/portfolio`, `/life`, `/learn`, `/saveload`, or `/scenarios` exist unless a PR
+explicitly reintroduces those routes in `src/App.tsx`.
+
+The `scripts/playtest-*.mjs` checks should exercise the compact shell directly:
+start from `/`, use Quick start or `/new`, interact with `/play` sheets, and keep
+selectors tied to current user-visible labels. When a UI redesign changes labels
+or routes, update these scripts in the same PR because the `smoke` CI job is a
+required branch-protection check.
+
+The older route strings that remain in pure engine/data helpers are historical
+guidance metadata. Treat them as non-navigation data until a UI surface consumes
+them again.
+
+---
+
 ## File ownership
 
 The agent that opens a PR touching a file **owns that file until the PR merges**. Another agent should not start a parallel PR on the same file without commenting on the first PR/issue and getting agreement.
@@ -72,6 +100,10 @@ gh pr list --state open --json number,title,headRefName,files
 | Playwright smoke / scripts | `scripts/playtest-*.mjs` |
 | Always shared | `package.json`, `package-lock.json`, `CHANGELOG.md`, `README.md`, `AGENTS.md`, `.github/**` |
 
+Note: the compact shell now lives in `src/screens/**`, `src/screens/play/**`,
+and `src/ui/**`. The older `src/pages/**` ownership row is retained only for
+historical branches or future route re-expansion.
+
 ---
 
 ## Hot zones
@@ -81,6 +113,11 @@ gh pr list --state open --json number,title,headRefName,files
 - **`src/data/saveSchema.ts`** and **`src/game/types.ts`**: changes ripple. Prefer additive optional fields. Breaking schema changes need a migration note and `SAVE_VERSION` decision.
 - **`src/engine/constants.ts`**: tunable parameters. Coordinate balance changes and cite current sources for policy/rule updates.
 - **`.github/**`, `AGENTS.md`, and `docs/agent-collaboration-template.md`**: repo process files. Keep changes focused and explain enforcement impact in the PR.
+
+Security/audit note: if `npm audit` reports a lockfile-only dependency fix while
+Dependabot PRs already touch `package.json` or `package-lock.json`, do not create
+a second lockfile PR without coordination. Comment on or reuse the active
+dependency PR, or open a separate issue if the fix cannot safely wait.
 
 ---
 

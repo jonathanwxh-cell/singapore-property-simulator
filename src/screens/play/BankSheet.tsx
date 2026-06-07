@@ -2,7 +2,7 @@ import { useGameStore } from '@/game/useGameStore';
 import { Sheet } from '@/ui/Sheet';
 import { Btn } from '@/ui/Button';
 import { Money } from '@/ui/Money';
-import { useToast } from '@/ui/Toast';
+import { useToast } from '@/ui/toastContext';
 import { playCoin, playFail } from '@/ui/sound';
 import { properties as catalog } from '@/data/properties';
 import { selectAvailableCash } from '@/engine/selectors';
