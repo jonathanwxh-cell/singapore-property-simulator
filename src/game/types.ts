@@ -187,6 +187,8 @@ export interface BuyerProfile {
   residencyStatus: BuyerResidencyStatus;
   householdProfile: HouseholdProfile;
   age: number;
+  /** Singapore PR CPF contribution year. Year 3 uses the full rates. */
+  sprYear?: 1 | 2 | 3;
 }
 
 export interface RouteMilestoneTemplate {
@@ -431,6 +433,7 @@ export interface Player {
   nextHomeShortlistIds?: string[];
   lifeMemories?: LifeMemory[];
   endingCollection?: EndingCollectionState;
+  lastResolvedMomentTurn?: number;
 }
 
 export interface MarketState {
@@ -552,6 +555,7 @@ export const DEFAULT_BUYER_PROFILE: BuyerProfile = {
   residencyStatus: 'sc',
   householdProfile: 'couple-family',
   age: 30,
+  sprYear: 3,
 };
 
 export function createInitialLifeIncomeBreakdown(): LifeIncomeBreakdown {
@@ -600,6 +604,9 @@ export function normalizeBuyerProfile(profile?: Partial<BuyerProfile> | null): B
     ...profile,
     householdProfile,
     age,
+    sprYear: profile?.residencyStatus === 'spr'
+      ? (profile.sprYear === 1 || profile.sprYear === 2 ? profile.sprYear : 3)
+      : 3,
   };
 }
 

@@ -26,11 +26,12 @@ One living screen, not a dashboard of panels:
 - **Start your story** (or ⚡ Quick start) — pick a career, your life situation
   (household + residency: Citizen / PR / Foreigner), and a difficulty.
 - **The month loop** — a slim human status strip (cash, net worth, market mood, a
-  near-term goal bar that visibly moves), a **life moment** most months (a quick
+  near-term goal bar that visibly moves), a living **Strategy Board** with three
+  situational plans and a best-fit recommendation, a **life moment** most months (a quick
   SG-flavoured 2-choice beat — angbao season, a surprise bonus, a dripping aircon, your
   kiasu classmate Wei Liang humble-bragging…), the real **decisions on your plate** (rent a
-  vacant unit, renovate, handle a lease or repair, deploy idle cash), and a big **Next
-  Month** heartbeat (with a **⏩ Skip** to fast-forward quiet months).
+  vacant unit, renovate, handle a lease or repair, deploy idle cash), a consequence recap,
+  and a big **Next Month** heartbeat (with a **⏩ Skip** to fast-forward quiet months).
 - **The market** — a scannable, sortable list of listings, each with a plain-English
   **gut-check verdict** (🔥 Steal / 👍 Comfortable / 😬 A Stretch / 🚫 with the reason
   in words), the cash you'd need now, and a one-tap **Buy**. "Details" tells the cost as
@@ -52,27 +53,30 @@ One living screen, not a dashboard of panels:
 |-----------|--------|
 | Net worth ≥ difficulty target | **Financial Freedom** 🏆 |
 | Cash negative + income < obligations for 3 turns | **Bankrupt** 🌧️ |
+| Player reaches age 75 | **Lifetime chapter complete** with a route-aware ending |
 
 ---
 
 ## Singapore realism model
 
-The financial engine implements real Singapore property rules. It is **untouched** by
-the redesign — every buy/sell/loan/event routes through the same pure, fully-tested
-functions; the new UI only changes how they're *surfaced* (plain-English by default, the
-exact ratios one tap away).
+The financial engine implements a researched, simplified 2026 Singapore property model.
+Every buy/sell/loan/event routes through pure, fully-tested functions, while the UI
+surfaces consequences in plain English and keeps the exact ratios one tap away.
 
-- **CPF** — age-bracket OA/SA/MA contributions, $8k wage ceiling, monthly-compounded
-  interest (OA 2.5% / SA 4% / MA 4%, +1% extra), and CPF counts toward net worth.
+- **CPF** — age-bracket contribution and allocation rates, PR graduated contribution
+  years, no employer CPF for foreigners, the $8k wage ceiling, monthly-compounded
+  interest (OA 2.5% / retirement and MediSave accounts 4%), and age-aware extra interest.
 - **Stamp duty** — 6-tier marginal **BSD** (1–6%) + **ABSD** by profile (Citizen 0/20/30%,
   PR 5/30/35%, Foreigner 60%). Both deducted in cash on purchase.
-- **LTV** caps (75% first loan, 45% second, 35% third+); the down payment must cover the
-  rest plus duties in cash/CPF.
+- **LTV** caps (75% / 45% / 35% by outstanding housing loans, reduced to
+  55% / 25% / 15% when tenure or borrower-age limits apply), with 5%, 10%, or 25%
+  mandatory cash down payment depending on the loan situation.
 - **TDSR** (all debt ≤ 55% of income) and **MSR** (mortgage ≤ 30%, HDB/EC only). Both must
-  pass or the bank says no.
+  pass at the simplified mortgage assessment rate, not only the offered interest rate.
 - **Mortgages** — standard amortization, 30-year default, difficulty-set rates, credit-score
   gating, early repayment.
-- **HDB** specifics — eligibility by household/residency, MOP lock-in.
+- **HDB** specifics — eligibility by household/residency, up to 80% concessionary LTV,
+  25-year term, MOP lock-in, and room rental while whole-flat rental is restricted.
 
 See the in-game **"Singapore rules in plain English"** sheet (with a *simplified 2026
 rule-set, not financial advice* note) for the player-facing glossary.
@@ -97,7 +101,8 @@ src/
 **Design principles**
 
 - **Pure engine, impure shell** — `engine/` is rule-bearing and testable in isolation; the
-  redesign never edits a rule or a number, only the presentation.
+  presentation layer stays thin, and policy changes are backed by focused tests and
+  dated official-source notes.
 - **Realism surfaced humanely** — plain-language consequences by default, the exact
   CPF/ABSD/TDSR figures revealed on demand.
 - **Fun layer is pure & derived** — goals, life-moments, rivals, and endings live in

@@ -9,7 +9,8 @@ import { Money } from '@/ui/Money';
 import { fireConfetti } from '@/ui/confetti';
 import { playKeys, playFail } from '@/ui/sound';
 import { playerRank, getLeaderboard } from '@/game-ui/rivals';
-import { getEnding, commitScore } from '@/game-ui/ending';
+import { getEnding, commitScore, readBestScore } from '@/game-ui/ending';
+import { MAX_RUN_AGE } from '@/engine/constants';
 
 export default function End() {
   const navigate = useNavigate();
@@ -17,16 +18,19 @@ export default function End() {
   const netWorth = selectNetWorth(player);
   const target = difficultySettings[player.difficulty].targetNetWorth;
   const won = netWorth >= target;
+  const retired = player.age >= MAX_RUN_AGE && !won;
   const years = Math.floor(player.turnCount / 12);
   const months = player.turnCount % 12;
   const ending = getEnding(player, won);
   const score = ending.score;
-  const [best] = useState(() => commitScore(score));
+  const [best] = useState(() => player.turnCount > 0
+    ? commitScore(score)
+    : { prevBest: readBestScore(), isNewBest: false });
   const { rank, of } = playerRank(player);
 
   useEffect(() => {
     if (player.turnCount === 0) { navigate('/', { replace: true }); return; }
-    if (won) {
+    if (won || retired) {
       playKeys();
       fireConfetti({ count: 140, power: 1.2 });
       const t = setTimeout(() => fireConfetti({ x: 0.25, y: 0.4, count: 60 }), 450);
@@ -34,7 +38,7 @@ export default function End() {
     }
     if (best.isNewBest) { playKeys(); fireConfetti({ count: 70 }); return; }
     playFail();
-  }, [best.isNewBest, navigate, player.turnCount, won]);
+  }, [best.isNewBest, navigate, player.turnCount, retired, won]);
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-[480px] flex-col items-center justify-center px-6 py-10 text-center">
@@ -44,7 +48,7 @@ export default function End() {
         transition={{ type: 'spring', stiffness: 200, damping: 16 }}
         className="text-[72px]"
       >
-        {won ? '🏆' : '🌧️'}
+        {won ? '🏆' : retired ? '🌅' : '🌧️'}
       </motion.div>
 
       <motion.h1
@@ -53,7 +57,7 @@ export default function End() {
         transition={{ delay: 0.15 }}
         className="font-display text-4xl font-bold text-ink"
       >
-        {won ? 'Financial Freedom!' : 'The dream slips away'}
+        {won ? 'Financial Freedom!' : retired ? 'A Life Chapter Complete' : 'The dream slips away'}
       </motion.h1>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }} className="mt-2">
@@ -93,7 +97,7 @@ export default function End() {
           <span>Best: <span className="tabnums text-ink">{Math.max(best.prevBest, score).toLocaleString()}</span></span>
         </div>
         <div className="mt-2 rounded-xl bg-paper-2 px-3 py-2 text-[13px] font-semibold text-ink-soft">
-          {won ? '🎉' : '💪'} “{won ? 'I keyed in freedom' : 'I’ll be back'} — {player.properties.length} properties, {difficultySettings[player.difficulty].label} mode.”
+          {won ? '🎉' : retired ? '🌅' : '💪'} “{won ? 'I keyed in freedom' : retired ? 'I played the long game' : 'I’ll be back'} — {player.properties.length} properties, {difficultySettings[player.difficulty].label} mode.”
         </div>
       </motion.div>
 

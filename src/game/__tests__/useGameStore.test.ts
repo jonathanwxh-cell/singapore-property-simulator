@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGameStore } from '../useGameStore';
 import { createInitialLifeState, type GameState, type Player } from '../types';
 import type { MonthlyIntentOption } from '@/engine/monthlyIntents';
+import { scenarios } from '@/data/scenarios';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -623,26 +624,17 @@ describe('useGameStore', () => {
       player: makePlayer({ salary: 6000, cash: 100_000 }),
     });
 
-    const resolution = useGameStore.getState().resolveScenario({
-      label: 'Take the growth role',
-      description: 'Higher pay with more upside and some added volatility.',
-      probability: 1,
-      cashImpact: 12_000,
-      propertyValueImpact: 0,
-      creditImpact: 5,
-      followUpText: 'You switched into a faster track role.',
-      salaryDeltaPct: 0.12,
-      careerGrowthModifierDelta: 0.2,
-      careerRiskModifierDelta: 0.08,
-      careerVolatilityModifierDelta: 0.04,
-    });
+    useGameStore.getState().setCurrentScenario('job-switch-opportunity');
+    const option = scenarios.find((scenario) => scenario.id === 'job-switch-opportunity')!
+      .options.find((candidate) => candidate.label === 'Take the higher-paying role')!;
+    const resolution = useGameStore.getState().resolveScenario(option);
 
     expect(resolution.success).toBe(true);
     const player = useGameStore.getState().player;
     expect(player.salary).toBe(6720);
     expect(player.cash).toBe(112_000);
     expect(player.creditScore).toBe(705);
-    expect(player.careerGrowthModifier).toBeCloseTo(1.2);
+    expect(player.careerGrowthModifier).toBeCloseTo(1.16);
     expect(player.careerRiskModifier).toBeCloseTo(1.08);
     expect(player.careerVolatilityModifier).toBeCloseTo(0.04);
   });
@@ -652,21 +644,35 @@ describe('useGameStore', () => {
       player: makePlayer({ cash: 100_000, cpfOrdinary: 20_000 }),
     });
 
-    const resolution = useGameStore.getState().resolveScenario({
-      label: 'Claim grant',
-      description: 'First-home support is credited to CPF OA.',
-      probability: 1,
-      cashImpact: 0,
-      cpfOrdinaryImpact: 40_000,
-      propertyValueImpact: 0,
-      creditImpact: 0,
-      followUpText: 'Grant credited to CPF OA.',
-    });
+    useGameStore.getState().setCurrentScenario('first-home-window');
+    const option = scenarios.find((scenario) => scenario.id === 'first-home-window')!.options[0];
+    const resolution = useGameStore.getState().resolveScenario(option);
 
     expect(resolution.success).toBe(true);
     const player = useGameStore.getState().player;
     expect(player.cash).toBe(100_000);
     expect(player.cpfOrdinary).toBe(60_000);
+  });
+
+  it('rejects a stale or forged scenario option', () => {
+    resetStore({ player: makePlayer({ cash: 100_000 }) });
+    const resolution = useGameStore.getState().resolveScenario({
+      label: 'Forged reward',
+      description: 'Not active',
+      probability: 1,
+      cashImpact: 9_000_000,
+      propertyValueImpact: 0,
+      creditImpact: 0,
+      followUpText: 'No.',
+    });
+    expect(resolution.success).toBe(false);
+    expect(useGameStore.getState().player.cash).toBe(100_000);
+  });
+
+  it('keeps completed saves inactive when hydrating', () => {
+    const completed = makeState();
+    useGameStore.getState().loadGame({ ...completed, isGameActive: false });
+    expect(useGameStore.getState().isGameActive).toBe(false);
   });
 
   it('blitz-advances multiple quiet months for low-friction MOP waiting', () => {

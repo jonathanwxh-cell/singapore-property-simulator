@@ -5,7 +5,15 @@ import { careers } from '@/data/careers';
 import { properties } from '@/data/properties';
 import { createRng, newSeed } from '@/engine/rng';
 import { advanceTurn } from '@/engine/turn';
-import { buyPropertyPure, sellPropertyPure, applyLoanPure, payLoanPure, renovatePropertyPure, resolveScenarioOption } from '@/engine/actions';
+import {
+  applyLoanPure,
+  applyScenarioTransactionPure,
+  buyPropertyPure,
+  payLoanPure,
+  renovatePropertyPure,
+  resolveScenarioOption,
+  sellPropertyPure,
+} from '@/engine/actions';
 import { selectNetWorth } from '@/engine/selectors';
 import { estimateInitialCpf } from '@/engine/cpf';
 import { withEvaluatedAchievements } from '@/engine/achievementRules';
@@ -125,11 +133,15 @@ function withPortfolioDefaults(player: Player): Player {
     properties: player.properties.map((owned) => {
       const listing = properties.find(p => p.id === owned.propertyId);
       const mopActive = listing?.isHdb && (owned.mopRemainingMonths ?? 0) > 0;
+      const compliantRoomRental = mopActive && owned.tenant?.rentalMode === 'room-rental';
+      const blockedWholeFlatRental = mopActive && owned.isRented && !compliantRoomRental;
       return {
         ...normalizeOwnedProperty(owned),
         currentValue: Math.max(PROPERTY_VALUE_FLOOR, owned.currentValue),
-        isRented: mopActive ? false : owned.isRented,
-        occupancyStatus: (mopActive && owned.isRented) ? 'owner-occupied' as const : owned.occupancyStatus,
+        isRented: blockedWholeFlatRental ? false : owned.isRented,
+        occupancyStatus: blockedWholeFlatRental || compliantRoomRental
+          ? 'owner-occupied' as const
+          : owned.occupancyStatus,
       };
     }),
   };
@@ -185,7 +197,12 @@ function createInitialPlayer(
   const diff = difficultySettings[difficulty];
   const salary = Math.round(career.startingSalary * diff.salaryModifier);
   const buyerProfile = normalizeBuyerProfile(buyerProfileInput);
-  const initialCpf = estimateInitialCpf(buyerProfile.age, salary);
+  const initialCpf = estimateInitialCpf(
+    buyerProfile.age,
+    salary,
+    buyerProfile.residencyStatus,
+    buyerProfile.sprYear,
+  );
   return finalizePlayer({
     name,
     age: buyerProfile.age,
@@ -288,6 +305,9 @@ function saveTurn(state: GameState) {
     writeAutoSave(state);
   } catch (error) {
     console.warn('Auto-save failed. Progress may not be preserved.', error);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('propsim:autosave-error'));
+    }
   }
 }
 
@@ -527,7 +547,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       market: withHydratedMarket(state.market),
       player: finalizePlayer(state.player),
       settings: withHydratedSettings(state.settings),
-      isGameActive: true,
+      isGameActive: state.isGameActive,
       currentScenario: validScenario,
     });
   },
@@ -723,10 +743,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // Light "life moment" effect — adjusts soft stats only (cash + stress), never
   // the financial rules. Equivalent in spirit to a tiny scenario resolution.
   applyMoment: (cashDelta, stressDelta = 0) => {
+    if (!Number.isFinite(cashDelta) || !Number.isFinite(stressDelta)) return;
     set((state) => ({
       player: finalizePlayer({
         ...state.player,
         cash: state.player.cash + cashDelta,
+        lastResolvedMomentTurn: state.player.turnCount,
         life: {
           ...state.player.life,
           stress: Math.max(0, Math.min(100, state.player.life.stress + stressDelta)),
@@ -783,11 +805,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   resolveScenario: (option) => {
-    const { rngSeed, rngState } = get();
+    const currentState = get();
+    const scenario = scenarios.find((candidate) => candidate.id === currentState.currentScenario);
+    const canonicalOption = scenario?.options.find((candidate) => candidate.label === option.label);
+    if (!scenario || !canonicalOption) {
+      return {
+        cashDelta: 0,
+        cpfOrdinaryDelta: 0,
+        creditDelta: 0,
+        propertyValueImpactPct: 0,
+        salaryDeltaPct: 0,
+        careerGrowthModifierDelta: 0,
+        careerRiskModifierDelta: 0,
+        careerVolatilityModifierDelta: 0,
+        followUpText: 'This scenario is no longer active.',
+        success: false,
+      };
+    }
+    const { rngSeed, rngState } = currentState;
     const rng = restoreRng(rngSeed, rngState);
-    const resolution = resolveScenarioOption(option, rng);
-    set(state => ({
-      player: finalizePlayer({
+    const resolution = resolveScenarioOption(canonicalOption, rng);
+    set(state => {
+      const playerAfterScalarEffects: Player = {
         ...state.player,
         cash: state.player.cash + resolution.cashDelta,
         cpfOrdinary: state.player.cpfOrdinary + resolution.cpfOrdinaryDelta,
@@ -802,10 +841,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
               ...p,
               currentValue: Math.max(PROPERTY_VALUE_FLOOR, Math.round(p.currentValue * (1 + resolution.propertyValueImpactPct / 100))),
             })),
-      }),
-      rngState: rng.getState(),
-      currentScenario: null,
-    }));
+      };
+      return {
+        player: finalizePlayer(applyScenarioTransactionPure(playerAfterScalarEffects, resolution.transaction)),
+        rngState: rng.getState(),
+        currentScenario: null,
+      };
+    });
     const state = get();
     if (state.settings.autoSave) saveTurn(pickGameState(state));
     return resolution;

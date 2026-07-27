@@ -7,6 +7,13 @@ export type ScenarioRequirement =
   | 'commercial-asset'
   | 'single-only';
 
+export type ScenarioTransaction =
+  | { kind: 'pay-loans'; amount: number }
+  | { kind: 'refinance-mortgages'; rateDelta: number }
+  | { kind: 'use-medisave'; amount: number }
+  | { kind: 'add-personal-loan'; amount: number; interestRate: number; termYears: number }
+  | { kind: 'sell-property'; valueMultiplier: number };
+
 export interface ScenarioOption {
   label: string;
   description: string;
@@ -19,6 +26,7 @@ export interface ScenarioOption {
   careerGrowthModifierDelta?: number;
   careerRiskModifierDelta?: number;
   careerVolatilityModifierDelta?: number;
+  transaction?: ScenarioTransaction;
   followUpText: string;
 }
 
@@ -155,9 +163,9 @@ export const scenarios: Scenario[] = [
     image: '/scenario-market-crash.jpg',
     frequency: 'rare',
     options: [
-      { label: 'Buy the Dip', description: 'Use your cash reserves to purchase undervalued properties', probability: 0.7, cashImpact: -200000, propertyValueImpact: 15, creditImpact: 0, followUpText: 'You acquired properties at bargain prices. When the market recovers, you will profit handsomely.' },
+      { label: 'Reposition the Portfolio', description: 'Commit reserves to repairs and upgrades while contractors are cheaper', probability: 0.7, cashImpact: -200000, propertyValueImpact: 15, creditImpact: 0, followUpText: 'Your counter-cyclical upgrades positioned the properties for a stronger recovery.' },
       { label: 'Hold and Wait', description: 'Do nothing and wait for the market to stabilize', probability: 0.9, cashImpact: 0, propertyValueImpact: -10, creditImpact: 0, followUpText: 'Your portfolio lost some value, but you preserved your cash for better opportunities.' },
-      { label: 'Panic Sell', description: 'Sell your properties to cut losses', probability: 0.4, cashImpact: 50000, propertyValueImpact: -20, creditImpact: -30, followUpText: 'You sold at the bottom. The market often rewards those who stay calm during crashes.' },
+      { label: 'Panic Sell', description: 'Sell one property at a distressed price to cut exposure', probability: 0.4, cashImpact: 0, propertyValueImpact: 0, creditImpact: -30, transaction: { kind: 'sell-property', valueMultiplier: 0.8 }, followUpText: 'You sold one property at the bottom and cleared its linked mortgage. The market often rewards those who stay calm.' },
     ],
   },
   {
@@ -169,8 +177,8 @@ export const scenarios: Scenario[] = [
     frequency: 'rare',
     options: [
       { label: 'Ride the Wave', description: 'Hold your properties and watch values soar', probability: 0.85, cashImpact: 0, propertyValueImpact: 20, creditImpact: 10, followUpText: 'Your portfolio surged in value as the market reached new heights!' },
-      { label: 'Take Profits', description: 'Sell some properties to lock in gains', probability: 0.75, cashImpact: 300000, propertyValueImpact: -5, creditImpact: 5, followUpText: 'You secured solid profits. Cash is king, and you now have ammunition for the next opportunity.' },
-      { label: 'Leverage Up', description: 'Take loans to buy more properties at peak', probability: 0.4, cashImpact: -400000, propertyValueImpact: 10, creditImpact: -15, followUpText: 'A risky move at market peak. Let us hope the boom continues...' },
+      { label: 'Take Profits', description: 'Sell one property at a market premium and clear its linked mortgage', probability: 0.75, cashImpact: 0, propertyValueImpact: 0, creditImpact: 5, transaction: { kind: 'sell-property', valueMultiplier: 1.12 }, followUpText: 'You sold one property into strength, cleared its linked mortgage, and banked the net proceeds.' },
+      { label: 'Upgrade at the Peak', description: 'Spend aggressively to improve the existing portfolio while prices are hot', probability: 0.4, cashImpact: -400000, propertyValueImpact: 10, creditImpact: -15, followUpText: 'A risky improvement programme at the market peak. Let us hope the boom continues.' },
     ],
   },
   {
@@ -181,8 +189,8 @@ export const scenarios: Scenario[] = [
     image: '/market-trend-bg.jpg',
     frequency: 'common',
     options: [
-      { label: 'Refinance', description: 'Seek better rates from other banks', probability: 0.7, cashImpact: -5000, propertyValueImpact: -2, creditImpact: 0, followUpText: 'You found a slightly better rate, but the pain is still there.' },
-      { label: 'Pay Down Debt', description: 'Use savings to reduce loan principal', probability: 0.8, cashImpact: -50000, propertyValueImpact: 0, creditImpact: 10, followUpText: 'Your debt burden is lighter, and your credit score improved!' },
+      { label: 'Refinance', description: 'Pay a fee to reduce active mortgage rates by 0.5 percentage points', probability: 0.7, cashImpact: -5000, propertyValueImpact: -2, creditImpact: 0, transaction: { kind: 'refinance-mortgages', rateDelta: -0.5 }, followUpText: 'You paid the fee and active mortgage rates and payments were recalculated lower.' },
+      { label: 'Pay Down Debt', description: 'Use up to S$50,000 cash to reduce active loan principal', probability: 0.8, cashImpact: 0, propertyValueImpact: 0, creditImpact: 10, transaction: { kind: 'pay-loans', amount: 50000 }, followUpText: 'Up to S$50,000 went directly against outstanding principal, reducing the debt burden.' },
       { label: 'Do Nothing', description: 'Absorb the higher payments', probability: 0.9, cashImpact: -12000, propertyValueImpact: -3, creditImpact: -5, followUpText: 'Your cash flow took a hit. Higher rates are the enemy of leveraged investors.' },
     ],
   },
@@ -222,9 +230,9 @@ export const scenarios: Scenario[] = [
     image: '/scenario-boom.jpg',
     frequency: 'uncommon',
     options: [
-      { label: 'Refinance Everything', description: 'Lock in the lowest possible mortgage rates', probability: 0.9, cashImpact: 8000, propertyValueImpact: 0, creditImpact: 5, followUpText: 'Your monthly payments dropped significantly. Cash flow positive!' },
+      { label: 'Refinance Everything', description: 'Pay legal fees and reduce active mortgage rates by 0.75 percentage points', probability: 0.9, cashImpact: -8000, propertyValueImpact: 0, creditImpact: 5, transaction: { kind: 'refinance-mortgages', rateDelta: -0.75 }, followUpText: 'You paid the legal fees; active mortgage rates and payments were recalculated lower.' },
       { label: 'Leverage and Expand', description: 'Take advantage of cheap money to grow portfolio', probability: 0.65, cashImpact: -500000, propertyValueImpact: 12, creditImpact: -10, followUpText: 'You expanded aggressively. Low rates make property investment very attractive.' },
-      { label: 'Pay Down Loans', description: 'Use savings to reduce principal while rates are low', probability: 0.8, cashImpact: -80000, propertyValueImpact: 0, creditImpact: 15, followUpText: 'Your debt is shrinking fast. Financial freedom is within reach!' },
+      { label: 'Pay Down Loans', description: 'Use up to S$80,000 cash to reduce outstanding principal', probability: 0.8, cashImpact: 0, propertyValueImpact: 0, creditImpact: 15, transaction: { kind: 'pay-loans', amount: 80000 }, followUpText: 'Up to S$80,000 went directly against outstanding principal.' },
     ],
   },
   // PERSONAL EVENTS
@@ -253,7 +261,7 @@ export const scenarios: Scenario[] = [
     options: [
       { label: 'Use Savings', description: 'Tap into your emergency fund while job hunting', probability: 0.7, cashImpact: -40000, propertyValueImpact: 0, creditImpact: -20, followUpText: 'Tough times, but your savings cushion the blow. You found a new job in 3 months.' },
       { label: 'Rent Out Rooms', description: 'Generate rental income from spare rooms', probability: 0.8, cashImpact: 18000, propertyValueImpact: 0, creditImpact: -5, followUpText: 'Rental income helped you stay afloat until you found new employment.' },
-      { label: 'Sell a Property', description: 'Liquidate one property to raise cash', probability: 0.5, cashImpact: 200000, propertyValueImpact: -8, creditImpact: -25, followUpText: 'You survived the crisis but your portfolio took a hit. Sometimes you must do what it takes.' },
+      { label: 'Sell a Property', description: 'Liquidate one property at a discount and clear its linked mortgage', probability: 0.5, cashImpact: 0, propertyValueImpact: 0, creditImpact: -25, transaction: { kind: 'sell-property', valueMultiplier: 0.92 }, followUpText: 'You liquidated one property, cleared its linked mortgage, and kept the net proceeds.' },
     ],
   },
   {
@@ -280,7 +288,7 @@ export const scenarios: Scenario[] = [
     options: [
       { label: 'Invest in Property', description: 'Put the windfall into real estate', probability: 0.85, cashImpact: 500000, propertyValueImpact: 20, creditImpact: 0, followUpText: 'A golden opportunity! You acquired a premium property with the inheritance.' },
       { label: 'Diversify Investments', description: 'Split between property, stocks, and bonds', probability: 0.8, cashImpact: 250000, propertyValueImpact: 5, creditImpact: 0, followUpText: 'A balanced approach. Half into property, half into other investments.' },
-      { label: 'Clear All Debts', description: 'Become completely debt-free', probability: 0.9, cashImpact: 100000, propertyValueImpact: 0, creditImpact: 50, followUpText: 'Debt-free! Your credit score soared and your monthly cash flow is now massive.' },
+      { label: 'Pay Down Debts', description: 'Receive the S$500,000 windfall, then apply up to that amount to outstanding loans', probability: 0.9, cashImpact: 500000, propertyValueImpact: 0, creditImpact: 30, transaction: { kind: 'pay-loans', amount: 500000 }, followUpText: 'The windfall paid down as much outstanding principal as possible; any remainder stayed in cash.' },
     ],
   },
   {
@@ -291,9 +299,9 @@ export const scenarios: Scenario[] = [
     image: '/scenario-market-crash.jpg',
     frequency: 'common',
     options: [
-      { label: 'Use Medisave', description: 'Tap into CPF Medisave to cover costs', probability: 0.9, cashImpact: -20000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'Medisave covered most of it. Thankful for Singapore\'s healthcare system.' },
+      { label: 'Use Medisave', description: 'Use up to S$20,000 from CPF Medisave; cash covers any shortfall', probability: 0.9, cashImpact: 0, propertyValueImpact: 0, creditImpact: 0, transaction: { kind: 'use-medisave', amount: 20000 }, followUpText: 'Medisave covered the eligible amount, with cash covering any remaining bill.' },
       { label: 'Pay Cash', description: 'Use your savings to cover the bills', probability: 0.85, cashImpact: -60000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'Health is wealth. The recovery is going well.' },
-      { label: 'Take Personal Loan', description: 'Borrow to cover the medical expenses', probability: 0.7, cashImpact: 30000, propertyValueImpact: 0, creditImpact: -15, followUpText: 'The loan covers the bills but adds to your monthly obligations.' },
+      { label: 'Take Personal Loan', description: 'Borrow S$30,000 over five years at 7% to cover the bill', probability: 0.7, cashImpact: -30000, propertyValueImpact: 0, creditImpact: -15, transaction: { kind: 'add-personal-loan', amount: 30000, interestRate: 7, termYears: 5 }, followUpText: 'The S$30,000 loan covered the bill and now appears in monthly obligations.' },
     ],
   },
   // PROPERTY EVENTS
@@ -306,9 +314,9 @@ export const scenarios: Scenario[] = [
     frequency: 'rare',
     requires: ['owned-property'],
     options: [
-      { label: 'Vote to Sell', description: 'Accept the en-bloc offer', probability: 0.8, cashImpact: 800000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'Jackpot! The en-bloc sale netted you a massive profit. Time to reinvest!' },
+      { label: 'Vote to Sell', description: 'Accept a 35% premium for one property and clear its linked mortgage', probability: 0.8, cashImpact: 0, propertyValueImpact: 0, creditImpact: 0, transaction: { kind: 'sell-property', valueMultiplier: 1.35 }, followUpText: 'The collective sale closed at a 35% premium; the linked mortgage was cleared and net proceeds landed in cash.' },
       { label: 'Hold Out', description: 'Reject the offer and wait for a better price', probability: 0.4, cashImpact: 0, propertyValueImpact: 5, creditImpact: 0, followUpText: 'Risky move. The developer may walk away, or they may come back with a higher offer.' },
-      { label: 'Renegotiate', description: 'Counter with a higher asking price', probability: 0.6, cashImpact: 1000000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'Bold negotiation! The developer agreed to a slightly improved offer.' },
+      { label: 'Renegotiate', description: 'Counter for a 45% premium on one property', probability: 0.6, cashImpact: 0, propertyValueImpact: 0, creditImpact: 0, transaction: { kind: 'sell-property', valueMultiplier: 1.45 }, followUpText: 'The developer accepted a 45% premium; the linked mortgage was cleared and net proceeds landed in cash.' },
     ],
   },
   {
@@ -382,7 +390,7 @@ export const scenarios: Scenario[] = [
     requires: ['owned-property'],
     options: [
       { label: 'Hold for Capital Gain', description: 'Wait for property values to rise when MRT opens', probability: 0.8, cashImpact: 0, propertyValueImpact: 20, creditImpact: 0, followUpText: 'Property prices in the area surged on the news! Great patience.' },
-      { label: 'Buy More Nearby', description: 'Acquire additional properties before prices rise', probability: 0.65, cashImpact: -400000, propertyValueImpact: 30, creditImpact: -5, followUpText: 'You capitalized on the news early. Multiple properties now rising in value!' },
+      { label: 'Upgrade Nearby Holdings', description: 'Commit capital to reposition existing nearby properties before prices rise', probability: 0.65, cashImpact: -400000, propertyValueImpact: 30, creditImpact: -5, followUpText: 'You upgraded and repositioned the existing portfolio before the area premium arrived.' },
       { label: 'Sell on News', description: 'Take profits now before construction delays', probability: 0.7, cashImpact: 150000, propertyValueImpact: 10, creditImpact: 0, followUpText: 'You locked in gains. Smart move as construction timelines can be unpredictable.' },
     ],
   },
@@ -447,7 +455,7 @@ export const scenarios: Scenario[] = [
     image: '/scenario-boom.jpg',
     frequency: 'rare',
     options: [
-      { label: 'Claim and Buy', description: 'Use the CPF OA grant toward a new property purchase', probability: 0.85, cashImpact: -200000, cpfOrdinaryImpact: 80000, propertyValueImpact: 15, creditImpact: 0, followUpText: 'The grant was credited to CPF OA, reducing eligible purchase pressure while the deal still used real cash.' },
+      { label: 'Claim and Prepare', description: 'Claim the CPF OA grant and commit cash to improve existing property value', probability: 0.85, cashImpact: -200000, cpfOrdinaryImpact: 80000, propertyValueImpact: 15, creditImpact: 0, followUpText: 'The grant was credited to CPF OA while the cash funded a value-improvement programme on current holdings.' },
       { label: 'Claim and Save', description: 'Keep the grant in CPF OA for future eligible housing use', probability: 0.9, cashImpact: 0, cpfOrdinaryImpact: 80000, propertyValueImpact: 0, creditImpact: 0, followUpText: 'The grant landed in CPF OA instead of spendable cash, improving future housing affordability.' },
       { label: 'Upgrade Property', description: 'Use the grant for renovation works', probability: 0.8, cashImpact: -50000, propertyValueImpact: 15, creditImpact: 0, followUpText: 'The renovation transformed your property. Value increased significantly!' },
     ],

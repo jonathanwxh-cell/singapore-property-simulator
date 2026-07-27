@@ -9,8 +9,10 @@ export const MIN_LOAN_AMOUNT = 1_000;
 export const DEFAULT_MORTGAGE_TERM_YEARS = 30;
 export const HDB_FLAT_MORTGAGE_TERM_YEARS = 25;
 export const HDB_CONCESSIONARY_LOAN_INTEREST = 2.6;
-export const HDB_CONCESSIONARY_LTV = 0.75;
-export const HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT = 25;
+export const HDB_CONCESSIONARY_LTV = 0.8;
+export const HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT = 20;
+export const BANK_LOAN_ASSESSMENT_RATE = 4;
+export const HDB_LOAN_ASSESSMENT_RATE = 3;
 export const HDB_RESALE_LEVY_ESTIMATE = 40_000;
 export const HDB_MOP_MONTHS = 60;
 // Months-remaining checkpoints used to surface MOP urgency to the player.
@@ -29,6 +31,7 @@ export const PROPERTY_VALUE_FLOOR = 1000;
 
 // Game-over
 export const INSOLVENCY_STRIKES_LIMIT = 3;
+export const MAX_RUN_AGE = 75;
 
 // Scenarios
 export const SCENARIO_TRIGGER_PROBABILITY = 0.7;
@@ -48,8 +51,10 @@ export const CPF_MA_INTEREST = 0.04;
 export const CPF_EXTRA_INTEREST_THRESHOLD = 60000;
 export const CPF_EXTRA_INTEREST_RATE = 0.01;
 // Of the $60k extra-interest threshold, at most $20k can come from OA.
-// The OA portion accrues to OA; the remainder accrues to SA.
+// Extra interest is credited to the retirement bucket (SA, or RA after age 55).
 export const CPF_EXTRA_INTEREST_OA_CAP = 20000;
+export const CPF_SENIOR_EXTRA_INTEREST_THRESHOLD = 30000;
+export const CPF_SENIOR_EXTRA_INTEREST_RATE = 0.02;
 
 // BSD tiers (current residential property marginal tiers)
 export const BSD_TIERS = [
@@ -75,6 +80,9 @@ export const ABSD_RATES = {
 export const LTV_FIRST_LOAN = 0.75;
 export const LTV_SECOND_LOAN = 0.45;
 export const LTV_THIRD_PLUS_LOAN = 0.35;
+export const LTV_FIRST_LOAN_REDUCED = 0.55;
+export const LTV_SECOND_LOAN_REDUCED = 0.25;
+export const LTV_THIRD_PLUS_LOAN_REDUCED = 0.15;
 export const MSR_LIMIT = 0.30;
 
 // Save versioning

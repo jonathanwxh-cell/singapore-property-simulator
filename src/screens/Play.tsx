@@ -39,9 +39,23 @@ export default function Play() {
   const [focusIndex, setFocusIndex] = useState<number | undefined>(undefined);
   const [activeScenario, setActiveScenario] = useState<string | null>(null);
   const wasActive = useRef(isGameActive);
+  const advancingRef = useRef(false);
   const streakRef = useRef(0);
 
   const openOverlay = (o: Overlay, idx?: number) => { setFocusIndex(idx); setOverlay(o); };
+
+  useEffect(() => {
+    const onSaveError = () => {
+      toast({
+        emoji: '⚠️',
+        tone: 'bad',
+        title: 'Progress was not saved',
+        body: 'Your browser storage is unavailable or full. Keep this tab open and export a save before leaving.',
+      });
+    };
+    window.addEventListener('propsim:autosave-error', onSaveError);
+    return () => window.removeEventListener('propsim:autosave-error', onSaveError);
+  }, [toast]);
 
   // Keep sound in sync with settings.
   useEffect(() => { setSoundEnabled(soundEnabled); }, [soundEnabled]);
@@ -118,6 +132,9 @@ export default function Play() {
   };
 
   const advance = () => {
+    if (advancingRef.current) return;
+    advancingRef.current = true;
+    window.setTimeout(() => { advancingRef.current = false; }, 250);
     const before = useGameStore.getState().player;
     nextTurn();
     const after = useGameStore.getState().player;
@@ -138,6 +155,9 @@ export default function Play() {
 
   // Fast-forward through quiet months until something notable happens.
   const skipAhead = () => {
+    if (advancingRef.current) return;
+    advancingRef.current = true;
+    window.setTimeout(() => { advancingRef.current = false; }, 250);
     const before = useGameStore.getState().player;
     advanceToNextNotableMonth(6);
     const after = useGameStore.getState().player;
@@ -160,7 +180,7 @@ export default function Play() {
     <div className="flex min-h-[100dvh] flex-col">
       <StatusStrip player={player} market={market} onOpenYou={() => openOverlay('you')} />
 
-      <main className="mx-auto w-full max-w-[480px] flex-1 px-4 pb-36 pt-3">
+      <main className="mx-auto w-full max-w-[960px] flex-1 px-4 pb-36 pt-3">
         {scenarioOnScreen ? (
           <DecisionCard
             scenarioId={scenarioOnScreen}
@@ -173,7 +193,7 @@ export default function Play() {
       </main>
 
       {/* Heartbeat */}
-      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[480px] safe-bottom bg-gradient-to-t from-paper via-paper/95 to-transparent px-4 pt-6">
+      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[720px] safe-bottom bg-gradient-to-t from-paper via-paper/95 to-transparent px-4 pt-6">
         {scenarioOnScreen ? (
           <motion.div
             initial={{ opacity: 0 }}

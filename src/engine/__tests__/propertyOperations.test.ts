@@ -110,6 +110,47 @@ describe('property operations', () => {
     expect(active?.projectedPaybackMonths).not.toBeNull();
   });
 
+  it('turns quoted renovation risk into a deterministic one-month overrun', () => {
+    const player = makePlayer({
+      properties: [{
+        propertyId: 'hdb-bto-1',
+        purchasePrice: 380_000,
+        purchaseDate: '2024-01',
+        currentValue: 400_000,
+        isRented: false,
+        monthlyRental: 1_700,
+        renovationLevel: 0,
+        activeRenovation: {
+          id: 'reno-risk',
+          templateId: 'kitchen-refresh',
+          propertyId: 'hdb-bto-1',
+          category: 'kitchen',
+          contractorTier: 'budget',
+          label: 'Risky Kitchen',
+          cost: 18_000,
+          durationMonths: 1,
+          remainingMonths: 1,
+          rentUpliftPct: 7,
+          resaleUpliftPct: 3.8,
+          satisfactionUplift: 7,
+          riskPct: 100,
+          conditionDelta: 12,
+          status: 'active',
+          startedTurn: 48,
+        },
+      }],
+    });
+
+    const overrun = advancePortfolioMonth(player);
+    expect(overrun.updatedProperties[0].activeRenovation?.status).toBe('overrun');
+    expect(overrun.updatedProperties[0].activeRenovation?.remainingMonths).toBe(1);
+    expect(overrun.operationHistory.some((entry) => entry.title.includes('overran'))).toBe(true);
+
+    const completed = advancePortfolioMonth({ ...player, properties: overrun.updatedProperties });
+    expect(completed.updatedProperties[0].activeRenovation).toBeUndefined();
+    expect(completed.updatedProperties[0].completedRenovations).toContain('kitchen');
+  });
+
   it('returns HDB homes under MOP to owner-occupied after disruptive renovations complete', () => {
     const player = makePlayer({
       properties: [{
@@ -245,6 +286,38 @@ describe('property operations', () => {
     expect(selectMonthlyRentalIncome(result.value.player)).toBe(tenant?.contractedRent);
   });
 
+  it('expires a lease if the player does not renew it', () => {
+    const player = makePlayer({
+      properties: [{
+        propertyId: 'condo-10',
+        purchasePrice: 1_150_000,
+        purchaseDate: '2027-01',
+        currentValue: 1_150_000,
+        isRented: true,
+        monthlyRental: 3_700,
+        renovationLevel: 0,
+        tenant: {
+          profileId: 'local-family',
+          rentalMode: 'whole-unit',
+          leaseStartTurn: 37,
+          leaseEndTurn: 49,
+          satisfaction: 70,
+          rentStrategy: 'market',
+          askingRent: 3_700,
+          contractedRent: 3_700,
+          defaultRiskPct: 2,
+          renewalIntent: 60,
+        },
+      }],
+    });
+
+    const result = advancePortfolioMonth(player);
+    expect(result.updatedProperties[0].tenant).toBeUndefined();
+    expect(result.updatedProperties[0].isRented).toBe(false);
+    expect(result.updatedProperties[0].occupancyStatus).toBe('vacant');
+    expect(result.operationHistory.some((entry) => entry.title === 'Lease expired')).toBe(true);
+  });
+
   it('uses emergency reserve bookkeeping when resolving maintenance', () => {
     const issue: MaintenanceIssue = {
       id: 'issue-1',
@@ -294,6 +367,39 @@ describe('property operations', () => {
     expect(result.value.player.properties[0].conditionScore).toBeGreaterThan(55);
     expect(result.value.player.properties[0].tenant?.satisfaction).toBeGreaterThan(68);
     expect(result.value.player.lifeMemories?.some((memory) => memory.tags.includes('repair-completed'))).toBe(true);
+  });
+
+  it('keeps follow-up work open when repair recurrence risk materialises', () => {
+    const issue: MaintenanceIssue = {
+      id: 'certain-recurrence',
+      propertyId: 'hdb-bto-1',
+      category: 'plumbing',
+      severity: 'urgent',
+      label: 'Recurring leak',
+      estimatedCost: 2_400,
+      satisfactionImpact: -8,
+      valueImpactPct: -0.4,
+      recurrenceRiskPct: 100,
+      status: 'open',
+    };
+    const player = makePlayer({
+      properties: [{
+        propertyId: 'hdb-bto-1',
+        purchasePrice: 380_000,
+        purchaseDate: '2024-01',
+        currentValue: 380_000,
+        isRented: false,
+        monthlyRental: 1_700,
+        renovationLevel: 0,
+        openMaintenanceIssues: [issue],
+      }],
+    });
+
+    const result = resolveMaintenanceIssuePure(player, 0, issue.id, 'cheap-fix');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.player.properties[0].openMaintenanceIssues).toHaveLength(1);
+    expect(result.value.player.properties[0].openMaintenanceIssues?.[0].label).toContain('recurrence');
   });
 
   it('allocates an emergency reserve without changing total cash', () => {

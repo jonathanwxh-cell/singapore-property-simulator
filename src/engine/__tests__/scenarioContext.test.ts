@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Player } from '@/game/types';
-import { getEligibleScenarios } from '../scenarioContext';
-import { getRouteWeightedScenarios } from '../scenarioContext';
+import { getEligibleScenarios, getRouteWeightedScenarios, pickWeightedScenario } from '../scenarioContext';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
@@ -102,5 +101,25 @@ describe('getEligibleScenarios', () => {
     const tenantDefaultCount = weighted.filter((scenario) => scenario.id === 'tenant-default').length;
     expect(tenantDefaultCount).toBeGreaterThan(1);
     expect(weighted.some((scenario) => scenario.id === 'market-crash')).toBe(true);
+  });
+
+  it('makes common scenarios materially more likely than very-rare scenarios', () => {
+    let state = 123456789;
+    const rng = {
+      next: () => {
+        state = (state * 1664525 + 1013904223) >>> 0;
+        return state / 0x100000000;
+      },
+    };
+    const counts = { common: 0, uncommon: 0, rare: 0, 'very-rare': 0 };
+    const player = makePlayer({ runRouteId: 'bto-upgrader' });
+
+    for (let index = 0; index < 2_000; index += 1) {
+      const scenario = pickWeightedScenario(player, rng);
+      if (scenario) counts[scenario.frequency] += 1;
+    }
+
+    expect(counts.common).toBeGreaterThan(counts.uncommon);
+    expect(counts.uncommon).toBeGreaterThan(counts['very-rare']);
   });
 });

@@ -48,6 +48,7 @@ const buyerProfileSchema = z.object({
     'foreigner-investor',
   ]),
   age: z.number().int().min(18).max(100),
+  sprYear: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
 });
 
 const renovationProjectSchema = z.object({
@@ -308,6 +309,7 @@ const playerSchema = z.object({
     unlockedEndingIds: z.array(endingIdSchema),
     runHistory: z.array(lifetimeRunRecordSchema),
   }).optional(),
+  lastResolvedMomentTurn: z.number().int().nonnegative().optional(),
 });
 
 export const saveSchema = z.object({

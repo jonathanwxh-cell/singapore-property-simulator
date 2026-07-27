@@ -56,6 +56,7 @@ export default function NewGame() {
   const [careerId, setCareerId] = useState('tech');
   const [household, setHousehold] = useState<HouseholdProfile>('couple-family');
   const [residency, setResidency] = useState<BuyerResidencyStatus>('sc');
+  const [sprYear, setSprYear] = useState<1 | 2 | 3>(3);
   const [difficulty, setDifficulty] = useState<Difficulty>('normal');
 
   const chooseHousehold = (h: HouseholdProfile) => {
@@ -70,7 +71,7 @@ export default function NewGame() {
       name.trim() || 'You',
       careerId,
       difficulty,
-      { householdProfile: household, residencyStatus: residency, age: opt?.defaultAge ?? 30 },
+      { householdProfile: household, residencyStatus: residency, age: opt?.defaultAge ?? 30, sprYear },
       undefined,
       { guidedMode: true },
     );
@@ -84,7 +85,7 @@ export default function NewGame() {
       </button>
 
       <h1 className="font-display text-3xl font-bold text-ink">Who are you?</h1>
-      <p className="mb-5 mt-1 text-sm text-ink-soft">Three quick choices set up your story. You'll learn the rules as you play.</p>
+      <p className="mb-5 mt-1 text-sm text-ink-soft">Four quick choices set up your story. You'll learn the rules as you play.</p>
 
       {/* Name */}
       <div className="mb-6">
@@ -144,6 +145,27 @@ export default function NewGame() {
             </button>
           ))}
         </div>
+        {residency === 'spr' && (
+          <div className="mt-3 rounded-2xl border border-line-2 bg-white p-3">
+            <div className="text-[12px] font-bold text-ink">CPF contribution year as a PR</div>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {([1, 2, 3] as const).map((year) => (
+                <button
+                  key={year}
+                  onClick={() => { playPop(); setSprYear(year); }}
+                  aria-pressed={sprYear === year}
+                  className={cn(
+                    'pl-press rounded-xl px-3 py-2 text-[12px] font-bold',
+                    sprYear === year ? 'bg-grape text-white' : 'bg-paper-2 text-ink-soft',
+                  )}
+                >
+                  Year {year}{year === 3 ? '+' : ''}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-[11.5px] text-ink-soft">Years 1 and 2 use graduated CPF rates; year 3+ uses the full rate.</p>
+          </div>
+        )}
       </div>
 
       {/* Difficulty */}

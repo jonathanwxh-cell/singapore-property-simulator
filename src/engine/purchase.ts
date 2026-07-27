@@ -15,11 +15,13 @@ import {
   HDB_CONCESSIONARY_LOAN_INTEREST,
   HDB_CONCESSIONARY_LTV,
   HDB_RESALE_LEVY_ESTIMATE,
+  BANK_LOAN_ASSESSMENT_RATE,
+  HDB_LOAN_ASSESSMENT_RATE,
   TDSR_LIMIT,
 } from './constants';
 import { calcMonthlyPayment, calcTDSR } from './finance';
 import { selectBankAssessableMonthlyIncome } from './income';
-import { getLtvCap, checkMsr, maxBorrowable } from './ltv';
+import { getLtvCap, checkMsr, maxBorrowable, minCashRequired } from './ltv';
 import type { ActionFailReason } from './results';
 import { selectMonthlyExpenses } from './selectors';
 import {
@@ -46,10 +48,13 @@ export interface PurchaseValidation {
   shortfall: number;
   mortgageAmount: number;
   monthlyPayment: number;
+  assessedMonthlyPayment: number;
+  assessmentInterestRate: number;
   loanInterestRate: number;
   loanTermYears: number;
   financingMode: MortgageFinancingMode;
   maxLoan: number;
+  mandatoryCash: number;
   ltvCap: number;
   ltvAllowed: boolean;
   tdsrRatio: number;
@@ -80,7 +85,7 @@ export function validatePurchase(
   const residentialPropertyCount = countResidentialHoldings(player);
   const residentialHoldings = getResidentialHoldings(player);
   const isOwned = player.properties.some((ownedProperty) => ownedProperty.propertyId === property.id);
-  const buyerProfile = normalizeBuyerProfile(player.buyerProfile);
+  const buyerProfile = normalizeBuyerProfile({ ...player.buyerProfile, age: player.age });
   const propertyCategory = getPropertyCategory(property.type);
   const bsd = roundMoney(calculateBSDForCategory(property.price, propertyCategory));
   const absd = propertyCategory === 'commercial'
@@ -114,25 +119,37 @@ export function validatePurchase(
   const mortgageAmount = Math.max(0, roundMoney(property.price - roundedDownPayment));
   const activeHousingLoans = player.loans.filter((loan) => loan.type === 'mortgage' && !loan.isPaid).length;
   const hdbConcessionaryAllowed = property.isHdb && activeHousingLoans === 0;
+  const loanTermYears = getMortgageTermYears(property);
+  const bankLtvContext = {
+    borrowerAge: player.age,
+    termYears: loanTermYears,
+    propertyIsHdb: property.isHdb,
+  };
   const ltvCap = financingMode === 'hdb-concessionary' && hdbConcessionaryAllowed
     ? HDB_CONCESSIONARY_LTV
-    : getLtvCap(activeHousingLoans);
+    : getLtvCap(activeHousingLoans, bankLtvContext);
   const maxLoan = financingMode === 'hdb-concessionary' && hdbConcessionaryAllowed
     ? roundMoney(property.price * HDB_CONCESSIONARY_LTV)
-    : maxBorrowable(property.price, activeHousingLoans);
+    : maxBorrowable(property.price, activeHousingLoans, bankLtvContext);
+  const mandatoryCash = financingMode === 'hdb-concessionary'
+    ? 0
+    : minCashRequired(property.price, activeHousingLoans, bankLtvContext);
   const ltvAllowed = mortgageAmount <= maxLoan;
   const diff = difficultySettings[player.difficulty];
   const loanInterestRate = financingMode === 'hdb-concessionary'
     ? HDB_CONCESSIONARY_LOAN_INTEREST
     : diff.loanInterest;
-  const loanTermYears = getMortgageTermYears(property);
   const monthlyPayment = calcMonthlyPayment(mortgageAmount, loanInterestRate, loanTermYears);
+  const assessmentInterestRate = financingMode === 'hdb-concessionary'
+    ? Math.max(loanInterestRate, HDB_LOAN_ASSESSMENT_RATE)
+    : Math.max(loanInterestRate, BANK_LOAN_ASSESSMENT_RATE);
+  const assessedMonthlyPayment = calcMonthlyPayment(mortgageAmount, assessmentInterestRate, loanTermYears);
   const assessableMonthlyIncome = selectBankAssessableMonthlyIncome(player);
-  const tdsrRatio = mortgageAmount > 0 ? calcTDSR(selectMonthlyExpenses(player), monthlyPayment, assessableMonthlyIncome) : 0;
+  const tdsrRatio = mortgageAmount > 0 ? calcTDSR(selectMonthlyExpenses(player), assessedMonthlyPayment, assessableMonthlyIncome) : 0;
   const tdsrAllowed = mortgageAmount <= 0 || tdsrRatio <= TDSR_LIMIT;
   const creditAllowed = mortgageAmount <= 0 || player.creditScore >= CREDIT_SCORE_FLOOR;
   const msrCheck = mortgageAmount > 0 && property.isHdb
-    ? checkMsr(assessableMonthlyIncome, monthlyPayment, true)
+    ? checkMsr(assessableMonthlyIncome, assessedMonthlyPayment, true)
     : { passes: true, maxMonthlyPayment: Infinity };
   const msrAllowed = msrCheck.passes;
   const maxMsrPayment = Number.isFinite(msrCheck.maxMonthlyPayment) ? msrCheck.maxMonthlyPayment : null;
@@ -209,10 +226,13 @@ export function validatePurchase(
     shortfall,
     mortgageAmount,
     monthlyPayment,
+    assessedMonthlyPayment,
+    assessmentInterestRate,
     loanInterestRate,
     loanTermYears,
     financingMode,
     maxLoan,
+    mandatoryCash,
     ltvCap,
     ltvAllowed,
     tdsrRatio,
@@ -223,7 +243,7 @@ export function validatePurchase(
     isOwned,
     activeHousingLoans,
     cpfUsageMode: cpfLeaseAssessment.mode,
-    maxCpfOrdinaryUsable: cpfLeaseAssessment.maxCpfOrdinaryUsable,
+    maxCpfOrdinaryUsable: Math.max(0, cpfLeaseAssessment.maxCpfOrdinaryUsable - mandatoryCash),
     remainingLeaseYears: cpfLeaseAssessment.remainingLeaseYears,
     cpfUsageMessage: cpfLeaseAssessment.message,
     pendingTaxRelief,

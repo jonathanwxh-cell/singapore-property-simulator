@@ -27,9 +27,9 @@ export function StatusStrip({
 
   return (
     <div className="safe-top sticky top-0 z-30 bg-paper/85 px-4 pb-2 pt-2 backdrop-blur-md">
-      <div className="mx-auto max-w-[480px]">
+      <div className="mx-auto max-w-[960px]">
         <div className="flex items-center justify-between">
-          <button onClick={onOpenYou} className="pl-press flex items-center gap-2.5 text-left">
+          <button onClick={onOpenYou} className="pl-press flex min-h-11 items-center gap-2.5 text-left">
             <div className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-coral to-gold text-lg shadow-soft">
               {player.name?.[0]?.toUpperCase() ?? '🙂'}
             </div>

@@ -9,7 +9,9 @@ import type {
 const COMMERCIAL_BSD_TIERS = [
   { threshold: 180000, rate: 0.01 },
   { threshold: 180000, rate: 0.02 },
-  { threshold: Infinity, rate: 0.03 },
+  { threshold: 640000, rate: 0.03 },
+  { threshold: 500000, rate: 0.04 },
+  { threshold: Infinity, rate: 0.05 },
 ] as const;
 
 interface SSDTier {

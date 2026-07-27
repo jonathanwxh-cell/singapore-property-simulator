@@ -61,6 +61,45 @@ export function detectLifetimeEnding(player: Player, outcome: RunOutcome): Lifet
       score: propertyCount === 1 && player.firstHomePurchased && stress <= 55 ? 78 : 0,
       reasons: ['Built a rooted life around one practical home.'],
     },
+    {
+      id: 'kiasu-king',
+      score: player.achievements.length >= 5 && propertyCount >= 2 && stress >= 55 ? 86 : 0,
+      reasons: ['Optimised aggressively across property, career, and milestones.'],
+    },
+    {
+      id: 'retire-in-jb',
+      score: player.age >= 60 && player.totalNetWorth < netWorthTarget * 0.65 && propertyCount <= 1 ? 82 : 0,
+      reasons: ['Chose a lower-cost retirement route after a long Singapore chapter.'],
+    },
+    {
+      id: 'en-bloc-millionaire',
+      score: player.totalPropertySalesProfit >= 1_000_000 ? 96 : 0,
+      reasons: ['A seven-figure property sale profit transformed the run.'],
+    },
+    {
+      id: 'kena-scam',
+      score: hasMemory(player, 'scam') || (player.creditScore <= 450 && player.cash < 0) ? 94 : 0,
+      reasons: ['A high-risk shortcut became the defining financial lesson.'],
+    },
+    {
+      id: 'migration-story',
+      score: player.buyerProfile?.residencyStatus === 'foreigner' && player.age >= 55 ? 83 : 0,
+      reasons: ['The Singapore property chapter became part of a wider migration story.'],
+    },
+    {
+      id: 'paper-general',
+      score: player.salary >= 25_000 && propertyCount <= 1 && player.careerProgressionProfile.reviewCount >= 3 ? 85 : 0,
+      reasons: ['Career progression and credentials became the strongest asset class.'],
+    },
+    {
+      id: 'ah-beng-made-good',
+      score: (player.difficulty === 'hard' || player.difficulty === 'tycoon')
+        && outcome === 'won'
+        && player.bankruptcyStrikes === 0
+        ? 89
+        : 0,
+      reasons: ['A difficult start became a disciplined comeback story.'],
+    },
   ];
 
   const fallback = outcome === 'won'
