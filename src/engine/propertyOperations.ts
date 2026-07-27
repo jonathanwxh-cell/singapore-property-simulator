@@ -324,6 +324,31 @@ export function advancePropertyOperationsMonth(player: Player): {
       const remainingMonths = property.activeRenovation.remainingMonths - 1;
       if (remainingMonths <= 0) {
         const completed = property.activeRenovation;
+        const overrunRoll = (
+          completed.startedTurn * 31
+          + propertyIndex * 17
+          + completed.durationMonths * 13
+        ) % 100;
+        if (completed.status === 'active' && overrunRoll < completed.riskPct) {
+          property = {
+            ...property,
+            activeRenovation: {
+              ...completed,
+              remainingMonths: 1,
+              status: 'overrun',
+            },
+            occupancyStatus: 'renovating',
+          };
+          operationHistory.unshift({
+            id: `op_${nextTurn}_${propertyIndex}_reno_overrun`,
+            turn: nextTurn,
+            propertyId: property.propertyId,
+            title: `${completed.label} overran`,
+            detail: `A snag added one month to the project (${completed.riskPct}% quoted risk).`,
+            tone: 'warn',
+          });
+          return property;
+        }
         property = {
           ...property,
           activeRenovation: undefined,
@@ -353,6 +378,30 @@ export function advancePropertyOperationsMonth(player: Player): {
         };
         return property;
       }
+    }
+
+    if (property.tenant && nextTurn >= property.tenant.leaseEndTurn) {
+      const endedTenant = property.tenant;
+      const listing = getListing(property.propertyId);
+      const occupancyStatus = endedTenant.rentalMode === 'room-rental'
+        || (listing?.isHdb && (property.mopRemainingMonths ?? 0) > 0)
+        ? 'owner-occupied'
+        : 'vacant';
+      property = {
+        ...property,
+        tenant: undefined,
+        isRented: false,
+        occupancyStatus,
+        vacancyMonths: occupancyStatus === 'vacant' ? 1 : 0,
+      };
+      operationHistory.unshift({
+        id: `op_${nextTurn}_${propertyIndex}_lease_expired`,
+        turn: nextTurn,
+        propertyId: property.propertyId,
+        title: 'Lease expired',
+        detail: 'The 12-month lease ended without a renewal decision. The unit is ready for a new tenant plan.',
+        tone: 'warn',
+      });
     }
 
     property = advanceTenant(property);

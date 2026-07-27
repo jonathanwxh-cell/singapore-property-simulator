@@ -30,6 +30,7 @@ export function DecisionCard({
   const resolveScenario = useGameStore((s) => s.resolveScenario);
   const scenario = scenarios.find((sc) => sc.id === scenarioId);
   const [result, setResult] = useState<{ option: ScenarioOption; res: ScenarioResolution } | null>(null);
+  const [resolving, setResolving] = useState(false);
 
   if (!scenario) {
     // Unknown scenario — fail safe so the loop never locks.
@@ -38,6 +39,8 @@ export function DecisionCard({
   }
 
   const choose = (option: ScenarioOption) => {
+    if (resolving) return;
+    setResolving(true);
     onChoiceStarted();
     const res = resolveScenario(option);
     setResult({ option, res });
@@ -52,7 +55,7 @@ export function DecisionCard({
       initial={{ opacity: 0, y: 18, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-      className="pl-card overflow-hidden p-0"
+      className="pl-card mx-auto max-w-[560px] overflow-hidden p-0"
     >
       <div className="relative h-36 w-full overflow-hidden">
         <SceneImage src={scenario.image} alt={scenario.title} className="h-full w-full object-cover" />
@@ -75,6 +78,7 @@ export function DecisionCard({
                   <button
                     key={i}
                     onClick={() => choose(opt)}
+                    disabled={resolving}
                     className="pl-press w-full rounded-2xl border border-line-2 bg-white p-3.5 text-left hover:border-coral hover:bg-coral/5"
                   >
                     <div className="font-jakarta text-[14.5px] font-bold text-ink">{opt.label}</div>

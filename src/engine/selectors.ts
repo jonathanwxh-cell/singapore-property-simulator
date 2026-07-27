@@ -1,5 +1,6 @@
 import { createInitialLifeIncomeBreakdown, type Player } from '@/game/types';
 import { deriveMaintenanceCost, derivePropertyTax } from './portfolio';
+import { getCpfEmployeeContribution } from './cpf';
 
 export interface AffordabilityReport {
   shortfall: number;
@@ -37,8 +38,15 @@ export function selectMonthlyRentalIncome(player: Player): number {
     .reduce((sum, p) => sum + (p.tenant?.contractedRent ?? p.monthlyRental), 0);
 }
 
-export function selectMonthlyTakeHome(player: Player, takeHomeRatio: number): number {
-  return player.salary * takeHomeRatio;
+export function selectMonthlyTakeHome(player: Player, _legacyTakeHomeRatio?: number): number {
+  void _legacyTakeHomeRatio;
+  const profile = player.buyerProfile;
+  return player.salary - getCpfEmployeeContribution(
+    player.salary,
+    player.age,
+    profile?.residencyStatus ?? 'sc',
+    profile?.sprYear ?? 3,
+  );
 }
 
 export function selectMonthlyExpenses(player: Player): number {
@@ -62,7 +70,7 @@ export function selectMonthlyOwnershipCosts(player: Player): number {
   }, 0);
 }
 
-export function selectMonthlyNetCashflow(player: Player, takeHomeRatio: number): number {
+export function selectMonthlyNetCashflow(player: Player, takeHomeRatio?: number): number {
   return selectMonthlyTakeHome(player, takeHomeRatio)
     + selectMonthlyRentalIncome(player)
     - selectMonthlyExpenses(player)
@@ -70,7 +78,7 @@ export function selectMonthlyNetCashflow(player: Player, takeHomeRatio: number):
     - selectMonthlyHouseholdLoad(player);
 }
 
-export function selectMonthlyIncomeMix(player: Player, takeHomeRatio: number): MonthlyIncomeMix {
+export function selectMonthlyIncomeMix(player: Player, takeHomeRatio?: number): MonthlyIncomeMix {
   const takeHomePay = selectMonthlyTakeHome(player, takeHomeRatio);
   const rentalIncome = selectMonthlyRentalIncome(player);
   const breakdown = player.life.lastMonthSummary?.incomeBreakdown ?? createInitialLifeIncomeBreakdown();

@@ -2,6 +2,7 @@ import { properties } from '@/data/properties';
 import { scenarios, type Scenario, type ScenarioRequirement } from '@/data/scenarios';
 import type { Player } from '@/game/types';
 import { getRouteForPlayer } from './runDirector';
+import type { Rng } from './rng';
 
 function playerOwnsAnyProperty(player: Player): boolean {
   return player.properties.length > 0;
@@ -67,4 +68,37 @@ export function getRouteWeightedScenarios(player: Player): Scenario[] {
   if (routeMatches.length === 0) return eligible;
 
   return [...routeMatches, ...routeMatches, ...eligible];
+}
+
+const FREQUENCY_WEIGHTS: Record<Scenario['frequency'], number> = {
+  common: 8,
+  uncommon: 4,
+  rare: 2,
+  'very-rare': 1,
+};
+
+export function pickWeightedScenario(
+  player: Player,
+  rng: Pick<Rng, 'next'>,
+  predicate: (scenario: Scenario) => boolean = () => true,
+): Scenario | null {
+  const eligible = getEligibleScenarios(player).filter(predicate);
+  if (eligible.length === 0) return null;
+
+  const routeTags = new Set(getRouteForPlayer(player).scenarioTags);
+  const weighted = eligible.map((scenario) => {
+    const routeMatch = (scenario.routeTags ?? []).some((tag) => routeTags.has(tag));
+    return {
+      scenario,
+      weight: FREQUENCY_WEIGHTS[scenario.frequency] * (routeMatch ? 3 : 1),
+    };
+  });
+  const totalWeight = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+  let cursor = rng.next() * totalWeight;
+
+  for (const entry of weighted) {
+    cursor -= entry.weight;
+    if (cursor < 0) return entry.scenario;
+  }
+  return weighted[weighted.length - 1].scenario;
 }

@@ -7,8 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added a living Strategy Board to the main play screen with three situational monthly plans, best-fit guidance, journey-stage progress, and a visible consequence recap.
+- Added Singapore PR CPF contribution-year setup, an age-75 retirement chapter, and reachable conditions for all 14 lifetime endings.
+
 ### Changed
 - Strengthened multi-agent repository workflow docs, templates, labels, and branch-protection guidance so Codex, Claude, humans, and future agents can coordinate parallel work safely.
+- Updated the simplified 2026 rules model for age- and residency-aware CPF contributions and allocation, CPF extra interest, 80% HDB concessionary LTV, bank-loan age and tenure limits, mandatory cash down payment, mortgage assessment rates, and commercial BSD.
+- Made scenario frequency influence selection, allowed active bank mortgages to reprice with market pulses, and kept vacant-unit asking rents responsive to the rental market.
+- Deepened landlord operations with actual 12-month leases, MOP-safe room rental, lease expiry, renovation overrun risk, and recurring maintenance risk.
+
+### Fixed
+- Made loan repayment, refinancing, MediSave bills, personal loans, and scenario-driven property sales change the promised state instead of only changing cash.
+- Rejected stale, forged, inactive, repeated, and non-finite actions; guarded rapid double-click resolution; and stopped failed scenario outcomes from paying partial rewards.
+- Preserved completed games and resolved moments across save/reload, protected personal bests from direct cold `/end` visits, and surfaced auto-save failures in the play screen.
+- Kept valid MOP room-rental tenants during state normalisation, synchronised player age and household eligibility over time, and made sheets keyboard-accessible with focus trapping and restoration.
 
 ## [0.6.1] - 2026-05-09
 

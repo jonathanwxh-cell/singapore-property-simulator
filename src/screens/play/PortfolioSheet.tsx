@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 export function PortfolioSheet({ open, onClose, focusIndex }: { open: boolean; onClose: () => void; focusIndex?: number }) {
   const player = useGameStore((s) => s.player);
-  const toggleRental = useGameStore((s) => s.toggleRental);
+  const setTenantStrategy = useGameStore((s) => s.setTenantStrategy);
   const sellProperty = useGameStore((s) => s.sellProperty);
   const startRenovation = useGameStore((s) => s.startRenovation);
   const resolveMaintenanceIssue = useGameStore((s) => s.resolveMaintenanceIssue);
@@ -56,6 +56,37 @@ export function PortfolioSheet({ open, onClose, focusIndex }: { open: boolean; o
     const res = applyTenantLeaseDecision(i, decisionId);
     if (res.ok) { playChime(); toast({ emoji: '📝', tone: 'good', title: label, body: 'Lease updated.' }); }
     else { playFail(); toast({ emoji: '🚫', tone: 'bad', title: 'Could not update lease', body: res.message }); }
+  };
+
+  const toggleLease = (i: number) => {
+    const owned = player.properties[i];
+    const listing = catalog.find((property) => property.id === owned?.propertyId);
+    if (!owned || !listing) return;
+
+    if (owned.tenant) {
+      lease(i, 'end-lease', 'Tenant released');
+      return;
+    }
+
+    const commercial = listing.type === 'Commercial Shop' || listing.type === 'Commercial Office';
+    const inMop = listing.isHdb && (owned.mopRemainingMonths ?? 0) > 0;
+    const res = setTenantStrategy(i, {
+      mode: commercial ? 'commercial-lease' : inMop ? 'room-rental' : 'whole-unit',
+      profileId: commercial ? 'sme-commercial' : 'local-family',
+      rentStrategy: 'market',
+    });
+    if (res.ok) {
+      playChime();
+      toast({
+        emoji: '🔑',
+        tone: 'good',
+        title: inMop ? 'Room-rental lease signed' : 'Lease signed',
+        body: 'A 12-month tenant lease is now active and tracked.',
+      });
+    } else {
+      playFail();
+      toast({ emoji: '🚫', tone: 'bad', title: 'Could not sign tenant', body: res.message });
+    }
   };
 
   const fixIssue = (i: number, issueId: string) => {
@@ -109,7 +140,7 @@ export function PortfolioSheet({ open, onClose, focusIndex }: { open: boolean; o
                       <div className="mt-0.5 truncate font-jakarta text-[14px] font-bold text-ink">{listing.name}</div>
                       <div className="text-[11.5px] text-ink-soft">📍 {districtName(listing.districtId)}</div>
                       {mopActive
-                        ? <div className="mt-0.5 text-[11px] font-semibold text-[#B9791E]">🔒 Renting locked during MOP · tap to renovate</div>
+                        ? <div className="mt-0.5 text-[11px] font-semibold text-[#B9791E]">🔒 Whole-flat rental locked · room rental is available</div>
                         : owned.activeRenovation
                           ? null
                           : !owned.isRented
@@ -189,12 +220,9 @@ export function PortfolioSheet({ open, onClose, focusIndex }: { open: boolean; o
                         </div>
                       ) : (
                         <div className="flex flex-wrap gap-2">
-                          {!mopActive && (
-                            <Btn tone={owned.isRented ? 'soft' : 'money'} className="flex-1" onClick={() => toggleRental(i)}>{owned.isRented ? 'Stop renting' : '🔑 Rent it out'}</Btn>
-                          )}
-                          {mopActive && (
-                            <div className="flex-1 rounded-xl bg-gold-soft px-3 py-2 text-center text-[12px] font-semibold text-[#8a5a16]">You live here · rental locked {owned.mopRemainingMonths}mo — but you can renovate</div>
-                          )}
+                          <Btn tone={owned.isRented ? 'soft' : 'money'} className="flex-1" onClick={() => toggleLease(i)}>
+                            {owned.isRented ? 'End lease' : mopActive ? '🔑 Rent a room' : '🔑 Rent it out'}
+                          </Btn>
                           {!owned.activeRenovation && renoTemplates.length > 0 && <Btn tone="soft" onClick={() => setRenoOpen(i)}>🛠️ Renovate</Btn>}
                           <Btn tone="ghost" onClick={() => setConfirmSell(i)}>Sell</Btn>
                         </div>

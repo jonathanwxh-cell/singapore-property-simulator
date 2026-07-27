@@ -36,13 +36,31 @@ export function resolveMaintenanceIssuePure(
         renewalIntent: clamp(property.tenant.renewalIntent + choice.satisfactionDelta, 0, 100),
       }
     : undefined;
+  const recurrenceRiskPct = clamp(issue.recurrenceRiskPct + choice.recurrenceDeltaPct, 0, 100);
+  const recurrenceRoll = (
+    player.turnCount * 31
+    + propertyIndex * 17
+    + issue.id.length * 13
+  ) % 100;
+  const recurs = recurrenceRoll < recurrenceRiskPct;
+  const remainingIssues = (property.openMaintenanceIssues ?? []).filter((candidate) => candidate.id !== issueId);
+  if (recurs) {
+    remainingIssues.push({
+      ...issue,
+      id: `${issue.id}_recur_${player.turnCount}`,
+      label: `${issue.label ?? issue.category} recurrence`,
+      estimatedCost: Math.round(issue.estimatedCost * 0.65),
+      recurrenceRiskPct: Math.max(0, recurrenceRiskPct - 5),
+      status: 'open',
+    });
+  }
 
   const updatedProperties = [...player.properties];
   updatedProperties[propertyIndex] = {
     ...property,
     tenant,
     conditionScore: clamp((property.conditionScore ?? DEFAULT_CONDITION_SCORE) + choice.conditionDelta, 0, 100),
-    openMaintenanceIssues: (property.openMaintenanceIssues ?? []).filter((candidate) => candidate.id !== issueId),
+    openMaintenanceIssues: remainingIssues,
   };
 
   let updatedPlayer = withOperationLog({
@@ -57,7 +75,9 @@ export function resolveMaintenanceIssuePure(
   }, {
     propertyId: property.propertyId,
     title: `${choice.label} completed`,
-    detail: reserveDraw > 0
+    detail: recurs
+      ? `S$${cost.toLocaleString()} repair paid, but the ${recurrenceRiskPct}% recurrence risk materialised and follow-up work is still open.`
+      : reserveDraw > 0
       ? `S$${cost.toLocaleString()} repair paid, with S$${reserveDraw.toLocaleString()} covered by reserve.`
     : `S$${cost.toLocaleString()} repair paid from cash.`,
     tone: choiceId === 'cheap-fix' ? 'warn' : 'good',

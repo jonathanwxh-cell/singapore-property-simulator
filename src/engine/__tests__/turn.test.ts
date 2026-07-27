@@ -69,6 +69,18 @@ describe('advanceTurn', () => {
     expect(result.player.age).toBe(28);
   });
 
+  it('ends the run at the retirement age cap', () => {
+    const result = advanceTurn({
+      player: makePlayer({ month: 12, age: 74, cash: 1_000_000 }),
+      market: baseMarket,
+      settings: baseSettings,
+      rng: createRng(1),
+    });
+    expect(result.player.age).toBe(75);
+    expect(result.gameOver).toBe(true);
+    expect(result.outcome).toBe('won');
+  });
+
   it('does not fire scenarios on turn 0', () => {
     let firedOnZero = false;
     for (let seed = 0; seed < 50; seed++) {

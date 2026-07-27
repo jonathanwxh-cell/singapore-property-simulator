@@ -13,6 +13,8 @@ async function run() {
     await expectVisible(page, 'text=Start your story');
 
     await startQuickGame(page, baseUrl);
+    await expectVisible(page, 'text=Life Board');
+    await expectVisible(page, 'text=Choose this month');
     await clickCompactNav(page, 'Market');
     await expectVisible(page, 'text=The market');
     await expectVisible(page, 'text=Sort');
@@ -26,7 +28,10 @@ async function run() {
     await expectVisible(page, 'text=Your places');
     await expectVisible(page, 'text=Northstar Grove 3-Room');
     await page.locator('button').filter({ hasText: 'Northstar Grove 3-Room' }).first().click();
-    await expectVisible(page, 'text=You live here');
+    await expectVisible(page, 'text=Whole-flat rental locked');
+    await page.getByRole('button', { name: /Rent a room/i }).click();
+    await expectVisible(page, 'text=Room-rental lease signed');
+    await expectVisible(page, 'text=End lease');
     await expectVisible(page, 'text=Renovate');
 
     await page.getByRole('button', { name: 'Close' }).click();

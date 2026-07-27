@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { properties } from '@/data/properties';
 import {
   applyLoanPure,
+  applyScenarioTransactionPure,
   buyPropertyPure,
   payLoanPure,
   renovatePropertyPure,
@@ -248,7 +249,7 @@ describe('buyPropertyPure', () => {
   });
 
   it('flags private-home ownership after buying a private condo', () => {
-    const result = buyPropertyPure(makePlayer({ cash: 3_000_000 }), 'condo-10', 500_000);
+    const result = buyPropertyPure(makePlayer({ cash: 3_000_000, salary: 6_000 }), 'condo-10', 500_000);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.value.player.firstHomePurchased).toBe(true);
@@ -257,7 +258,7 @@ describe('buyPropertyPure', () => {
   });
 
   it('marks the first private residential purchase as owner-occupied', () => {
-    const result = buyPropertyPure(makePlayer({ cash: 3_000_000 }), 'condo-10', 500_000);
+    const result = buyPropertyPure(makePlayer({ cash: 3_000_000, salary: 6_000 }), 'condo-10', 500_000);
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -300,9 +301,10 @@ describe('buyPropertyPure', () => {
   });
 
   it('charges SPR first-property ABSD through the purchase path', () => {
-    const citizen = buyPropertyPure(makePlayer({ cash: 3_000_000 }), 'condo-10', 500_000);
+    const citizen = buyPropertyPure(makePlayer({ cash: 3_000_000, salary: 6_000 }), 'condo-10', 500_000);
     const spr = buyPropertyPure(makePlayer({
       cash: 3_000_000,
+      salary: 6_000,
       buyerProfile: {
         residencyStatus: 'spr',
         householdProfile: 'couple-family',
@@ -549,6 +551,11 @@ describe('applyLoanPure', () => {
     if (!result.ok) expect(result.reason).toBe('invalid_amount');
   });
 
+  it('rejects non-finite loan inputs', () => {
+    expect(applyLoanPure(makePlayer(), Number.NaN, 4, 5, 'personal').ok).toBe(false);
+    expect(applyLoanPure(makePlayer(), 10_000, Number.POSITIVE_INFINITY, 5, 'personal').ok).toBe(false);
+  });
+
   it('rejects zero termYears (would otherwise produce NaN monthlyPayment)', () => {
     const result = applyLoanPure(makePlayer(), 50_000, 5, 0, 'personal');
     expect(result.ok).toBe(false);
@@ -577,6 +584,10 @@ describe('renovatePropertyPure', () => {
     const result = renovatePropertyPure(playerWithProperty(), 0, -1000);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toBe('invalid_amount');
+  });
+
+  it('rejects non-finite renovation costs', () => {
+    expect(renovatePropertyPure(makePlayer(), 0, Number.NaN).ok).toBe(false);
   });
 
   it('rejects invalid property index', () => {
@@ -711,12 +722,12 @@ describe('validatePurchase Singapore policy surfaces', () => {
     if (!property) throw new Error('Expected condo fixture.');
 
     const stableEmployee = validatePurchase(
-      makePlayer({ careerId: 'tech', salary: 6_000, cash: 2_000_000 }),
+      makePlayer({ careerId: 'tech', salary: 8_000, cash: 2_000_000 }),
       property,
       property.price * 0.25,
     );
     const entrepreneur = validatePurchase(
-      makePlayer({ careerId: 'entrepreneur', salary: 6_000, cash: 2_000_000 }),
+      makePlayer({ careerId: 'entrepreneur', salary: 8_000, cash: 2_000_000 }),
       property,
       property.price * 0.25,
     );
@@ -743,5 +754,64 @@ describe('resolveScenarioOption', () => {
     expect(resolution.success).toBe(true);
     expect(resolution.cashDelta).toBe(0);
     expect(resolution.cpfOrdinaryDelta).toBe(40_000);
+  });
+
+  it('does not award half of a positive payout when an option fails', () => {
+    const resolution = resolveScenarioOption({
+      label: 'Risky payout',
+      description: 'May fail.',
+      probability: 0,
+      cashImpact: 100_000,
+      cpfOrdinaryImpact: 20_000,
+      propertyValueImpact: 10,
+      creditImpact: 5,
+      followUpText: 'Paid out.',
+    }, { next: () => 1 } as never);
+
+    expect(resolution.success).toBe(false);
+    expect(resolution.cashDelta).toBe(0);
+    expect(resolution.cpfOrdinaryDelta).toBe(0);
+    expect(resolution.propertyValueImpactPct).toBe(0);
+  });
+});
+
+describe('applyScenarioTransactionPure', () => {
+  it('uses cash to reduce real outstanding loan balances', () => {
+    const player = makePlayer({
+      cash: 80_000,
+      loans: [{
+        id: 'personal-1',
+        type: 'personal',
+        principal: 100_000,
+        remainingBalance: 100_000,
+        interestRate: 7,
+        monthlyPayment: 1_980,
+        termYears: 5,
+        startDate: '2024-01',
+        isPaid: false,
+      }],
+    });
+    const result = applyScenarioTransactionPure(player, { kind: 'pay-loans', amount: 50_000 });
+    expect(result.cash).toBe(30_000);
+    expect(result.loans[0].remainingBalance).toBe(50_000);
+  });
+
+  it('creates a real personal loan with a monthly payment', () => {
+    const result = applyScenarioTransactionPure(
+      makePlayer({ cash: 0 }),
+      { kind: 'add-personal-loan', amount: 30_000, interestRate: 7, termYears: 5 },
+    );
+    expect(result.cash).toBe(30_000);
+    expect(result.loans).toHaveLength(1);
+    expect(result.loans[0].monthlyPayment).toBeGreaterThan(0);
+  });
+
+  it('deducts Medisave before cash for a medical bill', () => {
+    const result = applyScenarioTransactionPure(
+      makePlayer({ cash: 5_000, cpfMedisave: 12_000 }),
+      { kind: 'use-medisave', amount: 20_000 },
+    );
+    expect(result.cpfMedisave).toBe(0);
+    expect(result.cash).toBe(-3_000);
   });
 });

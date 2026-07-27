@@ -208,8 +208,9 @@ describe('assessDealReadiness', () => {
     });
     const validation = validatePurchase(player, property, property.price * 0.25);
 
-    expect(readiness.cpfApplied).toBe(validation.downPayment);
-    expect(readiness.cashRequired).toBe(readiness.totalUpfront - validation.downPayment);
+    expect(readiness.cpfApplied).toBe(validation.maxCpfOrdinaryUsable);
+    expect(readiness.cpfApplied).toBe(validation.downPayment - validation.mandatoryCash);
+    expect(readiness.cashRequired).toBe(readiness.totalUpfront - validation.maxCpfOrdinaryUsable);
   });
 
   it('names TDSR as the blocker instead of a vague insufficient-funds label', () => {

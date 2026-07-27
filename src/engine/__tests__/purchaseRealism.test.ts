@@ -51,14 +51,14 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
 }
 
 describe('purchase realism fixes', () => {
-  it('uses the current 75% HDB concessionary LTV instead of a 90% starter loan', () => {
+  it('uses the current 80% HDB concessionary LTV', () => {
     const bto = properties.find((property) => property.id === 'hdb-bto-0');
     expect(bto).toBeDefined();
-    expect(HDB_CONCESSIONARY_LTV).toBe(0.75);
-    expect(HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT).toBe(25);
+    expect(HDB_CONCESSIONARY_LTV).toBe(0.8);
+    expect(HDB_CONCESSIONARY_DOWNPAYMENT_PERCENT).toBe(20);
 
     const tenPercentDown = validatePurchase(makePlayer(), bto!, bto!.price * 0.1, 'hdb-concessionary');
-    expect(tenPercentDown.maxLoan).toBe(Math.round(bto!.price * 0.75));
+    expect(tenPercentDown.maxLoan).toBe(Math.round(bto!.price * 0.8));
     expect(tenPercentDown.reasons.some((reason) => reason.code === 'ltv_exceeded')).toBe(true);
   });
 
@@ -68,13 +68,53 @@ describe('purchase realism fixes', () => {
     expect(bto).toBeDefined();
     expect(condo).toBeDefined();
 
-    const hdbValidation = validatePurchase(makePlayer(), bto!, bto!.price * 0.25, 'hdb-concessionary');
+    const hdbValidation = validatePurchase(makePlayer(), bto!, bto!.price * 0.2, 'hdb-concessionary');
     const privateValidation = validatePurchase(makePlayer({ cash: 3_000_000 }), condo!, condo!.price * 0.25);
 
     expect(HDB_FLAT_MORTGAGE_TERM_YEARS).toBe(25);
     expect(hdbValidation.loanTermYears).toBe(HDB_FLAT_MORTGAGE_TERM_YEARS);
-    expect(hdbValidation.monthlyPayment).toBe(902);
+    expect(hdbValidation.monthlyPayment).toBe(962);
+    expect(hdbValidation.assessmentInterestRate).toBe(3);
+    expect(hdbValidation.assessedMonthlyPayment).toBeGreaterThan(hdbValidation.monthlyPayment);
     expect(privateValidation.loanTermYears).toBe(DEFAULT_MORTGAGE_TERM_YEARS);
+  });
+
+  it('separates mandatory cash from the total bank-loan down payment', () => {
+    const condo = properties.find((property) => property.id === 'condo-10');
+    expect(condo).toBeDefined();
+
+    const validation = validatePurchase(
+      makePlayer({ cash: 3_000_000, salary: 10_000, cpfOrdinary: 500_000 }),
+      condo!,
+      condo!.price * 0.25,
+      'bank',
+    );
+
+    expect(validation.mandatoryCash).toBe(condo!.price * 0.05);
+    expect(validation.maxCpfOrdinaryUsable).toBeLessThanOrEqual(
+      validation.downPayment - validation.mandatoryCash,
+    );
+    expect(validation.assessmentInterestRate).toBeGreaterThanOrEqual(4);
+  });
+
+  it('reduces bank LTV when the term extends beyond age 65', () => {
+    const condo = properties.find((property) => property.id === 'condo-10');
+    expect(condo).toBeDefined();
+
+    const validation = validatePurchase(
+      makePlayer({
+        age: 60,
+        salary: 20_000,
+        cash: 3_000_000,
+        buyerProfile: { residencyStatus: 'sc', householdProfile: 'single-35-plus', age: 60 },
+      }),
+      condo!,
+      condo!.price * 0.45,
+      'bank',
+    );
+
+    expect(validation.ltvCap).toBe(0.55);
+    expect(validation.mandatoryCash).toBe(condo!.price * 0.10);
   });
 
   it('lets true all-cash purchases bypass loan servicing and credit checks', () => {

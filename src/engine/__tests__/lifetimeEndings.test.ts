@@ -78,6 +78,41 @@ describe('detectLifetimeEnding', () => {
     expect(result.ending.id).toBe('property-tycoon');
   });
 
+  it.each([
+    ['kiasu-king', {
+      achievements: ['a', 'b', 'c', 'd', 'e'],
+      properties: [{ id: 'a' }, { id: 'b' }],
+      life: createInitialLifeState({ stress: 70 }),
+    }],
+    ['retire-in-jb', { age: 65, cash: 100_000, totalNetWorth: 300_000 }],
+    ['en-bloc-millionaire', { totalPropertySalesProfit: 1_200_000 }],
+    ['kena-scam', { cash: -50_000, creditScore: 420 }],
+    ['migration-story', {
+      age: 60,
+      totalNetWorth: 2_000_000,
+      buyerProfile: { residencyStatus: 'foreigner', householdProfile: 'foreigner-investor', age: 60 },
+    }],
+    ['paper-general', {
+      salary: 30_000,
+      cash: 100_000,
+      careerProgressionProfile: { reviewCount: 5, lastOutcome: 'promotion', lastSalaryDelta: 2_000, lastBonus: 10_000 },
+    }],
+    ['ah-beng-made-good', {
+      difficulty: 'hard',
+      cash: 100_000,
+      totalNetWorth: 35_000_000,
+    }],
+  ] as const)('makes the %s ending reachable', (endingId, overrides) => {
+    const properties = 'properties' in overrides
+      ? overrides.properties.map((property) => property as unknown as Player['properties'][number])
+      : undefined;
+    const result = detectLifetimeEnding(makePlayer({
+      ...overrides,
+      ...(properties ? { properties } : {}),
+    } as Partial<Player>), 'won');
+    expect(result.ending.id).toBe(endingId);
+  });
+
   it('records completed runs and unlocks the ending collection', () => {
     const player = makePlayer({
       cash: 1_800_000,

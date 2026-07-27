@@ -40,7 +40,8 @@ describe('Stamp Duty', () => {
 
     it('uses non-residential BSD tiers for commercial property', () => {
       expect(calculateBSDForCategory(1_000_000, 'commercial')).toBe(24_600);
-      expect(calculateBSDForCategory(5_000_000, 'commercial')).toBe(144_600);
+      expect(calculateBSDForCategory(1_500_000, 'commercial')).toBe(44_600);
+      expect(calculateBSDForCategory(5_000_000, 'commercial')).toBe(219_600);
     });
   });
 

@@ -16,7 +16,7 @@ import { calcMonthlyPayment, calcTDSR } from './finance';
 import { selectBankAssessableMonthlyIncome } from './income';
 import { selectMonthlyExpenses } from './selectors';
 import type { Rng } from './rng';
-import type { ScenarioOption } from '@/data/scenarios';
+import type { ScenarioOption, ScenarioTransaction } from '@/data/scenarios';
 import { formatPercent, roundMoney } from '@/lib/format';
 import { validatePurchase } from './purchase';
 import { deriveMaintenanceCost, derivePropertyTax } from './portfolio';
@@ -40,6 +40,7 @@ export interface ScenarioResolution {
   careerVolatilityModifierDelta: number;
   followUpText: string;
   success: boolean;
+  transaction?: ScenarioTransaction;
 }
 
 function canUseCpfForProperty(propertyId: string): boolean {
@@ -73,13 +74,18 @@ export function resolveScenarioOption(option: ScenarioOption, rng: Rng): Scenari
       careerVolatilityModifierDelta: option.careerVolatilityModifierDelta ?? 0,
       followUpText: option.followUpText,
       success: true,
+      transaction: option.transaction,
     };
   }
   return {
-    cashDelta: Math.round(option.cashImpact * 0.5),
-    cpfOrdinaryDelta: Math.round((option.cpfOrdinaryImpact ?? 0) * 0.5),
+    cashDelta: option.cashImpact < 0 ? Math.round(option.cashImpact * 0.5) : 0,
+    cpfOrdinaryDelta: (option.cpfOrdinaryImpact ?? 0) < 0
+      ? Math.round((option.cpfOrdinaryImpact ?? 0) * 0.5)
+      : 0,
     creditDelta: -10,
-    propertyValueImpactPct: Math.round(option.propertyValueImpact * 0.5),
+    propertyValueImpactPct: option.propertyValueImpact < 0
+      ? Math.round(option.propertyValueImpact * 0.5)
+      : 0,
     salaryDeltaPct: 0,
     careerGrowthModifierDelta: 0,
     careerRiskModifierDelta: 0,
@@ -96,6 +102,9 @@ export function buyPropertyPure(
   cpfOrdinaryUsed = 0,
   financingMode: MortgageFinancingMode = 'bank',
 ): ActionResult<{ player: Player }> {
+  if (!Number.isFinite(downPayment) || !Number.isFinite(cpfOrdinaryUsed)) {
+    return fail('invalid_amount', 'Purchase amounts must be valid numbers.');
+  }
   const property = properties.find(p => p.id === propertyId);
   if (!property) return fail('property_not_found', 'Property not found.');
 
@@ -361,7 +370,14 @@ export function applyLoanPure(
   propertyId?: string,
 ): ActionResult<{ player: Player }> {
   const roundedAmount = roundMoney(amount);
-  if (roundedAmount < MIN_LOAN_AMOUNT || termYears <= 0) {
+  if (
+    !Number.isFinite(roundedAmount)
+    || !Number.isFinite(interestRate)
+    || !Number.isFinite(termYears)
+    || roundedAmount < MIN_LOAN_AMOUNT
+    || interestRate < 0
+    || termYears <= 0
+  ) {
     return fail('invalid_amount', `Loan amount must be at least S$${MIN_LOAN_AMOUNT.toLocaleString()} and term must be positive.`);
   }
   if (player.creditScore < CREDIT_SCORE_FLOOR) {
@@ -425,7 +441,7 @@ export function payLoanPure(player: Player, loanId: string, amount: number): Act
 }
 
 export function renovatePropertyPure(player: Player, propertyIndex: number, cost: number): ActionResult<{ player: Player }> {
-  if (cost <= 0) return fail('invalid_amount', 'Renovation cost must be positive.');
+  if (!Number.isFinite(cost) || cost <= 0) return fail('invalid_amount', 'Renovation cost must be positive.');
   if (propertyIndex < 0 || propertyIndex >= player.properties.length) return fail('invalid_index', 'Invalid property index.');
   if (player.cash < cost) return fail('insufficient_cash', 'Not enough cash.');
 
@@ -444,6 +460,87 @@ export function renovatePropertyPure(player: Player, propertyIndex: number, cost
       properties: updatedProperties,
     },
   });
+}
+
+export function applyScenarioTransactionPure(player: Player, transaction?: ScenarioTransaction): Player {
+  if (!transaction) return player;
+
+  if (transaction.kind === 'pay-loans') {
+    let budget = Math.max(0, Math.min(player.cash, transaction.amount));
+    let creditScore = player.creditScore;
+    const loans = player.loans.map((loan) => {
+      if (loan.isPaid || budget <= 0) return loan;
+      const paid = Math.min(budget, loan.remainingBalance);
+      budget = roundMoney(budget - paid);
+      const remainingBalance = roundMoney(loan.remainingBalance - paid);
+      const isPaid = remainingBalance <= 0;
+      creditScore = Math.min(
+        MAX_CREDIT_SCORE,
+        creditScore + (isPaid ? CREDIT_DELTA_LOAN_PAID_OFF : CREDIT_DELTA_LOAN_PAYMENT),
+      );
+      return { ...loan, remainingBalance, isPaid };
+    });
+    const amountPaid = roundMoney(Math.max(0, Math.min(player.cash, transaction.amount)) - budget);
+    return { ...player, cash: roundMoney(player.cash - amountPaid), loans, creditScore };
+  }
+
+  if (transaction.kind === 'refinance-mortgages') {
+    return {
+      ...player,
+      loans: player.loans.map((loan) => {
+        if (loan.isPaid || loan.type !== 'mortgage') return loan;
+        const interestRate = Math.max(0.5, roundMoney(loan.interestRate + transaction.rateDelta));
+        return {
+          ...loan,
+          interestRate,
+          monthlyPayment: calcMonthlyPayment(loan.remainingBalance, interestRate, Math.max(1, loan.termYears)),
+        };
+      }),
+    };
+  }
+
+  if (transaction.kind === 'use-medisave') {
+    const medisaveUsed = Math.min(player.cpfMedisave, transaction.amount);
+    const cashRemainder = Math.max(0, transaction.amount - medisaveUsed);
+    return {
+      ...player,
+      cpfMedisave: roundMoney(player.cpfMedisave - medisaveUsed),
+      cash: roundMoney(player.cash - cashRemainder),
+    };
+  }
+
+  if (transaction.kind === 'add-personal-loan') {
+    const loan: Loan = {
+      id: `scenario-loan_t${player.turnCount}_${player.loans.length}`,
+      type: 'personal',
+      principal: transaction.amount,
+      remainingBalance: transaction.amount,
+      interestRate: transaction.interestRate,
+      monthlyPayment: calcMonthlyPayment(transaction.amount, transaction.interestRate, transaction.termYears),
+      termYears: transaction.termYears,
+      startDate: `${player.year}-${String(player.month).padStart(2, '0')}`,
+      isPaid: false,
+    };
+    return {
+      ...player,
+      cash: roundMoney(player.cash + transaction.amount),
+      loans: [...player.loans, loan],
+    };
+  }
+
+  if (player.properties.length === 0) return player;
+  const salePlayer: Player = {
+    ...player,
+    properties: player.properties.map((property, index) => index === 0
+      ? {
+          ...property,
+          currentValue: roundMoney(property.currentValue * transaction.valueMultiplier),
+          mopRemainingMonths: 0,
+        }
+      : property),
+  };
+  const sale = sellPropertyPure(salePlayer, 0);
+  return sale.ok ? sale.value.player : player;
 }
 
 function getPendingTaxReliefsAfterPurchase(

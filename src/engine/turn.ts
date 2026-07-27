@@ -1,9 +1,8 @@
 import type { Player, MarketState, GameSettings } from '@/game/types';
-import { difficultySettings } from '@/game/types';
+import { difficultySettings, normalizeBuyerProfile } from '@/game/types';
 import { careers } from '@/data/careers';
 import type { Rng } from './rng';
-import { rngPick } from './rng';
-import { amortizeOneMonth } from './finance';
+import { amortizeOneMonth, calcMonthlyPayment } from './finance';
 import { resolveAnnualCareerReview, shouldOfferJobSwitch, shouldRunAnnualCareerReview } from './careerProgression';
 import { generateMarketNews } from './marketNews';
 import { resolveMonthlyCareerIncome } from './income';
@@ -12,20 +11,20 @@ import { advancePortfolioMonth } from './portfolio';
 import { resolveLifeMonth } from './life';
 import { appendLifeMemory } from './lifetime/memories';
 import { getOwnershipPayoffTransitions } from './ownershipPayoffs';
-import { getRouteWeightedScenarios } from './scenarioContext';
+import { pickWeightedScenario } from './scenarioContext';
 import {
-  TAKE_HOME_RATIO,
   PROPERTY_VALUE_INDEX_SENSITIVITY,
   PROPERTY_VALUE_FLOOR,
   PRICE_INDEX_BOUNDS,
   RENTAL_INDEX_BOUNDS,
   INTEREST_RATE_BOUNDS,
   INSOLVENCY_STRIKES_LIMIT,
+  MAX_RUN_AGE,
   SCENARIO_TRIGGER_PROBABILITY,
   MARKET_NEWS_FEED_LIMIT,
   STARTER_SCENARIO_TURN,
 } from './constants';
-import { contributeCpf, applyCpfInterest } from './cpf';
+import { contributeCpf, applyCpfInterest, getCpfEmployeeContribution } from './cpf';
 
 export interface AdvanceTurnInput {
   player: Player;
@@ -60,13 +59,25 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
 
   const career = careers.find(c => c.id === player.careerId) || careers[0];
   const careerIncome = resolveMonthlyCareerIncome(player, career, rng);
+  const buyerProfile = normalizeBuyerProfile({ ...player.buyerProfile, age: player.age });
 
   // CPF - real age-based allocation + interest
   const cpfBalances = { oa: player.cpfOrdinary, sa: player.cpfSpecial, ma: player.cpfMedisave };
-  const afterContribution = contributeCpf(cpfBalances, careerIncome.grossIncome, player.age);
-  const afterInterest = applyCpfInterest(afterContribution);
+  const afterContribution = contributeCpf(
+    cpfBalances,
+    careerIncome.grossIncome,
+    player.age,
+    buyerProfile.residencyStatus,
+    buyerProfile.sprYear,
+  );
+  const afterInterest = applyCpfInterest(afterContribution, player.age);
 
-  const cpfEmployee = careerIncome.grossIncome * (1 - TAKE_HOME_RATIO);
+  const cpfEmployee = getCpfEmployeeContribution(
+    careerIncome.grossIncome,
+    player.age,
+    buyerProfile.residencyStatus,
+    buyerProfile.sprYear,
+  );
   const takeHomePay = careerIncome.grossIncome - cpfEmployee;
 
   // Rental income
@@ -91,7 +102,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
 
   // Loan amortization
   let totalLoanPayment = 0;
-  const updatedLoans = player.loans.map((loan) => {
+  let updatedLoans = player.loans.map((loan) => {
     if (loan.isPaid) return loan;
     const step = amortizeOneMonth(loan.remainingBalance, loan.monthlyPayment, loan.interestRate);
     totalLoanPayment += step.actualPayment;
@@ -170,11 +181,26 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
     INTEREST_RATE_BOUNDS.min,
     Math.min(INTEREST_RATE_BOUNDS.max, market.interestRate + marketPulse.rateChangePct),
   );
+  updatedLoans = updatedLoans.map((loan) => {
+    if (loan.isPaid || loan.type !== 'mortgage' || loan.financingMode === 'hdb-concessionary') return loan;
+    const interestRate = Math.max(
+      INTEREST_RATE_BOUNDS.min,
+      Math.min(INTEREST_RATE_BOUNDS.max, round2(loan.interestRate + marketPulse.rateChangePct)),
+    );
+    return {
+      ...loan,
+      interestRate,
+      monthlyPayment: calcMonthlyPayment(loan.remainingBalance, interestRate, Math.max(1, loan.termYears)),
+    };
+  });
 
   // Property values follow the same broader market pulse, but with dampened sensitivity
   const forkAdjustedProperties = applyOwnershipForkPropertyEffects(portfolioStep.updatedProperties, lifeResolution.propertyEffects);
   const finalProperties = forkAdjustedProperties.map((property) => ({
     ...property,
+    monthlyRental: property.tenant
+      ? property.monthlyRental
+      : Math.max(0, Math.round(property.monthlyRental * (1 + marketPulse.rentalChangePct / 100))),
     currentValue: Math.max(
       PROPERTY_VALUE_FLOOR,
       Math.round(property.currentValue * (1 + (marketPulse.priceChangePct / 100) * PROPERTY_VALUE_INDEX_SENSITIVITY)),
@@ -201,17 +227,24 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   } else if (shouldRunAnnualCareerReview(newTurnCount)) {
     scenarioId = 'career-review';
   } else if (player.turnCount > 0 && newTurnCount % diff.eventFrequency === 0 && rng.next() < SCENARIO_TRIGGER_PROBABILITY) {
-    const regularScenarios = getRouteWeightedScenarios(player).filter(
+    const regularScenarios = pickWeightedScenario(
+      player,
+      rng,
       (scenario) => !['first-home-window', 'job-switch-opportunity', 'career-review'].includes(scenario.id),
     );
-    if (regularScenarios.length > 0) {
-      scenarioId = rngPick(rng, regularScenarios).id;
-    }
+    scenarioId = regularScenarios?.id ?? null;
   }
 
   let newPlayer: Player = {
     ...player,
     age: newAge,
+    buyerProfile: normalizeBuyerProfile({
+      ...buyerProfile,
+      age: newAge,
+      householdProfile: buyerProfile.householdProfile === 'single-under-35' && newAge >= 35
+        ? 'single-35-plus'
+        : buyerProfile.householdProfile,
+    }),
     salary: newSalary,
     cash: newCash,
     cpfOrdinary: round2(afterInterest.oa),
@@ -268,7 +301,7 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
   // (loans + ownership costs + household). Earlier versions only compared loans
   // against take-home, so a player crushed by maintenance + property tax + life
   // costs would not register as insolvent until the loan alone exceeded income.
-  const monthlyTakeHome = newSalary * TAKE_HOME_RATIO + rentalIncome + lifeResolution.cashDelta;
+  const monthlyTakeHome = takeHomePay + rentalIncome + lifeResolution.cashDelta;
   const monthlyLoanPayments = updatedLoans.filter((loan) => !loan.isPaid).reduce((sum, loan) => sum + loan.monthlyPayment, 0);
   const monthlyObligations = monthlyLoanPayments + totalOwnershipCosts + lifeResolution.householdCost;
   const isInsolvent = newPlayer.cash < 0 && monthlyTakeHome < monthlyObligations;
@@ -277,8 +310,9 @@ export function advanceTurn(input: AdvanceTurnInput): AdvanceTurnOutput {
 
   const won = newPlayer.totalNetWorth >= diff.targetNetWorth;
   const lost = newStrikes >= INSOLVENCY_STRIKES_LIMIT;
-  const gameOver = won || lost;
-  const outcome: AdvanceTurnOutput['outcome'] = won ? 'won' : lost ? 'lost' : 'ongoing';
+  const retired = newPlayer.age >= MAX_RUN_AGE;
+  const gameOver = won || lost || retired;
+  const outcome: AdvanceTurnOutput['outcome'] = won || retired ? 'won' : lost ? 'lost' : 'ongoing';
 
   const newMarket: MarketState = {
     interestRate: newInterestRate,

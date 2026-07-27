@@ -89,6 +89,11 @@ const MOMENTS: Moment[] = [
  */
 export function getMoment(player: Player, seed = 0): Moment | null {
   if (player.turnCount <= 1) return null;
-  const idx = (player.turnCount * 7 + player.month * 3 + (player.name?.length ?? 0) + Math.abs(seed)) % MOMENTS.length;
+  let hash = Math.imul(player.turnCount + 1, 0x45d9f3b);
+  hash ^= Math.imul(player.month + 17, 0x119de1f3);
+  hash ^= Math.imul((player.name?.length ?? 0) + 31, 0x27d4eb2d);
+  hash ^= Math.abs(seed) | 0;
+  hash ^= hash >>> 16;
+  const idx = (hash >>> 0) % MOMENTS.length;
   return MOMENTS[idx];
 }
